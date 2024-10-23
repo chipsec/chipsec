@@ -62,6 +62,11 @@ class smrr(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.cs.set_scope({
+            'MTRRCAP': '8086.MSR.MTRRCAP',
+            'IA32_SMRR_PHYSBASE': '8086.MSR.IA32_SMRR_PHYSBASE',
+            'IA32_SMRR_PHYSMASK': '8086.MSR.IA32_SMRR_PHYSMASK',
+        })
 
     def is_supported(self) -> bool:
         mtrr_exist = self.cs.register.is_defined('MTRRCAP')
@@ -85,53 +90,54 @@ class smrr(BaseModule):
 
         self.logger.log('')
         self.logger.log('[*] Checking SMRR range base programming..')
-        msr_smrrbase = self.cs.register.read('IA32_SMRR_PHYSBASE')
-        self.cs.register.print('IA32_SMRR_PHYSBASE', msr_smrrbase)
-        smrrbase = self.cs.register.get_field('IA32_SMRR_PHYSBASE', msr_smrrbase, 'PhysBase', True)
-        smrrtype = self.cs.register.get_field('IA32_SMRR_PHYSBASE', msr_smrrbase, 'Type')
-        self.logger.log(f'[*] SMRR range base: 0x{smrrbase:016X}')
+        msr_smrrbase = self.cs.register.get_list_by_name('IA32_SMRR_PHYSBASE')
+        msr_smrrbase.read_and_print()
+        #self.cs.register.print('IA32_SMRR_PHYSBASE', msr_smrrbase)
 
-        if smrrtype in MemType:
-            self.logger.log(f'[*] SMRR range memory type is {MemType[smrrtype]}')
-        else:
-            smrr_ok = False
-            self.logger.log_bad(f'SMRR range memory type 0x{smrrtype:X} is invalid')
+        for reg in msr_smrrbase:
+            self.logger.log_verbose(reg)
+            smrrbase = reg.get_field('PhysBase', True)
+            smrrtype = reg.get_field('Type')
+            self.logger.log(f'[*] SMRR range base: 0x{smrrbase:016X}')
 
-        if 0 == smrrbase:
-            smrr_ok = False
-            self.logger.log_bad('SMRR range base is not programmed')
+            if smrrtype in MemType:
+                self.logger.log(f'[*] SMRR range memory type is {MemType[smrrtype]}')
+            else:
+                smrr_ok = False
+                self.logger.log_bad(f'SMRR range memory type 0x{smrrtype:X} is invalid')
+
+            if 0 == smrrbase:
+                smrr_ok = False
+                self.logger.log_bad("SMRR range base is not programmed")
 
         if smrr_ok:
             self.logger.log_good('OK so far. SMRR range base is programmed')
 
         self.logger.log('')
         self.logger.log('[*] Checking SMRR range mask programming..')
-        msr_smrrmask = self.cs.register.read('IA32_SMRR_PHYSMASK')
-        self.cs.register.print('IA32_SMRR_PHYSMASK', msr_smrrmask)
-        smrrmask = self.cs.register.get_field('IA32_SMRR_PHYSMASK', msr_smrrmask, 'PhysMask', True)
-        smrrvalid = self.cs.register.get_field('IA32_SMRR_PHYSMASK', msr_smrrmask, 'Valid')
-        self.logger.log(f'[*] SMRR range mask: 0x{smrrmask:016X}')
+        msr_smrrmask = self.cs.register.get_list_by_name('IA32_SMRR_PHYSMASK')
+        msr_smrrmask.read_and_print()
 
-        if not (smrrvalid and (0 != smrrmask)):
-            smrr_ok = False
-            self.logger.log_bad('SMRR range is not enabled')
+        for reg in msr_smrrmask:
+            self.logger.log_verbose(reg)
+            smrrmask = reg.get_field('PhysMask', True)
+            smrrvalid = reg.get_field('Valid')
+            self.logger.log(f'[*] SMRR range mask: 0x{smrrmask:016X}')
+
+            if not (smrrvalid and (0 != smrrmask)):
+                smrr_ok = False
+                self.logger.log_bad("SMRR range is not enabled")
 
         if smrr_ok:
             self.logger.log_good('OK so far. SMRR range is enabled')
 
         self.logger.log('')
-        self.logger.log('[*] Verifying that SMRR range base & mask are the same on all logical CPUs..')
-        for tid in range(self.cs.msr.get_cpu_thread_count()):
-            msr_base = self.cs.register.read('IA32_SMRR_PHYSBASE', tid)
-            msr_mask = self.cs.register.read('IA32_SMRR_PHYSMASK', tid)
-            self.logger.log(f'[CPU{tid:d}] SMRR_PHYSBASE = {msr_base:016X}, SMRR_PHYSMASK = {msr_mask:016X}')
-            if (msr_base != msr_smrrbase) or (msr_mask != msr_smrrmask):
-                smrr_ok = False
-                self.logger.log_bad('SMRR range base/mask do not match on all logical CPUs')
-                break
-
-        if smrr_ok:
-            self.logger.log_good('OK so far. SMRR range base/mask match on all logical CPUs')
+        self.logger.log("[*] Verifying that SMRR range base & mask are the same on all logical CPUs..")
+        if msr_smrrmask.is_all_value(msr_smrrmask[0].value) and msr_smrrbase.is_all_value(msr_smrrbase[0].value):
+            self.logger.log_good("OK so far. SMRR range base/mask match on all logical CPUs")
+        else:
+            smrr_ok = False
+            self.logger.log_bad("SMRR range base/mask do not match on all logical CPUs")
 
         self.logger.log(f'[*] Trying to read memory at SMRR base 0x{smrrbase:08X}...')
 

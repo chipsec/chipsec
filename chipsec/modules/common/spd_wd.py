@@ -61,6 +61,9 @@ class spd_wd(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.cs.set_scope({
+            'SPD_WD': '8086.SMBUS.SPD_WD',
+        })
 
     def is_supported(self) -> bool:
         if self.cs.device.is_enabled('SMBUS'):
@@ -82,12 +85,11 @@ class spd_wd(BaseModule):
             self.res = self.result.getReturnCode(ModuleResult.ERROR)
             return self.res
 
-        spd_wd_reg = self.cs.register.read('SMBUS_HCFG')
-        spd_wd = self.cs.register.get_field('SMBUS_HCFG', spd_wd_reg, 'SPD_WD')
+        spd_wd_reg = self.cs.register.get_list_by_name('SMBUS_HCFG')
+        spd_wd_reg.read_and_print()
+        spd_wd_mask = spd_wd_reg[0].get_field_mask("SPD_WD", True)
 
-        self.cs.register.print('SMBUS_HCFG', spd_wd_reg)
-
-        if 1 == spd_wd:
+        if spd_wd_reg.is_all_value(spd_wd_mask, spd_wd_mask):
             self.logger.log_passed('SPD Write Disable is set')
             self.res = ModuleResult.PASSED
         else:

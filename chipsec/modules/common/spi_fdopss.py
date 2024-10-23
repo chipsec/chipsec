@@ -45,6 +45,9 @@ class spi_fdopss(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.cs.set_scope({
+            "HSFS": "8086.SPI.HSFS",
+        })
 
     def is_supported(self) -> bool:
         if not self.cs.register.has_field('HSFS', 'FDOPSS'):
@@ -53,11 +56,9 @@ class spi_fdopss(BaseModule):
         return True
 
     def check_fd_security_override_strap(self) -> int:
-        hsfs_reg = self.cs.register.read('HSFS')
-        self.cs.register.print('HSFS', hsfs_reg)
-        fdopss = self.cs.register.get_field('HSFS', hsfs_reg, 'FDOPSS')
-
-        if (fdopss != 0):
+        hsfs_registers = self.cs.register.get_list_by_name('HSFS')
+        hsfs_registers.read_and_print()
+        if not hsfs_registers.is_all_field_value(0, 'FDOPSS'):
             self.logger.log_passed('SPI Flash Descriptor Security Override is disabled')
             return self.result.getReturnCode(ModuleResult.PASSED)
         else:
