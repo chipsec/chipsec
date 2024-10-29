@@ -52,14 +52,15 @@ class cpu_info(BaseModule):
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.cpu.cpu_info.html'
 
     def is_supported(self) -> bool:
-        if self.cs.register.has_field('IA32_BIOS_SIGN_ID', 'Microcode'):
-            return True
-        self.logger.log_important('IA32_BIOS_SIGN_ID.Microcode not defined for platform.  Skipping module.')
+        if self.cs.is_intel():
+            if self.cs.register.has_field('IA32_BIOS_SIGN_ID', 'Microcode'):
+                return True
+            self.logger.log_important('IA32_BIOS_SIGN_ID.Microcode not defined for platform.  Skipping module.')
+        else:
+            return self.cs.is_amd()
         return False
 
-    def run(self, module_argv: List[str]) -> int:
-        self.logger.start_test('Current Processor Information:')
-
+    def run_intel(self, module_argv: List[str]) -> int:
         thread_count = 1
         if not self.cs.os_helper.is_efi():
             thread_count = self.cs.msr.get_cpu_thread_count()
@@ -99,4 +100,65 @@ class cpu_info(BaseModule):
         self.result.setStatusBit(self.result.status.INFORMATION)
         return self.result.getReturnCode(ModuleResult.INFORMATION)
 
+    def run_amd(self) -> int:
+        # Determine number of threads to check
+        thread_count = 1
+        if not self.cs.os_helper.is_efi():
+            (_, _, r_rcx, _) = self.cs.cpu.cpuid(0x80000008,0)
+            thread_count = r_rcx & 0xff
 
+        for thread in range(thread_count):
+            # Handle processor binding so we are always checking processor 0
+            # for this example.  No need to do this in UEFI Shell.
+            if not self.cs.os_helper.is_efi():
+                self.cs.helper.set_affinity(thread)
+
+            # Display thread
+            self.logger.log(f'[*] Thread {thread:04d}')
+
+            # Get processor brand string
+            brand = ''
+            brand = brand.rstrip('\x00')
+            self.logger.log(f'[*] Processor: {brand}')
+
+            # "Authentic AMD"
+            e_rbx = int("htuA".encode('utf-8').hex(),16)    #0x68747541
+            e_rcx = int("DMAc".encode('utf-8').hex(),16)    #0x444D4163
+            e_rdx = int("itne".encode('utf-8').hex(),16)    #0x69746E65
+            (_, r_rbx, r_rcx, r_rdx) = self.cs.cpu.cpuid(0x00, 0x00)
+
+            if not(e_rbx == r_rbx and e_rcx == r_rcx and e_rdx == r_rdx):
+                self.logger.log_failed("Not Authentic AMD")
+                return self.res
+
+            # Get processor version information
+            (r_rax, _, _, _) = self.cs.cpu.cpuid(0x01, 0x00)
+            baseModel = (r_rax >> 4) & 0xF
+            baseFamily = (r_rax >> 8) & 0xF
+            extModel = (r_rax >> 16) & 0xF
+            extFamily = (r_rax >> 20) & 0xF
+            stepping = (r_rax) & 0xF
+            family = baseFamily + extFamily
+            model = (extModel << 4) & baseModel
+            self.logger.log(f'[*]            Family: {family:02X} Model: {model:02X} Stepping: {stepping:01X}')
+
+
+            # Get microcode revision
+            microcode_rev = self.cs.register.read_field('PATCH_LEVEL', 'PatchLevel', cpu_thread=thread)
+            self.logger.log(f'[*]            Microcode: {microcode_rev:08X}')
+            self.logger.log('[*]')
+        self.logger.log_information('Processor information displayed')
+        
+        #self.result.setStatusBit(self.result.status.INFORMATION)
+        #return self.result.getReturnCode(ModuleResult.INFORMATION)
+        self.res = ModuleResult.INFORMATION
+        return self.res 
+
+    def run(self, module_argv: List[str]) -> int:
+        # Log the start of the test
+        self.logger.start_test('Current Processor Information:')
+
+        if self.cs.is_intel():
+            return self.run_intel()
+        else:
+            return self.run_amd()
