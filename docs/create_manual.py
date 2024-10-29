@@ -40,8 +40,11 @@ https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
 """
 
 import os
-#from collections.abc import Sequence
-from typing import Sequence
+try:
+    from collections.abc import Sequence
+except ImportError:
+    from typing import Sequence
+    print('!! Unable to import collections.abc !!')
 import shutil
 import sys
 
