@@ -54,7 +54,6 @@ class smm_addr(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.id = 0xdf11080
 
     def is_supported(self) -> bool:
         if self.cs.is_amd():
