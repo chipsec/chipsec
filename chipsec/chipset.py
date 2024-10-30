@@ -28,7 +28,7 @@ from typing import Tuple
 from chipsec.helper.oshelper import helper as os_helper
 from chipsec.helper.basehelper import Helper
 from chipsec.helper.nonehelper import NoneHelper
-from chipsec.hal import cpu, io, iobar, mmio, msgbus, msr, pci, physmem, ucode, igd, cpuid
+from chipsec.hal import cpu, io, iobar, mmio, msgbus, msr, pci, physmem, ucode, igd, cpuid, psp
 from chipsec.library.exceptions import UnknownChipsetError, OsHelperError
 
 from chipsec.library.logger import logger
@@ -89,6 +89,8 @@ class Chipset:
         self.mmio = mmio.MMIO(self)
         self.iobar = iobar.IOBAR(self)
         self.igd = igd.IGD(self)
+        # AMD
+        self.psp = psp.PSP(self)
         #
         # All HAL components which use above 'basic primitive' HAL components
         # should be instantiated in modules/utilcmd with an instance of chipset

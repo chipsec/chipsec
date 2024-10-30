@@ -1,0 +1,234 @@
+<?xml version="1.0"?>
+<configuration platform="Strix Point">
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Information                          -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <info family="core">
+    <sku did="0x1507" name="Strix Point" code="Strix Point" longname="Strix Point Root Complex" />
+  </info>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Integrated devices                   -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <pci>
+<!--
+00:18.0 Host bridge: Advanced Micro Devices, Inc. [AMD] Device 1679
+00:18.1 Host bridge: Advanced Micro Devices, Inc. [AMD] Device 167a
+00:18.2 Host bridge: Advanced Micro Devices, Inc. [AMD] Device 167b
+00:18.3 Host bridge: Advanced Micro Devices, Inc. [AMD] Device 167c
+00:18.4 Host bridge: Advanced Micro Devices, Inc. [AMD] Device 167d
+00:18.5 Host bridge: Advanced Micro Devices, Inc. [AMD] Device 167e
+00:18.6 Host bridge: Advanced Micro Devices, Inc. [AMD] Device 167f
+00:18.7 Host bridge: Advanced Micro Devices, Inc. [AMD] Device 1680
+02:00.0 Ethernet controller: Realtek Semiconductor Co., Ltd. RTL8125 2.5GbE Controller (rev 05)
+03:00.0 Network controller: Intel Corporation Wi-Fi 6 AX200 (rev 1a)
+
+74:00.0 VGA compatible controller: Advanced Micro Devices, Inc. [AMD/ATI] Rembrandt (rev c8)
+74:00.2 Encryption controller: Advanced Micro Devices, Inc. [AMD] VanGogh PSP/CCP
+74:00.5 Multimedia controller: Advanced Micro Devices, Inc. [AMD] Raven/Raven2/FireFlight/Renoir Audio Processor (rev 60)
+-->
+    <!-- Table 13: PCI Device ID Assignments. -->
+    <!-- Bus A and B are programmable. Here, we assume A = 5 and B = 1. -->
+    <!--device name="ROOT"           bus="0" dev="0x00" fun="0" vid="0x1022" did="0x14B5" /-->
+    <device name="IOMMU"          bus="0" dev="0x00" fun="2" vid="0x1022" did="0x14B6" />
+    <device name="HOSTDUMMY0"     bus="0" dev="0x01" fun="0" vid="0x1022" did="0x14B7" />
+    <!-- PCIe GPP Bridge -->
+    <device name="GPP0"           bus="0" dev="0x01" fun="1" vid="0x1022" did="0x15D3" />
+    <device name="LPC"            bus="0" dev="0x14" fun="3" vid="0x1022" did="0x790E" />
+<!--
+00:01.2 PCI bridge: Advanced Micro Devices, Inc. [AMD] Device 14ba
+    <device name="GPP1"           bus="0" dev="0x01" fun="2" vid="0x1022" did="0x15D3" />
+00:01.3 PCI bridge: Advanced Micro Devices, Inc. [AMD] Device 14ba
+00:02.0 Host bridge: Advanced Micro Devices, Inc. [AMD] Device 14b7 (rev 01)
+00:02.2 PCI bridge: Advanced Micro Devices, Inc. [AMD] Device 14ba
+00:03.0 Host bridge: Advanced Micro Devices, Inc. [AMD] Device 14b7 (rev 01)
+00:03.1 PCI bridge: Advanced Micro Devices, Inc. [AMD] Device 14cd
+00:04.0 Host bridge: Advanced Micro Devices, Inc. [AMD] Device 14b7 (rev 01)
+
+00:08.0 Host bridge: Advanced Micro Devices, Inc. [AMD] Device 14b7 (rev 01)
+00:08.1 PCI bridge: Advanced Micro Devices, Inc. [AMD] Device 14b9 (rev 10)
+00:08.3 PCI bridge: Advanced Micro Devices, Inc. [AMD] Device 14b9 (rev 10)
+    <device name="HOSTDUMMY1"     bus="0" dev="0x08" fun="0" vid="0x1022" did="0x1452" />
+    <device name="GPP0TOBUSA"     bus="0" dev="0x08" fun="1" vid="0x1022" did="0x15DB" />
+    <device name="GPP0TOBUSB"     bus="0" dev="0x08" fun="2" vid="0x1022" did="0x15DC" />
+-->
+    <!-- Note: Vendor ID 1002h is used for Internal GPU and Display HD Audio Controller. -->
+    <!-- Model 18h: did=0x15D8. Models 10h, 11h: did=0x15DD -->
+<!--
+    <device name="GPU"            bus="5" dev="0x00" fun="0" vid="0x1002" did="0x15D8,0x15DD" />
+    <device name="DISPLAYHDAUDIO" bus="5" dev="0x00" fun="1" vid="0x1002" did="0x15DE" />
+    <device name="USB0"           bus="74" dev00.3 USB controller: Advanced Micro Devices, Inc. [AMD] Device 161d
+    <device name "USB1"           bus="74" dev00.4 USB controller: Advanced Micro Devices, Inc. [AMD] Device 161e
+    <device name "USB2"           bus="75" dev00.0 USB controller: Advanced Micro Devices, Inc. [AMD] Device 161f
+    <device name "USB3"           bus="75" dev00.3 USB controller: Advanced Micro Devices, Inc. [AMD] Device 15d6
+    <device name "USB4"           bus="75" dev00.4 USB controller: Advanced Micro Devices, Inc. [AMD] Device 15d7
+    <device name "USB5"           bus="75" dev00.5 USB controller: Advanced Micro Devices, Inc. [AMD] Device 162e
+74:00.6 Audio device: Advanced Micro Devices, Inc. [AMD] Family 17h (Models 10h-1fh) HD Audio Controller
+74:00.1 Audio device: Advanced Micro Devices, Inc. [AMD/ATI] Device 1640
+    <device name="AUDIO"          bus="5" dev="0x00" fun="5" vid="0x1022" did="0x15E2" />
+    <device name="HDAUDIO"        bus="5" dev="0x00" fun="6" vid="0x1022" did="0x15E3" />
+    <device name="DF0"            bus="0" dev="0x18" fun="0" vid="0x1022" did="0x15E8" />
+    <device name="DF1"            bus="0" dev="0x18" fun="1" vid="0x1022" did="0x15E9" />
+    <device name="DF2"            bus="0" dev="0x18" fun="2" vid="0x1022" did="0x15EA" />
+    <device name="DF3"            bus="0" dev="0x18" fun="3" vid="0x1022" did="0x15EB" />
+    <device name="DF4"            bus="0" dev="0x18" fun="4" vid="0x1022" did="0x15EC" />
+    <device name="DF5"            bus="0" dev="0x18" fun="5" vid="0x1022" did="0x15ED" />
+    <device name="DF6"            bus="0" dev="0x18" fun="6" vid="0x1022" did="0x15EE" />
+    <device name="DF7"            bus="0" dev="0x18" fun="7" vid="0x1022" did="0x15EF" />
+    <device name="SATAMS"         bus="1" dev="0x00" fun="0" vid="0x1022" did="0x7901" />
+    <device name="SATAAMD"        bus="1" dev="0x00" fun="0" vid="0x1022" did="0x7904" />
+    <device name="SD"             bus="0" dev="0x14" fun="6" vid="0x1022" did="0x7906" />
+00:14.0 SMBus: Advanced Micro Devices, Inc. [AMD] FCH SMBus Controller (rev 71)
+00:14.3 ISA bridge: Advanced Micro Devices, Inc. [AMD] FCH LPC Bridge (rev 51)
+    <device name="SMBUS"          bus="0" dev="0x14" fun="0" vid="0x1022" did="0x790B" />
+    <device name="SATARAID0"      bus="1" dev="0x00" fun="0" vid="0x1022" did="0x7916" />
+    <device name="SATARAID1"      bus="1" dev="0x00" fun="0" vid="0x1022" did="0x7917" />
+    <device name="GBE0"           bus="1" dev="0x00" fun="1" vid="0x1022" did="0x1458" />
+    <device name="GBE1"           bus="1" dev="0x00" fun="2" vid="0x1022" did="0x1458" />
+    <device name="FUNCTIONDUMMY"  bus="1" dev="0x00" fun="0" vid="0x1022" did="0x145A" />
+-->
+  </pci>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Memory Mapped I/O spaces (MMIO BARs) -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <mmio>
+  </mmio>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Memory ranges                        -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <memory>
+  </memory>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Indirect memory accesses             -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <ima>
+  </ima>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- I/O spaces (I/O BARs)                -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <io>
+  </io>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Configuration registers              -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <registers>
+    <register name="HWCR" type="msr" msr="0xc0010015" desc="Hardware Configuration">
+      <field name="SmmPgCfgLock" bit="33" size="1"  desc="1=SMM page config locked."/>
+      <field name="SmmBaseLock" bit="31" size="1"  desc="Disable SMM_BASE from being saved to and restored from the SMM save state area."/>
+      <field name="SmmLock" bit="0" size="1"  desc="SMM code in the ASeg and TSeg range and the SMM registers are Read-only and SMI interrupts are not intercepted in SVM."/>
+    </register>
+    <register name="PATCH_LEVEL" type="msr" msr="0x0000008B" desc="Patch Level. Read,Error-on-write,Volatile. Reset: 0000_0000_0000_0000h.">
+      <!-- Bits 63:32 reserved. -->
+      <field name="PatchLevel" bit="0" size="32" desc="Read,Error-on-write,Volatile. Reset: 0000_0000h. This returns an identification number for the microcode patch that has been loaded. If no patch has been loaded, this returns 0." />
+    </register>
+    <register name="SPIBASEADDR" type="pcicfg" device="LPC" offset="0x0A0" size="4" desc="SPI Base_Addr. Read-write. Reset: FEC1_0002h.">
+      <field name="Spi_eSpi_BaseAddr" bit="8" size="24" desc="Read-write. Reset: FE_C100h." />
+      <!-- Bits 7:5 reserved. -->
+      <field name="PspSpiMmioSel" bit="4" size="1" desc="Read-write. Reset: 0. 0=SPI MMIO register for Host. 1=SPI MMIO register for PSP. PSP SPI MMIO select." />
+      <field name="RouteTpm2Spi" bit="3" size="1" desc="Read-write. Reset: 0. 1=TPM cycles are routed to SPI bus with TPM_SPI_CS# asserted. Route TPM to SPI." />
+      <field name="AbortEnable" bit="2" size="1" desc="Read-write. Reset: 0. LPC Abort enable." />
+      <field name="SpiRomEnable" bit="1" size="1" desc="Read-write. Reset: 1. 0=SPI ROM is disabled. 1=SPI ROM is enabled if chip is strapped to SPI ROM." />
+      <field name="AltSpiCSEnable" bit="0" size="1" desc="Read-write. Reset: 0. Alternative SPI CS enable." />
+    </register>
+    <register name="ROMPROTECT0" type="pcicfg" device="LPC" offset="0x050" size="4" lockedby="SpiHostAccessRomEn" desc="ROM Protect 0. Read,Write-once. Reset: 0000_0000h. This register specifies different ROM ranges to be protected. FCH::ITF::SPI::AltSPICS[SpiProtectEn0] enables the protection ranges. The addresses are within the defined ROM range if: {RomBase, 000_0000_0000b} &lt;= address[31:0] &lt;= ({RomBase, 000_0000_0000b} + (Range &lt;&lt; (RangeUnit ? 16 : 12))). For the host, this register can only be written once after hardware reset; subsequent writes have no effect. To enable writing to this register again, one can generate an SMI through FCH or apply hardware reset.">
+      <field name="RomBase" bit="12" size="20" desc="ROM Base. Read,Write-once. Reset: 0_0000h." />
+      <!-- Bit 11 reserved. -->
+      <field name="WriteProtect" bit="10" size="1" desc="Write Protect. Read,Write-once. Reset: 0. 1=The memory range defined by this register is write- protected and writing to the range has no effect." />
+      <field name="ReadProtect" bit="9" size="1" desc="Read Protect. Read,Write-once. Reset: 0. 1=The memory range defined by this register is read- protected and reading any location in the range returns FFFF_FFFFh." />
+      <field name="RangeUnit" bit="8" size="1" desc="Read,Write-once. Reset: 0. 0=4 KB. 1=64 KB." />
+      <field name="Range" bit="0" size="8" desc="Read,Write-once. Reset: 00h. Description: Specifies the protected range. The unit is defined at bit[8] in the same register. NOTE: The protection is limited to 4GB boundary. Base + Range cannot cross 4GB boundary; otherwise, hardware will not behave correctly. BIOS should make sure the values are within a valid range." />
+    </register>
+    <register name="ROMPROTECT1" type="pcicfg" device="LPC" offset="0x054" size="4" lockedby="SpiHostAccessRomEn" desc="ROM Protect 1. Read,Write-once. Reset: 0000_0000h. This register specifies different ROM ranges to be protected. FCH::ITF::SPI::AltSPICS[SpiProtectEn0] enables the protection ranges. The addresses are within the defined ROM range if: {RomBase, 000_0000_0000b} &lt;= address[31:0] &lt;= ({RomBase, 000_0000_0000b} + (Range &lt;&lt; (RangeUnit ? 16 : 12))). For the host, this register can only be written once after hardware reset; subsequent writes have no effect. To enable writing to this register again, one can generate an SMI through FCH or apply hardware reset.">
+      <field name="RomBase" bit="12" size="20" desc="ROM Base. Read,Write-once. Reset: 0_0000h." />
+      <!-- Bit 11 reserved. -->
+      <field name="WriteProtect" bit="10" size="1" desc="Write Protect. Read,Write-once. Reset: 0. 1=The memory range defined by this register is write- protected and writing to the range has no effect." />
+      <field name="ReadProtect" bit="9" size="1" desc="Read Protect. Read,Write-once. Reset: 0. 1=The memory range defined by this register is read- protected and reading any location in the range returns FFFF_FFFFh." />
+      <field name="RangeUnit" bit="8" size="1" desc="Read,Write-once. Reset: 0. 0=4 KB. 1=64 KB." />
+      <field name="Range" bit="0" size="8" desc="Read,Write-once. Reset: 00h. Description: Specifies the protected range. The unit is defined at bit[8] in the same register. NOTE: The protection is limited to 4GB boundary. Base + Range cannot cross 4GB boundary; otherwise, hardware will not behave correctly. BIOS should make sure the values are within a valid range." />
+    </register>
+    <register name="ROMPROTECT2" type="pcicfg" device="LPC" offset="0x058" size="4" lockedby="SpiHostAccessRomEn" desc="ROM Protect 2. Read,Write-once. Reset: 0000_0000h. This register specifies different ROM ranges to be protected. FCH::ITF::SPI::AltSPICS[SpiProtectEn0] enables the protection ranges. The addresses are within the defined ROM range if: {RomBase, 000_0000_0000b} &lt;= address[31:0] &lt;= ({RomBase, 000_0000_0000b} + (Range &lt;&lt; (RangeUnit ? 16 : 12))). For the host, this register can only be written once after hardware reset; subsequent writes have no effect. To enable writing to this register again, one can generate an SMI through FCH or apply hardware reset.">
+      <field name="RomBase" bit="12" size="20" desc="ROM Base. Read,Write-once. Reset: 0_0000h." />
+      <!-- Bit 11 reserved. -->
+      <field name="WriteProtect" bit="10" size="1" desc="Write Protect. Read,Write-once. Reset: 0. 1=The memory range defined by this register is write- protected and writing to the range has no effect." />
+      <field name="ReadProtect" bit="9" size="1" desc="Read Protect. Read,Write-once. Reset: 0. 1=The memory range defined by this register is read- protected and reading any location in the range returns FFFF_FFFFh." />
+      <field name="RangeUnit" bit="8" size="1" desc="Read,Write-once. Reset: 0. 0=4 KB. 1=64 KB." />
+      <field name="Range" bit="0" size="8" desc="Read,Write-once. Reset: 00h. Description: Specifies the protected range. The unit is defined at bit[8] in the same register. NOTE: The protection is limited to 4GB boundary. Base + Range cannot cross 4GB boundary; otherwise, hardware will not behave correctly. BIOS should make sure the values are within a valid range." />
+    </register>
+    <register name="ROMPROTECT3" type="pcicfg" device="LPC" offset="0x05C" size="4" lockedby="SpiHostAccessRomEn" desc="ROM Protect 3. Read,Write-once. Reset: 0000_0000h. This register specifies different ROM ranges to be protected. FCH::ITF::SPI::AltSPICS[SpiProtectEn0] enables the protection ranges. The addresses are within the defined ROM range if: {RomBase, 000_0000_0000b} &lt;= address[31:0] &lt;= ({RomBase, 000_0000_0000b} + (Range &lt;&lt; (RangeUnit ? 16 : 12))). For the host, this register can only be written once after hardware reset; subsequent writes have no effect. To enable writing to this register again, one can generate an SMI through FCH or apply hardware reset.">
+      <field name="RomBase" bit="12" size="20" desc="ROM Base. Read,Write-once. Reset: 0_0000h." />
+      <!-- Bit 11 reserved. -->
+      <field name="WriteProtect" bit="10" size="1" desc="Write Protect. Read,Write-once. Reset: 0. 1=The memory range defined by this register is write- protected and writing to the range has no effect." />
+      <field name="ReadProtect" bit="9" size="1" desc="Read Protect. Read,Write-once. Reset: 0. 1=The memory range defined by this register is read- protected and reading any location in the range returns FFFF_FFFFh." />
+      <field name="RangeUnit" bit="8" size="1" desc="Read,Write-once. Reset: 0. 0=4 KB. 1=64 KB." />
+      <field name="Range" bit="0" size="8" desc="Read,Write-once. Reset: 00h. Description: Specifies the protected range. The unit is defined at bit[8] in the same register. NOTE: The protection is limited to 4GB boundary. Base + Range cannot cross 4GB boundary; otherwise, hardware will not behave correctly. BIOS should make sure the values are within a valid range." />
+    </register>
+    <register name="SMM_BASE" type="msr" msr="0xC0010111" desc="SMM Base Address. Reset: 0000_0000_0003_0000h. This holds the base of the SMM memory region. The value of this register is stored in the save state on entry into SMM (see 2.1.11.1.5 [SMM Save State]) and it is restored on returning from SMM. The 16-bit CS (code segment) selector is loaded with SmmBase[19:4] on entering SMM. SmmBase[3:0] is required to be 0. The SMM base address can be changed in two ways: • The SMM base address, at offset FF00h in the SMM state save area, may be changed by the SMI handler. The RSM instruction updates SmmBase with the new value. • Normal WRMSR access to this register.">
+      <!-- Bits 63:32 reserved. -->
+      <field name="SMMBASE" bit="0" size="32" desc="Reset: 0003_0000h. AccessType: Core::X86::Msr::HWCR[SmmLock] ? Read-only : Read-write." />
+    </register>
+    <register name="SMMADDR" type="msr" msr="0xC0010112" desc="SMM TSeg Base Address. Configurable. Reset: 0000_0000_0000_0000h. See 2.1.11.1 [System Management Mode (SMM)] and 2.1.5.3.1 [Memory Access to the Physical Address Space]. See Core::X86::Msr::SMMMask for more information about the ASeg and TSeg address ranges. Each CPU access, directed at CPUAddr, is determined to be in the TSeg range if the following is true: CPUAddr[47:17] &amp; TSegMask[47:17] == TSegBase[47:17] &amp; TSegMask[47:17]. For example, if TSeg spans 256 KBs and starts at the 1-MB address. The Core::X86::Msr::SMMAddr[TSegBase[47:17]] would be set to 0010_0000h and the Core::X86::Msr::SMMMask[TSegMask[47:17]] to FFFC_0000h (with zeros filling in for bits[16:0]). This results in a TSeg range from 0010_0000 to 0013_FFFFh.">
+      <!-- Bits 63:48 reserved. -->
+      <field name="TSEGBASE" bit="17" size="31" desc="TSeg address range base. Configurable. Reset: 0000_0000h. AccessType: (Core::X86::Msr::HWCR[SmmLock]) ? Read-only : Read-write." />
+      <!-- Bits 16:0 reserved. -->
+    </register>
+    <register name="SMMMASK" type="msr" msr="0xC0010113" desc="SMM TSeg Mask. Configurable. Reset: 0000_0000_0000_0000h. See 2.1.11.1 [System Management Mode (SMM)]. The ASeg address range is located at a fixed address from A0000h–BFFFFh. The TSeg range is located at a variable base (specified by Core::X86::Msr::SMMAddr[TSegBase[47:17]]) with a variable size (specified by Core::X86::Msr::SMMMask[TSegMask[47:17]]). These ranges provide a safe location for SMM code and data that is not readily accessible by non-SMM applications. The SMI handler can be located in one of these two ranges, or it can be located outside these ranges. These ranges must never overlap each other. This register specifies how accesses to the ASeg and TSeg address ranges are controlled as follows: • If [A,T]Valid == 1, then: • If in SMM, then: • If [A, T]Close == 0, then the accesses are directed to DRAM with memory type as specified in [A, T]MTypeDram. • If [A, T]Close == 1, then instruction accesses are directed to DRAM with memory type as specified in [A, T]MTypeDram and data accesses are directed at MMIO space and with attributes based on [A, T]MTypeIoWc. • If not in SMM, then the accesses are directed at MMIO space with attributes based on [A,T]MTypeIoWc. • See 2.1.5.3.1.1 [Determining Memory Type].">
+      <!-- Bits 63:48 reserved. -->
+      <field name="TSEGMASK" bit="17" size="31" desc="TSeg address range mask. Configurable. Reset: 0000_0000h. See Core::X86::Msr::SMMAddr. AccessType: (Core::X86::Msr::HWCR[SmmLock]) ? Read-only : Read-write." />
+      <!-- Bits 16:15 reserved. -->
+      <field name="TMTYPEDRAM" bit="12" size="3" desc="TSeg address range memory type. Configurable. Reset: 0h. Specifies the memory type for SMM accesses to the TSeg range that are directed to DRAM. AccessType: (Core::X86::Msr::HWCR[SmmLock]) ? Read-only : Read-write.  " />
+      <!-- Bit 11 reserved. -->
+      <field name="AMTYPEDRAM" bit="8" size="3" desc="ASeg Range Memory Type. Configurable. Reset: 0h. Specifies the memory type for SMM accesses to the ASeg range that are directed to DRAM. AccessType: (Core::X86::Msr::HWCR[SmmLock]) ? Read-only : Read-write." />
+      <!-- Bits 7:6 reserved. -->
+      <field name="TMTYPEIOWC" bit="5" size="1" desc="non-SMM TSeg address range memory type. Configurable. Reset: 0. 0=UC (uncacheable). 1=WC (write combining). Specifies the attribute of TSeg accesses that are directed to MMIO space. AccessType: (Core::X86::Msr::HWCR[SmmLock]) ? Read-only : Read-write." />
+      <field name="AMTYPEIOWC" bit="4" size="1" desc="non-SMM ASeg address range memory type. Configurable. Reset: 0. 0=UC (uncacheable). 1=WC (write combining). Specifies the attribute of ASeg accesses that are directed to MMIO space. AccessType: (Core::X86::Msr::HWCR[SmmLock]) ? Read-only : Read-write." />
+      <field name="TCLOSE" bit="3" size="1" desc="send TSeg address range data accesses to MMIO. Configurable. Reset: 0. 1=When in SMM, direct data accesses in the TSeg address range to MMIO space. See AClose. AccessType: (Core::X86::Msr::HWCR[SmmLock]) ? Read-only : Read-write." />
+      <field name="ACLOSE" bit="2" size="1" desc="send ASeg address range data accesses to MMIO. Configurable. Reset: 0. 1=When in SMM, direct data accesses in the ASeg address range to MMIO space. [A,T]Close allows the SMI handler to access the MMIO space located in the same address region as the [A,T]Seg. When the SMI handler is finished accessing the MMIO space, it must clear the bit. Failure to do so before resuming from SMM causes the CPU to erroneously read the save state from MMIO space. AccessType: (Core::X86::Msr::HWCR[SmmLock]) ? Read-only : Read-write." />
+      <field name="TVALID" bit="1" size="1" desc="enable TSeg SMM address range. Configurable. Reset: 0. 1=The TSeg address range SMM enabled. AccessType: (Core::X86::Msr::HWCR[SmmLock]) ? Read-only : Read-write." />
+      <field name="AVALID" bit="0" size="1" desc="enable ASeg SMM address range. Configurable. Reset: 0. 1=The ASeg address range SMM enabled. AccessType: (Core::X86::Msr::HWCR[SmmLock]) ? Read-only : Read-write." />
+    </register>
+    <register name="SPEC_CTRL" type="msr" msr="0x48" desc="Speculation Control MSR">
+      <field name="IBRS"  bit="0" size="1" desc="Enable Indirect Branch Restricted Speculation (IBRS)" />
+      <field name="STIBP" bit="1" size="1" desc="Enable Single Thread Indirect Branch Predictors (STIBP)" />
+      <field name="SSBD"  bit="2" size="1" desc="Delays speculative execution of load until the addr for all older stores are known" />
+      <field name="PSFD"  bit="7" size="1" desc="Disable predictive store forwarding" />
+    </register>
+  </registers>
+
+
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Controls                             -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <controls>
+  </controls>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Locks                                -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <locks>
+  </locks>
+
+</configuration>

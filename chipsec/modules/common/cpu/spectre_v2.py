@@ -140,12 +140,19 @@ class spectre_v2(BaseModule):
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.cpu.spectre_v2.html'
 
     def is_supported(self) -> bool:
-        if self.cs.register.is_defined('IA32_ARCH_CAPABILITIES'):
-            if self.cs.register.is_defined('IA32_SPEC_CTRL'):
+        if self.cs.is_intel():
+            if self.cs.register.is_defined('IA32_ARCH_CAPABILITIES'):
+                if self.cs.register.is_defined('IA32_SPEC_CTRL'):
+                    return True
+                
+                self.logger.log_important('IA32_SPEC_CTRL register not defined for platform.  Skipping module.')
+            else:
+                self.logger.log_important('IA32_ARCH_CAPABILITIES register not defined for platform.  Skipping module.')
+        elif self.cs.is_amd():
+            if self.cs.register.is_defined('SPEC_CTRL'):
                 return True
-            self.logger.log_important('IA32_SPEC_CTRL register not defined for platform.  Skipping module.')
         else:
-            self.logger.log_important('IA32_ARCH_CAPABILITIES register not defined for platform.  Skipping module.')
+            self.logger.log_important('SPEC_CTRL register not defined for platform.  Skipping module.')
         return False
 
     def check_spectre_mitigations(self) -> int:
@@ -154,137 +161,160 @@ class spectre_v2(BaseModule):
         except:
             cpu_thread_count = 1
 
-        #
-        # Read CPUID Leaf 07H
-        #
-        (_, _, _, r_edx) = self.cs.cpu.cpuid(0x7, 0x0)
-        ibrs_ibpb_supported = (r_edx & BIT26) > 0
-        stibp_supported = (r_edx & BIT27) > 0
-        arch_cap_supported = (r_edx & BIT29) > 0
-        self.logger.log(f'[*] CPUID.7H:EDX[26] = {ibrs_ibpb_supported:d} Indirect Branch Restricted Speculation (IBRS) & Predictor Barrier (IBPB)')
-        self.logger.log(f'[*] CPUID.7H:EDX[27] = {stibp_supported:d} Single Thread Indirect Branch Predictors (STIBP)')
-        self.logger.log(f'[*] CPUID.7H:EDX[29] = {arch_cap_supported:d} IA32_ARCH_CAPABILITIES')
+        if self.cs.is_intel():
+            #
+            # Read CPUID Leaf 07H
+            #
+            (_, _, _, r_edx) = self.cs.cpu.cpuid(0x7, 0x0)
+            ibrs_ibpb_supported = (r_edx & BIT26) > 0
+            stibp_supported = (r_edx & BIT27) > 0
+            arch_cap_supported = (r_edx & BIT29) > 0
+            self.logger.log(f'[*] CPUID.7H:EDX[26] = {ibrs_ibpb_supported:d} Indirect Branch Restricted Speculation (IBRS) & Predictor Barrier (IBPB)')
+            self.logger.log(f'[*] CPUID.7H:EDX[27] = {stibp_supported:d} Single Thread Indirect Branch Predictors (STIBP)')
+            self.logger.log(f'[*] CPUID.7H:EDX[29] = {arch_cap_supported:d} IA32_ARCH_CAPABILITIES')
 
-        if ibrs_ibpb_supported:
-            self.logger.log_good('CPU supports IBRS and IBPB')
-        else:
-            self.logger.log_bad('CPU does not support IBRS and IBPB')
-
-        if stibp_supported:
-            self.logger.log_good('CPU supports STIBP')
-        else:
-            self.logger.log_bad('CPU does not support STIBP')
-
-        if arch_cap_supported:
-            ibrs_enh_supported = True
-            self.logger.log('[*] Checking enhanced IBRS support in IA32_ARCH_CAPABILITIES...')
-            for tid in range(cpu_thread_count):
-                arch_cap_msr = 0
-                try:
-                    arch_cap_msr = self.cs.register.read('IA32_ARCH_CAPABILITIES', tid)
-                except HWAccessViolationError:
-                    self.logger.log_error('Could not read IA32_ARCH_CAPABILITIES')
-                    ibrs_enh_supported = False
-                    break
-
-                ibrs_all = self.cs.register.get_field('IA32_ARCH_CAPABILITIES', arch_cap_msr, 'IBRS_ALL')
-                self.logger.log(f'[*]   cpu{tid:d}: IBRS_ALL = {ibrs_all:x}')
-                if 0 == ibrs_all:
-                    ibrs_enh_supported = False
-                    break
-
-            if ibrs_enh_supported:
-                self.logger.log_good('CPU supports enhanced IBRS (on all logical CPU)')
+            if ibrs_ibpb_supported:
+                self.logger.log_good('CPU supports IBRS and IBPB')
             else:
+                self.logger.log_bad('CPU does not support IBRS and IBPB')
+
+            if stibp_supported:
+                self.logger.log_good('CPU supports STIBP')
+            else:
+                self.logger.log_bad('CPU does not support STIBP')
+
+            if arch_cap_supported:
+                ibrs_enh_supported = True
+                self.logger.log('[*] Checking enhanced IBRS support in IA32_ARCH_CAPABILITIES...')
+                for tid in range(cpu_thread_count):
+                    arch_cap_msr = 0
+                    try:
+                        arch_cap_msr = self.cs.register.read('IA32_ARCH_CAPABILITIES', tid)
+                    except HWAccessViolationError:
+                        self.logger.log_error('Could not read IA32_ARCH_CAPABILITIES')
+                        ibrs_enh_supported = False
+                        break
+
+                    ibrs_all = self.cs.register.get_field('IA32_ARCH_CAPABILITIES', arch_cap_msr, 'IBRS_ALL')
+                    self.logger.log(f'[*]   cpu{tid:d}: IBRS_ALL = {ibrs_all:x}')
+                    if 0 == ibrs_all:
+                        ibrs_enh_supported = False
+                        break
+
+                if ibrs_enh_supported:
+                    self.logger.log_good('CPU supports enhanced IBRS (on all logical CPU)')
+                else:
+                    self.logger.log_bad('CPU does not support enhanced IBRS')
+            else:
+                ibrs_enh_supported = False
                 self.logger.log_bad('CPU does not support enhanced IBRS')
-        else:
-            ibrs_enh_supported = False
-            self.logger.log_bad('CPU does not support enhanced IBRS')
 
-        ibrs_enabled = True
-        stibp_enabled_count = 0
-        if ibrs_enh_supported:
-            self.logger.log('[*] Checking if OS is using Enhanced IBRS...')
-            for tid in range(cpu_thread_count):
-                spec_ctrl_msr = 0
-                try:
-                    spec_ctrl_msr = self.cs.register.read('IA32_SPEC_CTRL', tid)
-                except HWAccessViolationError:
-                    self.logger.log_error('Could not read IA32_SPEC_CTRL')
-                    ibrs_enabled = False
-                    break
+            ibrs_enabled = True
+            stibp_enabled_count = 0
+            if ibrs_enh_supported:
+                self.logger.log('[*] Checking if OS is using Enhanced IBRS...')
+                for tid in range(cpu_thread_count):
+                    spec_ctrl_msr = 0
+                    try:
+                        spec_ctrl_msr = self.cs.register.read('IA32_SPEC_CTRL', tid)
+                    except HWAccessViolationError:
+                        self.logger.log_error('Could not read IA32_SPEC_CTRL')
+                        ibrs_enabled = False
+                        break
 
-                ibrs = self.cs.register.get_field('IA32_SPEC_CTRL', spec_ctrl_msr, 'IBRS')
-                self.logger.log(f'[*]   cpu{tid:d}: IA32_SPEC_CTRL[IBRS] = {ibrs:x}')
-                if 0 == ibrs:
-                    ibrs_enabled = False
+                    ibrs = self.cs.register.get_field('IA32_SPEC_CTRL', spec_ctrl_msr, 'IBRS')
+                    self.logger.log(f'[*]   cpu{tid:d}: IA32_SPEC_CTRL[IBRS] = {ibrs:x}')
+                    if 0 == ibrs:
+                        ibrs_enabled = False
 
-                # ok to access STIBP bit even if STIBP is not supported
-                stibp = self.cs.register.get_field('IA32_SPEC_CTRL', spec_ctrl_msr, 'STIBP')
-                self.logger.log(f'[*]   cpu{tid:d}: IA32_SPEC_CTRL[STIBP] = {stibp:x}')
-                if 1 == stibp:
-                    stibp_enabled_count += 1
+                    # ok to access STIBP bit even if STIBP is not supported
+                    stibp = self.cs.register.get_field('IA32_SPEC_CTRL', spec_ctrl_msr, 'STIBP')
+                    self.logger.log(f'[*]   cpu{tid:d}: IA32_SPEC_CTRL[STIBP] = {stibp:x}')
+                    if 1 == stibp:
+                        stibp_enabled_count += 1
 
-            if ibrs_enabled:
-                self.logger.log_good('OS enabled Enhanced IBRS (on all logical processors)')
-            else:
-                self.logger.log_bad('OS does not seem to use Enhanced IBRS')
-            if stibp_enabled_count == cpu_thread_count:
-                self.logger.log_good('OS enabled STIBP (on all logical processors)')
-            elif stibp_enabled_count > 0:
-                self.logger.log_good('OS selectively enabling STIBP')
-            else:
-                self.logger.log_information('Unable to determine if the OS uses STIBP')
+                if ibrs_enabled:
+                    self.logger.log_good('OS enabled Enhanced IBRS (on all logical processors)')
+                else:
+                    self.logger.log_bad('OS does not seem to use Enhanced IBRS')
+                if stibp_enabled_count == cpu_thread_count:
+                    self.logger.log_good('OS enabled STIBP (on all logical processors)')
+                elif stibp_enabled_count > 0:
+                    self.logger.log_good('OS selectively enabling STIBP')
+                else:
+                    self.logger.log_information('Unable to determine if the OS uses STIBP')
 
-        #
-        # Combining results of all checks into final decision
-        #
-        # FAILED : IBRS/IBPB is not supported
-        # WARNING: IBRS/IBPB is supported
-        #          enhanced IBRS is not supported
-        # WARNING: IBRS/IBPB is supported
-        #          enhanced IBRS is supported
-        #          enhanced IBRS is not enabled by the OS
-        # WARNING: IBRS/IBPB is supported
-        #          STIBP is not supported
-        # PASSED : IBRS/IBPB is supported
-        #          enhanced IBRS is supported
-        #          enhanced IBRS is enabled by the OS
-        #          STIBP is supported
-        #
-        if not ibrs_ibpb_supported:
-            res = ModuleResult.FAILED
-            self.result.setStatusBit(self.result.status.MITIGATION)
-            self.logger.log_failed('CPU mitigation (IBRS) is missing')
-        elif not ibrs_enh_supported:
-            res = ModuleResult.WARNING
-            self.result.setStatusBit(self.result.status.PROTECTION)
-            self.logger.log_warning('CPU supports mitigation (IBRS) but does not support enhanced IBRS')
-        elif ibrs_enh_supported and (not ibrs_enabled):
-            res = ModuleResult.WARNING
-            self.result.setStatusBit(self.result.status.MITIGATION)
-            self.logger.log_warning('CPU supports mitigation (enhanced IBRS) but OS is not using it')
-        else:
-            if not stibp_supported:
+            #
+            # Combining results of all checks into final decision
+            #
+            # FAILED : IBRS/IBPB is not supported
+            # WARNING: IBRS/IBPB is supported
+            #          enhanced IBRS is not supported
+            # WARNING: IBRS/IBPB is supported
+            #          enhanced IBRS is supported
+            #          enhanced IBRS is not enabled by the OS
+            # WARNING: IBRS/IBPB is supported
+            #          STIBP is not supported
+            # PASSED : IBRS/IBPB is supported
+            #          enhanced IBRS is supported
+            #          enhanced IBRS is enabled by the OS
+            #          STIBP is supported
+            #
+            if not ibrs_ibpb_supported:
+                res = ModuleResult.FAILED
+                self.result.setStatusBit(self.result.status.MITIGATION)
+                self.logger.log_failed('CPU mitigation (IBRS) is missing')
+            elif not ibrs_enh_supported:
+                res = ModuleResult.WARNING
+                self.result.setStatusBit(self.result.status.PROTECTION)
+                self.logger.log_warning('CPU supports mitigation (IBRS) but does not support enhanced IBRS')
+            elif ibrs_enh_supported and (not ibrs_enabled):
                 res = ModuleResult.WARNING
                 self.result.setStatusBit(self.result.status.MITIGATION)
-                self.logger.log_warning('CPU supports mitigation (enhanced IBRS) but STIBP is not supported')
+                self.logger.log_warning('CPU supports mitigation (enhanced IBRS) but OS is not using it')
             else:
-                res = ModuleResult.PASSED
-                self.logger.log_passed('CPU and OS support hardware mitigations')
+                if not stibp_supported:
+                    res = ModuleResult.WARNING
+                    self.result.setStatusBit(self.result.status.MITIGATION)
+                    self.logger.log_warning('CPU supports mitigation (enhanced IBRS) but STIBP is not supported')
+                else:
+                    res = ModuleResult.PASSED
+                    self.logger.log_passed('CPU and OS support hardware mitigations')
 
-        self.logger.log_important('OS may be using software based mitigation (eg. retpoline)')
-        try:
-            if self.cs.helper.retpoline_enabled():
+            self.logger.log_important('OS may be using software based mitigation (eg. retpoline)')
+            try:
+                if self.cs.helper.retpoline_enabled():
+                    res = ModuleResult.PASSED
+                    self.logger.log_passed('Retpoline is enabled by the OS')
+                else:
+                    self.logger.log_bad('Retpoline is NOT enabled by the OS')
+            except UnimplementedAPIError as e:
+                self.logger.log_warning(str(e))
+            except NotImplementedError:
+                self.logger.log_warning('Retpoline check not implemented in current environment')
+
+        elif self.cs.is_amd():
+            res = ModuleResult.PASSED
+            fields = ['IBRS','STIBP','SSBD','PSFD']
+            settings = {} 
+            threads = {}
+            fail = False
+
+            for tid in range(cpu_thread_count):
+                spec_ctrl_msr = self.cs.register.read('SPEC_CTRL', tid)
+                for f in fields:
+                    settings[f] = bool(self.cs.register.get_field('SPEC_CTRL', spec_ctrl_msr, f))
+                if not(settings[f]):
+                    fail = True
+                threads[tid] = settings
+
+            if fail:
+                self.logger.log_failed("Spectre V2 Mitigations Currently not enabled")
                 res = ModuleResult.PASSED
-                self.logger.log_passed('Retpoline is enabled by the OS')
+                for t,s in threads.items():
+                    self.logger.log_warning(f"Thread[{t}]: {fields[0]}:{s[fields[0]]} {fields[1]}:{s[fields[1]]} {fields[2]}:{s[fields[2]]} {fields[3]}:{s[fields[3]]}")
             else:
-                self.logger.log_bad('Retpoline is NOT enabled by the OS')
-        except UnimplementedAPIError as e:
-            self.logger.log_warning(str(e))
-        except NotImplementedError:
-            self.logger.log_warning('Retpoline check not implemented in current environment')
-
+                self.logger.log_passed("Spectre V2 Mitigations Currently enabled")
         return res
 
     def run(self, module_argv: List[str]) -> int:
