@@ -1,5 +1,6 @@
 # CHIPSEC: Platform Security Assessment Framework
 # Copyright (c) 2018 - 2021, Intel Corporation
+# Copyright (c) 2024, Amd Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -16,6 +17,8 @@
 #
 # Contact information:
 # chipsec@intel.com
+# AMD:
+# chipsec@amd.com
 #
 
 """
@@ -160,6 +163,6 @@ class cpu_info(BaseModule):
         self.logger.start_test('Current Processor Information:')
 
         if self.cs.is_intel():
-            return self.run_intel()
+            return self.run_intel(module_argv)
         else:
             return self.run_amd()

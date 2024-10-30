@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
-<configuration platform="Renoir">
+<configuration platform="Strix Point">
 <!--
-XML configuration for Renoir based platforms
+XML configuration for Strix Point based platforms
 
 Reference: PPR for AMD Family 17h Model 18h B1. 55570-B1 Rev 3.16 - Apr 14, 2021.
 
