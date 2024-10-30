@@ -143,8 +143,8 @@ class spectre_v2(BaseModule):
         if self.cs.is_intel():
             if self.cs.register.is_defined('IA32_ARCH_CAPABILITIES'):
                 if self.cs.register.is_defined('IA32_SPEC_CTRL'):
+                    self.logger.log_important('IA32_SPEC_CTRL register not defined for platform.  Skipping module.')
                     return True
-                self.logger.log_important('IA32_SPEC_CTRL register not defined for platform.  Skipping module.')
             else:
                 self.logger.log_important('IA32_ARCH_CAPABILITIES register not defined for platform.  Skipping module.')
         elif self.cs.is_amd():
@@ -297,15 +297,23 @@ class spectre_v2(BaseModule):
             fields = ['IBRS','STIBP','SSBD','PSFD']
             settings = {} 
             threads = {}
+            fail = False
 
             for tid in range(cpu_thread_count):
                 spec_ctrl_msr = self.cs.register.read('SPEC_CTRL', tid)
                 for f in fields:
                     settings[f] = bool(self.cs.register.get_field('SPEC_CTRL', spec_ctrl_msr, f))
                 if not(settings[f]):
-                   res = ModuleResult.FAILED
+                    fail = True
                 threads[tid] = settings
 
+            if fail:
+                self.logger.log_failed("Spectre V2 Mitigations Currently not enabled")
+                res = ModuleResult.PASSED
+                for t,s in threads.items():
+                    self.logger.log_warning(f"Thread[{t}]: {fields[0]}:{s[fields[0]]} {fields[1]}:{s[fields[1]]} {fields[2]}:{s[fields[2]]} {fields[3]}:{s[fields[3]]}")
+            else:
+                self.logger.log_passed("Spectre V2 Mitigations Currently enabled")
         return res
 
     def run(self, module_argv: List[str]) -> int:

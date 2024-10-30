@@ -1,5 +1,5 @@
 # CHIPSEC: Platform Security Assessment Framework
-# Copyright (c) 2024, AMD
+# Copyright (c) 2024, AMD Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -15,7 +15,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 # Contact information:
-# chipsec@intel.com
+# coudrant@amd.com
 #
 
 
@@ -54,8 +54,6 @@ class smm_addr(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.result.id = 0xdf11080
-        #TODO: we need to create this link
-        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.smm_addr.html'
 
     def is_supported(self) -> bool:
         if self.cs.is_amd():

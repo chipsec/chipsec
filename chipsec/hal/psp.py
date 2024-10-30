@@ -1,5 +1,5 @@
 # CHIPSEC: Platform Security Assessment Framework
-# Copyright (c) 2010-2022, Intel Corporation
+# Copyright (c) 2024, AMD Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -15,7 +15,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 # Contact information:
-# chipsec@intel.com
+# chipsec@amd.com
 #
 
 """
@@ -24,6 +24,7 @@
 import struct
 from collections import namedtuple
 import itertools
+import time
 from typing import List, Tuple, Optional
 from chipsec.library.logger import logger, pretty_print_hex_buffer
 from chipsec.library.file import write_file
@@ -39,6 +40,7 @@ class PSP:
     SMU_PSP_MBOX_CMD_BUF_HI = SMU_PSP_SMN_BASE + 0x00010978
     PSP_CMD_GET_CAPABILITIES = 0x27
     PSP_CMD_GET_HSTI_STATE = 0x14
+    TIMEOUT = 5
 
     def __init__(self, cs):
         self.cs = cs
@@ -60,15 +62,23 @@ class PSP:
         buf_size = num_buf * dword_size  # TODO: Build a table for each command
         cmd = self.PSP_CMD_GET_HSTI_STATE
 
-        (buf_va,buf_pa) = self.helper.alloc_phys_mem(buf_size,0x1000_0000_0000)
 
         # Todo: Add Reset and Recovery checks
 
         # poll for mailbox ready
+        start_time = time.time()
+        timeout = False
         while(True): 
             mbox_cmd_status_value = self.smu_read32(self.SMU_PSP_MBOX_CMD_STATUS)
-            if(mbox_cmd_status_value & 0x80000000):
+            timeout = (time.time() - start_time > self.TIMEOUT)
+            if((mbox_cmd_status_value & 0x80000000) or timeout):
                 break
+
+        if(timeout):
+            logger().log_bad(f'Timeout polling for PSP Mailbox Ready (Idle)')
+            return [0xbaddbadd]
+
+        (buf_va,buf_pa) = self.helper.alloc_phys_mem(buf_size,0x1000_0000_0000)
 
         # send physical address for msg buffer
         self.smu_write32(self.SMU_PSP_MBOX_CMD_BUF_LO,buf_pa & 0xFFFFFFFF)
@@ -79,14 +89,19 @@ class PSP:
         self.smu_write32(self.SMU_PSP_MBOX_CMD_STATUS, mbox_cmd_status_value)
 
         # poll command
-        #mbox_cmd_status_value = 0
-        #while(bool(mbox_cmd_status_value & 0x00ff000)): 
-            #mbox_cmd_status_value = self.smu_read32(self.SMU_PSP_MBOX_CMD_STATUS)
+        start_time = time.time()
+        timeout = False
 
         while(True): 
             mbox_cmd_status_value = self.smu_read32(self.SMU_PSP_MBOX_CMD_STATUS)
-            if(mbox_cmd_status_value & 0x80000000):
+            timeout = (time.time() - start_time > self.TIMEOUT)
+            if((mbox_cmd_status_value & 0x80000000) or timeout):
                 break
+
+        if(timeout):
+            logger().log_bad(f'Timeout polling for PSP Mailbox Ready (Complete)')
+            self.helper.free_phys_mem(buf_va)
+            return [0xbaddbadd]
         
         buffer = []
         for i in range(0,num_buf):
@@ -97,4 +112,8 @@ class PSP:
         return buffer
 
     def query_HSTI(self) -> int:
-        return self.cs.psp.psp_mbox_command(self.PSP_CMD_GET_HSTI_STATE)[2]
+        hsti_buffer = self.psp_mbox_command(self.PSP_CMD_GET_HSTI_STATE)
+        if(len(hsti_buffer) > 1):
+            return hsti_buffer[2] 
+        else:
+            return 0 

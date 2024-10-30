@@ -129,6 +129,7 @@ class cpu_info(BaseModule):
 
             if not(e_rbx == r_rbx and e_rcx == r_rcx and e_rdx == r_rdx):
                 self.logger.log_failed("Not Authentic AMD")
+                self.res = ModuleResult.FAILED
                 return self.res
 
             # Get processor version information

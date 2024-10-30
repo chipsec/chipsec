@@ -1,5 +1,5 @@
 # CHIPSEC: Platform Security Assessment Framework
-# Copyright (c) 2010-2021, Intel Corporation
+# Copyright (c) 2024, AMD Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -15,7 +15,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 # Contact information:
-# chipsec@intel.com
+# chipsec@amd.com
 #
 
 """
@@ -44,8 +44,6 @@ class smm_lock(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        #CAD TODO self.result.id = 0x3486891
-        #CAD TODO self.result.url = ''
 
     def is_supported(self) -> bool:
         if self.cs.is_amd():

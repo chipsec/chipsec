@@ -1,5 +1,5 @@
 # CHIPSEC: Platform Security Assessment Framework
-# Copyright (c) 2010-2021, Intel Corporation
+# Copyright (c) 2024, AMD Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -15,66 +15,37 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 # Contact information:
-# chipsec@intel.com
+# chipsec@amd.com
 #
 
 
 """
-Compatible SMM memory (SMRAM) Protection check module
-This CHIPSEC module simply reads SMRAMC and checks that D_LCK is set.
+This module verifies support for Rom Armor and SPI ROM protections.
 
 Reference:
-In 2006, `Security Issues Related to Pentium System Management Mode <http://www.ssi.gouv.fr/archive/fr/sciences/fichiers/lti/cansecwest2006-duflot.pdf>`_ outlined a configuration issue where compatibility SMRAM was not locked on some platforms. This means that ring 0 software was able to modify System Management Mode (SMM) code and data that should have been protected.
 
-In Compatability SMRAM (CSEG), access to memory is defined by the SMRAMC register. When SMRAMC[D_LCK] is not set by the BIOS, SMRAM can be accessed even when the CPU is not in SMM. Such attacks were also described in `Using CPU SMM to Circumvent OS Security Functions <http://fawlty.cs.usfca.edu/~cruse/cs630f06/duflot.pdf>`_ and `Using SMM for Other Purposes <http://phrack.org/issues/65/7.html>`_.
 
 usage:
-    ``chipsec_main -m common.smm``
+    ``chipsec_main -m common.rom_armor``
 
 Examples:
-    >>> chipsec_main.py -m common.smm
+    >>> chipsec_main.py -m common.rom_armor
 
-This module will only run on client (core) platforms that have PCI0.0.0_SMRAMC defined.
 """
 
 from chipsec.module_common import BaseModule, MTAG_BIOS, MTAG_SMM
 from chipsec.library.returncode import ModuleResult
 from typing import List
-import pdb
 
 TAGS = [MTAG_BIOS, MTAG_SMM]
 
 SMU_PSP_SMN_BASE = 0x3800000
-#SMU_PSP_MBOX_CMD_STATUS = 0x00010570
-#SMU_PSP_MBOX_CMD_BUF_LO = 0x00010574
-#SMU_PSP_MBOX_CMD_BUF_HI = 0x00010578
 SMU_PSP_MBOX_CMD_STATUS = 0x00010970
-SMU_PSP_MBOX_CMD_BUF_LO = 0x00010974
-SMU_PSP_MBOX_CMD_BUF_HI = 0x00010978
-
-#FCH_SDP_PROTECT_SPI_0 = 0x2DC6000
-#FCH_SDP_PROTECT_SPI_1 = 0x2DC6004
-#FCH_SDP_PROTECT_SPI_2 = 0x2DC6004
-#FCH_SDP_PROTECT_SPI_3 = 0x2DC6008
-#FCH_SDP_PROTECT_SPI_4 = 0x2DC6010
-#FCH_SDP_PROTECT_SPI_5 = 0x2DC6014
-#FCH_SDP_PROTECT_SPI_6 = 0x2DC6014
-#FCH_SDP_PROTECT_SPI_7 = 0x2DC6018
-
-#HSTI PSP Security Feature State
-PSP_ROM_ARMOR_ENFORCED = 11
-
-SMU_INDEX_ADDR = 0xb8
-SMU_DATA_ADDR = 0xbc
-
-PSP_MBOX_CMD_SMM_INFO = 0x02
 
 class rom_armor(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.id = 0x666
-        #self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.smm.html'
 
     def is_supported(self) -> bool:
         return self.cs.is_amd()
