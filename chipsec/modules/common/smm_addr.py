@@ -84,8 +84,7 @@ class smm_addr(BaseModule):
         self.logger.log('')
         self.logger.log("[*] Checking SMMMask range base programming..")
 
-        cpu0_smmmask = self.cs.register.read('SMMMask')
-        cpu0_smmbase = self.cs.register.read('SMM_BASE')
+        cpu0_smmmask = self.cs.register.read('SMMMASK')
         self.cs.register.print('SMMMASK', cpu0_smmmask)
         tseg_type = self.cs.register.get_field('SMMMASK', cpu0_smmmask, 'TMTYPEDRAM')
         aseg_type = self.cs.register.get_field('SMMMASK', cpu0_smmmask, 'AMTYPEDRAM')

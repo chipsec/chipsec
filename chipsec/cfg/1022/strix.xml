@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
 <configuration platform="Strix Point">
-
   <!-- #################################### -->
   <!--                                      -->
   <!-- Information                          -->
@@ -136,6 +135,10 @@
       <field name="SmmPgCfgLock" bit="33" size="1"  desc="1=SMM page config locked."/>
       <field name="SmmBaseLock" bit="31" size="1"  desc="Disable SMM_BASE from being saved to and restored from the SMM save state area."/>
       <field name="SmmLock" bit="0" size="1"  desc="SMM code in the ASeg and TSeg range and the SMM registers are Read-only and SMI interrupts are not intercepted in SVM."/>
+    </register>
+    <register name="PATCH_LEVEL" type="msr" msr="0x0000008B" desc="Patch Level. Read,Error-on-write,Volatile. Reset: 0000_0000_0000_0000h.">
+      <!-- Bits 63:32 reserved. -->
+      <field name="PatchLevel" bit="0" size="32" desc="Read,Error-on-write,Volatile. Reset: 0000_0000h. This returns an identification number for the microcode patch that has been loaded. If no patch has been loaded, this returns 0." />
     </register>
     <register name="SPIBASEADDR" type="pcicfg" device="LPC" offset="0x0A0" size="4" desc="SPI Base_Addr. Read-write. Reset: FEC1_0002h.">
       <field name="Spi_eSpi_BaseAddr" bit="8" size="24" desc="Read-write. Reset: FE_C100h." />

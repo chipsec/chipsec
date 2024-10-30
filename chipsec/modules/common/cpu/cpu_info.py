@@ -153,8 +153,6 @@ class cpu_info(BaseModule):
             self.logger.log('[*]')
         self.logger.log_information('Processor information displayed')
         
-        #self.result.setStatusBit(self.result.status.INFORMATION)
-        #return self.result.getReturnCode(ModuleResult.INFORMATION)
         self.res = ModuleResult.INFORMATION
         return self.res 
 
