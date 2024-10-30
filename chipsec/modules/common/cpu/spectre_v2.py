@@ -143,8 +143,9 @@ class spectre_v2(BaseModule):
         if self.cs.is_intel():
             if self.cs.register.is_defined('IA32_ARCH_CAPABILITIES'):
                 if self.cs.register.is_defined('IA32_SPEC_CTRL'):
-                    self.logger.log_important('IA32_SPEC_CTRL register not defined for platform.  Skipping module.')
                     return True
+                
+                self.logger.log_important('IA32_SPEC_CTRL register not defined for platform.  Skipping module.')
             else:
                 self.logger.log_important('IA32_ARCH_CAPABILITIES register not defined for platform.  Skipping module.')
         elif self.cs.is_amd():
