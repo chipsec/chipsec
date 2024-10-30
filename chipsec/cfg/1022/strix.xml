@@ -1,16 +1,5 @@
 <?xml version="1.0"?>
 <configuration platform="Strix Point">
-<!--
-XML configuration for Strix Point based platforms
-
-Reference: PPR for AMD Family 17h Model 18h B1. 55570-B1 Rev 3.16 - Apr 14, 2021.
-
-The following registers are defined in the reference PPR but have not been included:
-- ACP: the location of the BAR for APC access is not defined in the reference.
-- SMM: unreachable from the kernel.
-- SBTSI: unclear how to access this address space.
-- PMC events: no support in chipsec for performance monitor counters.
--->
 
   <!-- #################################### -->
   <!--                                      -->

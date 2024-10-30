@@ -20,9 +20,10 @@
 
 
 """
-CPU SMM Cache Poisoning / System Management Mask Registers check
+CPU SMM Addr
 
-This module checks to see that SMMMask are enabled and configured.
+This module checks to see that SMMMask has Tseg and Aseg programmed correctly.  It also verifies that CPU access to SMM 
+is blocked while not in SMM.
 
 Usage:
     ``chipsec_main -m common.smm_addr``
@@ -41,7 +42,7 @@ Registers used:
 
 """
 
-from chipsec.module_common import BaseModule, MTAG_BIOS, MTAG_SMM, OPT_MODIFY
+from chipsec.module_common import BaseModule, MTAG_BIOS, MTAG_SMM
 from chipsec.library.returncode import ModuleResult
 from chipsec.hal.msr import MemType
 from typing import List

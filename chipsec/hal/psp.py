@@ -21,19 +21,12 @@
 """
 """
 
-import struct
-from collections import namedtuple
-import itertools
 import time
-from typing import List, Tuple, Optional
-from chipsec.library.logger import logger, pretty_print_hex_buffer
-from chipsec.library.file import write_file
-from chipsec.library.exceptions import OsHelperError
-from chipsec.library.defines import is_all_ones, MASK_16b, MASK_32b, MASK_64b, BOUNDARY_4KB
+from chipsec.library.logger import logger
 
 class PSP:
-    SMU_INDEX_ADDR = 0xb8
-    SMU_DATA_ADDR = 0xbc
+    SMN_INDEX_ADDR = 0xb8
+    SMN_DATA_ADDR = 0xbc
     SMU_PSP_SMN_BASE = 0x3800000
     SMU_PSP_MBOX_CMD_STATUS = SMU_PSP_SMN_BASE + 0x00010970 
     SMU_PSP_MBOX_CMD_BUF_LO = SMU_PSP_SMN_BASE + 0x00010974
@@ -47,12 +40,12 @@ class PSP:
         self.helper = cs.helper
 
     def smu_read32(self, reg):
-        self.cs.pci.write_dword(0,0,0,self.SMU_INDEX_ADDR,reg)
-        return self.cs.pci.read_dword(0,0,0,self.SMU_DATA_ADDR)
+        self.cs.pci.write_dword(0,0,0,self.SMN_INDEX_ADDR,reg)
+        return self.cs.pci.read_dword(0,0,0,self.SMN_DATA_ADDR)
 
     def smu_write32(self, reg, val):
-        self.cs.pci.write_dword(0,0,0,self.SMU_INDEX_ADDR,reg)
-        return self.cs.pci.write_dword(0,0,0, self.SMU_DATA_ADDR,val)
+        self.cs.pci.write_dword(0,0,0,self.SMN_INDEX_ADDR,reg)
+        return self.cs.pci.write_dword(0,0,0, self.SMN_DATA_ADDR,val)
 
     def psp_mbox_command(self, cmd):
         #  Command ID (bits [23:16]), Status (bits [15:0]) fields and Ready flag (bit #31)
