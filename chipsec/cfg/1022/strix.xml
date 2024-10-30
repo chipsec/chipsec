@@ -6,7 +6,7 @@
   <!--                                      -->
   <!-- #################################### -->
   <info family="core">
-    <sku did="0x1507" name="Strix" code="Strix" longname="Strix Point Root Complex" />
+    <sku did="0x1507" name="Strix Point" code="Strix" longname="Strix Point Root Complex" />
   </info>
 
   <!-- #################################### -->
