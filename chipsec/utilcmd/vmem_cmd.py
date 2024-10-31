@@ -22,13 +22,13 @@
 """
 The vmem command provides direct access to read and write virtual memory.
 
->>> chipsec_util vmem <op> <physical_address> <length> [value|buffer_file]
+>>> chipsec_util vmem <op> <virtual_address> <length> [value|buffer_file]
 >>>
->>> <physical_address> : 64-bit physical address
+>>> <virtual_address> : 64-bit virtual address
 >>> <op>               : read|readval|write|writeval|allocate|pagedump|search|getphys
 >>> <length>           : byte|word|dword or length of the buffer from <buffer_file>
->>> <value>            : byte, word or dword value to be written to memory at <physical_address>
->>> <buffer_file>      : file with the contents to be written to memory at <physical_address>
+>>> <value>            : byte, word or dword value to be written to memory at <virtual_address>
+>>> <buffer_file>      : file with the contents to be written to memory at <virtual_address>
 
 Examples:
 
