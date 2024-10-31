@@ -222,7 +222,6 @@ jobs:
           - {ubuntu: "22.04", python: "3.10"}
           - {ubuntu: "22.04", python: "3.9"}
           - {ubuntu: "22.04", python: "3.8"}
-          - {ubuntu: "22.04", python: "3.7"}
           
     runs-on: ubuntu-${{ matrix.versions.ubuntu }}
 
