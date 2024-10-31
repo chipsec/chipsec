@@ -42,5 +42,17 @@ class TestInterruptsUtilcmd(unittest.TestCase):
         retval = setup_run_destroy_util(init_replay_file, "smi", "send 0x0 0xDE 0x0", util_replay_file=interrupts_dump_replay_file)
         self.assertEqual(retval, ExitCode.OK)
 
+    def test_smmc(self) -> None:
+        init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate.json")
+        interrupts_dump_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "interrupts_cmd", "interrupts_cmd_smi_smmc_1.json")
+        retval = setup_run_destroy_util(init_replay_file, "smi smmc 0x79dfe000 0x79efdfff ed32d533-99e6-4209-9cc02d72cdd998a7 0x79dfaaaa FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", util_replay_file=interrupts_dump_replay_file)
+        self.assertEqual(retval, ExitCode.OK)
+
+    def test_nmi(self) -> None:
+        init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate.json")
+        interrupts_dump_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "interrupts_cmd", "interrupts_cmd_nmi_1.json")
+        retval = setup_run_destroy_util(init_replay_file, "nmi", "", util_replay_file=interrupts_dump_replay_file)
+        self.assertEqual(retval, ExitCode.OK)
+
 if __name__ == '__main__':
     unittest.main()
