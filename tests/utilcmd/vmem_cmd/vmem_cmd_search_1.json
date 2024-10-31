@@ -1,0 +1,12 @@
+{
+  "va2pa": {
+    "(983040)": [
+      "(None, 22)"
+    ]
+  },
+  "read_phys_mem": {
+    "(983040,16)": [
+      "\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff"
+    ]
+  }
+}
