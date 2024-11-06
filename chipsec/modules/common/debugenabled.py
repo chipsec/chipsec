@@ -59,7 +59,7 @@ class debugenabled(BaseModule):
     def is_supported(self) -> bool:
         # Use CPUID Function 1 to determine if the IA32_DEBUG_INTERFACE MSR is supported.
         # See IA32 SDM CPUID Instruction for details.  (SDBG ECX bit 11)
-        (_, _, ecx, _) = self.cs.cpu.cpuid(1, 0)
+        (_, _, ecx, _) = self.cs.hals.CPU.cpuid(1, 0)
         supported = (ecx & BIT11) != 0
         if not supported and not self.cs.register.is_defined('ECTRL'):
             self.logger.log_important('CPU Debug features are not supported on this platform.  Skipping module.')
@@ -85,7 +85,7 @@ class debugenabled(BaseModule):
         self.logger.log('')
         self.logger.log('[*] Checking IA32_DEBUG_INTERFACE MSR status')
         TestFail = ModuleResult.PASSED
-        for tid in range(self.cs.msr.get_cpu_thread_count()):
+        for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
             dbgiface = self.cs.register.read('IA32_DEBUG_INTERFACE', tid)
             IA32_DEBUG_INTERFACE_DEBUGENABLE = self.cs.register.get_field('IA32_DEBUG_INTERFACE', dbgiface, 'ENABLE') == 1
             IA32_DEBUG_INTERFACE_DEBUGELOCK = self.cs.register.get_field('IA32_DEBUG_INTERFACE', dbgiface, 'LOCK') == 1

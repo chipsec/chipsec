@@ -60,7 +60,7 @@ import random
 
 from chipsec.module_common import BaseModule
 from chipsec.library.returncode import ModuleResult
-from chipsec.hal.pci import print_pci_devices
+from chipsec.library.pci import PCI as pcilib #print_pci_devices
 
 
 #################################################################
@@ -171,7 +171,7 @@ class pcie_fuzz(BaseModule):
 
     def fuzz_pcie_device(self, b, d, f):
         self.logger.log('[*] Discovering MMIO and I/O BARs of the device..')
-        device_bars = self.cs.pci.get_device_bars(b, d, f, bCalcSize=CALC_BAR_SIZE)
+        device_bars = self.cs.hals.Pci.get_device_bars(b, d, f, bCalcSize=CALC_BAR_SIZE)
         for (bar, isMMIO, is64bit, bar_off, bar_reg, size) in device_bars:
             if bar not in _EXCLUDE_BAR:
                 # Fuzzing MMIO registers of the PCIe device
@@ -206,10 +206,10 @@ class pcie_fuzz(BaseModule):
             pcie_devices.append((_bus, _dev, _fun, 0, 0, 0))
         else:
             self.logger.log('[*] Enumerating available PCIe devices..')
-            pcie_devices = self.cs.pci.enumerate_devices()
+            pcie_devices = self.cs.hals.Pci.enumerate_devices()
 
         self.logger.log('[*] About to fuzz the following PCIe devices..')
-        print_pci_devices(pcie_devices)
+        pcilib.print_pci_devices(pcie_devices)
 
         for (b, d, f, _, _, _) in pcie_devices:
             self.logger.log(f'[+] Fuzzing device {b:02X}:{d:02X}.{f:X}')

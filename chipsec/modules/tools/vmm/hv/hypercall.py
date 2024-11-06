@@ -34,7 +34,7 @@ from chipsec.modules.tools.vmm.common import *
 from chipsec.library.logger import *
 from chipsec.library.file import *
 from chipsec.module_common import *
-from chipsec.hal.vmm import *
+from chipsec.hal.common.vmm import *
 
 
 class HyperVHypercall(BaseModuleHwAccess):

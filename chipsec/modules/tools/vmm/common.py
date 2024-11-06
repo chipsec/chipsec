@@ -154,7 +154,7 @@ class BaseModuleSupport(BaseModuleDebug):
 class BaseModuleHwAccess(BaseModuleSupport):
 
     def cpuid_info(self, eax: int, ecx: int, desc: str) -> Tuple[int, int, int, int]:
-        val = self.cs.cpu.cpuid(eax, ecx)
+        val = self.cs.hals.CPU.cpuid(eax, ecx)
         self.msg('')
         self.msg(f'CPUID.{eax:X}h.{ecx:X}h > {desc}')
         self.msg(f'EAX: 0x{val[0]:08X} EBX: 0x{val[1]:08X} ECX: 0x{val[2]:08X} EDX: 0x{val[3]:08X}')
@@ -165,8 +165,8 @@ class BaseModuleHwAccess(BaseModuleSupport):
         temp = sys.stdout
         sys.stdout = open(os.devnull, 'wb')
         try:
-            for tid in range(self.cs.msr.get_cpu_thread_count()):
-                (eax, edx) = self.cs.msr.read_msr(tid, msr)
+            for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
+                (eax, edx) = self.cs.hals.Msr.read_msr(tid, msr)
         except:
             sys.stdout = temp
             raise
@@ -177,8 +177,8 @@ class BaseModuleHwAccess(BaseModuleSupport):
         temp = sys.stdout
         sys.stdout = open(os.devnull, 'wb')
         try:
-            for tid in range(self.cs.msr.get_cpu_thread_count()):
-                self.cs.msr.write_msr(tid, msr, value & 0xFFFFFFFF, value >> 32)
+            for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
+                self.cs.hals.Msr.write_msr(tid, msr, value & 0xFFFFFFFF, value >> 32)
         except:
             sys.stdout = temp
             raise

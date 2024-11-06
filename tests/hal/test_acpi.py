@@ -18,8 +18,8 @@
 import unittest
 
 from unittest.mock import MagicMock
-from chipsec.hal.acpi_tables import RSDP
-from chipsec.hal.acpi import ACPI
+from chipsec.hal.common.acpi_tables import RSDP
+from chipsec.hal.common.acpi import ACPI
 
 class TestACPI(unittest.TestCase):
     def test_apci_read_rsdp(self):

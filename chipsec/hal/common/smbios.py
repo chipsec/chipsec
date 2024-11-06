@@ -26,7 +26,8 @@ import struct
 from collections import namedtuple
 from typing import Dict, List, Optional, Tuple, Any, Union, Type
 from chipsec.library.defines import BOUNDARY_1MB, bytestostring
-from chipsec.hal import hal_base, uefi
+from chipsec.hal import hal_base
+from chipsec.hal.common import uefi
 from chipsec.library.logger import logger
 
 SCAN_LOW_LIMIT = 0xF0000
@@ -336,7 +337,7 @@ class SMBIOS(hal_base.HALBase):
 
         # Determine regions to scan
         if self.smbios_2_guid_found or self.smbios_3_guid_found:
-            (smm_base, _, _) = self.cs.cpu.get_SMRAM()
+            (smm_base, _, _) = self.cs.hals.CPU.get_SMRAM()
             pa = smm_base - SCAN_SIZE
         else:
             entries_to_find = 2

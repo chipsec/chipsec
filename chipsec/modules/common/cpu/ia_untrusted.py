@@ -64,7 +64,7 @@ class ia_untrusted(BaseModule):
                 self.logger.log_good('SoC_BIOS_DONE set.')
 
         self.logger.log('')
-        for tid in range(self.cs.msr.get_cpu_thread_count()):
+        for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
             bd = self.cs.register.read('MSR_BIOS_DONE', tid)
             if self.logger.VERBOSE:
                 self.cs.register.print('MSR_BIOS_DONE', bd)

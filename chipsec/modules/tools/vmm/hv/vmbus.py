@@ -33,7 +33,7 @@ from chipsec.modules.tools.vmm.hv.define import *
 from chipsec.library.logger import *
 from chipsec.library.file import *
 from chipsec.module_common import *
-from chipsec.hal.vmm import VMM
+from chipsec.hal.common.vmm import VMM
 from chipsec.library.defines import *
 
 
@@ -180,11 +180,11 @@ class HyperV(BaseModuleDebug):
         # if self.membuf[0] != 0:
         #    self.cs.mem.free_physical_mem(self.membuf[0])
         if len(self.old_sint2) == 2:
-            self.cs.msr.write_msr(0, HV_X64_MSR_SINT2, self.old_sint2[0], self.old_sint2[1])
+            self.cs.hals.Msr.write_msr(0, HV_X64_MSR_SINT2, self.old_sint2[0], self.old_sint2[1])
         if len(self.old_simp) == 2:
-            self.cs.msr.write_msr(0, HV_X64_MSR_SIMP, self.old_simp[0], self.old_simp[1])
+            self.cs.hals.Msr.write_msr(0, HV_X64_MSR_SIMP, self.old_simp[0], self.old_simp[1])
         if len(self.old_siefp) == 2:
-            self.cs.msr.write_msr(0, HV_X64_MSR_SIEFP, self.old_siefp[0], self.old_siefp[1])
+            self.cs.hals.Msr.write_msr(0, HV_X64_MSR_SIEFP, self.old_siefp[0], self.old_siefp[1])
         for i in [x for x in self.ringbuffers]:
             del self.ringbuffers[i]
 
@@ -192,16 +192,16 @@ class HyperV(BaseModuleDebug):
     # hv_init
     ##
     def hv_init(self):
-        self.old_sint2 = self.cs.msr.read_msr(0, HV_X64_MSR_SINT2)
-        self.old_simp = self.cs.msr.read_msr(0, HV_X64_MSR_SIMP)
-        self.old_siefp = self.cs.msr.read_msr(0, HV_X64_MSR_SIEFP)
+        self.old_sint2 = self.cs.hals.Msr.read_msr(0, HV_X64_MSR_SINT2)
+        self.old_simp = self.cs.hals.Msr.read_msr(0, HV_X64_MSR_SIMP)
+        self.old_siefp = self.cs.hals.Msr.read_msr(0, HV_X64_MSR_SIEFP)
         pa = self.membuf[1]
-        self.sint3 = self.cs.msr.read_msr(0, HV_X64_MSR_SINT3)
-        self.cs.msr.write_msr(0, HV_X64_MSR_SINT2, self.sint3[0], self.sint3[1])
-        self.cs.msr.write_msr(0, HV_X64_MSR_SIEFP, (pa & 0xFFFFFFFF) | 0x1, pa >> 32)
-        #self.cs.msr.write_msr(0, HV_X64_MSR_SCONTROL, 0x1, 0x0)
-        self.simp = self.cs.msr.read_msr(0, HV_X64_MSR_SIMP)
-        self.siefp = self.cs.msr.read_msr(0, HV_X64_MSR_SIEFP)
+        self.sint3 = self.cs.hals.Msr.read_msr(0, HV_X64_MSR_SINT3)
+        self.cs.hals.Msr.write_msr(0, HV_X64_MSR_SINT2, self.sint3[0], self.sint3[1])
+        self.cs.hals.Msr.write_msr(0, HV_X64_MSR_SIEFP, (pa & 0xFFFFFFFF) | 0x1, pa >> 32)
+        #self.cs.hals.Msr.write_msr(0, HV_X64_MSR_SCONTROL, 0x1, 0x0)
+        self.simp = self.cs.hals.Msr.read_msr(0, HV_X64_MSR_SIMP)
+        self.siefp = self.cs.hals.Msr.read_msr(0, HV_X64_MSR_SIEFP)
         self.simp = (self.simp[0] + (self.simp[1] << 32)) & 0xFFFFFFFFFFFFF000
         self.siefp = (self.siefp[0] + (self.siefp[1] << 32)) & 0xFFFFFFFFFFFFF000
         return
@@ -232,7 +232,7 @@ class HyperV(BaseModuleDebug):
         else:
             self.cs.mem.write_physical_mem(self.simp + 0x100 * sint, 0x4, DD(HVMSG_NONE))
             if message_flags & 0x1:
-                self.cs.msr.write_msr(0, HV_X64_MSR_EOM, 0x0, 0x0)
+                self.cs.hals.Msr.write_msr(0, HV_X64_MSR_EOM, 0x0, 0x0)
         return buffer
 
     ##

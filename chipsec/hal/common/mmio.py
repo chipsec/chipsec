@@ -243,11 +243,11 @@ class MMIO(hal_base.HALBase):
             reg_mask = (1 << (width * 8)) - 1
             size = 4 if width != 8 else 8
             if 8 == width:
-                base_lo = self.cs.pci.read_dword(b, d, f, r)
-                base_hi = self.cs.pci.read_dword(b, d, f, r + 4)
+                base_lo = self.cs.hals.Pci.read_dword(b, d, f, r)
+                base_hi = self.cs.hals.Pci.read_dword(b, d, f, r + 4)
                 base = (base_hi << 32) | base_lo
             else:
-                base = self.cs.pci.read_dword(b, d, f, r)
+                base = self.cs.hals.Pci.read_dword(b, d, f, r)
             is_ba_invalid = base == 0 or is_all_ones(base, size)
 
         if 'fixed_address' in bar and (base == reg_mask or base == 0):
@@ -306,14 +306,14 @@ class MMIO(hal_base.HALBase):
             f = bar['fun']
             r = bar['reg']
             width = bar['width']
-            if not self.cs.pci.is_enabled(b, d, f):
+            if not self.cs.hals.Pci.is_enabled(b, d, f):
                 return False
             if 8 == width:
-                base_lo = self.cs.pci.read_dword(b, d, f, r)
-                base_hi = self.cs.pci.read_dword(b, d, f, r + 4)
+                base_lo = self.cs.hals.Pci.read_dword(b, d, f, r)
+                base_hi = self.cs.hals.Pci.read_dword(b, d, f, r + 4)
                 base = (base_hi << 32) | base_lo
             else:
-                base = self.cs.pci.read_dword(b, d, f, r)
+                base = self.cs.hals.Pci.read_dword(b, d, f, r)
 
             if 'enable_bit' in bar:
                 en_mask = 1 << int(bar['enable_bit'])
@@ -342,11 +342,11 @@ class MMIO(hal_base.HALBase):
             r = bar['reg']
             width = bar['width']
             if 8 == width:
-                base_lo = self.cs.pci.read_dword(b, d, f, r)
-                base_hi = self.cs.pci.read_dword(b, d, f, r + 4)
+                base_lo = self.cs.hals.Pci.read_dword(b, d, f, r)
+                base_hi = self.cs.hals.Pci.read_dword(b, d, f, r + 4)
                 base = (base_hi << 32) | base_lo
             else:
-                base = self.cs.pci.read_dword(b, d, f, r)
+                base = self.cs.hals.Pci.read_dword(b, d, f, r)
 
         #if 'mask' in bar: base &= bar['mask']
         return (0 != base)

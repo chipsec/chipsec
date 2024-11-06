@@ -45,10 +45,10 @@ Examples:
 
 from chipsec.module_common import BaseModule, MTAG_SECUREBOOT, OPT_MODIFY
 from chipsec.library.returncode import ModuleResult
-from chipsec.hal.uefi import UEFI, SECURE_BOOT_VARIABLES, IS_VARIABLE_ATTRIBUTE, EFI_VAR_NAME_SecureBoot, SECURE_BOOT_KEY_VARIABLES
-from chipsec.hal.uefi import EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS
-from chipsec.hal.uefi import SECURE_BOOT_OPTIONAL_VARIABLES
-from chipsec.hal.uefi_common import StatusCode
+from chipsec.hal.common.uefi import UEFI, SECURE_BOOT_VARIABLES, IS_VARIABLE_ATTRIBUTE, EFI_VAR_NAME_SecureBoot, SECURE_BOOT_KEY_VARIABLES
+from chipsec.hal.common.uefi import EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS
+from chipsec.hal.common.uefi import SECURE_BOOT_OPTIONAL_VARIABLES
+from chipsec.hal.common.uefi_common import StatusCode
 from typing import AnyStr, List, Optional
 
 _MODULE_NAME = 'variables'

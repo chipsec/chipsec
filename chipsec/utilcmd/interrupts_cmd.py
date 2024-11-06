@@ -44,8 +44,8 @@ Examples:
 import os
 
 from chipsec.command import BaseCommand, toLoad
-from chipsec.hal.interrupts import Interrupts
-from chipsec.hal.uefi_common import EFI_ERROR_STR
+from chipsec.hal.common.interrupts import Interrupts
+from chipsec.hal.common.uefi_common import EFI_ERROR_STR
 from argparse import ArgumentParser
 
 
@@ -105,7 +105,7 @@ class SMICommand(BaseCommand):
 
     def smi_count(self) -> None:
         self.logger.log("[CHIPSEC] SMI count:")
-        for tid in range(self.cs.msr.get_cpu_thread_count()):
+        for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
             smi_cnt = self.cs.register.read_field('MSR_SMI_COUNT', 'Count', cpu_thread=tid)
             self.logger.log(f'  CPU{tid:d}: {smi_cnt:d}')
 

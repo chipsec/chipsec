@@ -24,7 +24,8 @@ CPU related functionality
 
 """
 from typing import Dict, List, Tuple, Optional
-from chipsec.hal import acpi, hal_base, paging
+from chipsec.hal import hal_base
+from chipsec.hal.common import acpi, paging
 from chipsec.library.logger import logger
 
 VMM_NONE = 0
@@ -250,7 +251,7 @@ class CPU(hal_base.HALBase):
             logger().log_error('could not dump page tables')
 
     def dump_page_tables_all(self) -> None:
-        for tid in range(self.cs.msr.get_cpu_thread_count()):
+        for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
             cr3 = self.read_cr(tid, 3)
             logger().log_hal(f'[cpu{tid:d}] found paging hierarchy base (CR3): 0x{cr3:08X}')
             self.dump_page_tables(cr3)

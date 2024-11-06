@@ -31,7 +31,7 @@ import struct
 
 from typing import AnyStr, Dict, List, Optional, Tuple
 from chipsec.library.logger import logger, pretty_print_hex_buffer
-import chipsec.hal.pcidb
+import chipsec.library.pcidb
 
 
 class VMM:
@@ -43,8 +43,8 @@ class VMM:
         (self.membuf0_va, self.membuf0_pa) = (0, 0)
         (self.membuf1_va, self.membuf1_pa) = (0, 0)
 
-        chipsec.hal.pcidb.VENDORS[VIRTIO_VID] = VIRTIO_VENDOR_NAME
-        chipsec.hal.pcidb.DEVICES[VIRTIO_VID] = VIRTIO_DEVICES
+        chipsec.library.pcidb.VENDORS[VIRTIO_VID] = VIRTIO_VENDOR_NAME
+        chipsec.library.pcidb.DEVICES[VIRTIO_VID] = VIRTIO_DEVICES
 
     def __del__(self):
         if self.membuf0_va != 0:
@@ -146,9 +146,9 @@ class VirtIO_Device:
 
     def dump_device(self) -> None:
         logger().log(f"\n[vmm] VirtIO device {self.bus:02X}:{self.dev:02X}.{self.fun:01X}")
-        dev_cfg = self.cs.pci.dump_pci_config(self.bus, self.dev, self.fun)
+        dev_cfg = self.cs.hals.Pci.dump_pci_config(self.bus, self.dev, self.fun)
         pretty_print_hex_buffer(dev_cfg)
-        bars = self.cs.pci.get_device_bars(self.bus, self.dev, self.fun)
+        bars = self.cs.hals.Pci.get_device_bars(self.bus, self.dev, self.fun)
         for (bar, isMMIO, _, _, _, size) in bars:
             if isMMIO:
                 self.cs.mmio.dump_MMIO(bar, size)

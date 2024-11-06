@@ -32,7 +32,7 @@ Examples:
 """
 
 from chipsec.command import BaseCommand, toLoad
-from chipsec.hal import mmio
+from chipsec.hal.common import mmio
 
 
 # Access to Memory Mapped PCIe Configuration Space (MMCFG)

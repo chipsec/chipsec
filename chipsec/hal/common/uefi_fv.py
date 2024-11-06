@@ -27,7 +27,7 @@ import struct
 from typing import Optional, Tuple
 from uuid import UUID
 from chipsec.library.defines import bytestostring
-from chipsec.hal.uefi_common import get_3b_size, bit_set, align
+from chipsec.hal.common.uefi_common import get_3b_size, bit_set, align
 from chipsec.library.logger import logger
 
 ################################################################################################

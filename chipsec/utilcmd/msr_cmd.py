@@ -51,13 +51,13 @@ class MSRCommand(BaseCommand):
 
     def run(self):
         if self.msr_input1 is None:
-            for tid in range(self.cs.msr.get_cpu_thread_count()):
-                (eax, edx) = self.cs.msr.read_msr(tid, self.msr_addr)
+            for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
+                (eax, edx) = self.cs.hals.Msr.read_msr(tid, self.msr_addr)
                 val64 = ((edx << 32) | eax)
                 self.logger.log("[CHIPSEC] CPU{:d}: RDMSR( 0x{:x} ) = {:016X} (EAX={:08X}, EDX={:08X})".format(tid, self.msr_addr, val64, eax, edx))
         elif self.msr_input2 is None:
             cpu_thread_id = self.msr_input1
-            (eax, edx) = self.cs.msr.read_msr(cpu_thread_id, self.msr_addr)
+            (eax, edx) = self.cs.hals.Msr.read_msr(cpu_thread_id, self.msr_addr)
             val64 = ((edx << 32) | eax)
             self.logger.log("[CHIPSEC] CPU{:d}: RDMSR( 0x{:x} ) = {:016X} (EAX={:08X}, EDX={:08X})".format(cpu_thread_id, self.msr_addr, val64, eax, edx))
         else:
@@ -66,12 +66,12 @@ class MSRCommand(BaseCommand):
             val64 = ((edx << 32) | eax)
             if self.thread_id is None:
                 self.logger.log("[CHIPSEC] All CPUs: WRMSR( 0x{:x} ) = {:016X}".format(self.msr_addr, val64))
-                for tid in range(self.cs.msr.get_cpu_thread_count()):
-                    self.cs.msr.write_msr(tid, self.msr_addr, eax, edx)
+                for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
+                    self.cs.hals.Msr.write_msr(tid, self.msr_addr, eax, edx)
             else:
                 cpu_thread_id = self.thread_id
                 self.logger.log("[CHIPSEC] CPU{:d}: WRMSR( 0x{:x} ) = {:016X}".format(cpu_thread_id, self.msr_addr, val64))
-                self.cs.msr.write_msr(cpu_thread_id, self.msr_addr, eax, edx)
+                self.cs.hals.Msr.write_msr(cpu_thread_id, self.msr_addr, eax, edx)
 
 
 commands = {'msr': MSRCommand}

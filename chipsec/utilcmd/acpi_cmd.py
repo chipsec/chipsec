@@ -35,7 +35,7 @@ Examples:
 from os.path import exists as path_exists
 from argparse import ArgumentParser
 
-from chipsec.hal.acpi import ACPI
+from chipsec.hal.common.acpi import ACPI
 from chipsec.command import BaseCommand, toLoad
 
 # ###################################################################

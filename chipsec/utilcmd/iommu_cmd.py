@@ -38,7 +38,7 @@ Examples:
 """
 
 from chipsec.command import BaseCommand, toLoad
-from chipsec.hal import acpi, iommu
+from chipsec.hal.common import acpi, iommu
 from argparse import ArgumentParser
 from chipsec.library.exceptions import IOMMUError, AcpiRuntimeError
 

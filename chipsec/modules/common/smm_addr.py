@@ -44,7 +44,7 @@ Registers used:
 
 from chipsec.module_common import BaseModule, MTAG_BIOS, MTAG_SMM
 from chipsec.library.returncode import ModuleResult
-from chipsec.hal.msr import MemType
+from chipsec.hal.common.msr import MemType
 from typing import List
 
 TAGS = [MTAG_BIOS, MTAG_SMM]
@@ -66,7 +66,7 @@ class smm_addr(BaseModule):
 
     def check_SMMMask(self) -> int:
 
-        if self.cs.cpu.check_SMRR_supported():
+        if self.cs.hals.CPU.check_SMRR_supported():
             self.logger.log_good("OK. SMMMask range protection is supported")
         else:
             self.logger.log_not_applicable("CPU does not support SMMMask range protection of SMRAM")
@@ -126,7 +126,7 @@ class smm_addr(BaseModule):
         self.logger.log('')
         self.logger.log("[*] Verifying that SMM range base & mask are the same on all logical CPUs..")
         smmbase  = []
-        for tid in range(self.cs.msr.get_cpu_thread_count()):
+        for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
             smmbase.append(self.cs.register.read('SMM_BASE', tid))
             smmmask = self.cs.register.read('SMMMASK', tid)
             self.logger.log(f"[CPU{tid:d}] SMMMask = {smmbase[tid]:016X}, SMMMask = {smmmask:016X}")

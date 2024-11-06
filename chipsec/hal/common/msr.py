@@ -168,3 +168,5 @@ class Msr:
     def GDT_all(self, num_entries: Optional[int] = None) -> None:
         for tid in range(self.get_cpu_thread_count()):
             self.GDT(tid, num_entries)
+
+haldata = {"arch":['8086'], 'name': ['Msr']} #change arch to CPUID genuine intel/amd

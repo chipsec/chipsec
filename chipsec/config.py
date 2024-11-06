@@ -26,11 +26,10 @@ import os
 import xml.etree.ElementTree as ET
 from chipsec.library.defines import is_hex, CHIPSET_CODE_UNKNOWN
 from chipsec.library.exceptions import CSConfigError, DeviceNotFoundError
-from chipsec.library.defines import is_hex, CHIPSET_CODE_UNKNOWN
-from chipsec.library.exceptions import CSConfigError, DeviceNotFoundError
 from chipsec.library.file import get_main_dir
 from chipsec.library.logger import logger
 from chipsec.library.register import ObjList
+from chipsec.library.strings import make_hex_key_str
 from chipsec.parsers import Stage
 from chipsec.parsers import stage_info, config_data
 from chipsec.cfg.parsers.ip.pci_device import PCIConfig
@@ -87,10 +86,6 @@ class Cfg:
         match = search_string.search(fname)
         vid = match.group(0)[4:]
         return vid
-
-    def _make_hex_key_str(self, int_val):
-        str_val = f'{int_val:04X}'
-        return str_val
     
     def _create_vid(self, vid_str):
         key_list = self.parent_keys + self.child_keys
@@ -109,8 +104,8 @@ class Cfg:
         if not hasattr(self, 'CONFIG_PCI_RAW'):
             setattr(self, 'CONFIG_PCI_RAW', {})
         for b, d, f, vid, did, rid in enum_devices:
-            vid_str = self._make_hex_key_str(vid)
-            did_str = self._make_hex_key_str(did)
+            vid_str = make_hex_key_str(vid)
+            did_str = make_hex_key_str(did)
             pci_data = {
                 'bus': [b],
                 'dev': d,
@@ -213,7 +208,7 @@ class Cfg:
         for sku in data.sku_list:
             did_list = [sku['did']] if type(sku['did']) is int else sku['did']
             for did in did_list:
-                did_str = self._make_hex_key_str(did)
+                did_str = make_hex_key_str(did)
                 if did_str not in dest[data.vid_str]:
                     dest[data.vid_str][did_str] = []
                 sku['req_pch'] = data.req_pch
@@ -290,12 +285,12 @@ class Cfg:
         return None
 
     def _find_did(self, sku):
-        vid_str = self._make_hex_key_str(sku['vid'])
+        vid_str = make_hex_key_str(sku['vid'])
         if 'did' in sku and type(sku['did']) is int:
             return sku['did']
         else:
             for did in sku['did']:
-                did_str = self._make_hex_key_str(did)
+                did_str = make_hex_key_str(did)
                 if vid_str in self.CONFIG_PCI_RAW and did_str in self.CONFIG_PCI_RAW[vid_str]:
                     return did
         self.logger.log_warning('Enumerated Platform PCI DID not found in XML Configs. System info may not be 100% accurate.')
@@ -424,8 +419,8 @@ class Cfg:
                 self.did = self.get_dev_from_bdf_000()['did']
             self.code = sku['code']
             if not proc_code:
-                vid_str = self._make_hex_key_str(self.vid)
-                did_str = self._make_hex_key_str(self.did)
+                vid_str = make_hex_key_str(self.vid)
+                did_str = make_hex_key_str(self.did)
                 self.rid = self.CONFIG_PCI_RAW[vid_str][did_str].get_rid(0, 0, 0)
             else:
                 raise CSConfigError('There is already a CPU detected, are you adding a new config?')
@@ -444,8 +439,8 @@ class Cfg:
             self.pch_did = self._find_did(sku)
             self.pch_code = sku['code']
             if not pch_code:
-                vid_str = self._make_hex_key_str(self.pch_vid)
-                did_str = self._make_hex_key_str(self.pch_did)
+                vid_str = make_hex_key_str(self.pch_vid)
+                did_str = make_hex_key_str(self.pch_did)
                 for cfg_data in self.CONFIG_PCI_RAW[vid_str][did_str]:
                     if 0x31 == cfg_data['dev'] and 0x0 == cfg_data['fun']:
                         self.rid = cfg_data['rid']

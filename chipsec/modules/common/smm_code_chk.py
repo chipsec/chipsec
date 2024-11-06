@@ -101,7 +101,7 @@ class smm_code_chk(BaseModule):
     def check_SMM_Code_Chk_En(self) -> int:
 
         results = []
-        for tid in range(self.cs.msr.get_cpu_thread_count()):
+        for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
             results.append(self._check_SMM_Code_Chk_En(tid))
 
         if not all(_ == results[0] for _ in results):

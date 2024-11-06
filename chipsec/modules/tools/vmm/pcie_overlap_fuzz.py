@@ -51,7 +51,7 @@ import random
 
 from chipsec.module_common import BaseModule
 from chipsec.library.returncode import ModuleResult
-from chipsec.hal.pci import print_pci_devices
+from chipsec.hal.common.pci import print_pci_devices
 
 #################################################################
 # Fuzzing configuration
@@ -70,32 +70,32 @@ class pcie_overlap_fuzz(BaseModule):
         BaseModule.__init__(self)
 
     def overlap_mmio_range(self, bus1, dev1, fun1, is64bit1, off1, bus2, dev2, fun2, is64bit2, off2, direction):
-        base_lo1 = self.cs.pci.read_dword(bus1, dev1, fun1, off1)
-        base_lo2 = self.cs.pci.read_dword(bus2, dev2, fun2, off2)
+        base_lo1 = self.cs.hals.Pci.read_dword(bus1, dev1, fun1, off1)
+        base_lo2 = self.cs.hals.Pci.read_dword(bus2, dev2, fun2, off2)
         if (0 == (base_lo1 & 0x1)) and (0 == (base_lo2 & 0x1)):
             if not is64bit1 and not is64bit2:
                 # 32-bit MMIO BARs
                 # MMIO BARs
                 if direction:
-                    self.cs.pci.write_dword(bus2, dev2, fun2, off2, base_lo1)
+                    self.cs.hals.Pci.write_dword(bus2, dev2, fun2, off2, base_lo1)
                 else:
-                    self.cs.pci.write_dword(bus1, dev1, fun1, off1, base_lo2)
+                    self.cs.hals.Pci.write_dword(bus1, dev1, fun1, off1, base_lo2)
             elif is64bit1 and is64bit2:
                 # 64-bit MMIO BARs
-                base_hi1 = self.cs.pci.read_dword(bus1, dev1, fun1, off1 + 4)
-                base_hi2 = self.cs.pci.read_dword(bus2, dev2, fun2, off2 + 4)
+                base_hi1 = self.cs.hals.Pci.read_dword(bus1, dev1, fun1, off1 + 4)
+                base_hi2 = self.cs.hals.Pci.read_dword(bus2, dev2, fun2, off2 + 4)
                 if direction:
-                    self.cs.pci.write_dword(bus2, dev2, fun2, off2, base_lo1)
-                    self.cs.pci.write_dword(bus2, dev2, fun2, off2 + 4, base_hi1)
+                    self.cs.hals.Pci.write_dword(bus2, dev2, fun2, off2, base_lo1)
+                    self.cs.hals.Pci.write_dword(bus2, dev2, fun2, off2 + 4, base_hi1)
                 else:
-                    self.cs.pci.write_dword(bus1, dev1, fun1, off1, base_lo2)
-                    self.cs.pci.write_dword(bus1, dev1, fun1, off1 + 4, base_hi2)
+                    self.cs.hals.Pci.write_dword(bus1, dev1, fun1, off1, base_lo2)
+                    self.cs.hals.Pci.write_dword(bus1, dev1, fun1, off1 + 4, base_hi2)
             elif is64bit1 and not is64bit2:
-                self.cs.pci.write_dword(bus1, dev1, fun1, off1, base_lo2)
-                self.cs.pci.write_dword(bus1, dev1, fun1, off1 + 4, 0)
+                self.cs.hals.Pci.write_dword(bus1, dev1, fun1, off1, base_lo2)
+                self.cs.hals.Pci.write_dword(bus1, dev1, fun1, off1 + 4, 0)
             else:
-                self.cs.pci.write_dword(bus2, dev2, fun2, off2, base_lo1)
-                self.cs.pci.write_dword(bus2, dev2, fun2, off2 + 4, 0)
+                self.cs.hals.Pci.write_dword(bus2, dev2, fun2, off2, base_lo1)
+                self.cs.hals.Pci.write_dword(bus2, dev2, fun2, off2 + 4, 0)
 
     def fuzz_offset(self, bar, reg_off, reg_value, is64bit):
         self.cs.mmio.write_MMIO_reg(bar, reg_off, reg_value)  # same value
@@ -134,12 +134,12 @@ class pcie_overlap_fuzz(BaseModule):
     def fuzz_overlap_pcie_device(self, pcie_devices):
         for (b1, d1, f1, _, _, _) in pcie_devices:
             self.logger.log('[*] Overlapping MMIO bars...')
-            device_bars1 = self.cs.pci.get_device_bars(b1, d1, f1, bCalcSize=True)
+            device_bars1 = self.cs.hals.Pci.get_device_bars(b1, d1, f1, bCalcSize=True)
             for (bar1, isMMIO1, is64bit1, bar_off1, _, size1) in device_bars1:
                 if bar1 not in _EXCLUDE_MMIO_BAR1:
                     if isMMIO1:
                         for (b2, d2, f2, _, _) in pcie_devices:
-                            device_bars2 = self.cs.pci.get_device_bars(b2, d2, f2, bCalcSize=True)
+                            device_bars2 = self.cs.hals.Pci.get_device_bars(b2, d2, f2, bCalcSize=True)
                             for (bar2, isMMIO2, is64bit2, bar_off2, _, size2) in device_bars2:
                                 if bar2 not in _EXCLUDE_MMIO_BAR2:
                                     if isMMIO2:
@@ -161,7 +161,7 @@ class pcie_overlap_fuzz(BaseModule):
 
         pcie_devices = []
         self.logger.log('[*] Enumerating available PCIe devices..')
-        pcie_devices = self.cs.pci.enumerate_devices()
+        pcie_devices = self.cs.hals.Pci.enumerate_devices()
 
         self.logger.log('[*] About to fuzz the following PCIe devices..')
         print_pci_devices(pcie_devices)

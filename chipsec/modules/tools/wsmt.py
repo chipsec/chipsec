@@ -36,8 +36,8 @@ Examples:
 """
 from chipsec.module_common import BaseModule, MTAG_BIOS, MTAG_SMM
 from chipsec.library.returncode import ModuleResult
-from chipsec.hal.acpi import ACPI
-from chipsec.hal.acpi_tables import WSMT
+from chipsec.hal.common.acpi import ACPI
+from chipsec.hal.common.acpi_tables import WSMT
 
 TAGS = [MTAG_BIOS, MTAG_SMM]
 

@@ -32,11 +32,11 @@ from typing import Dict, List, Tuple, Optional, Union, TYPE_CHECKING
 from chipsec.library.defines import bytestostring
 from chipsec.library.exceptions import UnimplementedAPIError
 from chipsec.library.file import read_file
-from chipsec.hal import acpi_tables
+from chipsec.hal.common import acpi_tables
 from chipsec.hal.hal_base import HALBase
-from chipsec.hal.uefi import UEFI
+from chipsec.hal.common.uefi import UEFI
 from chipsec.library.logger import logger, print_buffer_bytes
-from chipsec.hal.acpi_tables import ACPI_TABLE
+from chipsec.hal.common.acpi_tables import ACPI_TABLE
 
 if TYPE_CHECKING:
     from ctypes import Array
@@ -285,7 +285,7 @@ class ACPI(HALBase):
         rsdp = None
         logger().log_hal("[acpi] Searching all EFI memory for RSDP (this may take a minute).")
         CHUNK_SZ = 1024 * 1024  # 1MB
-        (smram_base, _, _) = self.cs.cpu.get_SMRAM()
+        (smram_base, _, _) = self.cs.hals.CPU.get_SMRAM()
         pa = smram_base - CHUNK_SZ
         while pa > CHUNK_SZ:
             membuf = self.cs.mem.read_physical_mem(pa, CHUNK_SZ)

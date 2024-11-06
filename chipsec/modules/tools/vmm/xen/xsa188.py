@@ -45,7 +45,7 @@ Examples:
 
 from chipsec.module_common import BaseModule
 from chipsec.library.returncode import ModuleResult
-from chipsec.hal.vmm import VMM
+from chipsec.hal.common.vmm import VMM
 
 EVENT_CHANNEL_OP = 32
 EVTCHOP_INIT_CONTROL = 11

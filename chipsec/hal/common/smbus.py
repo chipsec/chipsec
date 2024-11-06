@@ -29,7 +29,8 @@
 Access to SMBus Controller
 """
 from typing import List
-from chipsec.hal import iobar, hal_base
+from chipsec.hal import hal_base
+from chipsec.hal.common import iobar
 from chipsec.library.exceptions import IOBARNotFoundError, RegisterNotFoundError
 
 SMBUS_COMMAND_QUICK = 0

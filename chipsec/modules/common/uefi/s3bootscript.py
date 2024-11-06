@@ -53,8 +53,8 @@ Examples:
 from chipsec.module_common import BaseModule, MTAG_BIOS, MTAG_SMM, MTAG_SECUREBOOT
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.defines import BOUNDARY_1MB, BOUNDARY_4GB
-from chipsec.hal.uefi import UEFI, parse_script
-from chipsec.hal.uefi_common import S3BootScriptOpcode, S3BOOTSCRIPT_ENTRY
+from chipsec.hal.common.uefi import UEFI, parse_script
+from chipsec.hal.common.uefi_common import S3BootScriptOpcode, S3BOOTSCRIPT_ENTRY
 from typing import List
 
 TAGS = [MTAG_BIOS, MTAG_SMM, MTAG_SECUREBOOT]
@@ -195,7 +195,7 @@ class s3bootscript(BaseModule):
         if len(module_argv) > 0:
             script_pa = int(module_argv[0], 16)
             self.logger.log(f'[*] Using manually assigned S3 Boot-Script table base: 0x{script_pa:016X}')
-        (self.smrambase, self.smramlimit, self.smramsize) = self.cs.cpu.get_SMRAM()
+        (self.smrambase, self.smramlimit, self.smramsize) = self.cs.hals.CPU.get_SMRAM()
         if (self.smrambase is not None) and (self.smramlimit is not None):
             self.logger.log(f'[*] SMRAM: Base = 0x{self.smrambase:016X}, Limit = 0x{self.smramlimit:016X}, Size = 0x{self.smramsize:08X}')
 

@@ -51,7 +51,7 @@ from chipsec.library.logger import logger
 from chipsec.library.file import write_file
 from chipsec.module_common import BaseModule
 from chipsec.library.returncode import ModuleResult
-from chipsec.hal.paging import c_extended_page_tables
+from chipsec.hal.common.paging import c_extended_page_tables
 
 
 class c_extended_page_tables_from_file(c_extended_page_tables):
@@ -210,7 +210,7 @@ class ept_finder(BaseModule):
                 self.logger.log(self.__doc__.replace('`', ''))
                 return ModuleResult.ERROR
         else:
-            revision_id = self.cs.msr.read_msr(0, 0x480)[0]
+            revision_id = self.cs.hals.Msr.read_msr(0, 0x480)[0]
             self.par = self.get_memory_ranges()
 
         if len(self.par) == 0:

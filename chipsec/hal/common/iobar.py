@@ -85,7 +85,7 @@ class IOBAR(hal_base.HALBase):
                     empty_base = 0
         else:
             # this method is not preferred
-            base = self.cs.pci.read_word(self.cs.device.get_first_bus(bar), bar['dev'], bar['fun'], bar['reg'])
+            base = self.cs.hals.Pci.read_word(self.cs.device.get_first_bus(bar), bar['dev'], bar['fun'], bar['reg'])
             empty_base = 0xFFFF
 
         if 'fixed_address' in bar and (base == empty_base or base == 0):

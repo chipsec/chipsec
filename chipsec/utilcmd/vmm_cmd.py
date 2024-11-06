@@ -35,8 +35,8 @@ Examples:
 import re
 
 from chipsec.command import BaseCommand, toLoad
-from chipsec.hal.vmm import VMM, get_virtio_devices, VirtIO_Device
-from chipsec.hal.pci import print_pci_devices
+from chipsec.hal.common.vmm import VMM, get_virtio_devices, VirtIO_Device
+from chipsec.hal.common.pci import print_pci_devices
 from chipsec.library.exceptions import VMMRuntimeError
 from argparse import ArgumentParser
 
@@ -84,8 +84,8 @@ class VMMCommand(BaseCommand):
                 _bus = int(match.group(1), 16) & 0xFF
                 _dev = int(match.group(2), 16) & 0x1F
                 _fun = int(match.group(3), 16) & 0x07
-                vid = self.cs.pci.read_word(_bus, _dev, _fun, 0)
-                did = self.cs.pci.read_word(_bus, _dev, _fun, 2)
+                vid = self.cs.hals.Pci.read_word(_bus, _dev, _fun, 0)
+                did = self.cs.hals.Pci.read_word(_bus, _dev, _fun, 2)
                 dev = (_bus, _dev, _fun, vid, did)
                 virt_dev = [dev]
             else:
@@ -94,7 +94,7 @@ class VMMCommand(BaseCommand):
                 return
         else:
             self.logger.log("[CHIPSEC] Enumerating VirtIO devices...")
-            virt_dev = get_virtio_devices(self.cs.pci.enumerate_devices())
+            virt_dev = get_virtio_devices(self.cs.hals.Pci.enumerate_devices())
 
         if len(virt_dev) > 0:
             self.logger.log("[CHIPSEC] Available VirtIO devices:")
