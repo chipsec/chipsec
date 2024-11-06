@@ -252,9 +252,8 @@ class Chipset:
         return old_log_state
     
     def init_topology(self):
-        _cpu = cpu.CPU(self)
         self.logger.log_debug('[*] Gathering CPU Topology..')
-        topology = _cpu.get_cpu_topology()
+        topology = self.hals.CPU.get_cpu_topology()
         self.Cfg.set_topology(topology)
 
     def is_all_value(self, regdata: Type[RegData], value: int, mask: Optional[int] = None) -> bool:
