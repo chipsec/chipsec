@@ -52,7 +52,7 @@ Registers used:
 
 from chipsec.module_common import BaseModule, MTAG_BIOS, MTAG_SMM, OPT_MODIFY
 from chipsec.library.returncode import ModuleResult
-from chipsec.hal.msr import MemType
+from chipsec.hal.common.msr import MemType
 from typing import List
 
 TAGS = [MTAG_BIOS, MTAG_SMM]
@@ -79,7 +79,7 @@ class smrr(BaseModule):
 
     def check_SMRR(self, do_modify: bool) -> int:
 
-        if self.cs.cpu.check_SMRR_supported():
+        if self.cs.hals.CPU.check_SMRR_supported():
             self.logger.log_good('OK. SMRR range protection is supported')
         else:
             self.logger.log_not_applicable('CPU does not support SMRR range protection of SMRAM')

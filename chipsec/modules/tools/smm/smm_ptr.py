@@ -88,7 +88,7 @@ from chipsec.module_common import BaseModule
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.file import write_file
 from chipsec.library.logger import print_buffer_bytes
-from chipsec.hal.interrupts import Interrupts
+from chipsec.hal.common.interrupts import Interrupts
 from chipsec.library.exceptions import BadSMIDetected
 from chipsec.helper.oshelper import OsHelper
 
@@ -718,7 +718,7 @@ class smm_ptr(BaseModule):
             self.fill_size = int(module_argv[2], 16)
         if len(module_argv) > 3:
             if 'smram' == module_argv[3]:
-                (_addr, _, _) = self.cs.cpu.get_SMRAM()
+                (_addr, _, _) = self.cs.hals.CPU.get_SMRAM()
                 self.is_check_memory = False
                 self.logger.log(f'[*] Using SMRAM base address (0x{_addr:016X}) to pass to SMI handlers')
             else:

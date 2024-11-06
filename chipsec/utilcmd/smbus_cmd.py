@@ -29,7 +29,7 @@ Examples:
 
 from chipsec.command import BaseCommand, toLoad
 from chipsec.library.logger import print_buffer_bytes
-from chipsec.hal.smbus import SMBus
+from chipsec.hal.common.smbus import SMBus
 from argparse import ArgumentParser
 
 

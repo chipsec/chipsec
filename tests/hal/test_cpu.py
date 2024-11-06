@@ -21,7 +21,7 @@
 
 import unittest
 from unittest.mock import patch, Mock, MagicMock, call
-from chipsec.hal.cpu import CPU
+from chipsec.hal.common.cpu import CPU
 
 
 class TestHalCpu(unittest.TestCase):
@@ -188,7 +188,7 @@ class TestHalCpu(unittest.TestCase):
     def test_hal_cpu_get_cpu_topology(self):
         mock_self = Mock()
         mock_self.cs.helper.get_threads_count.return_value = 4
-        mock_self.cs.cpu.cpuid.side_effect = [(4, 0, 0, 0),
+        mock_self.cs.hals.CPU.cpuid.side_effect = [(4, 0, 0, 0),
                                               (1, 0, 0, 0),
                                               (4, 0, 0, 2),
                                               (1, 0, 0, 2),
@@ -333,7 +333,7 @@ class TestHalCpu(unittest.TestCase):
     def test_hal_cpu_dump_page_tables_all_1_thread(self):
         mock_self = Mock()
         threads = 1
-        mock_self.cs.msr.get_cpu_thread_count.return_value = threads
+        mock_self.cs.hals.Msr.get_cpu_thread_count.return_value = threads
         mock_self.return_value.dump_page_tables.return_value = 1
         mock_self.read_cr.side_effect = [0]
         CPU.dump_page_tables_all(mock_self)
@@ -342,7 +342,7 @@ class TestHalCpu(unittest.TestCase):
     def test_hal_cpu_dump_page_tables_all_4_threads(self):
         mock_self = Mock()
         threads = 4
-        mock_self.cs.msr.get_cpu_thread_count.return_value = threads
+        mock_self.cs.hals.Msr.get_cpu_thread_count.return_value = threads
         mock_self.return_value.dump_page_tables.return_value = 1
         mock_self.read_cr.side_effect = [0, 1, 2, 3]
         CPU.dump_page_tables_all(mock_self)

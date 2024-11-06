@@ -24,9 +24,13 @@ Base for HAL Components
 """
 
 import chipsec.library.logger
+from chipsec.library.exceptions import UnimplementedAPIError
 
 
 class HALBase:
     def __init__(self, cs):
         self.cs = cs
         self.logger = chipsec.library.logger.logger()
+
+    def __getattr__(self, name):
+        raise UnimplementedAPIError(f'No function with the name {name}')

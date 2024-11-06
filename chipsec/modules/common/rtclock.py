@@ -41,7 +41,7 @@ Registers used:
 
 from chipsec.module_common import BaseModule, MTAG_BIOS, MTAG_HWCONFIG
 from chipsec.library.returncode import ModuleResult
-from chipsec.hal.cmos import CMOS
+from chipsec.hal.common.cmos import CMOS
 from chipsec.config import CHIPSET_CODE_AVN
 from typing import List
 TAGS = [MTAG_BIOS, MTAG_HWCONFIG]

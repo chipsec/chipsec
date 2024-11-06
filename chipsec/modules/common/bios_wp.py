@@ -60,7 +60,7 @@ Registers used: (n = 0,1,2,3,4)
 from chipsec.library.exceptions import CSReadError
 from chipsec.module_common import BaseModule, MTAG_BIOS
 from chipsec.library.returncode import ModuleResult
-from chipsec.hal.spi import BIOS, SPI
+from chipsec.hal.common.spi import BIOS, SPI
 from typing import List
 
 

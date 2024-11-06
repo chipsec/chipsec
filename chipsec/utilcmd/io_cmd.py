@@ -36,7 +36,7 @@ Examples:
 
 from argparse import ArgumentParser
 
-from chipsec.hal import iobar
+from chipsec.hal.common import iobar
 from chipsec.command import BaseCommand, toLoad
 
 

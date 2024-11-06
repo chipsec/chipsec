@@ -48,8 +48,8 @@ from chipsec.command import BaseCommand, toLoad
 from chipsec.library.logger import pretty_print_hex_buffer
 from argparse import ArgumentParser
 from chipsec_util import get_option_width, is_option_valid_width, CMD_OPTS_WIDTH
-from chipsec.hal.pci import print_pci_devices, print_pci_XROMs
-from chipsec.hal.pci import PCI_HDR_CLS_OFF, PCI_HDR_SUB_CLS_OFF, PCI_HDR_CMD_OFF
+from chipsec.hal.common.pci import print_pci_devices, print_pci_XROMs
+from chipsec.hal.common.pci import PCI_HDR_CLS_OFF, PCI_HDR_SUB_CLS_OFF, PCI_HDR_CMD_OFF
 
 # PCIe Devices and Configuration Registers
 
@@ -105,33 +105,33 @@ class PCICommand(BaseCommand):
 
     def pci_enumerate(self):
         self.logger.log("[CHIPSEC] Enumerating available PCIe devices...")
-        print_pci_devices(self.cs.pci.enumerate_devices())
+        print_pci_devices(self.cs.hals.Pci.enumerate_devices())
 
     def pci_dump(self):
         if self.bus is not None:
             if self.device is not None and self.function is not None:
                 devices = [(self.bus, self.device, self.function, 0x0000, 0x0000, 0x0000)]
             else:
-                devices = self.cs.pci.enumerate_devices(self.bus, self.device, self.function)
+                devices = self.cs.hals.Pci.enumerate_devices(self.bus, self.device, self.function)
 
             for (_bus, _device, _function, _vid, _did, _rid) in devices:
                 self.logger.log("[CHIPSEC] PCI device {:02X}:{:02X}.{:02X} configuration:".format(_bus, _device, _function))
-                cfg_buf = self.cs.pci.dump_pci_config(_bus, _device, _function)
+                cfg_buf = self.cs.hals.Pci.dump_pci_config(_bus, _device, _function)
                 pretty_print_hex_buffer(cfg_buf)
         else:
             self.logger.log("[CHIPSEC] Dumping configuration of available PCI devices...")
-            self.cs.pci.print_pci_config_all()
+            self.cs.hals.Pci.print_pci_config_all()
 
     def pci_xrom(self):
         if self.bus is not None:
             if self.device is not None and self.function is not None:
                 devices = [(self.bus, self.device, self.function, 0x0000, 0x0000, 0x000)]
             else:
-                devices = self.cs.pci.enumerate_devices(self.bus, self.device, self.function)
+                devices = self.cs.hals.Pci.enumerate_devices(self.bus, self.device, self.function)
 
             for (_bus, _device, _function, _vid, _did, _rid) in devices:
                 self.logger.log("[CHIPSEC] Locating PCI expansion ROM (XROM) of {:02X}:{:02X}.{:02X}...".format(_bus, _device, _function))
-                exists, xrom = self.cs.pci.find_XROM(_bus, _device, _function, True, True, self.xrom_addr)
+                exists, xrom = self.cs.hals.Pci.find_XROM(_bus, _device, _function, True, True, self.xrom_addr)
                 if exists:
                     self.logger.log("[CHIPSEC] Found XROM of {:02X}:{:02X}.{:02X}".format(_bus, _device, _function))
                     if xrom is not None:
@@ -142,7 +142,7 @@ class PCICommand(BaseCommand):
                     self.logger.log("[CHIPSEC] Couldn't find XROM of {:02X}:{:02X}.{:02X}".format(_bus, _device, _function))
         else:
             self.logger.log("[CHIPSEC] Enumerating PCI expansion ROMs...")
-            _xroms = self.cs.pci.enumerate_xroms(True, True, self.xrom_addr)
+            _xroms = self.cs.hals.Pci.enumerate_xroms(True, True, self.xrom_addr)
             self.logger.log("[CHIPSEC] found {:d} PCI expansion ROMs".format(len(_xroms)))
             if len(_xroms) > 0:
                 print_pci_XROMs(_xroms)
@@ -153,11 +153,11 @@ class PCICommand(BaseCommand):
             width = get_option_width(self.size) if is_option_valid_width(self.size) else int(self.size, 16)
 
         if 1 == width:
-            pci_value = self.cs.pci.read_byte(self.bus, self.device, self.function, self.offset)
+            pci_value = self.cs.hals.Pci.read_byte(self.bus, self.device, self.function, self.offset)
         elif 2 == width:
-            pci_value = self.cs.pci.read_word(self.bus, self.device, self.function, self.offset)
+            pci_value = self.cs.hals.Pci.read_word(self.bus, self.device, self.function, self.offset)
         elif 4 == width:
-            pci_value = self.cs.pci.read_dword(self.bus, self.device, self.function, self.offset)
+            pci_value = self.cs.hals.Pci.read_dword(self.bus, self.device, self.function, self.offset)
         else:
             self.logger.log_error("Width should be one of {}".format(CMD_OPTS_WIDTH))
             return
@@ -167,11 +167,11 @@ class PCICommand(BaseCommand):
         width = get_option_width(self.size) if is_option_valid_width(self.size) else int(self.size, 16)
 
         if 1 == width:
-            self.cs.pci.write_byte(self.bus, self.device, self.function, self.offset, self.value)
+            self.cs.hals.Pci.write_byte(self.bus, self.device, self.function, self.offset, self.value)
         elif 2 == width:
-            self.cs.pci.write_word(self.bus, self.device, self.function, self.offset, self.value)
+            self.cs.hals.Pci.write_word(self.bus, self.device, self.function, self.offset, self.value)
         elif 4 == width:
-            self.cs.pci.write_dword(self.bus, self.device, self.function, self.offset, self.value)
+            self.cs.hals.Pci.write_dword(self.bus, self.device, self.function, self.offset, self.value)
         else:
             self.logger.log_error("Width should be one of {}".format(CMD_OPTS_WIDTH))
             return
@@ -180,14 +180,14 @@ class PCICommand(BaseCommand):
     def pci_cmd(self):
         self.logger.log('BDF     | VID:DID   | CMD  | CLS | Sub CLS')
         self.logger.log('------------------------------------------')
-        for (b, d, f, vid, did, rid) in self.cs.pci.enumerate_devices():
-            dev_cls = self.cs.pci.read_byte(b, d, f, PCI_HDR_CLS_OFF)
+        for (b, d, f, vid, did, rid) in self.cs.hals.Pci.enumerate_devices():
+            dev_cls = self.cs.hals.Pci.read_byte(b, d, f, PCI_HDR_CLS_OFF)
             if self.pci_class is not None and (dev_cls != self.pci_class):
                 continue
-            dev_sub_cls = self.cs.pci.read_byte(b, d, f, PCI_HDR_SUB_CLS_OFF)
+            dev_sub_cls = self.cs.hals.Pci.read_byte(b, d, f, PCI_HDR_SUB_CLS_OFF)
             if self.pci_sub_class is not None and (dev_sub_cls != self.pci_sub_class):
                 continue
-            cmd_reg = self.cs.pci.read_word(b, d, f, PCI_HDR_CMD_OFF)
+            cmd_reg = self.cs.hals.Pci.read_word(b, d, f, PCI_HDR_CMD_OFF)
             if (cmd_reg & self.cmd_mask) == 0:
                 continue
             self.logger.log('{:02X}:{:02X}.{:X} | {:04X}:{:04X} | {:04X} | {:02X}  | {:02X}'.format(b, d, f, vid, did, cmd_reg, dev_cls, dev_sub_cls))

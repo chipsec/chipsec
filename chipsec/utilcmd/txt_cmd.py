@@ -95,12 +95,12 @@ class TXTCommand(BaseCommand):
         https://github.com/TrenchBoot/sltools/blob/842cfd041b7454727b363b72b6d4dcca9c00daca/sl-stat/sl-stat.c
         """
         # Read bits in CPUID
-        (eax, ebx, ecx, edx) = self.cs.cpu.cpuid(0x01, 0x00)
+        (eax, ebx, ecx, edx) = self.cs.hals.CPU.cpuid(0x01, 0x00)
         self.logger.log("[CHIPSEC] CPUID.01H.ECX[Bit 6] = {} << Safer Mode Extensions (SMX)".format((ecx >> 6) & 1))
         self.logger.log("[CHIPSEC] CPUID.01H.ECX[Bit 5] = {} << Virtual Machine Extensions (VMX)".format((ecx >> 5) & 1))
 
         # Read bits in CR4
-        cr4 = self.cs.cpu.read_cr(0, 4)
+        cr4 = self.cs.hals.CPU.read_cr(0, 4)
         self.logger.log("[CHIPSEC] CR4.SMXE[Bit 14] = {} << Safer Mode Extensions Enable".format((cr4 >> 14) & 1))
         self.logger.log("[CHIPSEC] CR4.VMXE[Bit 13] = {} << Virtual Machine Extensions Enable".format((cr4 >> 13) & 1))
 
@@ -122,13 +122,13 @@ class TXTCommand(BaseCommand):
         self.logger.log("[CHIPSEC] TXT Public Key Hash: {}".format(txt_pubkey.hex()))
 
         try:
-            eax, edx = self.cs.msr.read_msr(0, 0x20)
+            eax, edx = self.cs.hals.Msr.read_msr(0, 0x20)
             pubkey_in_msr = struct.pack("<II", eax, edx)
-            eax, edx = self.cs.msr.read_msr(0, 0x21)
+            eax, edx = self.cs.hals.Msr.read_msr(0, 0x21)
             pubkey_in_msr += struct.pack("<II", eax, edx)
-            eax, edx = self.cs.msr.read_msr(0, 0x22)
+            eax, edx = self.cs.hals.Msr.read_msr(0, 0x22)
             pubkey_in_msr += struct.pack("<II", eax, edx)
-            eax, edx = self.cs.msr.read_msr(0, 0x23)
+            eax, edx = self.cs.hals.Msr.read_msr(0, 0x23)
             pubkey_in_msr += struct.pack("<II", eax, edx)
             self.logger.log("[CHIPSEC] Public Key Hash in MSR[0x20...0x23]: {}".format(pubkey_in_msr.hex()))
         except HWAccessViolationError as exc:

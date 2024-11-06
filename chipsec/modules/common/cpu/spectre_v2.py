@@ -157,7 +157,7 @@ class spectre_v2(BaseModule):
 
     def check_spectre_mitigations(self) -> int:
         try:
-            cpu_thread_count = self.cs.msr.get_cpu_thread_count()
+            cpu_thread_count = self.cs.hals.Msr.get_cpu_thread_count()
         except:
             cpu_thread_count = 1
 
@@ -165,7 +165,7 @@ class spectre_v2(BaseModule):
             #
             # Read CPUID Leaf 07H
             #
-            (_, _, _, r_edx) = self.cs.cpu.cpuid(0x7, 0x0)
+            (_, _, _, r_edx) = self.cs.hals.CPU.cpuid(0x7, 0x0)
             ibrs_ibpb_supported = (r_edx & BIT26) > 0
             stibp_supported = (r_edx & BIT27) > 0
             arch_cap_supported = (r_edx & BIT29) > 0

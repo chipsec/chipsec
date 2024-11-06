@@ -90,7 +90,7 @@ class MMCfgCommand(BaseCommand):
         self.logger.log(f'[CHIPSEC] Writing MMCFG register ({self.bus:02d}:{self.device:02d}.{self.function:d} + 0x{self.offset:02X}): 0x{self.value:X}')
 
     def ec(self):
-        devs = self.cs.pci.enumerate_devices()
+        devs = self.cs.hals.Pci.enumerate_devices()
         for (b, d, f, _, _, _) in devs:
             capabilities = self.cs.mmio.get_extended_capabilities(b, d, f)
             if capabilities:

@@ -35,7 +35,7 @@ Examples:
 """
 
 from chipsec.command import BaseCommand, toLoad
-from chipsec.hal import smbus, spd
+from chipsec.hal.common import smbus, spd
 from argparse import ArgumentParser
 
 

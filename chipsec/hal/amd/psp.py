@@ -40,12 +40,12 @@ class PSP:
         self.helper = cs.helper
 
     def smu_read32(self, reg):
-        self.cs.pci.write_dword(0,0,0,self.SMN_INDEX_ADDR,reg)
-        return self.cs.pci.read_dword(0,0,0,self.SMN_DATA_ADDR)
+        self.cs.hals.Pci.write_dword(0,0,0,self.SMN_INDEX_ADDR,reg)
+        return self.cs.hals.Pci.read_dword(0,0,0,self.SMN_DATA_ADDR)
 
     def smu_write32(self, reg, val):
-        self.cs.pci.write_dword(0,0,0,self.SMN_INDEX_ADDR,reg)
-        return self.cs.pci.write_dword(0,0,0, self.SMN_DATA_ADDR,val)
+        self.cs.hals.Pci.write_dword(0,0,0,self.SMN_INDEX_ADDR,reg)
+        return self.cs.hals.Pci.write_dword(0,0,0, self.SMN_DATA_ADDR,val)
 
     def psp_mbox_command(self, cmd):
         #  Command ID (bits [23:16]), Status (bits [15:0]) fields and Ready flag (bit #31)

@@ -62,7 +62,7 @@ class MSRRegisters(BaseConfigRegisterHelper):
         """Read the object"""
         self.logger.log_debug(f'reading {self.name}')
         _cs = cs()
-        (eax, edx) = _cs.msr.read_msr(self.thread, self.msr)
+        (eax, edx) = _cs.hals.Msr.read_msr(self.thread, self.msr)
         self.value = (edx << 32) | eax
         return self.value
 
@@ -71,4 +71,4 @@ class MSRRegisters(BaseConfigRegisterHelper):
         _cs = cs()
         eax = value & 0xFFFFFFFF
         edx = (value >> 32) & 0xFFFFFFFF
-        _cs.cpu.write_msr(self.thread, self.msr, eax, edx)
+        _cs.hals.CPU.write_msr(self.thread, self.msr, eax, edx)

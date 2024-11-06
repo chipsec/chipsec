@@ -32,7 +32,7 @@ from typing import Dict, Tuple
 
 from chipsec.library.logger import print_buffer_bytes
 from chipsec.hal import hal_base
-import chipsec.hal.tpm12_commands
+import chipsec.hal.common.tpm12_commands
 
 
 COMMANDREADY = 0x40

@@ -52,8 +52,8 @@ Examples:
 
 from chipsec.module_common import BaseModule
 from chipsec.library.returncode import ModuleResult
-from chipsec.hal.smbus import SMBus
-from chipsec.hal.spd import SPD
+from chipsec.hal.common.smbus import SMBus
+from chipsec.hal.common.spd import SPD
 from typing import List
 
 

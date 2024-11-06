@@ -72,7 +72,7 @@ class cpu_info(BaseModule):
 
         # thread_count = 1
         # if not self.cs.os_helper.is_efi():
-        #     thread_count = self.cs.msr.get_cpu_thread_count()
+        #     thread_count = self.cs.hals.Msr.get_cpu_thread_count()
 
         # for thread in range(thread_count):
         for reg in signId:
@@ -86,13 +86,13 @@ class cpu_info(BaseModule):
 
             brand = ''
             for eax_val in [0x80000002, 0x80000003, 0x80000004]:
-                regs = self.cs.cpu.cpuid(eax_val, 0)
+                regs = self.cs.hals.CPU.cpuid(eax_val, 0)
                 for i in range(4):
                     brand += bytestostring(struct.pack('<I', regs[i]))
             brand = brand.rstrip('\x00')
             self.logger.log(f'[*] Processor: {brand}')
 
-            (eax, _, _, _) = self.cs.cpu.cpuid(0x01, 0x00)
+            (eax, _, _, _) = self.cs.hals.CPU.cpuid(0x01, 0x00)
             stepping = eax & 0xF
             model = (eax >> 4) & 0xF
             family = (eax >> 8) & 0xF
@@ -114,7 +114,7 @@ class cpu_info(BaseModule):
         # Determine number of threads to check
         thread_count = 1
         if not self.cs.os_helper.is_efi():
-            (_, _, r_rcx, _) = self.cs.cpu.cpuid(0x80000008,0)
+            (_, _, r_rcx, _) = self.cs.hals.CPU.cpuid(0x80000008,0)
             thread_count = r_rcx & 0xff
 
         for thread in range(thread_count):
@@ -135,7 +135,7 @@ class cpu_info(BaseModule):
             e_rbx = int("htuA".encode('utf-8').hex(),16)    #0x68747541
             e_rcx = int("DMAc".encode('utf-8').hex(),16)    #0x444D4163
             e_rdx = int("itne".encode('utf-8').hex(),16)    #0x69746E65
-            (_, r_rbx, r_rcx, r_rdx) = self.cs.cpu.cpuid(0x00, 0x00)
+            (_, r_rbx, r_rcx, r_rdx) = self.cs.hals.CPU.cpuid(0x00, 0x00)
 
             if not(e_rbx == r_rbx and e_rcx == r_rcx and e_rdx == r_rdx):
                 self.logger.log_failed("Not Authentic AMD")
@@ -143,7 +143,7 @@ class cpu_info(BaseModule):
                 return self.res
 
             # Get processor version information
-            (r_rax, _, _, _) = self.cs.cpu.cpuid(0x01, 0x00)
+            (r_rax, _, _, _) = self.cs.hals.CPU.cpuid(0x01, 0x00)
             baseModel = (r_rax >> 4) & 0xF
             baseFamily = (r_rax >> 8) & 0xF
             extModel = (r_rax >> 16) & 0xF

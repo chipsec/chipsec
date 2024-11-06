@@ -23,7 +23,8 @@
 Access to IOMMU engines
 """
 
-from chipsec.hal import hal_base, mmio, paging
+from chipsec.hal import hal_base
+from chipsec.hal.common import mmio, paging
 from chipsec.library.exceptions import IOMMUError
 
 IOMMU_ENGINE_DEFAULT = 'VTD'

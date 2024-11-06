@@ -29,7 +29,7 @@ from typing import Tuple, Type, Optional
 from chipsec.helper.oshelper import helper as os_helper
 from chipsec.helper.basehelper import Helper
 from chipsec.helper.nonehelper import NoneHelper
-from chipsec.hal import cpu, io, iobar, mmio, msgbus, msr, pci, physmem, ucode, igd, cpuid, psp
+from chipsec.hal.hals import Hals #cpu, io, iobar, mmio, msgbus, msr, pci, physmem, ucode, igd, cpuid, psp
 from chipsec.library.options import Options
 from chipsec.library.exceptions import UnknownChipsetError, OsHelperError
 from chipsec.library.logger import logger
@@ -38,6 +38,7 @@ from chipsec.library.register import Register, RegData
 from chipsec.library.lock import Lock
 from chipsec.library.control import Control
 from chipsec.library.device import Device
+from chipsec.library.pci import PCI as pcilib
 
 from chipsec.config import Cfg, CHIPSET_CODE_UNKNOWN, PROC_FAMILY
 
@@ -67,25 +68,14 @@ class Chipset:
         self.logger = logger()
         self.helper = None
         self.os_helper = os_helper()
-        self.set_hal_objects()
+        self.init_hals_object()
 
-    def set_hal_objects(self):
+    def init_hals_object(self):
         #
         # Initializing 'basic primitive' HAL components
         # (HAL components directly using native OS helper functionality)
         #
-        self.pci = pci.Pci(self)
-        self.mem = physmem.Memory(self)
-        self.msr = msr.Msr(self)
-        self.ucode = ucode.Ucode(self)
-        self.io = io.PortIO(self)
-        self.cpu = cpu.CPU(self)
-        self.msgbus = msgbus.MsgBus(self)
-        self.mmio = mmio.MMIO(self)
-        self.iobar = iobar.IOBAR(self)
-        self.igd = igd.IGD(self)
-        # AMD
-        self.psp = psp.PSP(self)
+        self.hals = Hals(self)
         #
         # All HAL components which use above 'basic primitive' HAL components
         # should be instantiated in modules/utilcmd with an instance of chipset
@@ -93,6 +83,8 @@ class Chipset:
         # - initializing SPI HAL component in a module or util extension:
         #   self.spi = SPI( self.cs )
         #
+    def update_hals_object(self):
+        pass
 
     ##################################################################################
     #
@@ -100,8 +92,7 @@ class Chipset:
     #
     ##################################################################################
     def get_cpuid(self):
-        _cpuid = cpuid.CpuID(self)
-        return _cpuid.get_proc_info()
+        return self.hals.CpuID.get_proc_info()
 
     @classmethod
     def basic_init_with_helper(cls, helper=None):
@@ -167,7 +158,7 @@ class Chipset:
                 else:
                     self.logger.log(f'[!]       {msg[-1]}; Using Default.')
         if start_helper and ((self.logger.VERBOSE) or (load_config and (_unknown_pch or _unknown_proc))):
-            pci.print_pci_devices(self.pci.enumerate_devices())
+            pcilib.print_pci_devices(self.hals.Pci.enumerate_devices())
         if _unknown_pch or _unknown_proc:
             msg.append('Results from this system may be incorrect.')
             self.logger.log(f'[!]            {msg[-1]}')
@@ -184,7 +175,7 @@ class Chipset:
                     raise OsHelperError(f'Helper named {helper_name} not found in available helpers', 1)
         else:
             self.helper = self.os_helper.get_default_helper()
-        self.set_hal_objects()
+        self.update_hals_object()
 
     def start_helper(self):
         try:
@@ -252,7 +243,7 @@ class Chipset:
                 self.logger.log_debug('[*] Unable to load cached PCI configuration.')
         if not enum_devices:
             try:
-                enum_devices = self.pci.enumerate_devices()
+                enum_devices = self.hals.Pci.enumerate_devices()
                 if reuse_scan:
                     json.dump(enum_devices, open(enum_devices_filename, 'w'))
             except Exception:
@@ -271,9 +262,8 @@ class Chipset:
         return old_log_state
 
     def init_topology(self):
-        _cpu = cpu.CPU(self)
         self.logger.log_debug('[*] Gathering CPU Topology..')
-        topology = _cpu.get_cpu_topology()
+        topology = self.hals.CPU.get_cpu_topology()
         self.Cfg.set_topology(topology)
 
     def is_all_value(self, regdata: Type[RegData], value: int, mask: Optional[int] = None) -> bool:
@@ -298,12 +288,6 @@ class Chipset:
 
     def clear_scope(self):
         self.Cfg.clear_scope()
-
-    def init_topology(self):
-        _cpu = cpu.CPU(self)
-        self.logger.log_debug('[*] Gathering CPU Topology..')
-        topology = _cpu.get_cpu_topology()
-        self.Cfg.set_topology(topology)
 
     def is_all_value(self, regdata: Type[RegData], value: int, mask: Optional[int] = None) -> bool:
         if mask is None:

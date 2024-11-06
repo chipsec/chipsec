@@ -45,3 +45,5 @@ class CpuID(hal_base.HALBase):
     def get_proc_info(self):
         (eax, _, _, _) = self.cpuid(0x01, 0x00)
         return eax
+
+haldata = {"arch":['FFFF'], 'name': ['CpuID']} #change arch to CPUID genuine intel/amd

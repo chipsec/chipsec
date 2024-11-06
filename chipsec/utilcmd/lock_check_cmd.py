@@ -46,7 +46,7 @@ KEY:
 from argparse import ArgumentParser
 
 from chipsec.command import BaseCommand, toLoad
-from chipsec.hal.locks import locks, LockResult
+from chipsec.hal.common.locks import locks, LockResult
 from chipsec.library.defines import is_set
 
 

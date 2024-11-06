@@ -17,7 +17,7 @@
 
 import unittest
 
-from chipsec.hal.acpi_tables import APIC, BGRT, DMAR, XSDT, UEFI_TABLE, WSMT
+from chipsec.hal.common.acpi_tables import APIC, BGRT, DMAR, XSDT, UEFI_TABLE, WSMT
 
 
 class TestACPITables(unittest.TestCase):

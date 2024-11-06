@@ -48,7 +48,7 @@ Registers used:
 from chipsec.library.exceptions import CSReadError
 from chipsec.module_common import BaseModule, MTAG_BIOS
 from chipsec.library.returncode import ModuleResult
-from chipsec.hal.spi import SPI, GBE, PLATFORM_DATA, ME, FLASH_DESCRIPTOR
+from chipsec.hal.common.spi import SPI, GBE, PLATFORM_DATA, ME, FLASH_DESCRIPTOR
 from typing import List
 
 TAGS = [MTAG_BIOS]

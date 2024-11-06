@@ -68,13 +68,13 @@ class Device:
     def get_VendorID(self, device_name: str) -> Tuple[int, int]:
         """Retrieves device ID and vendor ID from the PCI device"""
         (b, d, f) = self.get_BDF(device_name)
-        return self.cs.pci.get_DIDVID(b, d, f)
+        return self.cs.hals.Pci.get_DIDVID(b, d, f)
 
     def is_enabled(self, device_name: str) -> bool:
         """Checks if PCI device is enabled"""
         if self.is_defined(device_name):
             (b, d, f) = self.get_BDF(device_name)
-            return self.cs.pci.is_enabled(b, d, f)
+            return self.cs.hals.Pci.is_enabled(b, d, f)
         return False
 
     def is_defined(self, device_name: str) -> bool:
@@ -99,7 +99,7 @@ class Device:
         #     return buses
         # if device_name in self.cs.Cfg.CONFIG_PCI and 'bus' in self.cs.Cfg.CONFIG_PCI[device_name]:
         #     (bus, dev, fun) = self.get_BDF(device_name)
-        #     if self.cs.pci.is_enabled(bus, dev, fun):
+        #     if self.cs.hals.Pci.is_enabled(bus, dev, fun):
         #         if logger().DEBUG:
         #             logger().log_important(f"Using pre-defined bus values for device '{device_name}'")
         #         buses = [bus]

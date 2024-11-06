@@ -82,11 +82,11 @@ class sgx_check(BaseModule):
         elif not self.cs.register.has_field('IA32_FEATURE_CONTROL', 'SGX_GLOBAL_EN'):
             self.logger.log_important('IA32_FEATURE_CONTROL.SGX_GLOBAL_EN not defined for platform.  Skipping module.')
         else:
-            for tid in range(self.cs.msr.get_cpu_thread_count()):
+            for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
                 status = self.helper.set_affinity(tid)
                 if status == -1:
                     self.logger.log_verbose(f'[*] Failed to set affinity to CPU{tid:d}')
-                (_, r_ebx, _, _) = self.cs.cpu.cpuid(0x07, 0x00)
+                (_, r_ebx, _, _) = self.cs.hals.CPU.cpuid(0x07, 0x00)
                 if r_ebx & BIT2:
                     self.logger.log_verbose(f'[*] CPU{tid:d}: does support SGX')
                     sgx_cpu_support = True
@@ -103,7 +103,7 @@ class sgx_check(BaseModule):
         self.logger.log('\n[*] SGX BIOS enablement check')
         self.logger.log('[*] Verifying IA32_FEATURE_CONTROL MSR is configured')
         bios_feature_control_enable = True
-        for tid in range(self.cs.msr.get_cpu_thread_count()):
+        for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
             if not (self.cs.register.read_field('IA32_FEATURE_CONTROL', 'SGX_GLOBAL_EN', False, tid) == 1):
                 bios_feature_control_enable = False
         if bios_feature_control_enable:
@@ -115,7 +115,7 @@ class sgx_check(BaseModule):
 
         self.logger.log('\n[*] Verifying IA32_FEATURE_CONTROL MSR is locked')
         locked = True
-        for tid in range(self.cs.msr.get_cpu_thread_count()):
+        for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
             feature_cntl_lock = self.cs.control.get('Ia32FeatureControlLock', tid)
             self.logger.log_verbose(f'[*] cpu{tid:d}: IA32_Feature_Control Lock = {feature_cntl_lock:d}')
             if 0 == feature_cntl_lock:
@@ -129,7 +129,7 @@ class sgx_check(BaseModule):
 
         self.logger.log('\n[*] Verifying if Protected Memory Range (PRMRR) is configured')
         prmrr_enable = False
-        for tid in range(self.cs.msr.get_cpu_thread_count()):
+        for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
             mtrrcap = self.cs.register.read_field('MTRRCAP', 'PRMRR', False, tid)
             if mtrrcap == 0:
                 self.logger.log_verbose(f'[*] CPU{tid:d} Protected Memory Range configuration is not supported')
@@ -160,11 +160,11 @@ class sgx_check(BaseModule):
             sgx1_instr_support = False
             sgx2_instr_support = False
             self.logger.log('\n[*] Verifying if SGX instructions are supported')
-            for tid in range(self.cs.msr.get_cpu_thread_count()):
+            for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
                 status = self.helper.set_affinity(tid)
                 if status == -1:
                     self.logger.log_verbose(f'[*] Failed to set affinity to CPU{tid:d}')
-                (r_eax, _, _, _) = self.cs.cpu.cpuid(0x012, 0x00)
+                (r_eax, _, _, _) = self.cs.hals.CPU.cpuid(0x012, 0x00)
                 if r_eax & BIT0:
                     self.logger.log_verbose(f'[*] CPU{tid:d} SGX-1 instructions are supported')
                     sgx1_instr_support = True
@@ -357,7 +357,7 @@ class sgx_check(BaseModule):
             self.uniform = True
             self.locked = True
             self.check_uncore_vals = self.cs.register.is_defined('PRMRR_UNCORE_PHYBASE') and self.cs.register.is_defined('PRMRR_UNCORE_MASK')
-            for tid in range(self.cs.msr.get_cpu_thread_count()):
+            for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
                 self.valid_config_new = self.cs.register.read('PRMRR_VALID_CONFIG', tid)
                 self.base_new = self.cs.register.read_field('PRMRR_PHYBASE', 'PRMRR_base_address_fields', False, tid)
                 self.base_memtype_new = self.cs.register.read_field('PRMRR_PHYBASE', 'PRMRR_MEMTYPE', False, tid)

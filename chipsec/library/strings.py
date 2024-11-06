@@ -48,3 +48,7 @@ def is_printable(seq: AnyStr) -> bool:
 
 def is_hex(maybe_hex: Iterable) -> bool:
     return all(char in string.hexdigits for char in maybe_hex)
+
+def make_hex_key_str(int_val: int):
+        str_val = f'{int_val:04X}'
+        return str_val

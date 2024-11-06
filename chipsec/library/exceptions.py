@@ -67,6 +67,12 @@ class CSReadError(RuntimeError):
 # ================================================
 
 
+class HALNotFoundError (RuntimeError):
+    pass
+
+class HALInitializationError (RuntimeError):
+    pass
+
 class AcpiRuntimeError (RuntimeError):
     pass
 

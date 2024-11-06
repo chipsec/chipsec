@@ -102,9 +102,9 @@ import struct
 from chipsec.module_common import BaseModule
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.logger import print_buffer_bytes
-from chipsec.hal.uefi import UEFI
-from chipsec.hal.uefi_common import S3BootScriptOpcode, script_width_values, script_width_formats, op_io_pci_mem, op_dispatch
-from chipsec.hal.uefi_platform import encode_s3bootscript_entry, id_s3bootscript_type, create_s3bootscript_entry_buffer
+from chipsec.hal.common.uefi import UEFI
+from chipsec.hal.common.uefi_common import S3BootScriptOpcode, script_width_values, script_width_formats, op_io_pci_mem, op_dispatch
+from chipsec.hal.common.uefi_platform import encode_s3bootscript_entry, id_s3bootscript_type, create_s3bootscript_entry_buffer
 
 ########################################################################################################
 #
@@ -200,7 +200,7 @@ class s3script_modify(BaseModule):
 
     def modify_s3_dispatch(self):
         ep_size = len(self.DISPATCH_ENTRYPOINT_INSTR)
-        (smram_base, _, _) = self.cs.cpu.get_SMRAM()
+        (smram_base, _, _) = self.cs.hals.CPU.get_SMRAM()
         (_, new_entrypoint) = self.cs.mem.alloc_physical_mem(ep_size, smram_base)
         self.cs.mem.write_physical_mem(new_entrypoint, ep_size, self.DISPATCH_ENTRYPOINT_INSTR)
         new_ep = self.cs.mem.read_physical_mem(new_entrypoint, ep_size)
@@ -272,7 +272,7 @@ class s3script_modify(BaseModule):
 
     def modify_s3_mem(self, address, new_value):
         if address is None:
-            (smram_base, _, _) = self.cs.cpu.get_SMRAM()
+            (smram_base, _, _) = self.cs.hals.CPU.get_SMRAM()
             (_, address) = self.cs.mem.alloc_physical_mem(0x1000, smram_base)
             self.logger.log(f'[*] Allocated memory at 0x{address:016X} as a target of MEM_WRITE opcode')
 
@@ -406,7 +406,7 @@ class s3script_modify(BaseModule):
                     return self.result.getReturnCode(ModuleResult.ERROR)
             elif 'dispatch' == scmd:
                 if len(module_argv) < 3:
-                    (smram_base, _, _) = self.cs.cpu.get_SMRAM()
+                    (smram_base, _, _) = self.cs.hals.CPU.get_SMRAM()
                     (_, entrypoint) = self.cs.mem.alloc_physical_mem(0x1000, smram_base)
                     self.cs.mem.write_physical_mem(entrypoint, len(self.DISPATCH_ENTRYPOINT_INSTR), self.DISPATCH_ENTRYPOINT_INSTR)
                 else:

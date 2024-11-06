@@ -30,7 +30,7 @@ Examples:
 
 from chipsec.command import BaseCommand, toLoad
 from chipsec.library.file import read_file
-from chipsec.hal.ucode import dump_ucode_update_header
+from chipsec.hal.common.ucode import dump_ucode_update_header
 from argparse import ArgumentParser
 
 # ###################################################################
@@ -63,7 +63,7 @@ class UCodeCommand(BaseCommand):
 
     def ucode_id(self):
         if self.cpu_thread_id is None:
-            for tid in range(self.cs.msr.get_cpu_thread_count()):
+            for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
                 ucode_update_id = self.cs.ucode.ucode_update_id(tid)
                 self.logger.log("[CHIPSEC] CPU{:d}: Microcode update ID = 0x{:08X}".format(tid, ucode_update_id))
         else:

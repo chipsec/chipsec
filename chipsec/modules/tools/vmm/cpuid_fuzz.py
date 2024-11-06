@@ -109,13 +109,13 @@ class cpuid_fuzz (BaseModule):
                 self.logger.log(f'[*] CPUID EAX: 0x{eax:08X}')
                 if _FUZZ_ECX_RANDOM:
                     ecx = random.randint(0, 0xFFFFFFFF)
-                    (r_eax, r_ebx, r_ecx, r_edx) = self.cs.cpu.cpuid(eax, ecx)
+                    (r_eax, r_ebx, r_ecx, r_edx) = self.cs.hals.CPU.cpuid(eax, ecx)
                 else:
                     for ecx in range(_MAX_ECX):
                         self.logger.log(f'  > ECX: 0x{ecx:08X}')
                         if _FLUSH_LOG_EACH_ITER:
                             self.logger.flush()
-                        (r_eax, r_ebx, r_ecx, r_edx) = self.cs.cpu.cpuid(eax, ecx)
+                        (r_eax, r_ebx, r_ecx, r_edx) = self.cs.hals.CPU.cpuid(eax, ecx)
                         if _LOG_OUT_RESULTS:
                             self.logger.log(f'    Out: EAX=0x{r_eax:08X}, EBX=0x{r_ebx:08X}, ECX=0x{r_ecx:08X}, EDX=0x{r_edx:08X}')
             it += 1

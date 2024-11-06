@@ -30,7 +30,7 @@ usage:
 import struct
 from typing import Dict, List, Optional, Tuple
 from chipsec.library.logger import logger, print_buffer_bytes
-from chipsec.hal import spi
+from chipsec.hal.common import spi
 
 SPI_FLASH_DESCRIPTOR_SIGNATURE = struct.pack('=I', 0x0FF0A55A)
 SPI_FLASH_DESCRIPTOR_SIZE = 0x1000

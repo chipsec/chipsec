@@ -32,7 +32,7 @@ Examples:
 from argparse import ArgumentParser
 
 from chipsec.command import BaseCommand, toLoad
-from chipsec.hal.cmos import CMOS
+from chipsec.hal.common.cmos import CMOS
 
 
 class CMOSCommand(BaseCommand):

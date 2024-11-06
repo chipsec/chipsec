@@ -44,8 +44,8 @@ from chipsec.module_common import BaseModule
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.defines import BOUNDARY_4GB
 from chipsec.library.file import write_file
-from chipsec.hal.pci import PCI_HDR_BAR_STEP, PCI_HDR_BAR_BASE_MASK_MMIO64, PCI_HDR_BAR_CFGBITS_MASK
-from chipsec.hal.interrupts import Interrupts
+from chipsec.hal.common.pci import PCI_HDR_BAR_STEP, PCI_HDR_BAR_BASE_MASK_MMIO64, PCI_HDR_BAR_CFGBITS_MASK
+from chipsec.hal.common.interrupts import Interrupts
 
 #################################################################
 # Testing configuration
@@ -143,10 +143,10 @@ class rogue_mmio_bar(BaseModule):
     def modify_bar(self, b, d, f, off, is64bit, bar, new_bar):
         # Modify MMIO BAR address
         if is64bit:
-            self.cs.pci.write_dword(b, d, f, off + PCI_HDR_BAR_STEP, ((new_bar >> 32) & 0xFFFFFFFF))
-        self.cs.pci.write_dword(b, d, f, off, (new_bar & 0xFFFFFFFF))
+            self.cs.hals.Pci.write_dword(b, d, f, off + PCI_HDR_BAR_STEP, ((new_bar >> 32) & 0xFFFFFFFF))
+        self.cs.hals.Pci.write_dword(b, d, f, off, (new_bar & 0xFFFFFFFF))
         # Check that the MMIO BAR has been modified correctly. Restore original and skip if not
-        l = self.cs.pci.read_dword(b, d, f, off)
+        l = self.cs.hals.Pci.read_dword(b, d, f, off)
         if l != (new_bar & 0xFFFFFFFF):
             self.restore_bar(b, d, f, off, is64bit, bar)
             self.logger.log(f'  skipping ({l:X} != {new_bar:X})')
@@ -156,8 +156,8 @@ class rogue_mmio_bar(BaseModule):
 
     def restore_bar(self, b, d, f, off, is64bit, bar):
         if is64bit:
-            self.cs.pci.write_dword(b, d, f, off + PCI_HDR_BAR_STEP, ((bar >> 32) & 0xFFFFFFFF))
-        self.cs.pci.write_dword(b, d, f, off, (bar & 0xFFFFFFFF))
+            self.cs.hals.Pci.write_dword(b, d, f, off + PCI_HDR_BAR_STEP, ((bar >> 32) & 0xFFFFFFFF))
+        self.cs.hals.Pci.write_dword(b, d, f, off, (bar & 0xFFFFFFFF))
         return True
 
     def run(self, module_argv):
@@ -179,7 +179,7 @@ class rogue_mmio_bar(BaseModule):
                 self.logger.log_error("Incorrect b:d.f format\nUsage:\nchipsec_main -m tools.smm.rogue_mmio_bar [-a <smi_start:smi_end>,<b:d.f>]")
         else:
             self.logger.log("[*] Discovering PCIe devices..")
-            pcie_devices = self.cs.pci.enumerate_devices()
+            pcie_devices = self.cs.hals.Pci.enumerate_devices()
 
         self.logger.log("[*] Testing MMIO of PCIe devices:")
         for (b, d, f, _, _, _) in pcie_devices:
@@ -202,7 +202,7 @@ class rogue_mmio_bar(BaseModule):
 
         for (b, d, f, vid, did, _) in pcie_devices:
             self.logger.log(f'[*] Enumerating device {b:02X}:{d:02X}.{f:X} MMIO BARs..')
-            device_bars = self.cs.pci.get_device_bars(b, d, f, True)
+            device_bars = self.cs.hals.Pci.get_device_bars(b, d, f, True)
             for (base, isMMIO, is64bit, bar_off, bar, size) in device_bars:
                 if isMMIO and size <= MAX_MMIO_RANGE_SIZE:
                     self.logger.flush()

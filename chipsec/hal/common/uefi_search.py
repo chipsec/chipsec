@@ -38,7 +38,7 @@ from typing import Dict, Optional, Any
 from uuid import UUID
 
 from chipsec.library import defines
-from chipsec.hal.spi_uefi import EFI_SECTION
+from chipsec.hal.common.spi_uefi import EFI_SECTION
 from chipsec.library.logger import logger
 
 #

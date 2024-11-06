@@ -25,7 +25,7 @@ Xen specific hypercall functionality
 
 import collections
 from chipsec.modules.tools.vmm.xen.define import *
-from chipsec.hal.vmm import *
+from chipsec.hal.common.vmm import *
 from chipsec.module_common import *
 from chipsec.modules.tools.vmm.common import *
 

@@ -30,7 +30,7 @@ Examples:
 
 from argparse import ArgumentParser
 from chipsec.command import BaseCommand, toLoad
-from chipsec.hal.smbios import SMBIOS
+from chipsec.hal.common.smbios import SMBIOS
 from chipsec.library.logger import print_buffer_bytes
 from chipsec.library.options import Options
 

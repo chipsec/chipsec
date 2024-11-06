@@ -70,7 +70,7 @@ class memlock(BaseModule):
     def check_MSR_LT_LOCK_MEMORY(self) -> bool:
         self.logger.log('[*] Checking MSR_LT_LOCK_MEMORY status')
         status = False
-        for tid in range(self.cs.msr.get_cpu_thread_count()):
+        for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
             lt_lock_msr = 0
             try:
                 lt_lock_msr = self.cs.register.read('MSR_LT_LOCK_MEMORY', tid)
