@@ -38,11 +38,14 @@ class Hals:
     def __init__(self, cs):
         self.cs = cs
         self.hals_import_location = "chipsec.hal."
-        self._avaliable_hals = []
-        self.update_avaliable_hals() #['mem', 'msr', 'ucode', 'io', 'cpu', 'msgbus', 'mmio', 'iobar', 'igd']
+        self._available_hals = []
+        self.update_available_hals() #['mem', 'msr', 'ucode', 'io', 'cpu', 'msgbus', 'mmio', 'iobar', 'igd']
 
-    def avaliable_hals(self) -> str:
-        return ', '.join([i['Name'] for i in self._avaliable_hals]) #not tested.
+    def available_hals(self) -> str:
+        a_hals = []
+        for i in self._available_hals:
+            a_hals += i['name']
+        return a_hals
 
     def __getattr__(self, name):
         best_hal = self.find_best_hal_by_name(name)
@@ -56,7 +59,7 @@ class Hals:
     def find_best_hal_by_name(self, name:str) -> Any:
         # hal_path = f'{self.hals_import_location}{name}'
         selected_hals = []
-        for hal in self._avaliable_hals:
+        for hal in self._available_hals:
             if name in hal['name'] and make_hex_key_str(self.cs.Cfg.vid) in [arch.upper() for arch in hal['arch']]:
                 hal['priority'] = 1
                 selected_hals.append(hal)
@@ -70,7 +73,7 @@ class Hals:
         return sorted(selected_hals, key=lambda x: x['priority'])[0]
 
 
-    def update_avaliable_hals(self) -> Dict[str, Any]:
+    def update_available_hals(self) -> Dict[str, Any]:
         """Determine available HAL modules"""
         hal_base_dir = os.path.join(get_main_dir(), "chipsec", "hal")
         hal_dirs = [f.name for f in os.scandir(hal_base_dir) if f.is_dir() and '__' not in f.name]
@@ -95,7 +98,7 @@ class Hals:
             except AttributeError as err:
                 logger().log_error(f"HAL {hal} has not been updated with 'haldata' attribute: '{str(err)}'")
                 continue
-        self._avaliable_hals = halsdata
+        self._available_hals = halsdata
 
 
 
