@@ -168,11 +168,11 @@ LOCALITY: Dict[str, int] = {
 }
 
 COMMANDS: Dict[str, Callable] = {
-    "pcrread": chipsec.hal.tpm12_commands.pcrread,
-    "nvread": chipsec.hal.tpm12_commands.nvread,
-    "startup": chipsec.hal.tpm12_commands.startup,
-    "continueselftest": chipsec.hal.tpm12_commands.continueselftest,
-    "forceclear": chipsec.hal.tpm12_commands.forceclear
+    "pcrread": chipsec.hal.common.tpm12_commands.pcrread,
+    "nvread": chipsec.hal.common.tpm12_commands.nvread,
+    "startup": chipsec.hal.common.tpm12_commands.startup,
+    "continueselftest": chipsec.hal.common.tpm12_commands.continueselftest,
+    "forceclear": chipsec.hal.common.tpm12_commands.forceclear
 }
 
 
