@@ -36,7 +36,7 @@ import re
 
 from chipsec.command import BaseCommand, toLoad
 from chipsec.hal.common.vmm import VMM, get_virtio_devices, VirtIO_Device
-from chipsec.hal.common.pci import print_pci_devices
+from chipsec.library.pci import PCI as pcilib
 from chipsec.library.exceptions import VMMRuntimeError
 from argparse import ArgumentParser
 
@@ -98,7 +98,7 @@ class VMMCommand(BaseCommand):
 
         if len(virt_dev) > 0:
             self.logger.log("[CHIPSEC] Available VirtIO devices:")
-            print_pci_devices(virt_dev)
+            pcilib.print_pci_devices(virt_dev)
             for (b, d, f, vid, did, rid) in virt_dev:
                 VirtIO_Device(self.cs, b, d, f).dump_device()
         else:
