@@ -255,3 +255,6 @@ class CPU(hal_base.HALBase):
             cr3 = self.read_cr(tid, 3)
             logger().log_hal(f'[cpu{tid:d}] found paging hierarchy base (CR3): 0x{cr3:08X}')
             self.dump_page_tables(cr3)
+
+
+haldata = {"arch":['1022'], 'name': ['CPU']}

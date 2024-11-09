@@ -24,7 +24,7 @@
 import time
 from chipsec.library.logger import logger
 
-class PSP:
+class PSP: #TODO: Derive from HALBase
     SMN_INDEX_ADDR = 0xb8
     SMN_DATA_ADDR = 0xbc
     SMU_PSP_SMN_BASE = 0x3800000
@@ -110,3 +110,6 @@ class PSP:
             return hsti_buffer[2] 
         else:
             return 0 
+
+
+haldata = {"arch":['1022'], 'name': ['PSP']}

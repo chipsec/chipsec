@@ -809,3 +809,6 @@ class SPI(hal_base.HALBase):
         part = JEDEC_ID.DEVICE.get(jedec_id, 'Unknown')
 
         return (jedec_id, manu, part)
+
+
+haldata = {"arch":['FFFF'], 'name': ['SPI']}

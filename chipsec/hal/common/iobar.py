@@ -203,3 +203,6 @@ class IOBAR(hal_base.HALBase):
         for i in range(n):
             reg = self.cs.io._read_port(range_base + i * size, size)
             logger().log(f'{size * i:+04X}: {reg:{fmt}}')
+
+
+haldata = {"arch":['FFFF'], 'name': ['IOBAR']}

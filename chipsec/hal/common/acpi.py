@@ -541,3 +541,6 @@ class ACPI(HALBase):
                 table = (ACPI_TABLES[signature])()
             table.parse(contents)
         return table
+
+
+haldata = {"arch":['FFFF'], 'name': ['ACPI']}

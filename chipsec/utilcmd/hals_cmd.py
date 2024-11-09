@@ -52,14 +52,14 @@ class HALsCommand(BaseCommand):
         parser_list = subparsers.add_parser('list')
         parser_list.set_defaults(func=self.hals_list)
         parser_halfuncs = subparsers.add_parser('funcs')
-        parser_halfuncs.add_argument('hal_name', help='Name of the helper you want to get the function list from', choices=self.cs.hals.available_hals())
+        parser_halfuncs.add_argument('hal_name', help='Name of the helper you want to get the function list from', choices=sorted(self.cs.hals.available_hals()))
         parser_halfuncs.set_defaults(func=self.list_hal_functions)
 
         parser.parse_args(self.argv, namespace=HALsCommand)
 
     def hals_list(self) -> None:
         self.logger.log("[CHIPSEC] List of HALs:")
-        self.logger.log_heading(', '.join(self.cs.hals.available_hals()))
+        self.logger.log_heading(', '.join(sorted(self.cs.hals.available_hals())))
 
     def list_hal_functions(self) -> None:
         self.logger.log(f'[CHIPSEC] List of functions in {self.hal_name}:')

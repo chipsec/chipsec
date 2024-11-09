@@ -83,7 +83,7 @@ def read_ucode_file(ucode_filename: str) -> bytes:
         return ucode_buf
 
 
-class Ucode:
+class Ucode: #TODO Refactor and have it derive from halbase
     def __init__(self, cs):
         self.helper = cs.helper
         self.cs = cs

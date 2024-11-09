@@ -676,3 +676,6 @@ class UEFI(hal_base.HALBase):
                 print_buffer_bytes(table_buf)
             logger().log(str(hdr))
             logger().log(str(table))
+
+
+haldata = {"arch":['FFFF'], 'name': ['UEFI']}

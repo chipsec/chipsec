@@ -179,3 +179,6 @@ class EC(hal_base.HALBase):
         self.cs.io.write_port_byte(IO_PORT_EC_INDEX_ADDRH, (offset >> 8) & 0xFF)
         self.cs.io.write_port_byte(IO_PORT_EC_INDEX_DATA, value & 0xFF)
         return True
+
+
+haldata = {"arch":['FFFF'], 'name': ['EC']}

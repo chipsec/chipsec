@@ -204,3 +204,6 @@ class MsgBus(hal_base.HALBase):
         if self.cs.register.is_defined('P2SBC') and was_hidden:
             self.__hide_p2sb(True)
         return reg_val
+
+
+haldata = {"arch":['FFFF'], 'name': ['MsgBus']}

@@ -234,3 +234,6 @@ class SMBus(hal_base.HALBase):
             self.write_byte(target_address, start_offset + i, b)
         self.logger.log_hal(f'[smbus] writing {size:d} bytes to device 0x{target_address:X} at offset {start_offset:X}')
         return True
+
+
+haldata = {"arch":['FFFF'], 'name': ['SMBus']}
