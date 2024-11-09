@@ -34,7 +34,7 @@ from chipsec.library.logger import logger, pretty_print_hex_buffer
 import chipsec.library.pcidb
 
 
-class VMM:
+class VMM: #TODO: Refactor and make it derive from HALBase
 
     def __init__(self, cs):
         self.cs = cs

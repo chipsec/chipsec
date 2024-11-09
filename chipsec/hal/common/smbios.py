@@ -511,3 +511,6 @@ class SMBIOS(hal_base.HALBase):
             ret_val.append(decode_object)
 
         return ret_val
+
+
+haldata = {"arch":['FFFF'], 'name': ['SMBIOS']}

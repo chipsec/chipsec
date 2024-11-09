@@ -82,7 +82,7 @@ COMPRESSION_TYPES: List[int] = [COMPRESSION_TYPE_NONE,
                                 COMPRESSION_TYPE_LZMAF86, ]
 
 
-class UEFICompression:
+class UEFICompression: #TODO: Check to see where this should live...
     decompression_oder_type1: List[int] = [COMPRESSION_TYPE_TIANO, COMPRESSION_TYPE_UEFI]
     decompression_oder_type2: List[int] = [COMPRESSION_TYPE_TIANO,
                                            COMPRESSION_TYPE_UEFI,

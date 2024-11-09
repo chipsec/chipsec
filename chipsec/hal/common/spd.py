@@ -305,7 +305,7 @@ Base Configuration and DRAM Parameters
 #
 ###############################################################################
 
-class SPD:
+class SPD: #TODO: Refactor to derive from HALBase.
     def __init__(self, smbus):
         self.smbus = smbus
 
@@ -405,3 +405,6 @@ class SPD:
 
         if spd is not None:
             logger().log(str(spd))
+
+
+haldata = {"arch":['FFFF'], 'name': ['SPD']}

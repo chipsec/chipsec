@@ -35,7 +35,7 @@ from typing import List
 from chipsec.library.logger import logger
 
 
-class PortIO:
+class PortIO: #TODO: Refactor to derive from HALBase
 
     def __init__(self, cs):
         self.helper = cs.helper
@@ -109,3 +109,6 @@ class PortIO:
         for i in range(n):
             reg = self._read_port(range_base + i * size, size)
             logger().log(f'+{size * i:04X}: {reg:{fmt}}')
+
+
+haldata = {"arch":['FFFF'], 'name': ['PortIO']}

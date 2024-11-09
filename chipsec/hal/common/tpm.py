@@ -368,3 +368,6 @@ class TPM(hal_base.HALBase):
                 max_field_len = len(field)
         for field in register['FIELDS']:
             self.logger.log(f'\t{field}{" " * (max_field_len - len(field))}: {hex(register["FIELDS"][field]["value"])}')
+
+
+haldata = {"arch":['FFFF'], 'name': ['TPM']}

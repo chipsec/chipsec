@@ -164,3 +164,6 @@ class IOMMU(hal_base.HALBase):
         ics_reg = self.cs.register.read(f'{vtd}_ICS')
         self.cs.register.print(f'{vtd}_ICS', ics_reg)
         return None
+
+
+haldata = {"arch":['FFFF'], 'name': ['IOMMU']}

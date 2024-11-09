@@ -119,3 +119,6 @@ class VirtMemory(hal_base.HALBase):
         ret = self.helper.free_phys_mem(pa)
         logger().log_hal(f'[mem] Deallocated : VA = 0x{virt_address:016X}')
         return ret == 1
+
+
+haldata = {"arch":['FFFF'], 'name': ['VirtMemory']}

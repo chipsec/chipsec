@@ -88,3 +88,6 @@ class CMOS(hal_base.HALBase):
         chipsec.library.logger.pretty_print_hex_buffer(self.dump_low())
         self.logger.log("\nHigh CMOS memory contents:")
         chipsec.library.logger.pretty_print_hex_buffer(self.dump_high())
+
+
+haldata = {"arch":['FFFF'], 'name': ['CMOS']}

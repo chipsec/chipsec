@@ -585,3 +585,6 @@ ecIDs = {
     0x2D: 'Shadow Functions',
     0x2E: 'Data Object Exchange'
 }
+
+
+haldata = {"arch":['FFFF'], 'name': ['MMIO']}

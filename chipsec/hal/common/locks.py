@@ -34,7 +34,7 @@ class LockResult:
     INCONSISTENT = bit(4)  # all lock results do not match
 
 
-class locks(HALBase):
+class Locks(HALBase):
     def __init__(self, cs):
         super(locks, self).__init__(cs)
 
@@ -74,3 +74,7 @@ class locks(HALBase):
             if all(locked == elem for elem in lock_setting):
                 res |= LockResult.LOCKED
         return res
+
+
+
+haldata = {"arch":['FFFF'], 'name': ['Locks']}

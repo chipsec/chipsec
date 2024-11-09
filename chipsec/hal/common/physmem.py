@@ -177,3 +177,6 @@ class Memory(HALBase):
         if vid in self.cs.Cfg.MEMORY_RANGES and range in self.cs.Cfg.MEMORY_RANGES[vid]:
             return self.cs.Cfg.MEMORY_RANGES[vid][range]
         return None
+
+
+haldata = {"arch":['FFFF'], 'name': ['Memory']}

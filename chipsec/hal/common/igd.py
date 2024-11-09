@@ -221,3 +221,6 @@ class IGD(hal_base.HALBase):
         self.write_GGTT_PTE(pte_num, pte_orig)
 
         return buffer
+
+
+haldata = {"arch":['FFFF'], 'name': ['IGD']}
