@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -e
+
+# Sign chipsec kernel module
+$(find ${BUILDROOT}/usr/src/kernels -maxdepth 3 -name sign-file) sha256 ${SRCDIR}/mkosi/mkosi.{key,crt} $(find ${BUILDROOT}/usr/local -name "chipsec.ko")
+
+sbsign --key ${SRCDIR}/mkosi/mkosi.key --cert ${SRCDIR}/mkosi/mkosi.crt ${BUILDROOT}/efi/EFI/Tools/Shell.efi
+mv ${BUILDROOT}/efi/EFI/Tools/Shell.efi.signed ${BUILDROOT}/efi/EFI/Tools/Shell.efi
+
+sbsign --key ${SRCDIR}/mkosi/mkosi.key --cert ${SRCDIR}/mkosi/mkosi.crt ${BUILDROOT}/efi/EFI/Tools/Python.efi
+mv ${BUILDROOT}/efi/EFI/Tools/Python.efi.signed ${BUILDROOT}/efi/EFI/Tools/Python.efi
+
