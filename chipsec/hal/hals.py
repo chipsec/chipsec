@@ -41,11 +41,24 @@ class Hals:
         self._available_hals = []
         self.update_available_hals() #['mem', 'msr', 'ucode', 'io', 'cpu', 'msgbus', 'mmio', 'iobar', 'igd']
 
-    def available_hals(self) -> str:
+    def available_hals(self) -> list:
         a_hals = []
         for i in self._available_hals:
             a_hals += i['name']
         return a_hals
+    
+    def list_loadable_hals(self) -> list:
+        breakpoint()
+        loadable_list = []
+        if not self._available_hals:
+            self.update_available_hals()
+        for halobjs in self._available_hals:
+            for hal in halobjs['name']:
+                try:
+                    loadable_list.append(self.find_best_hal_by_name(hal))
+                except HALNotFoundError:
+                    continue
+        return loadable_list
 
     def __getattr__(self, name):
         best_hal = self.find_best_hal_by_name(name)
@@ -63,7 +76,7 @@ class Hals:
             if name in hal['name'] and make_hex_key_str(self.cs.Cfg.vid) in [arch.upper() for arch in hal['arch']]:
                 hal['priority'] = 1
                 selected_hals.append(hal)
-            elif name in hal['name'] and 'FFFF' in hal['arch'].upper():
+            elif name in hal['name'] and 'FFFF' in [h.upper() for h in hal['arch']]:
                 hal['priority'] = 2 
                 selected_hals.append(hal)
 

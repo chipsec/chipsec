@@ -21,11 +21,13 @@
 """
 Requires the Driver. Lists all available HALs (Hardware Abstraction Layers). 
 >>> chipsec_util hals list
+>>> chipsec_util hals listloadable
 >>> chipsec_util hals funcs <hal_name>
 
 Examples:
 
 >>> chipsec_util hals list
+>>> chipsec_util hals listloadable
 >>> chipsec_util hals funcs Pci
 """
 
@@ -51,6 +53,8 @@ class HALsCommand(BaseCommand):
         subparsers = parser.add_subparsers()
         parser_list = subparsers.add_parser('list')
         parser_list.set_defaults(func=self.hals_list)
+        parser_listloadable = subparsers.add_parser('listloadable')
+        parser_listloadable.set_defaults(func=self.hals_list_loadable)
         parser_halfuncs = subparsers.add_parser('funcs')
         parser_halfuncs.add_argument('hal_name', help='Name of the helper you want to get the function list from', choices=sorted(self.cs.hals.available_hals()))
         parser_halfuncs.set_defaults(func=self.list_hal_functions)
@@ -60,6 +64,14 @@ class HALsCommand(BaseCommand):
     def hals_list(self) -> None:
         self.logger.log("[CHIPSEC] List of HALs:")
         self.logger.log_heading(', '.join(sorted(self.cs.hals.available_hals())))
+    
+    def hals_list_loadable(self) -> None:
+        hal_list = self.cs.hals.list_loadable_hals()
+        hal_name_list = []
+        for hal in hal_list:
+            hal_name_list += hal['name']
+        self.logger.log("[CHIPSEC] List of loadable HALs:")
+        self.logger.log_heading(', '.join(sorted(hal_name_list)))
 
     def list_hal_functions(self) -> None:
         self.logger.log(f'[CHIPSEC] List of functions in {self.hal_name}:')
