@@ -23,10 +23,14 @@ Common include file for modules
 
 """
 
+import os
+import json
 from enum import Enum
 from chipsec.library.defines import bit, is_set
+from chipsec.library.file import get_main_dir
 from chipsec.library.logger import logger
 from hashlib import sha256
+from typing import Dict
 
 
 class ReturnCode:
@@ -88,7 +92,7 @@ class ReturnCode:
         self.setTestID()
         self.printLogOutput()
 
-    def resetReturnCodeValues(self):
+    def resetReturnCodeValues(self) -> None:
         self.id = 0x0
         self._result = 0x00000000
         self._return_code = self.status.SUCCESS.value[0]
@@ -102,6 +106,12 @@ class ReturnCode:
         self.resetReturnCodeValues()
         return ret_value
 
+
+
+def get_module_ids_dictionary() -> Dict[str, str]:
+    with open(os.path.join(get_main_dir(), 'chipsec', 'library', 'module_ids.json'), 'r') as module_ids_file:
+        module_ids = json.loads(module_ids_file.read())
+    return module_ids
 
 def generate_hash_id(className: str) -> int:
     generated_id = sha256(className.encode("utf-8")).hexdigest()[:7]
