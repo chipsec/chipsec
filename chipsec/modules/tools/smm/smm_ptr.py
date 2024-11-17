@@ -83,6 +83,7 @@ import struct
 import os
 import sys
 import time
+import math
 
 from chipsec.module_common import BaseModule
 from chipsec.library.returncode import ModuleResult
@@ -145,12 +146,12 @@ MAX_PTR_OFFSET_IN_BUFFER = 0x20
 # very obscure option, don't even try to understand
 GPR_2ADDR = False
 
-# Defines the time percentage increase at which the SMI call is considered to
-# be long-running
-OUTLIER_THRESHOLD = 33.3
+# Defines the threshold in standard deviations at which the SMI call is
+# considered long-running
+OUTLIER_STD_DEV = 2
 
-# Scan mode delay before retry
-SCAN_MODE_RETRY_DELAY = 0.01
+# Number of samples used for initial calibration
+SCAN_CALIB_SAMPLES = 50
 
 # SMI count MSR
 MSR_SMI_COUNT = 0x00000034
@@ -207,6 +208,12 @@ class scan_track:
         self.helper = OsHelper().get_default_helper()
         self.helper.init()
         self.smi_count = self.get_smi_count()
+        self.needs_calibration = True
+        self.calib_samples = 0
+        self.stdev = 0
+        self.m2 = 0
+        self.stdev_hist = 0
+        self.m2_hist = 0
 
     def __del__(self):
         self.helper.close()
@@ -254,6 +261,10 @@ class scan_track:
         self.outliers = 0
         self.code = None
         self.confirmed = False
+        self.needs_calibration = True
+        self.calib_samples = 0
+        self.stdev = 0
+        self.m2 = 0
 
     def add(self, duration, code, data, gprs, confirmed=False):
         if not self.code:
@@ -262,6 +273,7 @@ class scan_track:
         if not outlier:
             self.acc_smi_duration += duration
             self.acc_smi_num += 1
+            self.update_stdev(duration)
             if duration > self.max.duration:
                 self.max.update(duration, code, data, gprs.copy())
             elif duration < self.min.duration:
@@ -281,24 +293,49 @@ class scan_track:
             self.acc_smi_duration = 0
             self.acc_smi_num = 0
 
+    #
+    # Computes the standard deviation using the Welford's online algorithm
+    #
+    def update_stdev(self, value):
+        difference = value - self.avg_smi_duration
+        difference_hist = value - self.hist_smi_duration
+        self.avg()
+        self.m2 += difference * (value - self.avg_smi_duration)
+        self.m2_hist += difference_hist * (value - self.hist_smi_duration)
+        variance = self.m2 / self.avg_smi_num
+        variance_hist = self.m2_hist / self.hist_smi_num
+        self.stdev = math.sqrt(variance)
+        self.stdev_hist = math.sqrt(variance_hist)
+
+    def update_calibration(self, duration):
+        if not self.needs_calibration:
+            return
+        self.acc_smi_duration += duration
+        self.acc_smi_num += 1
+        self.update_stdev(duration)
+        self.calib_samples += 1
+        if self.calib_samples >= SCAN_CALIB_SAMPLES:
+            self.needs_calibration = False
+
     def is_slow_outlier(self, value):
         ret = False
-        if self.avg_smi_duration and value > self.avg_smi_duration * (1 + OUTLIER_THRESHOLD / 100):
+        if value > self.avg_smi_duration + OUTLIER_STD_DEV * self.stdev:
             ret = True
-        if self.hist_smi_duration and value > self.hist_smi_duration * (1 + OUTLIER_THRESHOLD / 100):
+        if value > self.hist_smi_duration + OUTLIER_STD_DEV * self.stdev_hist:
             ret = True
         return ret
 
     def is_fast_outlier(self, value):
         ret = False
-        if self.avg_smi_duration and value < self.avg_smi_duration * (1 - OUTLIER_THRESHOLD / 100):
+        if value < self.avg_smi_duration - OUTLIER_STD_DEV * self.stdev:
             ret = True
-        if self.hist_smi_duration and value < self.hist_smi_duration * (1 - OUTLIER_THRESHOLD / 100):
+        if value < self.hist_smi_duration - OUTLIER_STD_DEV * self.stdev_hist:
             ret = True
         return ret
 
     def is_outlier(self, value):
-        self.avg()
+        if self.needs_calibration:
+            return False
         ret = False
         if self.is_slow_outlier(value):
             ret = True
@@ -318,7 +355,7 @@ class scan_track:
     def get_info(self):
         self.avg()
         avg = self.avg_smi_duration or self.hist_smi_duration
-        info = f'average {round(avg)} checked {self.avg_smi_num + self.outliers}'
+        info = f'average {round(avg)} stddev {self.stdev:.2f} checked {self.avg_smi_num + self.outliers}'
         if self.outliers:
             info += f'\n    Identified outlier: {self.outlier.get_info()}'
         return info
@@ -501,13 +538,17 @@ class smm_ptr(BaseModule):
         else:
             while True:
                 _, duration = self.send_smi_timed(thread_id, _smi_desc.smi_code, _smi_desc.smi_data, _smi_desc.name, _smi_desc.desc, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
-                if scan.valid_smi_count():
+                if not scan.valid_smi_count():
+                    continue
+                if scan.needs_calibration:
+                    scan.update_calibration(duration)
+                    continue
+                else:
                     break
             #
             # Re-do the call if it was identified as an outlier, due to periodic SMI delays
             #
             if scan.is_outlier(duration):
-                time.sleep(SCAN_MODE_RETRY_DELAY)
                 while True:
                     _, duration = self.send_smi_timed(thread_id, _smi_desc.smi_code, _smi_desc.smi_data, _smi_desc.name, _smi_desc.desc, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
                     if scan.valid_smi_count():
