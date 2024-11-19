@@ -42,6 +42,7 @@ from chipsec.parsers import BaseConfigParser
 from chipsec.parsers import Stage
 from chipsec.parsers import info_data, config_data
 from chipsec.library.display import make_dict_hex
+from chipsec.library.strings import make_hex_key_str
 
 CONFIG_TAG = 'configuration'
 
@@ -168,7 +169,7 @@ class DevConfig(BaseConfigParser):
     def _process_pci_dev(self, vid_str, dev_name, dev_attr):
         if 'did' in dev_attr:
             for did in dev_attr['did']:
-                did_str = self.cfg._make_hex_key_str(did)
+                did_str = make_hex_key_str(did)
                 if vid_str in self.cfg.CONFIG_PCI_RAW and did_str in self.cfg.CONFIG_PCI_RAW[vid_str]:
                     cfg_data = self.cfg.CONFIG_PCI_RAW[vid_str][did_str]
                     self._add_dev(vid_str, dev_name, cfg_data, dev_attr)

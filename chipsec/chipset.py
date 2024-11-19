@@ -71,20 +71,10 @@ class Chipset:
         self.init_hals_object()
 
     def init_hals_object(self):
-        #
-        # Initializing 'basic primitive' HAL components
-        # (HAL components directly using native OS helper functionality)
-        #
+        if hasattr(self, 'hals'):
+            delattr(self, 'hals')
         self.hals = Hals(self)
-        #
-        # All HAL components which use above 'basic primitive' HAL components
-        # should be instantiated in modules/utilcmd with an instance of chipset
-        # Examples:
-        # - initializing SPI HAL component in a module or util extension:
-        #   self.spi = SPI( self.cs )
-        #
-    def update_hals_object(self):
-        pass
+
 
     ##################################################################################
     #
@@ -175,7 +165,7 @@ class Chipset:
                     raise OsHelperError(f'Helper named {helper_name} not found in available helpers', 1)
         else:
             self.helper = self.os_helper.get_default_helper()
-        self.update_hals_object()
+        self.init_hals_object()
 
     def start_helper(self):
         try:

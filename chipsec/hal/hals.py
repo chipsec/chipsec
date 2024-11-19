@@ -48,7 +48,6 @@ class Hals:
         return a_hals
     
     def list_loadable_hals(self) -> list:
-        breakpoint()
         loadable_list = []
         if not self._available_hals:
             self.update_available_hals()

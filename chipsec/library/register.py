@@ -115,7 +115,6 @@ class Register:
                         # RegisterType.MEMORY: self._get_memory_def,
                         RegisterType.MM_MSGBUS: self._get_mmmsgbus_def,
                         RegisterType.IMA: self._get_indirect_def}
-        # breakpoint()
         return def_type_map[reg_def["type"]](reg_def, vid, dev_name)
 
     # rework any call to this function

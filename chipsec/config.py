@@ -404,8 +404,8 @@ class Cfg:
     def get_dev_from_bdf_000(self):
         for vid in self.CONFIG_PCI_RAW:
             for did in self.CONFIG_PCI_RAW[vid]:
-                if 0 in self.CONFIG_PCI_RAW[vid][did]['bus'] and self.CONFIG_PCI_RAW[vid][did]['dev'] == 0 and self.CONFIG_PCI_RAW[vid][did]['fun'] == 0:
-                    return self.CONFIG_PCI_RAW[vid][did]
+                if 0 in self.CONFIG_PCI_RAW[vid][did].cfg['bus'] and self.CONFIG_PCI_RAW[vid][did].cfg['dev'] == 0 and self.CONFIG_PCI_RAW[vid][did].cfg['fun'] == 0:
+                    return self.CONFIG_PCI_RAW[vid][did].cfg
         return {'vid': 0xFFFF, 'did': 0xFFFF, 'rid': 0xFF}
 
     def platform_detection(self, proc_code, pch_code, cpuid):
@@ -441,7 +441,7 @@ class Cfg:
             if not pch_code:
                 vid_str = make_hex_key_str(self.pch_vid)
                 did_str = make_hex_key_str(self.pch_did)
-                for cfg_data in self.CONFIG_PCI_RAW[vid_str][did_str]:
+                for cfg_data in self.CONFIG_PCI_RAW[vid_str][did_str].cfg:
                     if 0x31 == cfg_data['dev'] and 0x0 == cfg_data['fun']:
                         self.rid = cfg_data['rid']
             else:
