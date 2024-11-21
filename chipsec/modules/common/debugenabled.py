@@ -133,6 +133,12 @@ class debugenabled(BaseModule):
         if not self.is_lock_set:
             self.logger.log_important('IA32_DEBUG_INTERFACE.LOCK bit is NOT set.')
 
+        if self.cs.control.is_defined('SamplePart'):
+            if self.cs.control.get('SamplePart') == 1:
+                self.logger.log_passed('CPU is a Sample Part. Test is N/A.')
+                self.res = self.result.getReturnCode(ModuleResult.INFORMATION)
+                return self.res
+
         if (dci_test_fail == ModuleResult.FAILED) or (cpu_debug_test_fail == ModuleResult.FAILED):
             self.logger.log_failed('One or more of the debug checks have failed and a debug feature is enabled')
             self.res = self.result.getReturnCode(ModuleResult.FAILED)
