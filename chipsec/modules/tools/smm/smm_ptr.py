@@ -254,8 +254,6 @@ class scan_track:
         self.max = smi_info(0)
         self.min = smi_info(2**32 - 1)
         self.outlier = smi_info(0)
-        self.acc_smi_duration = 0
-        self.acc_smi_num = 0
         self.avg_smi_duration = 0
         self.avg_smi_num = 0
         self.outliers = 0
@@ -271,8 +269,6 @@ class scan_track:
             self.code = code
         outlier = self.is_outlier(duration)
         if not outlier:
-            self.acc_smi_duration += duration
-            self.acc_smi_num += 1
             self.update_stdev(duration)
             if duration > self.max.duration:
                 self.max.update(duration, code, data, gprs.copy())
@@ -284,22 +280,16 @@ class scan_track:
             self.outlier.update(duration, code, data, gprs.copy())
         self.confirmed = confirmed
 
-    def avg(self):
-        if self.avg_smi_num or self.acc_smi_num:
-            self.avg_smi_duration = ((self.avg_smi_duration * self.avg_smi_num) + self.acc_smi_duration) / (self.avg_smi_num + self.acc_smi_num)
-            self.avg_smi_num += self.acc_smi_num
-            self.hist_smi_duration = ((self.hist_smi_duration * self.hist_smi_num) + self.acc_smi_duration) / (self.hist_smi_num + self.acc_smi_num)
-            self.hist_smi_num += self.acc_smi_num
-            self.acc_smi_duration = 0
-            self.acc_smi_num = 0
-
     #
     # Computes the standard deviation using the Welford's online algorithm
     #
     def update_stdev(self, value):
+        self.avg_smi_num += 1
+        self.hist_smi_num += 1
         difference = value - self.avg_smi_duration
         difference_hist = value - self.hist_smi_duration
-        self.avg()
+        self.avg_smi_duration += difference / self.avg_smi_num
+        self.hist_smi_duration += difference_hist / self.hist_smi_num
         self.m2 += difference * (value - self.avg_smi_duration)
         self.m2_hist += difference_hist * (value - self.hist_smi_duration)
         variance = self.m2 / self.avg_smi_num
@@ -310,8 +300,6 @@ class scan_track:
     def update_calibration(self, duration):
         if not self.needs_calibration:
             return
-        self.acc_smi_duration += duration
-        self.acc_smi_num += 1
         self.update_stdev(duration)
         self.calib_samples += 1
         if self.calib_samples >= SCAN_CALIB_SAMPLES:
@@ -353,7 +341,6 @@ class scan_track:
         return self.outliers_hist
 
     def get_info(self):
-        self.avg()
         avg = self.avg_smi_duration or self.hist_smi_duration
         info = f'average {round(avg)} stddev {self.stdev:.2f} checked {self.avg_smi_num + self.outliers}'
         if self.outliers:
