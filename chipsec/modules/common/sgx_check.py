@@ -61,10 +61,12 @@ Registers used:
 
 """
 
+from typing import Tuple
 from chipsec.library.exceptions import HWAccessViolationError
 from chipsec.module_common import BaseModule, MTAG_HWCONFIG
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.defines import BIT0, BIT1, BIT2, BIT5, BIT6, BIT7, BIT8
+from chipsec.modules.common.sgx_check_helper import SGX_Check_Helper
 
 TAGS = [MTAG_HWCONFIG]
 
@@ -205,6 +207,19 @@ class sgx_check(BaseModule):
             self.cs.register.print('BIOS_SE_SVN', self.cs.register.read('BIOS_SE_SVN'))
             self.cs.register.print('BIOS_SE_SVN_STATUS', self.cs.register.read('BIOS_SE_SVN_STATUS'))
 
+        debug_res, debug_result = self.check_debug()
+        if self.cs.control.is_defined('SamplePart') and self.cs.control.get('SamplePart') == 0:
+            self.logger.log_passed('CPU is a Sample Part. Test is N/A.')
+        else:
+            self.res = debug_res
+            if debug_result is not None:
+                self.result.setStatusBit(debug_result)
+
+        return self.res
+
+    def check_debug(self) -> Tuple:
+        debug_res = self.res
+        debug_result = None
         self.logger.log('\n[*] Check SGX debug feature settings')
         sgx_debug_status = self.cs.register.read_field('SGX_DEBUG_MODE', 'SGX_DEBUG_MODE_STATUS_BIT')
         self.logger.log(f'[*] SGX Debug Enable             : {sgx_debug_status:d}')
@@ -218,28 +233,27 @@ class sgx_check(BaseModule):
 
         if sgx_debug_status == 1:
             self.logger.log_bad('SGX debug mode is enabled')
-            self.res = ModuleResult.FAILED
-            self.result.setStatusBit(self.result.status.DEBUG_FEATURE)
+            debug_res = ModuleResult.FAILED
+            debug_result = self.result.status.DEBUG_FEATURE
         else:
             self.logger.log_good('SGX debug mode is disabled')
         if debug_enable == 0:
             self.logger.log_good('Silicon debug features are disabled')
         else:
             self.logger.log_bad('Silicon debug features are not disabled')
-            self.res = ModuleResult.FAILED
-            self.result.setStatusBit(self.result.status.DEBUG_FEATURE)
+            debug_res = ModuleResult.FAILED
+            debug_result = self.result.status.DEBUG_FEATURE
         if (0 == debug_enable) and (1 == sgx_debug_status):
             self.logger.log_bad('Enabling sgx_debug without enabling debug mode in msr IA32_DEBUG_INTERFACE is not a valid configuration')
-            self.res = ModuleResult.FAILED
-            self.result.setStatusBit(self.result.status.CONFIGURATION)
+            debug_res = ModuleResult.FAILED
+            debug_result = self.result.status.CONFIGURATION
         if debug_lock == 1:
             self.logger.log_good('Silicon debug Feature Control register is locked')
         else:
             self.logger.log_bad('Silicon debug Feature Control register is not locked')
-            self.res = ModuleResult.FAILED
-            self.result.setStatusBit(self.result.status.LOCKS)
-
-        return self.res
+            debug_res = ModuleResult.FAILED
+            debug_result = self.result.status.LOCKS
+        return debug_res, debug_result
 
     def check_prmrr_values(self) -> None:
         if not self.prmrr:
@@ -331,6 +345,7 @@ class sgx_check(BaseModule):
             self.logger = logger
             self.cs = cs
             self.reset_variables()
+            self.sgx_helper = SGX_Check_Helper(self.cs)
 
         def reset_variables(self) -> None:
             self.valid_config = 0
@@ -358,6 +373,7 @@ class sgx_check(BaseModule):
             self.locked = True
             self.check_uncore_vals = self.cs.register.is_defined('PRMRR_UNCORE_PHYBASE') and self.cs.register.is_defined('PRMRR_UNCORE_MASK')
             for tid in range(self.cs.msr.get_cpu_thread_count()):
+                self.check_valid = self.sgx_helper.check_valid(tid)
                 self.valid_config_new = self.cs.register.read('PRMRR_VALID_CONFIG', tid)
                 self.base_new = self.cs.register.read_field('PRMRR_PHYBASE', 'PRMRR_base_address_fields', False, tid)
                 self.base_memtype_new = self.cs.register.read_field('PRMRR_PHYBASE', 'PRMRR_MEMTYPE', False, tid)
@@ -399,9 +415,9 @@ class sgx_check(BaseModule):
                     (self.base != self.base_new) or (self.mask != self.mask_new) or
                     (self.uncore_base != self.uncore_base_new) or
                     (self.uncore_mask != self.uncore_mask_new) or
-                    (self.mask_vld != self.mask_vld_new) or
                     (self.mask_lock != self.mask_lock_new) or
-                    (self.uncore_mask_vld != self.uncore_mask_vld_new) or
+                    (self.check_valid and ((self.mask_vld != self.mask_vld_new) or
+                    (self.uncore_mask_vld != self.uncore_mask_vld_new))) or
                     (self.uncore_mask_lock != self.uncore_mask_lock_new) or
                         (self.base_memtype != self.base_memtype_new)):
                     self.uniform = False
