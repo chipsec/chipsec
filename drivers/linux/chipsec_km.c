@@ -1106,6 +1106,9 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         //IN params: SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi
 #ifdef CONFIG_X86
 
+        unsigned long flags;
+        unsigned long m_time;
+        
         printk( KERN_INFO "[chipsec] > IOCTL_SWSMI_TIMED\n");
         numargs = 7;
         if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
@@ -1114,8 +1117,6 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
             break;
         }
 
-        unsigned long flags;
-        unsigned long m_time;
         preempt_disable();
         local_irq_save(flags);
         __swsmi_timed__((SMI_CTX *)ptr, &m_time);
