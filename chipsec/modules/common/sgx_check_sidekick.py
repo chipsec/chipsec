@@ -18,7 +18,7 @@
 # chipsec@intel.com
 #
 
-class SGX_Check_Helper():
+class SGX_Check_Sidekick():
     def __init__(self, cs):
         self.cs = cs
         self.sgx_global_en_defined = self.cs.register.has_field('IA32_FEATURE_CONTROL', 'SGX_GLOBAL_EN')
