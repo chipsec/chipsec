@@ -66,7 +66,7 @@ from chipsec.library.exceptions import HWAccessViolationError
 from chipsec.module_common import BaseModule, MTAG_HWCONFIG
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.defines import BIT0, BIT1, BIT2, BIT5, BIT6, BIT7, BIT8
-from chipsec.modules.common.sgx_check_helper import SGX_Check_Helper
+from chipsec.modules.common.sgx_check_sidekick import SGX_Check_Sidekick
 
 TAGS = [MTAG_HWCONFIG]
 
@@ -208,7 +208,7 @@ class sgx_check(BaseModule):
             self.cs.register.print('BIOS_SE_SVN_STATUS', self.cs.register.read('BIOS_SE_SVN_STATUS'))
 
         debug_res, debug_result = self.check_debug()
-        if self.cs.control.is_defined('SamplePart') and self.cs.control.get('SamplePart') == 0:
+        if self.cs.control.is_defined('SamplePart') and self.cs.control.get('SamplePart') == 1:
             self.logger.log_passed('CPU is a Sample Part. Test is N/A.')
         else:
             self.res = debug_res
@@ -345,7 +345,7 @@ class sgx_check(BaseModule):
             self.logger = logger
             self.cs = cs
             self.reset_variables()
-            self.sgx_helper = SGX_Check_Helper(self.cs)
+            self.sgx_helper = SGX_Check_Sidekick(self.cs)
 
         def reset_variables(self) -> None:
             self.valid_config = 0
