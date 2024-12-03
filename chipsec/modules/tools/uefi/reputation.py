@@ -25,7 +25,7 @@ from chipsec.module_common import BaseModule, MTAG_BIOS
 from chipsec.library.returncode import ModuleResult
 from chipsec.hal.common.spi_uefi import search_efi_tree, build_efi_model, EFIModuleType
 from chipsec.hal.common.uefi import UEFI
-from chipsec.hal.common.spi import SPI, BIOS
+from chipsec.hal.intel.spi import SPI, BIOS
 from chipsec.library.file import read_file
 
 try:

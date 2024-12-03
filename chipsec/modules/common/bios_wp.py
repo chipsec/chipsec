@@ -60,7 +60,7 @@ Registers used: (n = 0,1,2,3,4)
 from chipsec.library.exceptions import CSReadError
 from chipsec.module_common import BaseModule, MTAG_BIOS
 from chipsec.library.returncode import ModuleResult
-from chipsec.hal.common.spi import BIOS, SPI
+from chipsec.hal.intel.spi import BIOS, SPI
 from typing import List
 
 
@@ -83,34 +83,39 @@ class bios_wp(BaseModule):
         return False
 
     def check_BIOS_write_protection(self) -> int:
-        ble = self.cs.control.get('BiosLockEnable', with_print=True)
-        bioswe = self.cs.control.get('BiosWriteEnable')
-        smmbwp = self.cs.control.get('SmmBiosWriteProtection')
+        ble = self.cs.control.get_list_by_name('BiosLockEnable')
+        ble.read_and_print()
+        bioswe = self.cs.control.get_list_by_name('BiosWriteEnable')
+        bioswe.read_and_verbose_print()
+        smmbwp = self.cs.control.get_list_by_name('SmmBiosWriteProtection')
+        smmbwp.read_and_verbose_print()
 
-        write_protected = 0
-        if (1 == ble) and (0 == bioswe):
-            if 1 == smmbwp:
+
+        write_protected = False
+        if ble.is_all_value(1) and bioswe.is_all_value(0):
+            if smmbwp.is_all_value(1):
                 self.logger.log_good('BIOS region write protection is enabled (writes restricted to SMM)')
-                write_protected = 1
+                write_protected = True
             else:
                 self.logger.log_important('Enhanced SMM BIOS region write protection has not been enabled (SMM_BWP is not used)')
         else:
             self.logger.log_bad('BIOS region write protection is disabled!')
 
-        return write_protected == 1
+        return write_protected
 
     def check_SPI_protected_ranges(self) -> bool:
-        (bios_base, bios_limit, _) = self.spi.get_SPI_region(BIOS)
+        (bios_base, bios_limit, _) = self.cs.hals.SPI.get_SPI_region(BIOS)
         self.logger.log(f'\n[*] BIOS Region: Base = 0x{bios_base:08X}, Limit = 0x{bios_limit:08X}')
-        self.spi.display_SPI_Protected_Ranges()
+        self.cs.hals.SPI.display_SPI_Protected_Ranges()
 
         pr_cover_bios = False
         pr_partial_cover_bios = False
 
-        areas_to_protect = [(bios_base, bios_limit)]
-
-        for j in range(5):
-            (base, limit, wpe, _, _, _) = self.spi.get_SPI_Protected_Range(j)
+        # areas_to_protect = [(bios_base, bios_limit)]
+        _bus = self.cs.device.get_bus('8086.SPI')
+        for bus in _bus:
+            self.cs.hals.SPI.set_instance(bus)
+            (base, limit, wpe, _, _, _) = self.cs.hals.SPI.get_SPI_Protected_Range(j)
             if base > limit:
                 continue
             if wpe == 1:
@@ -155,7 +160,6 @@ class bios_wp(BaseModule):
     def run(self, module_argv: List[str]) -> int:
         self.logger.start_test('BIOS Region Write Protection')
         try:
-            self.spi = SPI(self.cs)
             wp = self.check_BIOS_write_protection()
             spr = self.check_SPI_protected_ranges()
         except CSReadError as err:

@@ -133,18 +133,18 @@ FREG10 = 10
 FREG11 = 11
 
 SPI_REGION: Dict[int, str] = {
-    FLASH_DESCRIPTOR: 'FREG0_FLASHD',
-    BIOS: 'FREG1_BIOS',
-    ME: 'FREG2_ME',
-    GBE: 'FREG3_GBE',
-    PLATFORM_DATA: 'FREG4_PD',
-    FREG5: 'FREG5',
-    FREG6: 'FREG6',
-    FREG7: 'FREG7',
-    EMBEDDED_CONTROLLER: 'FREG8_EC',
-    FREG9: 'FREG9',
-    FREG10: 'FREG10',
-    FREG11: 'FREG11'
+    FLASH_DESCRIPTOR: '8086.SPI.FREG0_FLASHD',
+    BIOS: '8086.SPI.FREG1_BIOS',
+    ME: '8086.SPI.FREG2_ME',
+    GBE: '8086.SPI.FREG3_GBE',
+    PLATFORM_DATA: '8086.SPI.FREG4_PD',
+    FREG5: '8086.SPI.FREG5',
+    FREG6: '8086.SPI.FREG6',
+    FREG7: '8086.SPI.FREG7',
+    EMBEDDED_CONTROLLER: '8086.SPI.FREG8_EC',
+    FREG9: '8086.SPI.FREG9',
+    FREG10: '8086.SPI.FREG10',
+    FREG11: '8086.SPI.FREG11'
 }
 
 SPI_REGION_NAMES: Dict[int, str] = {
@@ -178,60 +178,99 @@ SPI_MASTER_NAMES: Dict[int, str] = {
     MASTER_EC: 'EC'
 }
 
+SPI_FLASH_DESCRIPTOR_SIGNATURE = struct.pack('=I', 0x0FF0A55A)
+SPI_FLASH_DESCRIPTOR_SIZE = 0x1000
+
 DEFAULT_PROGRESS_MAX = 50
 
 # @TODO: DEPRECATED
 
 
-def get_SPI_region(flreg: int) -> Tuple[int, int]:
-    range_base = (flreg & PCH_RCBA_SPI_FREGx_BASE_MASK) << SPI_FLA_SHIFT
-    range_limit = ((flreg & PCH_RCBA_SPI_FREGx_LIMIT_MASK) >> 4)
-    range_limit |= SPI_FLA_PAGE_MASK
-    return (range_base, range_limit)
+# def get_SPI_region(flreg: int) -> Tuple[int, int]:
+#     range_base = (flreg & PCH_RCBA_SPI_FREGx_BASE_MASK) << SPI_FLA_SHIFT
+#     range_limit = ((flreg & PCH_RCBA_SPI_FREGx_LIMIT_MASK) >> 4)
+#     range_limit |= SPI_FLA_PAGE_MASK
+#     return (range_base, range_limit)
 
 
 class SPI(hal_base.HALBase):
 
     def __init__(self, cs):
         super(SPI, self).__init__(cs)
-        self.mmio = mmio.MMIO(cs)
-        self.rcba_spi_base = self.get_SPI_MMIO_base()
+        self.instance = 0
+        self.get_registers()
+        # self.mmio = cs.hals.MMIO
+        # self.rcba_spi_base = self.get_SPI_MMIO_base()
         # We try to map SPIBAR in the process memory, this will increase the
         # speed of MMIO access later on.
-        try:
-            self.cs.helper.map_io_space(self.rcba_spi_base, SPI_MMIO_BASE_LENGTH, 0)
-        except UnimplementedAPIError:
-            pass
+        # try:
+        #     self.cs.helper.map_io_space(self.rcba_spi_base, SPI_MMIO_BASE_LENGTH, 0)
+        # except UnimplementedAPIError:
+        #     pass
 
         # Reading definitions of SPI flash controller registers
         # which are required to send SPI cycles once for performance reasons
-        self.hsfs_off = self.cs.register.get_def("HSFS")['offset']
-        self.hsfc_off = self.cs.register.get_def("HSFC")['offset']
-        self.faddr_off = self.cs.register.get_def("FADDR")['offset']
-        self.fdata0_off = self.cs.register.get_def("FDATA0")['offset']
-        self.fdata1_off = self.cs.register.get_def("FDATA1")['offset']
-        self.fdata2_off = self.cs.register.get_def("FDATA2")['offset']
-        self.fdata3_off = self.cs.register.get_def("FDATA3")['offset']
-        self.fdata4_off = self.cs.register.get_def("FDATA4")['offset']
-        self.fdata5_off = self.cs.register.get_def("FDATA5")['offset']
-        self.fdata6_off = self.cs.register.get_def("FDATA6")['offset']
-        self.fdata7_off = self.cs.register.get_def("FDATA7")['offset']
-        self.fdata8_off = self.cs.register.get_def("FDATA8")['offset']
-        self.fdata9_off = self.cs.register.get_def("FDATA9")['offset']
-        self.fdata10_off = self.cs.register.get_def("FDATA10")['offset']
-        self.fdata11_off = self.cs.register.get_def("FDATA11")['offset']
-        self.fdata12_off = self.cs.register.get_def("FDATA12")['offset']
-        self.fdata13_off = self.cs.register.get_def("FDATA13")['offset']
-        self.fdata14_off = self.cs.register.get_def("FDATA14")['offset']
-        self.fdata15_off = self.cs.register.get_def("FDATA15")['offset']
-        self.bios_ptinx = self.cs.register.get_def("BIOS_PTINX")['offset']
-        self.bios_ptdata = self.cs.register.get_def("BIOS_PTDATA")['offset']
+    def get_registers(self) -> None:
+        self.hsfs = self.cs.register.get_list_by_name('8086.SPI.HSFS', self.instance)
+        self.hsfc = self.cs.register.get_list_by_name('8086.SPI.HSFC', self.instance)
+        self.faddr = self.cs.register.get_list_by_name('8086.SPI.FADDR', self.instance)
+        self.fdata0 = self.cs.register.get_list_by_name('8086.SPI.FDATA0', self.instance)
+        self.fdata1 = self.cs.register.get_list_by_name('8086.SPI.FDATA1', self.instance)
+        self.fdata2 = self.cs.register.get_list_by_name('8086.SPI.FDATA2', self.instance)
+        self.fdata3 = self.cs.register.get_list_by_name('8086.SPI.FDATA3', self.instance)
+        self.fdata4 = self.cs.register.get_list_by_name('8086.SPI.FDATA4', self.instance)
+        self.fdata5 = self.cs.register.get_list_by_name('8086.SPI.FDATA5', self.instance)
+        self.fdata6 = self.cs.register.get_list_by_name('8086.SPI.FDATA6', self.instance)
+        self.fdata7 = self.cs.register.get_list_by_name('8086.SPI.FDATA7', self.instance)
+        self.fdata8 = self.cs.register.get_list_by_name('8086.SPI.FDATA8', self.instance)
+        self.fdata9 = self.cs.register.get_list_by_name('8086.SPI.FDATA9', self.instance)
+        self.fdata10 = self.cs.register.get_list_by_name('8086.SPI.FDATA10', self.instance)
+        self.fdata11 = self.cs.register.get_list_by_name('8086.SPI.FDATA11', self.instance)
+        self.fdata12 = self.cs.register.get_list_by_name('8086.SPI.FDATA12', self.instance)
+        self.fdata13 = self.cs.register.get_list_by_name('8086.SPI.FDATA13', self.instance)
+        self.fdata14 = self.cs.register.get_list_by_name('8086.SPI.FDATA14', self.instance)
+        self.fdata15 = self.cs.register.get_list_by_name('8086.SPI.FDATA15', self.instance)
+        self.ptinx = self.cs.register.get_list_by_name('8086.SPI.PTINX', self.instance)
+        self.ptdata = self.cs.register.get_list_by_name('8086.SPI.PTDATA', self.instance)
+        self.fdoc = self.cs.register.get_list_by_name('8086.SPI.FDOC', self.instance)
+        self.fdod = self.cs.register.get_list_by_name('8086.SPI.FDOD', self.instance)
+        self.frap = self.cs.register.get_list_by_name('8086.SPI.FRAP', self.instance)
+        self.bfpr = self.cs.register.get_list_by_name('8086.SPI.BFPR', self.instance)
+        self.ble = self.cs.control.get_list_by_name('BiosLockEnable', self.instance)
+        self.bioswe = self.cs.control.get_list_by_name('BiosWriteEnable', self.instance)
+        self.smmbwp = self.cs.control.get_list_by_name('SmmBiosWriteProtection', self.instance)
+        self.get_SPI_MMIO_base()
+        # self.hsfs_off = self.cs.register.get_def("HSFS")['offset']
+        # self.hsfc_off = self.cs.register.get_def("HSFC")['offset']
+        # self.faddr_off = self.cs.register.get_def("FADDR")['offset']
+        # self.fdata0_off = self.cs.register.get_def("FDATA0")['offset']
+        # self.fdata1_off = self.cs.register.get_def("FDATA1")['offset']
+        # self.fdata2_off = self.cs.register.get_def("FDATA2")['offset']
+        # self.fdata3_off = self.cs.register.get_def("FDATA3")['offset']
+        # self.fdata4_off = self.cs.register.get_def("FDATA4")['offset']
+        # self.fdata5_off = self.cs.register.get_def("FDATA5")['offset']
+        # self.fdata6_off = self.cs.register.get_def("FDATA6")['offset']
+        # self.fdata7_off = self.cs.register.get_def("FDATA7")['offset']
+        # self.fdata8_off = self.cs.register.get_def("FDATA8")['offset']
+        # self.fdata9_off = self.cs.register.get_def("FDATA9")['offset']
+        # self.fdata10_off = self.cs.register.get_def("FDATA10")['offset']
+        # self.fdata11_off = self.cs.register.get_def("FDATA11")['offset']
+        # self.fdata12_off = self.cs.register.get_def("FDATA12")['offset']
+        # self.fdata13_off = self.cs.register.get_def("FDATA13")['offset']
+        # self.fdata14_off = self.cs.register.get_def("FDATA14")['offset']
+        # self.fdata15_off = self.cs.register.get_def("FDATA15")['offset']
+        # self.bios_ptinx = self.cs.register.get_def("BIOS_PTINX")['offset']
+        # self.bios_ptdata = self.cs.register.get_def("BIOS_PTDATA")['offset']
 
-        self.logger.log_hal("[spi] Reading SPI flash controller registers definitions:")
-        self.logger.log_hal(f'      HSFS   offset = 0x{self.hsfs_off:04X}')
-        self.logger.log_hal(f'      HSFC   offset = 0x{self.hsfc_off:04X}')
-        self.logger.log_hal(f'      FADDR  offset = 0x{self.faddr_off:04X}')
-        self.logger.log_hal(f'      FDATA0 offset = 0x{self.fdata0_off:04X}')
+        # self.logger.log_hal("[spi] Reading SPI flash controller registers definitions:")
+        # self.logger.log_hal(f'      HSFS   offset = 0x{self.hsfs_off:04X}')
+        # self.logger.log_hal(f'      HSFC   offset = 0x{self.hsfc_off:04X}')
+        # self.logger.log_hal(f'      FADDR  offset = 0x{self.faddr_off:04X}')
+        # self.logger.log_hal(f'      FDATA0 offset = 0x{self.fdata0_off:04X}')
+
+    def set_instance(self, instance: int) -> None:
+        self.instance = instance
+        self.get_registers()
 
     def get_SPI_MMIO_base(self) -> int:
         spi_base = 0
@@ -811,4 +850,4 @@ class SPI(hal_base.HALBase):
         return (jedec_id, manu, part)
 
 
-haldata = {"arch":['FFFF'], 'name': ['SPI']}
+haldata = {"arch":['8086'], 'name': ['SPI']}

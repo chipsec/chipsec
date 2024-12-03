@@ -101,9 +101,13 @@ class me_mfg_mode(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.cs.set_scope({
+            "MEI1": "8086.MEI1",
+            "HFS": "8086.MEI1.HFS",
+        })
 
     def is_supported(self) -> bool:
-        if self.cs.device.is_enabled('MEI1'):
+        if self.cs.device.get_bus('MEI1') and self.cs.device.is_enabled('MEI1'):
             return True
         else:
             self.logger.log_important('MEI1 not enabled.  Skipping module.')
@@ -111,10 +115,10 @@ class me_mfg_mode(BaseModule):
 
     def check_me_mfg_mode(self) -> int:
         me_mfg_mode_res = ModuleResult.FAILED
-        me_hfs_reg = self.cs.register.read('HFS')
-        me_mfg_mode = self.cs.register.get_field('HFS', me_hfs_reg, 'MFG_MODE')
+        me_hfs_reg = self.cs.register.get_list_by_name('HFS')
+        me_hfs_reg.read_and_verbose_print()
 
-        if 0 == me_mfg_mode:
+        if me_hfs_reg.is_all_field_value(0, 'MFG_MODE'):
             me_mfg_mode_res = ModuleResult.PASSED
             self.logger.log_passed('ME is not in Manufacturing Mode')
         else:

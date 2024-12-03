@@ -51,10 +51,10 @@ class bios_kbrd_buffer(BaseModule):
         return True
 
     def check_BIOS_keyboard_buffer(self) -> int:
-        kbrd_buf_head = self.cs.mem.read_physical_mem_dword(0x41A) & 0x000000FF
-        kbrd_buf_tail = self.cs.mem.read_physical_mem_dword(0x41C) & 0x000000FF
+        kbrd_buf_head = self.cs.hals.Memory.read_physical_mem_dword(0x41A) & 0x000000FF
+        kbrd_buf_tail = self.cs.hals.Memory.read_physical_mem_dword(0x41C) & 0x000000FF
         self.logger.log(f'[*] Keyboard buffer head pointer = 0x{kbrd_buf_head:X} (at 0x41A), tail pointer = 0x{kbrd_buf_tail:X} (at 0x41C)')
-        bios_kbrd_buf = self.cs.mem.read_physical_mem(0x41E, 32)
+        bios_kbrd_buf = self.cs.hals.Memory.read_physical_mem(0x41E, 32)
         self.logger.log('[*] Keyboard buffer contents (at 0x41E):')
         print_buffer_bytes(bios_kbrd_buf)
         bios_kbrd_buf = bios_kbrd_buf.decode('latin_1')
