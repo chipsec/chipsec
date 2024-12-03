@@ -219,7 +219,7 @@ class ChipsecMain:
                 while len(subdirs) > 0:
                     subdirs.pop()
             for modx in mod_fnames:
-                if fnmatch.fnmatch(modx, '*.py') and not fnmatch.fnmatch(modx, '__init__.py'):
+                if fnmatch.fnmatch(modx, '*.py') and not fnmatch.fnmatch(modx, '__init__.py') and not fnmatch.fnmatch(modx, '*sidekick.py'):
                     self.load_module(os.path.join(dirname, modx), self._module_argv)
         self.Loaded_Modules.sort()
 
