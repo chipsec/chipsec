@@ -24,9 +24,8 @@ jobs:
           - {name: "debian", tag: "bookworm-slim", image_prefix: "docker.io/library/"}
           - {name: "debian", tag: "11", image_prefix: "docker.io/library/"}
           - {name: "debian", tag: "10", image_prefix: "docker.io/library/"}
-          - {name: "ubuntu", tag: "23.04", image_prefix: "docker.io/library/"}
+          - {name: "ubuntu", tag: "24.04", image_prefix: "docker.io/library/"}
           - {name: "ubuntu", tag: "22.04", image_prefix: "docker.io/library/"}
-          - {name: "ubuntu", tag: "20.04", image_prefix: "docker.io/library/"}
 
     runs-on: ubuntu-22.04
     container:
@@ -214,19 +213,18 @@ jobs:
     strategy:
       matrix:
         versions:
+          - {ubuntu: "24.04", python: "3.13"}
+          - {ubuntu: "24.04", python: "3.11"}
+          - {ubuntu: "24.04", python: "3.10"}
+          - {ubuntu: "24.04", python: "3.9"}
+          - {ubuntu: "24.04", python: "3.8"}
+
           - {ubuntu: "22.04", python: "3.13"}
           - {ubuntu: "22.04", python: "3.11"}
           - {ubuntu: "22.04", python: "3.10"}
           - {ubuntu: "22.04", python: "3.9"}
           - {ubuntu: "22.04", python: "3.8"}
           - {ubuntu: "22.04", python: "3.7"}
-
-          - {ubuntu: "20.04", python: "3.13"}
-          - {ubuntu: "20.04", python: "3.11"}
-          - {ubuntu: "20.04", python: "3.10"}
-          - {ubuntu: "20.04", python: "3.9"}
-          - {ubuntu: "20.04", python: "3.8"}
-          - {ubuntu: "20.04", python: "3.7"}
           
     runs-on: ubuntu-${{ matrix.versions.ubuntu }}
 
