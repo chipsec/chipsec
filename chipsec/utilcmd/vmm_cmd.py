@@ -22,23 +22,23 @@
 >>> chipsec_util vmm hypercall <rax> <rbx> <rcx> <rdx> <rdi> <rsi> [r8] [r9] [r10] [r11]
 >>> chipsec_util vmm hypercall <eax> <ebx> <ecx> <edx> <edi> <esi>
 >>> chipsec_util vmm pt|ept <ept_pointer>
->>> chipsec_util vmm virtio [<bus>:<device>.<function>]
+>>> chipsec_util vmm is_virtio [<bus> <device> <function>]
+>>> chipsec_util vmm virtio
 
 Examples:
 
 >>> chipsec_util vmm hypercall 32 0 0 0 0 0
 >>> chipsec_util vmm pt 0x524B01E
 >>> chipsec_util vmm virtio
->>> chipsec_util vmm virtio 0:6.0
+>>> chipsec_util vmm is_virtio 0 6 0
 """
 
-import re
+from argparse import ArgumentParser
+from typing import List, Tuple
 
 from chipsec.command import BaseCommand, toLoad
-from chipsec.hal.common.vmm import VMM, get_virtio_devices, VirtIO_Device
+from chipsec.hal.common.vmm import get_virtio_devices, VirtIO_Device
 from chipsec.library.pci import PCI as pcilib
-from chipsec.library.exceptions import VMMRuntimeError
-from argparse import ArgumentParser
 
 
 class VMMCommand(BaseCommand):
@@ -71,38 +71,36 @@ class VMMCommand(BaseCommand):
         parser_ept.add_argument('eptp', type=lambda x: int(x, 16), help='Pointer (hex)')
         parser_ept.set_defaults(func=self.vmm_pt)
 
-        parser_virtio = subparsers.add_parser('virtio')
-        parser_virtio.add_argument('bdf', type=str, nargs='?', default=None, help='<bus>:<device>.<function>')
+        parser_virtio = subparsers.add_parser('is_virtio')
+        parser_virtio.add_argument('bus', type=lambda x: int(x,16), help='bus value (hex)')
+        parser_virtio.add_argument('dev', type=lambda x: int(x,16), help='device value (hex)')
+        parser_virtio.add_argument('fun', type=lambda x: int(x,16), help='function value (hex)')
         parser_virtio.set_defaults(func=self.vmm_virtio)
+
+        parser_enumerate = subparsers.add_parser('virtio')
+        parser_enumerate.set_defaults(func=self.enumerate)
 
         parser.parse_args(self.argv, namespace=self)
 
-    def vmm_virtio(self):
-        if self.bdf is not None:
-            match = re.search(r"^([0-9a-f]{1,2}):([0-1]?[0-9a-f]{1})\.([0-7]{1})$", self.bdf)
-            if match:
-                _bus = int(match.group(1), 16) & 0xFF
-                _dev = int(match.group(2), 16) & 0x1F
-                _fun = int(match.group(3), 16) & 0x07
-                vid = self.cs.hals.Pci.read_word(_bus, _dev, _fun, 0)
-                did = self.cs.hals.Pci.read_word(_bus, _dev, _fun, 2)
-                dev = (_bus, _dev, _fun, vid, did)
-                virt_dev = [dev]
-            else:
-                self.logger.log_error("Invalid B:D.F ({})".format(self.bdf))
-                self.logger.log(VMMCommand.__doc__)
-                return
-        else:
-            self.logger.log("[CHIPSEC] Enumerating VirtIO devices...")
-            virt_dev = get_virtio_devices(self.cs.hals.Pci.enumerate_devices())
-
-        if len(virt_dev) > 0:
+    def _dump_virtio(self, virt_dev: List[Tuple[int, int, int, int, int]]):
+        if virt_dev:
             self.logger.log("[CHIPSEC] Available VirtIO devices:")
             pcilib.print_pci_devices(virt_dev)
             for (b, d, f, vid, did, rid) in virt_dev:
                 VirtIO_Device(self.cs, b, d, f).dump_device()
         else:
             self.logger.log("[CHIPSEC] No VirtIO devices found")
+
+    def enumerate(self):
+        self.logger.log('[CHIPSEC] enumerating VirtIo devices...')
+        virtdev_list = get_virtio_devices(self.cs.hals.Pci.enumerate_devices())
+        self._dump_virtio(virtdev_list)
+
+    def vmm_virtio(self):
+        did, vid = self.cs.hals.Pci.get_DIDVID(self.bus, self.dev, self.fun)
+        dev = (self.bus, self.dev, self.fun, vid, did, 0)
+        virt_dev = get_virtio_devices([dev])
+        self._dump_virtio(virt_dev)
 
     def vmm_hypercall(self):
         self.logger.log('')
@@ -118,7 +116,7 @@ class VMMCommand(BaseCommand):
         self.logger.log("[CHIPSEC]   R10: 0x{:016X}".format(self.r10))
         self.logger.log("[CHIPSEC]   R11: 0x{:016X}".format(self.r11))
 
-        rax = self.vmm.hypercall(self.ax, self.bx, self.cx, self.dx, self.si, self.di, self.r8, self.r9, self.r10, self.r11)
+        rax = self.cs.hals.Vmm.hypercall(self.ax, self.bx, self.cx, self.dx, self.si, self.di, self.r8, self.r9, self.r10, self.r11)
 
         self.logger.log("[CHIPSEC] < RAX: 0x{:016X}".format(rax))
 
@@ -127,20 +125,13 @@ class VMMCommand(BaseCommand):
             pt_fname = 'ept_{:08X}'.format(self.eptp)
             self.logger.log("[CHIPSEC] EPT physical base: 0x{:016X}".format(self.eptp))
             self.logger.log("[CHIPSEC] Dumping EPT to '{}'...".format(pt_fname))
-            self.vmm.dump_EPT_page_tables(self.eptp, pt_fname)
+            self.cs.hals.Vmm.dump_EPT_page_tables(self.eptp, pt_fname)
         else:
             self.logger.log("[CHIPSEC] Finding EPT hierarchy in memory is not implemented yet")
             self.logger.log_error(VMMCommand.__doc__)
             return
 
     def run(self):
-        try:
-            self.vmm = VMM(self.cs)
-        except VMMRuntimeError as msg:
-            self.logger.log_error(msg)
-            return
-
-        self.vmm.init()
 
         self.func()
 
