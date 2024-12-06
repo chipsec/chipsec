@@ -85,9 +85,14 @@ class RegisterCommand(BaseCommand):
             value = self.cs.register.read_field(self.reg_name, self.field_name)
             self.logger.log("[CHIPSEC] {}.{}=0x{:X}".format(self.reg_name, self.field_name, value))
         else:
-            value = self.cs.register.read(self.reg_name)
-            self.logger.log("[CHIPSEC] {}=0x{:X}".format(self.reg_name, value))
-            self.cs.register.print(self.reg_name, value)
+            # value = self.cs.register.read(self.reg_name)
+            reglist = self.cs.register.get_list_by_name(self.reg_name)
+            if len(reglist) == 0:
+                self.logger.log(f'No register found with the name {self.reg_name}')
+            else:
+                reglist.read_and_print()
+            # self.logger.log("[CHIPSEC] {}=0x{:X}".format(self.reg_name, value))
+            # self.cs.register.print(self.reg_name, value)
 
     def reg_read_field(self):
         if self.cs.register.has_field(self.reg_name, self.field_name):

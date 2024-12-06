@@ -98,29 +98,29 @@ class pcie_overlap_fuzz(BaseModule):
                 self.cs.hals.Pci.write_dword(bus2, dev2, fun2, off2 + 4, 0)
 
     def fuzz_offset(self, bar, reg_off, reg_value, is64bit):
-        self.cs.mmio.write_MMIO_reg(bar, reg_off, reg_value)  # same value
-        self.cs.mmio.write_MMIO_reg(bar, reg_off, ~reg_value & 0xFFFFFFFF)
-        self.cs.mmio.write_MMIO_reg(bar, reg_off, 0xFFFFFFFF)
-        self.cs.mmio.write_MMIO_reg(bar, reg_off, 0x5A5A5A5A)
-        self.cs.mmio.write_MMIO_reg(bar, reg_off, 0x00000000)
+        self.cs.hals.MMIO.write_MMIO_reg(bar, reg_off, reg_value)  # same value
+        self.cs.hals.MMIO.write_MMIO_reg(bar, reg_off, ~reg_value & 0xFFFFFFFF)
+        self.cs.hals.MMIO.write_MMIO_reg(bar, reg_off, 0xFFFFFFFF)
+        self.cs.hals.MMIO.write_MMIO_reg(bar, reg_off, 0x5A5A5A5A)
+        self.cs.hals.MMIO.write_MMIO_reg(bar, reg_off, 0x00000000)
 
     def fuzz_unaligned(self, bar, reg_off, is64bit):
-        dummy = self.cs.mmio.read_MMIO_reg(bar, reg_off + 1)
+        dummy = self.cs.hals.MMIO.read_MMIO_reg(bar, reg_off + 1)
         # @TODO: crosses the reg boundary
-        #self.cs.mmio.write_MMIO_reg(bar, reg_off + 1, 0xFFFFFFFF)
-        self.cs.mem.write_physical_mem_word(bar + reg_off + 1, 0xFFFF)
-        self.cs.mem.write_physical_mem_byte(bar + reg_off + 1, 0xFF)
+        #self.cs.hals.MMIO.write_MMIO_reg(bar, reg_off + 1, 0xFFFFFFFF)
+        self.cs.hals.Memory.write_physical_mem_word(bar + reg_off + 1, 0xFFFF)
+        self.cs.hals.Memory.write_physical_mem_byte(bar + reg_off + 1, 0xFF)
 
     def fuzz_mmio_bar(self, bar, is64bit, size=0x1000):
         self.logger.log(f'[*] Fuzzing MMIO BAR 0x{bar:016X}, size = 0x{size:X}..')
         reg_off = 0
         # Issue 32b MMIO requests with various values to all MMIO registers
         for reg_off in range(0, size, 4):
-            reg_value = self.cs.mmio.read_MMIO_reg(bar, reg_off)
+            reg_value = self.cs.hals.MMIO.read_MMIO_reg(bar, reg_off)
             self.fuzz_offset(bar, reg_off, reg_value, is64bit)
             self.fuzz_unaligned(bar, reg_off, is64bit)
             # restore the original value
-            self.cs.mmio.write_MMIO_reg(bar, reg_off, reg_value)
+            self.cs.hals.MMIO.write_MMIO_reg(bar, reg_off, reg_value)
 
     def fuzz_mmio_bar_random(self, bar, is64bit, size=0x1000):
         self.logger.log(f'[*] Fuzzing MMIO BAR in random mode 0x{bar:016X}, size = 0x{size:X}..')

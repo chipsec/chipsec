@@ -48,7 +48,7 @@ class TXTCommand(BaseCommand):
 
     def txt_dump(self):
         # Read TXT Public area as hexdump, with absolute address and skipping zeros
-        txt_public = self.cs.mem.read_physical_mem(0xfed30000, 0x1000)
+        txt_public = self.cs.hals.Memory.read_physical_mem(0xfed30000, 0x1000)
         has_skipped_line = False
         for offset in range(0, len(txt_public), 16):
             line_bytes = txt_public[offset:offset + 16]

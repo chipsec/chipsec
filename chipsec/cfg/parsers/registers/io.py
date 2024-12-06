@@ -59,10 +59,10 @@ class IORegisters(BaseConfigRegisterHelper):
         """Read the object"""
         self.logger.log_debug(f'reading {self.name}')
         _cs = cs()
-        self.value = _cs.io.read_port(self.io_port, self.size)
+        self.value = _cs.hals.PortIO.read_port(self.io_port, self.size)
         return self.value
 
     def write(self, value):
         """Write the object"""
         _cs = cs()
-        _cs.io.write_port(self.io_port, value, self.size)
+        _cs.hals.PortIO.write_port(self.io_port, value, self.size)

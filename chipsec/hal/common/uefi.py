@@ -544,7 +544,7 @@ class UEFI(hal_base.HALBase):
                 continue
             logger().log_hal(f'[uefi] Reading 0x{pa:016X}...')
             try:
-                membuf = self.cs.mem.read_physical_mem(pa, CHUNK_SZ)
+                membuf = self.cs.hals.Memory.read_physical_mem(pa, CHUNK_SZ)
             except OsHelperError as err:
                 logger().log_hal(f'[uefi] Unable to read memory at pa: {pa:016X} Error: {err}')
                 pa -= CHUNK_SZ
@@ -556,7 +556,7 @@ class UEFI(hal_base.HALBase):
                 if pos < (CHUNK_SZ - EFI_TABLE_HEADER_SIZE):
                     hdr = membuf[pos: pos + EFI_TABLE_HEADER_SIZE]
                 else:
-                    hdr = self.cs.mem.read_physical_mem(table_pa, EFI_TABLE_HEADER_SIZE)
+                    hdr = self.cs.hals.Memory.read_physical_mem(table_pa, EFI_TABLE_HEADER_SIZE)
                 table_header = EFI_TABLE_HEADER(*struct.unpack_from(EFI_TABLE_HEADER_FMT, hdr))
                 # do some sanity checks on the header
                 is_reserved = table_header.Reserved != 0
@@ -573,7 +573,7 @@ class UEFI(hal_base.HALBase):
                     if pos < (CHUNK_SZ - EFI_TABLE_HEADER_SIZE - table_size):
                         table_buf = membuf[pos: pos + EFI_TABLE_HEADER_SIZE + table_size]
                     else:
-                        table_buf = self.cs.mem.read_physical_mem(table_pa, EFI_TABLE_HEADER_SIZE + table_size)
+                        table_buf = self.cs.hals.Memory.read_physical_mem(table_pa, EFI_TABLE_HEADER_SIZE + table_size)
                     table = EFI_TABLES[table_sig]['struct'](*struct.unpack_from(EFI_TABLES[table_sig]['fmt'], table_buf[EFI_TABLE_HEADER_SIZE:]))
                     if logger().HAL:
                         print_buffer_bytes(table_buf)
@@ -613,7 +613,7 @@ class UEFI(hal_base.HALBase):
                 ect_pa = est.ConfigurationTable
             else:
                 logger().log_hal('[uefi] UEFI appears to be in Runtime mode')
-                ect_pa = self.cs.mem.va2pa(est.ConfigurationTable)
+                ect_pa = self.cs.hals.Memory.va2pa(est.ConfigurationTable)
                 if not ect_pa:
                     # Most likely the VA in the System Table is not mapped so find the RST by signature and
                     # then compute the address of the configuration table.  This assumes the VA mapping keeps
@@ -634,7 +634,7 @@ class UEFI(hal_base.HALBase):
 
         found = ect_pa is not None
         if found and (est is not None):
-            ect_buf = self.cs.mem.read_physical_mem(ect_pa, EFI_VENDOR_TABLE_SIZE * est.NumberOfTableEntries)
+            ect_buf = self.cs.hals.Memory.read_physical_mem(ect_pa, EFI_VENDOR_TABLE_SIZE * est.NumberOfTableEntries)
             ect = EFI_CONFIGURATION_TABLE()
             for i in range(est.NumberOfTableEntries):
                 vt = EFI_VENDOR_TABLE(*struct.unpack_from(EFI_VENDOR_TABLE_FORMAT, ect_buf[i * EFI_VENDOR_TABLE_SIZE:]))

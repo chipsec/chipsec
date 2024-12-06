@@ -147,7 +147,7 @@ class c_paging_memory_access:
         self.cs = cs
 
     def readmem(self, name: str, addr: int, size: int = 4096) -> bytes:
-        return self.cs.mem.read_physical_mem(addr, size)
+        return self.cs.hals.Memory.read_physical_mem(addr, size)
 
 
 class c_paging_with_2nd_level_translation(c_paging_memory_access):
@@ -517,7 +517,7 @@ class c_extended_page_tables(c_4level_page_tables):
             addr = pml4e & ADDR_4KB
             pdpt = self.read_entries('pdpt', addr)
             new_entry = struct.pack('<Q', ((pdpt[i] | 0x87) & ~ADDR_4KB) | (i << 30))
-            self.cs.mem.write_physical_mem(addr + i * 8, 8, new_entry)
+            self.cs.hals.Memory.write_physical_mem(addr + i * 8, 8, new_entry)
         return None
 
 

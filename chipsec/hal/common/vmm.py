@@ -52,7 +52,7 @@ class VMM: #TODO: Refactor and make it derive from HALBase
             (self.membuf1_va, self.membuf1_pa) = (0, 0)
 
     def init(self) -> None:
-        (self.membuf0_va, self.membuf0_pa) = self.cs.mem.alloc_physical_mem(0x2000, 0xFFFFFFFFFFFFFFFF)
+        (self.membuf0_va, self.membuf0_pa) = self.cs.hals.Memory.alloc_physical_mem(0x2000, 0xFFFFFFFFFFFFFFFF)
         (self.membuf1_va, self.membuf1_pa) = (self.membuf0_va + 0x1000, self.membuf0_pa + 0x1000)
         if self.membuf0_va == 0:
             logger().log("[vmm] Could not allocate memory!")
@@ -69,7 +69,7 @@ class VMM: #TODO: Refactor and make it derive from HALBase
         return self.helper.hypercall(0, arg3, arg5, 0, arg4, 0, vector, 0, arg1, arg2)
 
     def hypercall64_memory_based(self, hypervisor_input_value: int, parameters: AnyStr, size: int = 0) -> int:
-        self.cs.mem.write_physical_mem(self.membuf0_pa, len(parameters[:0x1000]), parameters[:0x1000])
+        self.cs.hals.Memory.write_physical_mem(self.membuf0_pa, len(parameters[:0x1000]), parameters[:0x1000])
         regs = self.helper.hypercall(hypervisor_input_value & ~0x00010000, self.membuf0_pa, self.membuf1_pa)
         self.output = self.helper.read_phys_mem(self.membuf1_pa, size) if size > 0 else ''
         return regs
@@ -79,7 +79,7 @@ class VMM: #TODO: Refactor and make it derive from HALBase
 
     def hypercall64_extended_fast(self, hypervisor_input_value: int, parameter_block: bytes) -> int:
         (param0, param1, xmm_regs) = struct.unpack('<QQ96s', parameter_block)
-        self.cs.mem.write_physical_mem(self.membuf0_pa, 0x60, xmm_regs)
+        self.cs.hals.Memory.write_physical_mem(self.membuf0_pa, 0x60, xmm_regs)
         return self.helper.hypercall(hypervisor_input_value | 0x00010000, param0, param1, 0, 0, 0, 0, 0, 0, 0, self.membuf0_va)
 
     #
@@ -151,6 +151,6 @@ class VirtIO_Device:
         bars = self.cs.hals.Pci.get_device_bars(self.bus, self.dev, self.fun)
         for (bar, isMMIO, _, _, _, size) in bars:
             if isMMIO:
-                self.cs.mmio.dump_MMIO(bar, size)
+                self.cs.hals.MMIO.dump_MMIO(bar, size)
             else:
-                self.cs.io.dump_IO(bar, size, 4)
+                self.cs.hals.PortIO.dump_IO(bar, size, 4)
