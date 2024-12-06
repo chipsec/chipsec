@@ -65,8 +65,8 @@ class MMIORegisters(BaseConfigRegisterHelper):
         self.logger.log_debug(f'reading {self.name}')
         _cs = cs()
         if self.bar_base is None:
-            (self.bar_base, self.bar_size) = _cs.mmio.get_MMIO_BAR_base_address(self.bar, self.instance.instance)
-        self.value = _cs.mmio.read_MMIO_reg(self.bar_base, self.offset, self.size, self.bar_size)
+            (self.bar_base, self.bar_size) = _cs.hals.MMIO.get_MMIO_BAR_base_address(self.bar, self.instance.instance)
+        self.value = _cs.hals.MMIO.read_MMIO_reg(self.bar_base, self.offset, self.size, self.bar_size)
         self.logger.log_debug('done reading')
         return self.value
 
@@ -74,14 +74,14 @@ class MMIORegisters(BaseConfigRegisterHelper):
         """Write the object"""
         _cs = cs()
         if self.bar_base is None:
-            (self.bar_base, self.bar_size) = _cs.mmio.get_MMIO_BAR_base_address(self.bar, self.instance.instance)
-        _cs.mmio.write_MMIO_reg(self.bar_base, self.offset, value, self.size, self.bar_size)
+            (self.bar_base, self.bar_size) = _cs.hals.MMIO.get_MMIO_BAR_base_address(self.bar, self.instance.instance)
+        _cs.hals.MMIO.write_MMIO_reg(self.bar_base, self.offset, value, self.size, self.bar_size)
 
     def write_subset(self, value, size, offset=0):
         _cs = cs()
         if offset < self.size and size <= self.size - offset:
             if self.bar_base is None:
-                (self.bar_base, self.bar_size) = _cs.mmio.get_MMIO_BAR_base_address(self.bar, self.instance.instance)
-            _cs.mmio.write_MMIO_reg(self.bar_base, self.offset + offset, value, size, self.bar_size)
+                (self.bar_base, self.bar_size) = _cs.hals.MMIO.get_MMIO_BAR_base_address(self.bar, self.instance.instance)
+            _cs.hals.MMIO.write_MMIO_reg(self.bar_base, self.offset + offset, value, size, self.bar_size)
         else:
             raise CSReadError(f"Improper Offset or Size requested in write subset for {self.name}")

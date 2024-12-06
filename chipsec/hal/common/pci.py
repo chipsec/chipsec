@@ -44,7 +44,7 @@ from chipsec.library.logger import pretty_print_hex_buffer
 from chipsec.library.file import write_file
 from chipsec.library.pci import PCI as pcilib
 from chipsec.hal.hal_base import HALBase
-from chipsec.library.exceptions import OsHelperError
+from chipsec.library.exceptions import CSReadError, OsHelperError
 from chipsec.library.defines import is_all_ones, MASK_16b, MASK_32b, MASK_64b, BOUNDARY_4KB
 
 class Pci(HALBase):
@@ -58,6 +58,19 @@ class Pci(HALBase):
     #
     # Access to PCI configuration registers
     #
+
+    def read(self, bus: int, device: int, function: int, address: int, size: int) -> int:
+        if self.get_DIDVID(bus, device, function) == (0xffff, 0xffff):
+            raise CSReadError(f'PCI Device is not available ({bus}:{device}.{function})')
+        if size in [1, 2, 4]:
+            value = self.helper.read_pci_reg(bus, device, function, address, size)
+        elif size == 8:
+            value = self.helper.read_pci_reg(bus, device, function, address, 4)
+            value |= (self.helper.read_pci_reg(bus, device, function, address + 4, 4) << 32)
+        else:
+            raise CSReadError('PCI Device size should be 1, 2, 4, or 8')
+        self.logger.log_hal(f'[pci] reading B/D/F: {bus}/{device}/{function}, offset: 0x{address:02X}, value: 0x{value:0{size}X}')
+        return value
 
     def read_dword(self, bus: int, device: int, function: int, address: int) -> int:
         value = self.helper.read_pci_reg(bus, device, function, address, 4)
@@ -149,14 +162,14 @@ class Pci(HALBase):
     #
 
     def parse_XROM(self, xrom: pcilib.XROM, xrom_dump: bool = False) -> Optional[pcilib.PCI_XROM_HEADER]:
-        xrom_sig = self.cs.mem.read_physical_mem_word(xrom.base)
+        xrom_sig = self.cs.hals.Memory.read_physical_mem_word(xrom.base)
         if xrom_sig != pcilib.XROM_SIGNATURE:
             return None
-        xrom_hdr_buf = self.cs.mem.read_physical_mem(xrom.base, pcilib.PCI_XROM_HEADER_SIZE)
+        xrom_hdr_buf = self.cs.hals.Memory.read_physical_mem(xrom.base, pcilib.PCI_XROM_HEADER_SIZE)
         xrom_hdr = pcilib.PCI_XROM_HEADER(*struct.unpack_from(pcilib.PCI_XROM_HEADER_FMT, xrom_hdr_buf))
         if xrom_dump:
             xrom_fname = f'xrom_{xrom.bus:X}-{xrom.dev:X}-{xrom.fun:X}_{xrom.vid:X}{xrom.did:X}.bin'
-            xrom_buf = self.cs.mem.read_physical_mem(xrom.base, xrom.size)  # use xrom_hdr.InitSize ?
+            xrom_buf = self.cs.hals.Memory.read_physical_mem(xrom.base, xrom.size)  # use xrom_hdr.InitSize ?
             write_file(xrom_fname, xrom_buf)
         return xrom_hdr
 

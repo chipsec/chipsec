@@ -84,39 +84,39 @@ class pcie_fuzz(BaseModule):
         port_off = 0
         # Issue 8/16/32-bit I/O requests with various values to all I/O ports (aligned and unaligned)
         for port_off in range(size):
-            port_value = self.cs.io.read_port_byte(bar + port_off)
-            self.cs.io.write_port_byte(bar + port_off, port_value)
-            self.cs.io.write_port_byte(bar + port_off, ~port_value & 0xFF)
-            self.cs.io.write_port_byte(bar + port_off, 0xFF)
-            self.cs.io.write_port_byte(bar + port_off, 0x00)
-            self.cs.io.write_port_word(bar + port_off, 0xFFFF)
-            self.cs.io.write_port_word(bar + port_off, 0x0000)
-            self.cs.io.write_port_dword(bar + port_off, 0xFFFFFFFF)
-            self.cs.io.write_port_dword(bar + port_off, 0x00000000)
+            port_value = self.cs.hals.PortIO.read_port_byte(bar + port_off)
+            self.cs.hals.PortIO.write_port_byte(bar + port_off, port_value)
+            self.cs.hals.PortIO.write_port_byte(bar + port_off, ~port_value & 0xFF)
+            self.cs.hals.PortIO.write_port_byte(bar + port_off, 0xFF)
+            self.cs.hals.PortIO.write_port_byte(bar + port_off, 0x00)
+            self.cs.hals.PortIO.write_port_word(bar + port_off, 0xFFFF)
+            self.cs.hals.PortIO.write_port_word(bar + port_off, 0x0000)
+            self.cs.hals.PortIO.write_port_dword(bar + port_off, 0xFFFFFFFF)
+            self.cs.hals.PortIO.write_port_dword(bar + port_off, 0x00000000)
 
     def fuzz_offset(self, bar, reg_off, reg_value, is64bit):
-        self.cs.mmio.write_MMIO_reg(bar, reg_off, reg_value)  # same value
-        self.cs.mmio.write_MMIO_reg(bar, reg_off, ~reg_value & 0xFFFFFFFF)
-        self.cs.mmio.write_MMIO_reg(bar, reg_off, 0xFFFFFFFF)
-        self.cs.mmio.write_MMIO_reg(bar, reg_off, 0x5A5A5A5A)
-        self.cs.mmio.write_MMIO_reg(bar, reg_off, 0x00000000)
+        self.cs.hals.MMIO.write_MMIO_reg(bar, reg_off, reg_value)  # same value
+        self.cs.hals.MMIO.write_MMIO_reg(bar, reg_off, ~reg_value & 0xFFFFFFFF)
+        self.cs.hals.MMIO.write_MMIO_reg(bar, reg_off, 0xFFFFFFFF)
+        self.cs.hals.MMIO.write_MMIO_reg(bar, reg_off, 0x5A5A5A5A)
+        self.cs.hals.MMIO.write_MMIO_reg(bar, reg_off, 0x00000000)
 
     def fuzz_unaligned(self, bar, reg_off, is64bit):
-        dummy = self.cs.mmio.read_MMIO_reg(bar, reg_off + 1)
+        dummy = self.cs.hals.MMIO.read_MMIO_reg(bar, reg_off + 1)
         # @TODO: crosses the reg boundary
-        self.cs.mem.write_physical_mem_word(bar + reg_off + 1, 0xFFFF)
-        self.cs.mem.write_physical_mem_byte(bar + reg_off + 1, 0xFF)
+        self.cs.hals.Memory.write_physical_mem_word(bar + reg_off + 1, 0xFFFF)
+        self.cs.hals.Memory.write_physical_mem_byte(bar + reg_off + 1, 0xFF)
 
     def fuzz_mmio_bar(self, bar, is64bit, size=0x1000):
         self.logger.log(f'[*] Fuzzing MMIO BAR 0x{bar:016X}, size = 0x{size:X}..')
         reg_off = 0
         # Issue aligned 32-bit MMIO requests with various values to all MMIO registers
         for reg_off in range(0, size, 4):
-            reg_value = self.cs.mmio.read_MMIO_reg(bar, reg_off)
+            reg_value = self.cs.hals.MMIO.read_MMIO_reg(bar, reg_off)
             self.fuzz_offset(bar, reg_off, reg_value, is64bit)
             self.fuzz_unaligned(bar, reg_off, is64bit)
             # restore the original value
-            self.cs.mmio.write_MMIO_reg(bar, reg_off, reg_value)
+            self.cs.hals.MMIO.write_MMIO_reg(bar, reg_off, reg_value)
 
     def fuzz_mmio_bar_random(self, bar, is64bit, size=0x1000):
         self.logger.log(f'[*] Fuzzing MMIO BAR in random mode 0x{bar:016X}, size = 0x{size:X}..')
@@ -147,7 +147,7 @@ class pcie_fuzz(BaseModule):
         reg_off = 0
         while 1:
             rand_index = random.randint(0, len(list) - 1)
-            reg_value = self.cs.mmio.read_MMIO_reg(bar, list[rand_index])
+            reg_value = self.cs.hals.MMIO.read_MMIO_reg(bar, list[rand_index])
 
             rand_offset = random.randint(0, 32)
             if (1 << rand_offset) & reg_value:
@@ -155,13 +155,13 @@ class pcie_fuzz(BaseModule):
             else:
                 reg_value = reg_value | (1 << rand_offset)
 
-            self.cs.mmio.write_MMIO_reg(bar, reg_off, reg_value)
+            self.cs.hals.MMIO.write_MMIO_reg(bar, reg_off, reg_value)
 
     def find_active_range(self, bar, size):
         self.logger.log(f'[*] Determine MMIO BAR Active range 0x{bar:016X}, size  0x{size:X}..')
-        one = self.cs.mem.read_physical_mem(bar, size)
+        one = self.cs.hals.Memory.read_physical_mem(bar, size)
         time.sleep(TIMEOUT)
-        two = self.cs.mem.read_physical_mem(bar, size)
+        two = self.cs.hals.Memory.read_physical_mem(bar, size)
         diff_index = []
         for i in range(len(one) // 4 - 1):
             j = 4 * i

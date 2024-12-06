@@ -52,35 +52,35 @@ class CMOS(hal_base.HALBase):
         super(CMOS, self).__init__(cs)
 
     def read_cmos_high(self, offset: int) -> int:
-        self.cs.io.write_port_byte(CMOS_ADDR_PORT_HIGH, offset)
-        return self.cs.io.read_port_byte(CMOS_DATA_PORT_HIGH)
+        self.cs.hals.PortIO.write_port_byte(CMOS_ADDR_PORT_HIGH, offset)
+        return self.cs.hals.PortIO.read_port_byte(CMOS_DATA_PORT_HIGH)
 
     def write_cmos_high(self, offset: int, value: int) -> None:
-        self.cs.io.write_port_byte(CMOS_ADDR_PORT_HIGH, offset)
-        self.cs.io.write_port_byte(CMOS_DATA_PORT_HIGH, value)
+        self.cs.hals.PortIO.write_port_byte(CMOS_ADDR_PORT_HIGH, offset)
+        self.cs.hals.PortIO.write_port_byte(CMOS_DATA_PORT_HIGH, value)
 
     def read_cmos_low(self, offset: int) -> int:
-        self.cs.io.write_port_byte(CMOS_ADDR_PORT_LOW, 0x80 | offset)
-        return self.cs.io.read_port_byte(CMOS_DATA_PORT_LOW)
+        self.cs.hals.PortIO.write_port_byte(CMOS_ADDR_PORT_LOW, 0x80 | offset)
+        return self.cs.hals.PortIO.read_port_byte(CMOS_DATA_PORT_LOW)
 
     def write_cmos_low(self, offset: int, value: int) -> None:
-        self.cs.io.write_port_byte(CMOS_ADDR_PORT_LOW, offset)
-        self.cs.io.write_port_byte(CMOS_DATA_PORT_LOW, value)
+        self.cs.hals.PortIO.write_port_byte(CMOS_ADDR_PORT_LOW, offset)
+        self.cs.hals.PortIO.write_port_byte(CMOS_DATA_PORT_LOW, value)
 
     def dump_low(self) -> List[int]:
         cmos_buf = [0xFF] * 0x80
-        orig = self.cs.io.read_port_byte(CMOS_ADDR_PORT_LOW)
+        orig = self.cs.hals.PortIO.read_port_byte(CMOS_ADDR_PORT_LOW)
         for off in range(0x80):
             cmos_buf[off] = self.read_cmos_low(off)
-        self.cs.io.write_port_byte(CMOS_ADDR_PORT_LOW, orig)
+        self.cs.hals.PortIO.write_port_byte(CMOS_ADDR_PORT_LOW, orig)
         return cmos_buf
 
     def dump_high(self) -> List[int]:
         cmos_buf = [0xFF] * 0x80
-        orig = self.cs.io.read_port_byte(CMOS_ADDR_PORT_HIGH)
+        orig = self.cs.hals.PortIO.read_port_byte(CMOS_ADDR_PORT_HIGH)
         for off in range(0x80):
             cmos_buf[off] = self.read_cmos_high(off)
-        self.cs.io.write_port_byte(CMOS_ADDR_PORT_HIGH, orig)
+        self.cs.hals.PortIO.write_port_byte(CMOS_ADDR_PORT_HIGH, orig)
         return cmos_buf
 
     def dump(self) -> None:

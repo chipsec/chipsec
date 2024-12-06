@@ -146,7 +146,7 @@ class smm_addr(BaseModule):
 
         for tid_base in smmbase:
             self.logger.log(f"[*] Trying to read memory at SMM base 0x{tid_base:08X}..")
-            ok = 0xFFFFFFFF == self.cs.mem.read_physical_mem_dword(tid_base)
+            ok = 0xFFFFFFFF == self.cs.hals.Memory.read_physical_mem_dword(tid_base)
             if not ok:
                 self.logger.log_bad("Able to read SMM base at 0x{tid_base:08X}..")
                 break

@@ -205,11 +205,11 @@ class ACPI(HALBase):
         self.get_ACPI_table_list()
 
     def read_RSDP(self, rsdp_pa: int) -> acpi_tables.RSDP:
-        rsdp_buf = self.cs.mem.read_physical_mem(rsdp_pa, acpi_tables.ACPI_RSDP_SIZE)
+        rsdp_buf = self.cs.hals.Memory.read_physical_mem(rsdp_pa, acpi_tables.ACPI_RSDP_SIZE)
         rsdp = acpi_tables.RSDP()
         rsdp.parse(rsdp_buf)
         if rsdp.Revision >= 0x2:
-            rsdp_buf = self.cs.mem.read_physical_mem(rsdp_pa, acpi_tables.ACPI_RSDP_EXT_SIZE)
+            rsdp_buf = self.cs.hals.Memory.read_physical_mem(rsdp_pa, acpi_tables.ACPI_RSDP_EXT_SIZE)
             rsdp = acpi_tables.RSDP()
             rsdp.parse(rsdp_buf)
         return rsdp
@@ -222,9 +222,9 @@ class ACPI(HALBase):
         rsdp = None
         logger().log_hal('[acpi] searching RSDP in EBDA...')
         ebda_ptr_addr = 0x40E
-        ebda_addr = struct.unpack('<H', self.cs.mem.read_physical_mem(ebda_ptr_addr, 2))[0] << 4
+        ebda_addr = struct.unpack('<H', self.cs.hals.Memory.read_physical_mem(ebda_ptr_addr, 2))[0] << 4
         if ebda_addr > 0x400 and ebda_addr < 0xA0000:
-            membuf = self.cs.mem.read_physical_mem(ebda_addr, 0xA0000 - ebda_addr)
+            membuf = self.cs.hals.Memory.read_physical_mem(ebda_addr, 0xA0000 - ebda_addr)
             pos = bytestostring(membuf).find(ACPI_RSDP_SIG)
             if -1 != pos:
                 rsdp_pa = ebda_addr + pos
@@ -241,7 +241,7 @@ class ACPI(HALBase):
     def _find_RSDP_in_legacy_BIOS_segments(self) -> Tuple[Optional[acpi_tables.RSDP], Optional[int]]:
         rsdp_pa = None
         rsdp = None
-        membuf = self.cs.mem.read_physical_mem(0xE0000, 0x20000)
+        membuf = self.cs.hals.Memory.read_physical_mem(0xE0000, 0x20000)
         membuf = bytestostring(membuf)
         pos = bytestostring(membuf).find(ACPI_RSDP_SIG)
         if -1 != pos:
@@ -288,7 +288,7 @@ class ACPI(HALBase):
         (smram_base, _, _) = self.cs.hals.CPU.get_SMRAM()
         pa = smram_base - CHUNK_SZ
         while pa > CHUNK_SZ:
-            membuf = self.cs.mem.read_physical_mem(pa, CHUNK_SZ)
+            membuf = self.cs.hals.Memory.read_physical_mem(pa, CHUNK_SZ)
             pos = bytestostring(membuf).find(ACPI_RSDP_SIG)
             if -1 != pos:
                 rsdp_pa = pa + pos
@@ -342,9 +342,9 @@ class ACPI(HALBase):
                     return (False, None, None, None)
                 found_str = 'XSDT' if is_xsdt else 'RSDT'
                 logger().log_hal(f'[acpi] Found {found_str} at PA: 0x{sdt_pa:016X}')
-                sdt_header_buf = self.cs.mem.read_physical_mem(sdt_pa, ACPI_TABLE_HEADER_SIZE)
+                sdt_header_buf = self.cs.hals.Memory.read_physical_mem(sdt_pa, ACPI_TABLE_HEADER_SIZE)
                 sdt_header = self._parse_table_header(sdt_header_buf)
-                sdt_buf = self.cs.mem.read_physical_mem(sdt_pa, sdt_header.Length)
+                sdt_buf = self.cs.hals.Memory.read_physical_mem(sdt_pa, sdt_header.Length)
         else:
             sdt_pa = None
             if logger().HAL:
@@ -400,7 +400,7 @@ class ACPI(HALBase):
     def get_table_list_from_SDT(self, sdt: RsdtXsdt, is_xsdt: bool) -> None:
         logger().log_hal(f'[acpi] Getting table list from entries in {"XSDT" if is_xsdt else "RSDT"}')
         for a in sdt.Entries:
-            _sig = self.cs.mem.read_physical_mem(a, ACPI_TABLE_SIG_SIZE)
+            _sig = self.cs.hals.Memory.read_physical_mem(a, ACPI_TABLE_SIG_SIZE)
             _sig = bytestostring(_sig)
             if _sig not in ACPI_TABLES.keys():
                 if logger().HAL:
@@ -481,8 +481,8 @@ class ACPI(HALBase):
                 #    CHIPSEC kernel module and OS native API
                 logger().log_hal('[acpi] trying to extract ACPI table from physical memory...')
                 for table_address in self.tableList[name]:
-                    t_size = self.cs.mem.read_physical_mem_dword(table_address + 4)
-                    t_data = self.cs.mem.read_physical_mem(table_address, t_size)
+                    t_size = self.cs.hals.Memory.read_physical_mem_dword(table_address + 4)
+                    t_data = self.cs.hals.Memory.read_physical_mem(table_address, t_size)
                     acpi_tables_data.append(t_data)
 
         acpi_tables = []
@@ -533,7 +533,7 @@ class ACPI(HALBase):
             if 'BERT' in signature:
                 BootRegionLen = struct.unpack('<L', contents[0:4])[0]
                 BootRegionAddr = struct.unpack('<Q', contents[4:12])[0]
-                bootRegion = self.cs.mem.read_physical_mem(BootRegionAddr, BootRegionLen)
+                bootRegion = self.cs.hals.Memory.read_physical_mem(BootRegionAddr, BootRegionLen)
                 table = (ACPI_TABLES[signature])(bootRegion)
             elif 'NFIT' in signature:
                 table = (ACPI_TABLES[signature])(header)
