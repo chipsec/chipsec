@@ -83,6 +83,7 @@ import struct
 import os
 import sys
 import time
+import math
 
 from chipsec.module_common import BaseModule
 from chipsec.library.returncode import ModuleResult
@@ -145,12 +146,12 @@ MAX_PTR_OFFSET_IN_BUFFER = 0x20
 # very obscure option, don't even try to understand
 GPR_2ADDR = False
 
-# Defines the time percentage increase at which the SMI call is considered to
-# be long-running
-OUTLIER_THRESHOLD = 33.3
+# Defines the threshold in standard deviations at which the SMI call is
+# considered long-running
+OUTLIER_STD_DEV = 2
 
-# Scan mode delay before retry
-SCAN_MODE_RETRY_DELAY = 0.01
+# Number of samples used for initial calibration
+SCAN_CALIB_SAMPLES = 50
 
 # SMI count MSR
 MSR_SMI_COUNT = 0x00000034
@@ -198,12 +199,51 @@ class smi_info:
             return f'duration {self.duration} code {self.code:02X} data {self.data:02X} ({gprs_info(self.gprs)})'
 
 
-class scan_track:
+class smi_stats:
     def __init__(self):
         self.clear()
-        self.hist_smi_duration = 0
-        self.hist_smi_num = 0
-        self.outliers_hist = 0
+
+    def clear(self):
+        self.count = 0
+        self.mean = 0
+        self.m2 = 0
+        self.stdev = 0
+        self.outliers = 0
+
+    #
+    # Computes the standard deviation using the Welford's online algorithm
+    #
+    def update_stats(self, duration):
+        self.count += 1
+        difference = duration - self.mean
+        self.mean += difference / self.count
+        self.m2 += difference * (duration - self.mean)
+        variance = self.m2 / self.count
+        self.stdev = math.sqrt(variance)
+
+    def get_info(self):
+        info = f'average {round(self.mean)} stddev {self.stdev:.2f} checked {self.count}'
+        return info
+
+    #
+    # Combines the statistics of the two data sets using parallel variance computation
+    #
+    def combine(self, partial):
+         self.outliers += partial.outliers
+         total_count = self.count + partial.count
+         difference = partial.mean - self.mean
+         self.mean = (self.mean * self.count + partial.mean * partial.count) / total_count
+         self.m2 += partial.m2 + difference**2 * self.count * partial.count / total_count
+         self.count = total_count
+         variance = self.m2 / self.count
+         self.stdev = math.sqrt(variance)
+
+
+class scan_track:
+    def __init__(self):
+        self.current_smi_stats = smi_stats()
+        self.combined_smi_stats = smi_stats()
+        self.clear()
         self.helper = OsHelper().get_default_helper()
         self.helper.init()
         self.smi_count = self.get_smi_count()
@@ -244,61 +284,53 @@ class scan_track:
                 return key
 
     def clear(self):
-        self.max = smi_info(0)
-        self.min = smi_info(2**32 - 1)
         self.outlier = smi_info(0)
-        self.acc_smi_duration = 0
-        self.acc_smi_num = 0
-        self.avg_smi_duration = 0
-        self.avg_smi_num = 0
-        self.outliers = 0
         self.code = None
-        self.confirmed = False
+        self.contents_changed = False
+        self.needs_calibration = True
+        self.calib_samples = 0
+        self.current_smi_stats.clear()
 
-    def add(self, duration, code, data, gprs, confirmed=False):
+    def add(self, duration, code, data, gprs, contents_changed=False):
         if not self.code:
             self.code = code
         outlier = self.is_outlier(duration)
         if not outlier:
-            self.acc_smi_duration += duration
-            self.acc_smi_num += 1
-            if duration > self.max.duration:
-                self.max.update(duration, code, data, gprs.copy())
-            elif duration < self.min.duration:
-                self.min.update(duration, code, data, gprs.copy())
+            self.current_smi_stats.update_stats(duration)
         elif self.is_slow_outlier(duration):
-            self.outliers += 1
-            self.outliers_hist += 1
+            self.current_smi_stats.outliers += 1
             self.outlier.update(duration, code, data, gprs.copy())
-        self.confirmed = confirmed
+        self.contents_changed = contents_changed
 
-    def avg(self):
-        if self.avg_smi_num or self.acc_smi_num:
-            self.avg_smi_duration = ((self.avg_smi_duration * self.avg_smi_num) + self.acc_smi_duration) / (self.avg_smi_num + self.acc_smi_num)
-            self.avg_smi_num += self.acc_smi_num
-            self.hist_smi_duration = ((self.hist_smi_duration * self.hist_smi_num) + self.acc_smi_duration) / (self.hist_smi_num + self.acc_smi_num)
-            self.hist_smi_num += self.acc_smi_num
-            self.acc_smi_duration = 0
-            self.acc_smi_num = 0
+    def update_calibration(self, duration):
+        if not self.needs_calibration:
+            return
+        self.current_smi_stats.update_stats(duration)
+        self.calib_samples += 1
+        if self.calib_samples >= SCAN_CALIB_SAMPLES:
+            self.needs_calibration = False
 
     def is_slow_outlier(self, value):
         ret = False
-        if self.avg_smi_duration and value > self.avg_smi_duration * (1 + OUTLIER_THRESHOLD / 100):
+        if value > self.current_smi_stats.mean + OUTLIER_STD_DEV * self.current_smi_stats.stdev:
             ret = True
-        if self.hist_smi_duration and value > self.hist_smi_duration * (1 + OUTLIER_THRESHOLD / 100):
+        if self.combined_smi_stats.count and \
+            value > self.combined_smi_stats.mean + OUTLIER_STD_DEV * self.combined_smi_stats.stdev:
             ret = True
         return ret
 
     def is_fast_outlier(self, value):
         ret = False
-        if self.avg_smi_duration and value < self.avg_smi_duration * (1 - OUTLIER_THRESHOLD / 100):
+        if value < self.current_smi_stats.mean - OUTLIER_STD_DEV * self.current_smi_stats.stdev:
             ret = True
-        if self.hist_smi_duration and value < self.hist_smi_duration * (1 - OUTLIER_THRESHOLD / 100):
+        if self.combined_smi_stats.count and \
+            value < self.combined_smi_stats.mean - OUTLIER_STD_DEV * self.combined_smi_stats.stdev:
             ret = True
         return ret
 
     def is_outlier(self, value):
-        self.avg()
+        if self.needs_calibration:
+            return False
         ret = False
         if self.is_slow_outlier(value):
             ret = True
@@ -307,19 +339,17 @@ class scan_track:
         return ret
 
     def skip(self):
-        return self.outliers or self.confirmed
+        return self.current_smi_stats.outliers or self.contents_changed
 
     def found_outlier(self):
-        return bool(self.outliers)
+        return bool(self.current_smi_stats.outliers)
 
     def get_total_outliers(self):
-        return self.outliers_hist
+        return self.combined_smi_stats.outliers
 
     def get_info(self):
-        self.avg()
-        avg = self.avg_smi_duration or self.hist_smi_duration
-        info = f'average {round(avg)} checked {self.avg_smi_num + self.outliers}'
-        if self.outliers:
+        info = self.current_smi_stats.get_info()
+        if self.current_smi_stats.outliers:
             info += f'\n    Identified outlier: {self.outlier.get_info()}'
         return info
 
@@ -329,6 +359,9 @@ class scan_track:
             logger.log_important(msg)
         else:
             logger.log(f'[*] {msg}')
+
+    def update_combined_stats(self):
+        self.combined_smi_stats.combine(self.current_smi_stats)
 
 
 class smi_desc:
@@ -501,13 +534,17 @@ class smm_ptr(BaseModule):
         else:
             while True:
                 _, duration = self.send_smi_timed(thread_id, _smi_desc.smi_code, _smi_desc.smi_data, _smi_desc.name, _smi_desc.desc, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
-                if scan.valid_smi_count():
+                if not scan.valid_smi_count():
+                    continue
+                if scan.needs_calibration:
+                    scan.update_calibration(duration)
+                    continue
+                else:
                     break
             #
             # Re-do the call if it was identified as an outlier, due to periodic SMI delays
             #
             if scan.is_outlier(duration):
-                time.sleep(SCAN_MODE_RETRY_DELAY)
                 while True:
                     _, duration = self.send_smi_timed(thread_id, _smi_desc.smi_code, _smi_desc.smi_data, _smi_desc.name, _smi_desc.desc, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
                     if scan.valid_smi_count():
@@ -671,6 +708,7 @@ class smm_ptr(BaseModule):
                         break
                 if scan_mode:
                     scan.log_smi_result(self.logger)
+                    scan.update_combined_stats()
                     scan.clear()
 
         return bad_ptr_cnt, scan
