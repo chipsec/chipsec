@@ -68,7 +68,7 @@ class c_extended_page_tables_from_file(c_extended_page_tables):
                     return source.read(size)
             logger().log_error(f'Invalid memory address: {addr:016x}-{addr + size:016x}')
             return '\xFF' * size
-        return self.cs.mem.read_physical_mem(addr, size)
+        return self.cs.hals.Memory.read_physical_mem(addr, size)
 
 
 class ept_finder(BaseModule):
@@ -85,7 +85,7 @@ class ept_finder(BaseModule):
                     return source.read(size)
             self.logger.log_error(f'Invalid memory address: {addr:016x}-{addr + size:016x}')
             return '\xFF' * size
-        return self.cs.mem.read_physical_mem(addr, size)
+        return self.cs.hals.Memory.read_physical_mem(addr, size)
 
     def read_physical_mem_dword(self, addr):
         return struct.unpack('<L', self.read_physical_mem(addr, 4))[0]
@@ -185,7 +185,7 @@ class ept_finder(BaseModule):
         with open(filename, 'wb') as dram:
             self.logger.log(f'[*] Dumping memory to {filename} ...')
             while pa < end_pa:
-                dram.write(self.cs.mem.read_physical_mem(pa, min(end_pa - pa, buffer_size)))
+                dram.write(self.cs.hals.Memory.read_physical_mem(pa, min(end_pa - pa, buffer_size)))
                 pa += buffer_size
         return
 

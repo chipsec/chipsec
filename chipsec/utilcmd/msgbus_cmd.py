@@ -106,7 +106,7 @@ class MsgBusCommand(BaseCommand):
         return self._msgbus.msgbus_send_message(self.port, self.reg, self.opcode, self.val)
 
     def run(self):
-        self._msgbus = self.cs.msgbus
+        self._msgbus = self.cs.hals.MsgBus
 
         res = self.func()
 

@@ -76,11 +76,11 @@ class PortIOCommand(BaseCommand):
 
     def io_read(self) -> None:
         if 0x1 == self._width:
-            value = self.cs.io.read_port_byte(self._port)
+            value = self.cs.hals.PortIO.read_port_byte(self._port)
         elif 0x2 == self._width:
-            value = self.cs.io.read_port_word(self._port)
+            value = self.cs.hals.PortIO.read_port_word(self._port)
         elif 0x4 == self._width:
-            value = self.cs.io.read_port_dword(self._port)
+            value = self.cs.hals.PortIO.read_port_dword(self._port)
         else:
             self.logger.log("Invalid read size requested. 1,2,4 supported")
             return
@@ -89,11 +89,11 @@ class PortIOCommand(BaseCommand):
 
     def io_write(self) -> None:
         if 0x1 == self._width:
-            self.cs.io.write_port_byte(self._port, self._value)
+            self.cs.hals.PortIO.write_port_byte(self._port, self._value)
         elif 0x2 == self._width:
-            self.cs.io.write_port_word(self._port, self._value)
+            self.cs.hals.PortIO.write_port_word(self._port, self._value)
         elif 0x4 == self._width:
-            self.cs.io.write_port_dword(self._port, self._value)
+            self.cs.hals.PortIO.write_port_dword(self._port, self._value)
         else:
             self.logger.log("Invalid write size requested. 1,2,4 supported")
             return

@@ -62,21 +62,21 @@ class MEMORYRegisters(BaseConfigRegisterHelper):
         _cs = cs()
         if self.access == 'dram':
             if 1 == self.size:
-                self.value = _cs.mem.read_physical_mem_byte(self.address)
+                self.value = _cs.hals.Memory.read_physical_mem_byte(self.address)
             elif 2 == self.size:
-                self.value = _cs.mem.read_physical_mem_word(self.address)
+                self.value = _cs.hals.Memory.read_physical_mem_word(self.address)
             elif 4 == self.size:
-                self.value = _cs.mem.read_physical_mem_dword(self.address)
+                self.value = _cs.hals.Memory.read_physical_mem_dword(self.address)
             elif 8 == self.size:
-                self.value = _cs.mem.read_physical_mem_qword(self.address)
+                self.value = _cs.hals.Memory.read_physical_mem_qword(self.address)
         elif self.access == 'mmio':
-            self.value = _cs.mmio.read_MMIO_reg(self.address, self.offset, self.size)
+            self.value = _cs.hals.MMIO.read_MMIO_reg(self.address, self.offset, self.size)
         return self.value
 
     def write(self, value):
         """Write the object"""
         _cs = cs()
         if self.access == 'dram':
-            _cs = _cs.mem.write_physical_mem(self.address + self.offset, self.size, value)
+            _cs = _cs.hals.Memory.write_physical_mem(self.address + self.offset, self.size, value)
         elif self.access == 'mmio':
-            _cs.mmio.write_MMIO_reg(self.address, self.offset, value, self.size, None)
+            _cs.hals.MMIO.write_MMIO_reg(self.address, self.offset, value, self.size, None)

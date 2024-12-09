@@ -124,7 +124,7 @@ class s3bootscript(BaseModule):
             res |= BOOTSCRIPT_OUTSIDE_SMRAM
             self.logger.log_bad('S3 boot-script is not in SMRAM')
             self.logger.log('[*] Reading S3 boot-script from memory..')
-            script_all = self.cs.mem.read_physical_mem(bootscript_pa, 0x100000)
+            script_all = self.cs.hals.Memory.read_physical_mem(bootscript_pa, 0x100000)
             self.logger.log('[*] Decoding S3 boot-script opcodes..')
             script_entries = parse_script(script_all, False)
             dispatch_opcodes_ok = self.check_dispatch_opcodes(script_entries)

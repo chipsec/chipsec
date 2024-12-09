@@ -353,7 +353,7 @@ class UEFICommand(BaseCommand):
         self.logger.log("[CHIPSEC] Searching for and parsing S3 resume bootscripts..")
         if self.bootscript_pa is not None:
             self.logger.log('[*] Reading S3 boot-script from memory at 0x{:016X}..'.format(self.bootscript_pa))
-            script_all = self.cs.mem.read_physical_mem(self.bootscript_pa, 0x100000)
+            script_all = self.cs.hals.Memory.read_physical_mem(self.bootscript_pa, 0x100000)
             self.logger.log('[*] Decoding S3 boot-script opcodes..')
             script_entries = parse_script(script_all, True)
         else:
