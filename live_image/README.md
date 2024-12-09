@@ -6,7 +6,7 @@ Requirements:
 How to build:
 
 ```
-cd live_usb/
+cd live_image/
 mkosi genkey
 mkosi build
 # test boot in a VM
