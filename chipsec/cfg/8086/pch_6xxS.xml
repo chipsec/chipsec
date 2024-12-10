@@ -23,6 +23,7 @@ chipsec@intel.com
 <!--
 XML configuration file for 6XX series pch
 Based upon datasheet(s): 648364 and 680836
+Also: 743835 (700 series)
 -->
 
   <!-- #################################### -->
@@ -63,6 +64,14 @@ Based upon datasheet(s): 648364 and 680836
     <sku did="0x7A9D" name="6xxS" code="PCH_6XXS" longname="ADL PCH 600 Series"/>
     <sku did="0x7A9E" name="6xxS" code="PCH_6XXS" longname="ADL PCH 600 Series"/>
     <sku did="0x7A9F" name="6xxS" code="PCH_6XXS" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A00-0x7A1F" name="7xxS" code="PCH_6XXS" longname="PCH 700 Series"/>
+    <sku did="0x7A04" name="7xxS" code="PCH_6XXS" longname="PCH Z790"/>
+    <sku did="0x7A05" name="7xxS" code="PCH_6XXS" longname="PCH H770"/>
+    <sku did="0x7A06" name="7xxS" code="PCH_6XXS" longname="PCH B760"/>
+    <sku did="0x7A0D" name="7xxS" code="PCH_6XXS" longname="PCH WM790"/>
+    <sku did="0x7A0C" name="7xxS" code="PCH_6XXS" longname="PCH HM770"/>
+    <sku did="0x7A13" name="7xxS" code="PCH_6XXS" longname="PCH C266"/>
+    <sku did="0x7A14" name="7xxS" code="PCH_6XXS" longname="PCH C262"/>
   </info>
 
   <!-- #################################### -->
