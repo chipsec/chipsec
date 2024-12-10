@@ -107,7 +107,7 @@ class Cfg:
             vid_str = make_hex_key_str(vid)
             did_str = make_hex_key_str(did)
             pci_data = {
-                'bus': [b],
+                'bus': b,
                 'dev': d,
                 'fun': f,
                 'vid': vid,
