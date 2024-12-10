@@ -76,14 +76,14 @@ class Interrupts(hal_base.HALBase):
 
     def send_SMI_APMC(self, SMI_code_port_value: int, SMI_data_port_value: int) -> None:
         logger().log_hal(f"[intr] sending SMI via APMC ports: code 0xB2 <- 0x{SMI_code_port_value:02X}, data 0xB3 <- 0x{SMI_data_port_value:02X}")
-        self.cs.hals.PortIO.write_port_byte(SMI_DATA_PORT, SMI_data_port_value)
-        return self.cs.hals.PortIO.write_port_byte(SMI_APMC_PORT, SMI_code_port_value)
+        self.cs.hals.Io.write_port_byte(SMI_DATA_PORT, SMI_data_port_value)
+        return self.cs.hals.Io.write_port_byte(SMI_APMC_PORT, SMI_code_port_value)
 
     def send_NMI(self) -> None:
         logger().log_hal("[intr] Sending NMI# through TCO1_CTL[NMI_NOW]")
         reg, ba = self.cs.device.get_IO_space("TCOBASE")
         tcobase = self.cs.register.read_field(reg, ba)
-        return self.cs.hals.PortIO.write_port_byte(tcobase + NMI_TCO1_CTL + 1, NMI_NOW)
+        return self.cs.hals.Io.write_port_byte(tcobase + NMI_TCO1_CTL + 1, NMI_NOW)
 
     def find_ACPI_SMI_Buffer(self) -> Optional[UEFI_TABLE.CommBuffInfo]:
         logger().log_hal("Parsing ACPI tables to identify Communication Buffer")

@@ -64,9 +64,9 @@ class venom (BaseModule):
         BaseModule.__init__(self)
 
     def venom_impl(self):
-        self.cs.hals.PortIO.write_port_byte(FDC_PORT_DATA_FIFO, FD_CMD)
+        self.cs.hals.Io.write_port_byte(FDC_PORT_DATA_FIFO, FD_CMD)
         for _ in range(ITER_COUNT):
-            self.cs.hals.PortIO.write_port_byte(FDC_PORT_DATA_FIFO, FDC_CMD_WRVAL)
+            self.cs.hals.Io.write_port_byte(FDC_PORT_DATA_FIFO, FDC_CMD_WRVAL)
         return True
 
     def run(self, module_argv):

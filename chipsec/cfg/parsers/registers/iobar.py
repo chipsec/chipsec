@@ -67,7 +67,7 @@ class IOBARRegisters(BaseConfigRegisterHelper):
         if self.io_port is None:
             (self.bar_base, self.bar_size) = _cs.hals.PortIObar.get_IO_BAR_base_address(self.bar, self.instance)
             self.io_port = self.bar_base + self.offset
-        self.value = _cs.hals.PortIO.read_port(self.io_port, self.size)
+        self.value = _cs.hals.Io.read(self.io_port, self.size)
         self.logger.log_debug('done reading')
         return self.value
 
@@ -77,4 +77,4 @@ class IOBARRegisters(BaseConfigRegisterHelper):
         if self.io_port is None:
             (self.bar_base, self.bar_size) = _cs.hals.PortIObar.get_IO_BAR_base_address(self.bar, self.instance.instance)
             self.io_port = self.bar_base + self.offset
-        _cs.hals.PortIO.write_port(self.io_port, value, self.size)
+        _cs.hals.Io.write(self.io_port, value, self.size)
