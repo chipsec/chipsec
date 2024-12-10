@@ -76,6 +76,8 @@ class HALInitializationError (RuntimeError):
 class AcpiRuntimeError (RuntimeError):
     pass
 
+class SizeRuntimeError (RuntimeError):
+    pass
 
 class CmosRuntimeError (RuntimeError):
     pass

@@ -84,15 +84,15 @@ class pcie_fuzz(BaseModule):
         port_off = 0
         # Issue 8/16/32-bit I/O requests with various values to all I/O ports (aligned and unaligned)
         for port_off in range(size):
-            port_value = self.cs.hals.PortIO.read_port_byte(bar + port_off)
-            self.cs.hals.PortIO.write_port_byte(bar + port_off, port_value)
-            self.cs.hals.PortIO.write_port_byte(bar + port_off, ~port_value & 0xFF)
-            self.cs.hals.PortIO.write_port_byte(bar + port_off, 0xFF)
-            self.cs.hals.PortIO.write_port_byte(bar + port_off, 0x00)
-            self.cs.hals.PortIO.write_port_word(bar + port_off, 0xFFFF)
-            self.cs.hals.PortIO.write_port_word(bar + port_off, 0x0000)
-            self.cs.hals.PortIO.write_port_dword(bar + port_off, 0xFFFFFFFF)
-            self.cs.hals.PortIO.write_port_dword(bar + port_off, 0x00000000)
+            port_value = self.cs.hals.Io.read(bar + port_off)
+            self.cs.hals.Io.write_port_byte(bar + port_off, port_value)
+            self.cs.hals.Io.write_port_byte(bar + port_off, ~port_value & 0xFF)
+            self.cs.hals.Io.write_port_byte(bar + port_off, 0xFF)
+            self.cs.hals.Io.write_port_byte(bar + port_off, 0x00)
+            self.cs.hals.Io.write_port_word(bar + port_off, 0xFFFF)
+            self.cs.hals.Io.write_port_word(bar + port_off, 0x0000)
+            self.cs.hals.Io.write_port_dword(bar + port_off, 0xFFFFFFFF)
+            self.cs.hals.Io.write_port_dword(bar + port_off, 0x00000000)
 
     def fuzz_offset(self, bar, reg_off, reg_value, is64bit):
         self.cs.hals.MMIO.write_MMIO_reg(bar, reg_off, reg_value)  # same value

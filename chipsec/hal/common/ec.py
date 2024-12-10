@@ -84,29 +84,29 @@ class EC(hal_base.HALBase):
     # Wait for EC input buffer empty
     def _wait_ec_inbuf_empty(self) -> bool:
         to = 1000
-        while (self.cs.hals.PortIO.read_port_byte(IO_PORT_EC_STATUS) & EC_STS_IBF) and to:
+        while (self.cs.hals.Io.read(IO_PORT_EC_STATUS) & EC_STS_IBF) and to:
             to = to - 1
         return True
 
     # Wait for EC output buffer full
     def _wait_ec_outbuf_full(self) -> bool:
         to = 1000
-        while not (self.cs.hals.PortIO.read_port_byte(IO_PORT_EC_STATUS) & EC_STS_OBF) and to:
+        while not (self.cs.hals.Io.read(IO_PORT_EC_STATUS) & EC_STS_OBF) and to:
             to = to - 1
         return True
 
     def write_command(self, command: int) -> None:
         self._wait_ec_inbuf_empty()
-        return self.cs.hals.PortIO.write_port_byte(IO_PORT_EC_COMMAND, command)
+        return self.cs.hals.Io.write(IO_PORT_EC_COMMAND, command)
 
     def write_data(self, data: int) -> None:
         self._wait_ec_inbuf_empty()
-        return self.cs.hals.PortIO.write_port_byte(IO_PORT_EC_DATA, data)
+        return self.cs.hals.Io.write(IO_PORT_EC_DATA, data)
 
     def read_data(self) -> Optional[int]:
         if not self._wait_ec_outbuf_full():
             return None
-        return self.cs.hals.PortIO.read_port_byte(IO_PORT_EC_DATA)
+        return self.cs.hals.Io.read(IO_PORT_EC_DATA)
 
     def read_memory(self, offset: int) -> Optional[int]:
         self.write_command(EC_COMMAND_ACPI_READ)
@@ -167,17 +167,17 @@ class EC(hal_base.HALBase):
     # EC Intex I/O access
     #
     def read_idx(self, offset: int) -> int:
-        self.cs.hals.PortIO.write_port_byte(IO_PORT_EC_INDEX_ADDRL, offset & 0xFF)
-        self.cs.hals.PortIO.write_port_byte(IO_PORT_EC_INDEX_ADDRH, (offset >> 8) & 0xFF)
-        value = self.cs.hals.PortIO.read_port_byte(IO_PORT_EC_INDEX_DATA)
+        self.cs.hals.Io.write(IO_PORT_EC_INDEX_ADDRL, offset & 0xFF)
+        self.cs.hals.Io.write(IO_PORT_EC_INDEX_ADDRH, (offset >> 8) & 0xFF)
+        value = self.cs.hals.Io.read(IO_PORT_EC_INDEX_DATA)
         self.logger.log_hal(f'[ec] index read: offset 0x{offset:02X} > 0x{value:02X}:')
         return value
 
     def write_idx(self, offset: int, value: int) -> bool:
         self.logger.log_hal(f'[ec] index write: offset 0x{offset:02X} < 0x{value:02X}:')
-        self.cs.hals.PortIO.write_port_byte(IO_PORT_EC_INDEX_ADDRL, offset & 0xFF)
-        self.cs.hals.PortIO.write_port_byte(IO_PORT_EC_INDEX_ADDRH, (offset >> 8) & 0xFF)
-        self.cs.hals.PortIO.write_port_byte(IO_PORT_EC_INDEX_DATA, value & 0xFF)
+        self.cs.hals.Io.write(IO_PORT_EC_INDEX_ADDRL, offset & 0xFF)
+        self.cs.hals.Io.write(IO_PORT_EC_INDEX_ADDRH, (offset >> 8) & 0xFF)
+        self.cs.hals.Io.write(IO_PORT_EC_INDEX_DATA, value & 0xFF)
         return True
 
 

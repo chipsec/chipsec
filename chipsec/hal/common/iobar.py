@@ -115,7 +115,7 @@ class IOBAR(hal_base.HALBase):
         io_port = bar_base + offset
         if offset > bar_size and logger().HAL:
             logger().log_warning(f'offset 0x{offset:X} is outside {bar_name} size (0x{size:X})')
-        value = self.cs.hals.PortIO._read_port(io_port, size)
+        value = self.cs.hals.Io.read(io_port, size)
         return value
 
     #
@@ -128,7 +128,7 @@ class IOBAR(hal_base.HALBase):
         io_port = bar_base + offset
         if offset > bar_size and logger().HAL:
             logger().log_warning(f'offset 0x{offset:X} is outside {bar_name} size (0x{size:X})')
-        return self.cs.hals.PortIO._write_port(io_port, value, size)
+        return self.cs.hals.Io.write(io_port, value, size)
 
     #
     # Check if I/O range is enabled by BAR name
@@ -189,7 +189,7 @@ class IOBAR(hal_base.HALBase):
         n = range_size // size
         io_ports = []
         for i in range(n):
-            io_ports.append(self.cs.hals.PortIO._read_port(range_base + i * size, size))
+            io_ports.append(self.cs.hals.Io.read(range_base + i * size, size))
         return io_ports
 
     #
@@ -201,7 +201,7 @@ class IOBAR(hal_base.HALBase):
         fmt = f'0{size * 2:d}X'
         logger().log(f"[iobar] I/O BAR {bar_name}:")
         for i in range(n):
-            reg = self.cs.hals.PortIO._read_port(range_base + i * size, size)
+            reg = self.cs.hals.Io.read(range_base + i * size, size)
             logger().log(f'{size * i:+04X}: {reg:{fmt}}')
 
 

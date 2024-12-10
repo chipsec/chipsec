@@ -198,8 +198,8 @@ class SPI(hal_base.HALBase):
     def __init__(self, cs):
         super(SPI, self).__init__(cs)
         self.instance = 0
+        self.mmio = cs.hals.MMIO
         self.get_registers()
-        # self.mmio = cs.hals.MMIO
         # self.rcba_spi_base = self.get_SPI_MMIO_base()
         # We try to map SPIBAR in the process memory, this will increase the
         # speed of MMIO access later on.
@@ -211,34 +211,34 @@ class SPI(hal_base.HALBase):
         # Reading definitions of SPI flash controller registers
         # which are required to send SPI cycles once for performance reasons
     def get_registers(self) -> None:
-        self.hsfs = self.cs.register.get_list_by_name('8086.SPI.HSFS', self.instance)
-        self.hsfc = self.cs.register.get_list_by_name('8086.SPI.HSFC', self.instance)
-        self.faddr = self.cs.register.get_list_by_name('8086.SPI.FADDR', self.instance)
-        self.fdata0 = self.cs.register.get_list_by_name('8086.SPI.FDATA0', self.instance)
-        self.fdata1 = self.cs.register.get_list_by_name('8086.SPI.FDATA1', self.instance)
-        self.fdata2 = self.cs.register.get_list_by_name('8086.SPI.FDATA2', self.instance)
-        self.fdata3 = self.cs.register.get_list_by_name('8086.SPI.FDATA3', self.instance)
-        self.fdata4 = self.cs.register.get_list_by_name('8086.SPI.FDATA4', self.instance)
-        self.fdata5 = self.cs.register.get_list_by_name('8086.SPI.FDATA5', self.instance)
-        self.fdata6 = self.cs.register.get_list_by_name('8086.SPI.FDATA6', self.instance)
-        self.fdata7 = self.cs.register.get_list_by_name('8086.SPI.FDATA7', self.instance)
-        self.fdata8 = self.cs.register.get_list_by_name('8086.SPI.FDATA8', self.instance)
-        self.fdata9 = self.cs.register.get_list_by_name('8086.SPI.FDATA9', self.instance)
-        self.fdata10 = self.cs.register.get_list_by_name('8086.SPI.FDATA10', self.instance)
-        self.fdata11 = self.cs.register.get_list_by_name('8086.SPI.FDATA11', self.instance)
-        self.fdata12 = self.cs.register.get_list_by_name('8086.SPI.FDATA12', self.instance)
-        self.fdata13 = self.cs.register.get_list_by_name('8086.SPI.FDATA13', self.instance)
-        self.fdata14 = self.cs.register.get_list_by_name('8086.SPI.FDATA14', self.instance)
-        self.fdata15 = self.cs.register.get_list_by_name('8086.SPI.FDATA15', self.instance)
-        self.ptinx = self.cs.register.get_list_by_name('8086.SPI.PTINX', self.instance)
-        self.ptdata = self.cs.register.get_list_by_name('8086.SPI.PTDATA', self.instance)
-        self.fdoc = self.cs.register.get_list_by_name('8086.SPI.FDOC', self.instance)
-        self.fdod = self.cs.register.get_list_by_name('8086.SPI.FDOD', self.instance)
-        self.frap = self.cs.register.get_list_by_name('8086.SPI.FRAP', self.instance)
-        self.bfpr = self.cs.register.get_list_by_name('8086.SPI.BFPR', self.instance)
-        self.ble = self.cs.control.get_list_by_name('BiosLockEnable', self.instance)
-        self.bioswe = self.cs.control.get_list_by_name('BiosWriteEnable', self.instance)
-        self.smmbwp = self.cs.control.get_list_by_name('SmmBiosWriteProtection', self.instance)
+        self.hsfs = self.cs.register.get_instance_by_name('8086.SPI.HSFS', self.instance)
+        self.hsfc = self.cs.register.get_instance_by_name('8086.SPI.HSFC', self.instance)
+        self.faddr = self.cs.register.get_instance_by_name('8086.SPI.FADDR', self.instance)
+        self.fdata0 = self.cs.register.get_instance_by_name('8086.SPI.FDATA0', self.instance)
+        self.fdata1 = self.cs.register.get_instance_by_name('8086.SPI.FDATA1', self.instance)
+        self.fdata2 = self.cs.register.get_instance_by_name('8086.SPI.FDATA2', self.instance)
+        self.fdata3 = self.cs.register.get_instance_by_name('8086.SPI.FDATA3', self.instance)
+        self.fdata4 = self.cs.register.get_instance_by_name('8086.SPI.FDATA4', self.instance)
+        self.fdata5 = self.cs.register.get_instance_by_name('8086.SPI.FDATA5', self.instance)
+        self.fdata6 = self.cs.register.get_instance_by_name('8086.SPI.FDATA6', self.instance)
+        self.fdata7 = self.cs.register.get_instance_by_name('8086.SPI.FDATA7', self.instance)
+        self.fdata8 = self.cs.register.get_instance_by_name('8086.SPI.FDATA8', self.instance)
+        self.fdata9 = self.cs.register.get_instance_by_name('8086.SPI.FDATA9', self.instance)
+        self.fdata10 = self.cs.register.get_instance_by_name('8086.SPI.FDATA10', self.instance)
+        self.fdata11 = self.cs.register.get_instance_by_name('8086.SPI.FDATA11', self.instance)
+        self.fdata12 = self.cs.register.get_instance_by_name('8086.SPI.FDATA12', self.instance)
+        self.fdata13 = self.cs.register.get_instance_by_name('8086.SPI.FDATA13', self.instance)
+        self.fdata14 = self.cs.register.get_instance_by_name('8086.SPI.FDATA14', self.instance)
+        self.fdata15 = self.cs.register.get_instance_by_name('8086.SPI.FDATA15', self.instance)
+        self.ptinx = self.cs.register.get_instance_by_name('8086.SPI.PTINX', self.instance)
+        self.ptdata = self.cs.register.get_instance_by_name('8086.SPI.PTDATA', self.instance)
+        self.fdoc = self.cs.register.get_instance_by_name('8086.SPI.FDOC', self.instance)
+        self.fdod = self.cs.register.get_instance_by_name('8086.SPI.FDOD', self.instance)
+        self.frap = self.cs.register.get_instance_by_name('8086.SPI.FRAP', self.instance)
+        self.bfpr = self.cs.register.get_instance_by_name('8086.SPI.BFPR', self.instance)
+        self.ble = self.cs.control.get_instance_by_name('BiosLockEnable', self.instance)
+        self.bioswe = self.cs.control.get_instance_by_name('BiosWriteEnable', self.instance)
+        self.smmbwp = self.cs.control.get_instance_by_name('SmmBiosWriteProtection', self.instance)
         self.get_SPI_MMIO_base()
         # self.hsfs_off = self.cs.register.get_def("HSFS")['offset']
         # self.hsfc_off = self.cs.register.get_def("HSFC")['offset']
@@ -274,8 +274,8 @@ class SPI(hal_base.HALBase):
 
     def get_SPI_MMIO_base(self) -> int:
         spi_base = 0
-        if self.mmio.is_MMIO_BAR_defined('SPIBAR'):
-            (spi_base, _) = self.mmio.get_MMIO_BAR_base_address('SPIBAR')
+        if self.mmio.is_MMIO_BAR_defined('8086.SPI.SPIBAR'):
+            (spi_base, _) = self.mmio.get_MMIO_BAR_base_address('8086.SPI.SPIBAR')
         else:
             self.logger.log_hal('[spi] get_SPI_MMIO_base(): SPIBAR not defined. Returning spi_base = 0.')
         self.logger.log_hal(f'[spi] SPI MMIO base: 0x{spi_base:016X} (assuming below 4GB)')
@@ -291,11 +291,12 @@ class SPI(hal_base.HALBase):
         freg_name = SPI_REGION[spi_region_id]
         if not self.cs.register.is_defined(freg_name):
             return (0, 0, 0)
-        freg = self.cs.register.read(freg_name)
+        freg =  self.cs.register.get_instance_by_name(freg_name, self.instance)
+        freg_val = freg.read()
         # Region Base corresponds to FLA bits 24:12
-        range_base = self.cs.register.get_field(freg_name, freg, 'RB') << SPI_FLA_SHIFT
+        range_base = freg.get_field('RB') << SPI_FLA_SHIFT
         # Region Limit corresponds to FLA bits 24:12
-        range_limit = self.cs.register.get_field(freg_name, freg, 'RL') << SPI_FLA_SHIFT
+        range_limit = freg.get_field('RL') << SPI_FLA_SHIFT
         # FLA bits 11:0 are assumed to be FFFh for the limit comparison
         range_limit |= SPI_FLA_PAGE_MASK
         return (range_base, range_limit, freg)

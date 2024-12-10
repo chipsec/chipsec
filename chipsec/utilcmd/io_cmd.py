@@ -75,28 +75,12 @@ class PortIOCommand(BaseCommand):
         self._iobar.list_IO_BARs()
 
     def io_read(self) -> None:
-        if 0x1 == self._width:
-            value = self.cs.hals.PortIO.read_port_byte(self._port)
-        elif 0x2 == self._width:
-            value = self.cs.hals.PortIO.read_port_word(self._port)
-        elif 0x4 == self._width:
-            value = self.cs.hals.PortIO.read_port_dword(self._port)
-        else:
-            self.logger.log("Invalid read size requested. 1,2,4 supported")
-            return
+        value = self.cs.hals.Io.read(self._port, self._width)
         self.logger.log(f'[CHIPSEC] IN 0x{self._port:04X} -> 0x{value:08X} (size = 0x{self._width:02X})')
         return
 
     def io_write(self) -> None:
-        if 0x1 == self._width:
-            self.cs.hals.PortIO.write_port_byte(self._port, self._value)
-        elif 0x2 == self._width:
-            self.cs.hals.PortIO.write_port_word(self._port, self._value)
-        elif 0x4 == self._width:
-            self.cs.hals.PortIO.write_port_dword(self._port, self._value)
-        else:
-            self.logger.log("Invalid write size requested. 1,2,4 supported")
-            return
+        self.cs.hals.Io.write(self._port, self._value, self._width)
         self.logger.log(
             f'[CHIPSEC] OUT 0x{self._port:04X} <- 0x{self._value:08X} (size = 0x{self._width:02X})')
         return
