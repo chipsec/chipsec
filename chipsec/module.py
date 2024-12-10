@@ -21,12 +21,12 @@
 
 import re
 import os
-import traceback
 import json
+import traceback
 import chipsec.library.logger
 from chipsec.library.file import get_main_dir
 from chipsec.library.url import url
-from chipsec.library.returncode import ModuleResult, generate_hash_id
+from chipsec.library.returncode import ModuleResult, generate_hash_id, get_module_ids_dictionary
 
 _importlib = True
 try:
@@ -43,7 +43,7 @@ class Module:
         self.name = name
         self.module = None
         self.mod_obj = None
-        self.module_ids = self.get_module_ids_dictionary()
+        self.module_ids = get_module_ids_dictionary()
         self.url = url()
 
     def __lt__(self, other):
@@ -78,11 +78,6 @@ class Module:
                     self.logger.log_bad(traceback.format_exc())
                 raise msg
         return loaded
-
-    def get_module_ids_dictionary(self):
-        with open(os.path.join(get_main_dir(), 'chipsec', 'library', 'module_ids.json'), 'r') as module_ids_file:
-            module_ids = json.loads(module_ids_file.read())
-        return module_ids
 
     def update_module_ids_file(self):
         with open(os.path.join(get_main_dir(), 'chipsec', 'library', 'module_ids.json'), 'w') as module_ids_file:
