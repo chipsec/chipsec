@@ -66,8 +66,8 @@ Review:    !!!
   <!-- #################################### -->
   <pci>
     <!-- Review !!!!                                           !!!!                /-->
-    <device name="HOSTCTL" bus="0x00" dev="0x00" fun="0" did="0x4621,0x4660" config="IOMMU.iommu.xml" />
-    <!-- <device name="HOSTCTL" bus="0x00" dev="0x00" fun="0" config="HOSTCTL.hostctl1.xml"/> -->
+    <device name="HOSTCTL" bus="0x00" dev="0x00" fun="0" did="0x4621,0x4660" config="IOMMU.iommu.xml, HOSTCTL.hostctl1.xml" />
+    <!-- <device name="HOSTCTL" bus="0x00" dev="0x00" fun="0" config=""/> -->
     <device name="IGD"     bus="0x00" dev="0x02" fun="0" config="IGD.igd0.xml" />
     <device name="MEI1"    bus="0x00" dev="0x16" fun="0" config="ME.mei0.xml" />
     <device name="SMBUS"   bus="0x00" dev="0x1F" fun="4" config="SMBUS.smbus0.xml" />
@@ -87,5 +87,7 @@ Review:    !!!
   <memory>
     <range name="TPM" access="mmio" address="0xFED40000" size="0x10000" config="TPM.tpm12.xml" />
   </memory>
+
+  
 
 </configuration>
