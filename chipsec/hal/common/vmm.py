@@ -30,21 +30,22 @@ VMM specific functionality
 import struct
 
 from typing import AnyStr, Dict, List, Optional, Tuple
+from chipsec.hal.hal_base import HALBase
 from chipsec.library.logger import logger, pretty_print_hex_buffer
-import chipsec.library.pcidb
+from chipsec.library.pcidb import VENDORS, DEVICES
+from chipsec.hal.common.paging import c_extended_page_tables
 
 
-class VMM: #TODO: Refactor and make it derive from HALBase
+class Vmm(HALBase):
 
     def __init__(self, cs):
-        self.cs = cs
-        self.helper = cs.helper
+        super(Vmm, self).__init__(cs)
         self.output = ''
         (self.membuf0_va, self.membuf0_pa) = (0, 0)
         (self.membuf1_va, self.membuf1_pa) = (0, 0)
 
-        chipsec.library.pcidb.VENDORS[VIRTIO_VID] = VIRTIO_VENDOR_NAME
-        chipsec.library.pcidb.DEVICES[VIRTIO_VID] = VIRTIO_DEVICES
+        VENDORS[VIRTIO_VID] = VIRTIO_VENDOR_NAME
+        DEVICES[VIRTIO_VID] = VIRTIO_DEVICES
 
     def __del__(self):
         if self.membuf0_va != 0:
@@ -61,41 +62,41 @@ class VMM: #TODO: Refactor and make it derive from HALBase
     # Generic hypercall interface
 
     def hypercall(self, rax: int, rbx: int, rcx: int, rdx: int, rdi: int, rsi: int, r8: int = 0, r9: int = 0, r10: int = 0, r11: int = 0, xmm_buffer: int = 0) -> int:
-        return self.helper.hypercall(rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer)
+        return self.cs.helper.hypercall(rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer)
 
     # Hypervisor-specific hypercall interfaces
 
     def hypercall64_five_args(self, vector: int, arg1: int = 0, arg2: int = 0, arg3: int = 0, arg4: int = 0, arg5: int = 0) -> int:
-        return self.helper.hypercall(0, arg3, arg5, 0, arg4, 0, vector, 0, arg1, arg2)
+        return self.hypercall(0, arg3, arg5, 0, arg4, 0, vector, 0, arg1, arg2)
 
     def hypercall64_memory_based(self, hypervisor_input_value: int, parameters: AnyStr, size: int = 0) -> int:
         self.cs.hals.Memory.write_physical_mem(self.membuf0_pa, len(parameters[:0x1000]), parameters[:0x1000])
-        regs = self.helper.hypercall(hypervisor_input_value & ~0x00010000, self.membuf0_pa, self.membuf1_pa)
-        self.output = self.helper.read_phys_mem(self.membuf1_pa, size) if size > 0 else ''
+        regs = self.hypercall(hypervisor_input_value & ~0x00010000, self.membuf0_pa, self.membuf1_pa)
+        self.output = self.cs.hals.Memory.read_physical_mem(self.membuf1_pa, size) if size > 0 else ''
         return regs
 
     def hypercall64_fast(self, hypervisor_input_value: int, param0: int = 0, param1: int = 0) -> int:
-        return self.helper.hypercall(hypervisor_input_value | 0x00010000, param0, param1)
+        return self.hypercall(hypervisor_input_value | 0x00010000, param0, param1)
 
     def hypercall64_extended_fast(self, hypervisor_input_value: int, parameter_block: bytes) -> int:
         (param0, param1, xmm_regs) = struct.unpack('<QQ96s', parameter_block)
-        self.cs.hals.Memory.write_physical_mem(self.membuf0_pa, 0x60, xmm_regs)
-        return self.helper.hypercall(hypervisor_input_value | 0x00010000, param0, param1, 0, 0, 0, 0, 0, 0, 0, self.membuf0_va)
+        self.cs.hals.Memory.mem.write_physical_mem(self.membuf0_pa, 0x60, xmm_regs)
+        return self.hypercall(hypervisor_input_value | 0x00010000, param0, param1, 0, 0, 0, 0, 0, 0, 0, self.membuf0_va)
 
     #
     # Dump EPT page tables at specified physical base (EPT pointer)
     #
     def dump_EPT_page_tables(self, eptp: str, pt_fname: Optional[str] = None) -> None:
-        _orig_logname = logger().LOG_FILE_NAME
-        paging_ept = chipsec.hal.paging.c_extended_page_tables(self.cs)
-        logger().log_hal(f'[vmm] Dumping EPT paging hierarchy at EPTP 0x{eptp:08X}...')
+        _orig_logname = self.logger.LOG_FILE_NAME
+        paging_ept = c_extended_page_tables(self.cs)
+        self.logger.log_hal(f'[vmm] Dumping EPT paging hierarchy at EPTP 0x{eptp:08X}...')
         if pt_fname is None:
             pt_fname = (f'ept_{eptp:08X}')
-        logger().set_log_file(pt_fname, False)
+        self.logger.set_log_file(pt_fname, False)
         paging_ept.read_pt_and_show_status(pt_fname, 'EPT', eptp)
-        logger().set_log_file(_orig_logname, False)
+        self.logger.set_log_file(_orig_logname, False)
         if paging_ept.failure:
-            logger().log_error('Could not dump EPT page tables')
+            self.logger.log_error('Could not dump EPT page tables')
 
 
 ################################################################################
@@ -128,11 +129,11 @@ VIRTIO_DEVICES: Dict[int, str] = {
 }
 
 
-def get_virtio_devices(devices: List[Tuple[int, int, int, int, int]]) -> List[Tuple[int, int, int, int, int]]:
+def get_virtio_devices(devices: List[Tuple[int, int, int, int, int, int]]) -> List[Tuple[int, int, int, int, int, int]]:
     virtio_devices = []
-    for (b, d, f, vid, did) in devices:
+    for (b, d, f, vid, did, rid) in devices:
         if vid in VIRTIO_VENDORS:
-            virtio_devices.append((b, d, f, vid, did))
+            virtio_devices.append((b, d, f, vid, did, rid))
     return virtio_devices
 
 
@@ -151,6 +152,8 @@ class VirtIO_Device:
         bars = self.cs.hals.Pci.get_device_bars(self.bus, self.dev, self.fun)
         for (bar, isMMIO, _, _, _, size) in bars:
             if isMMIO:
-                self.cs.hals.MMIO.dump_MMIO(bar, size)
+                self.cs.hals.Mmio.dump_MMIO(bar, size)
             else:
-                self.cs.hals.PortIO.dump_IO(bar, size, 4)
+                self.cs.hals.Io.dump_IO(bar, size, 4)
+
+haldata = {"arch":['FFFF'], 'name': ['Vmm']}
