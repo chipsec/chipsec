@@ -156,4 +156,5 @@ class VirtIO_Device:
             else:
                 self.cs.hals.Io.dump_IO(bar, size, 4)
 
-haldata = {"arch":['FFFF'], 'name': ['Vmm']}
+
+haldata = {"arch": ['FFFF'], 'name': ['Vmm']}
