@@ -53,8 +53,8 @@ from chipsec.hal.common.uefi_fv import EFI_FIRMWARE_FILE_SYSTEM_GUID, EFI_SECTIO
 from chipsec.hal.common.uefi_fv import EFI_GUID_DEFINED_SECTION, EFI_GUID_DEFINED_SECTION_size, NextFwFile, NextFwFileSection, NextFwVolume, GetFvHeader
 from chipsec.hal.common.uefi_fv import EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID, LZMA_CUSTOM_DECOMPRESS_GUID, TIANO_DECOMPRESSED_GUID, LZMAF86_DECOMPRESS_GUID
 from chipsec.hal.common.uefi_fv import EFI_CERT_TYPE_RSA_2048_SHA256_GUID, EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size, EFI_SECTION, EFI_FV, EFI_FILE
-from chipsec.hal.common.uefi_fv import EFI_FIRMWARE_CONTENTS_SIGNED_GUID, WIN_CERT_TYPE_EFI_GUID, WIN_CERTIFICATE_size, WIN_CERTIFICATE
-from chipsec.hal.common.uefi_fv import EFI_SECTION_COMPRESSION, EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_SECTION_RAW, SECTION_NAMES, DEF_INDENT
+from chipsec.hal.common.uefi_fv import EFI_FIRMWARE_CONTENTS_SIGNED_GUID, WIN_CERT_TYPE_EFI_GUID, WIN_CERTIFICATE_size, WIN_CERTIFICATE, WIN_CERT_TYPE_PKCS_SIGNED_DATA
+from chipsec.hal.common.uefi_fv import EFI_SECTION_COMPRESSION, EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_SECTION_RAW, SECTION_NAMES, DEF_INDENT, WIN_CERT_TYPE_EFI_PKCS115
 from chipsec.hal.common.uefi_fv import FILE_TYPE_NAMES, EFI_FS_GUIDS, EFI_FILE_HEADER_INVALID, EFI_FILE_HEADER_VALID, EFI_FILE_HEADER_CONSTRUCTION
 from chipsec.hal.common.uefi_fv import EFI_COMPRESSION_SECTION_size, EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_FFS_PAD, EFI_FVB2_ERASE_POLARITY, EFI_FV_FILETYPE_RAW
 from chipsec.hal.common.uefi_compression import UEFICompression
@@ -212,6 +212,10 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
                         sec.Comments += " Cert of type RSA2048/SHA256!"
                     else:
                         sec.Comments += f" Cert of unknown type! But the guid is: {certGuid}"
+                elif cert_type == WIN_CERT_TYPE_PKCS_SIGNED_DATA:
+                    sec.Comments = "Found PKCS SIGNED Certificate"
+                elif cert_type == WIN_CERT_TYPE_EFI_PKCS115:
+                    sec.Comments = "Found UEFI PKCS1_15 SIGNED Certificate"
                 else:
                     sec.Comments = f"Unknown cert type: {cert_type}"
                 offset = sec.DataOffset + length
