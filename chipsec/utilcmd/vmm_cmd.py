@@ -72,9 +72,9 @@ class VMMCommand(BaseCommand):
         parser_ept.set_defaults(func=self.vmm_pt)
 
         parser_virtio = subparsers.add_parser('is_virtio')
-        parser_virtio.add_argument('bus', type=lambda x: int(x,16), help='bus value (hex)')
-        parser_virtio.add_argument('dev', type=lambda x: int(x,16), help='device value (hex)')
-        parser_virtio.add_argument('fun', type=lambda x: int(x,16), help='function value (hex)')
+        parser_virtio.add_argument('bus', type=lambda x: int(x, 16), help='bus value (hex)')
+        parser_virtio.add_argument('dev', type=lambda x: int(x, 16), help='device value (hex)')
+        parser_virtio.add_argument('fun', type=lambda x: int(x, 16), help='function value (hex)')
         parser_virtio.set_defaults(func=self.vmm_virtio)
 
         parser_enumerate = subparsers.add_parser('virtio')
