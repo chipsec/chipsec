@@ -4,7 +4,7 @@ DAL Windows Installation
 Prerequisites
 -------------
 
-Python 3.7 or higher (https://www.python.org/downloads/)
+Python 3.8 or higher (https://www.python.org/downloads/)
 
 .. note::
 

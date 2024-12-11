@@ -415,7 +415,7 @@ Python 3.12 will deprecate and remove the distutils module.  In order for CHIPSE
 
 The setuptools module has been updated to fully replace distutils but requires an up-to-date version.
 
-- Minimum setuptools version: `62.0.0 <https://pypi.org/project/setuptools/62.0.0/>`_ (requires Python >= 3.7)
+- Minimum setuptools version: `62.0.0 <https://pypi.org/project/setuptools/62.0.0/>`_ (requires Python >= 3.8)
 
 - Recommended setuptools version: latest
 

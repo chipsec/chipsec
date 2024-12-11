@@ -12,7 +12,7 @@ Windows Installation
 Install CHIPSEC Dependencies
 ----------------------------
 
-Python 3.7 or higher (https://www.python.org/downloads/)
+Python 3.8 or higher (https://www.python.org/downloads/)
 
 .. note::
 
