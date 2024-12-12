@@ -26,17 +26,17 @@ import struct
 import os
 from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
 if TYPE_CHECKING:
-    from chipsec.hal.common.uefi_common import S3BOOTSCRIPT_ENTRY, EFI_SYSTEM_TABLE
+    from chipsec.library.uefi.uefi_common import S3BOOTSCRIPT_ENTRY, EFI_SYSTEM_TABLE
     from chipsec.hal.common.uefi_platform import EfiVariableType, EfiTableType
 from chipsec.hal import hal_base
 from chipsec.hal.common import uefi_platform
 from chipsec.hal.intel.spi import SPI, BIOS
-from chipsec.hal.common.uefi_common import EFI_VENDOR_TABLE, EFI_VENDOR_TABLE_SIZE, EFI_VENDOR_TABLE_FORMAT, EFI_TABLE_HEADER_SIZE, EFI_TABLE_HEADER, EFI_TABLES, MAX_EFI_TABLE_SIZE
-from chipsec.hal.common.uefi_common import S3BootScriptOpcode, S3_BOOTSCRIPT_VARIABLES, parse_efivar_file, EFI_REVISIONS, AUTH_SIG_VAR, ESAL_SIG_VAR
-from chipsec.hal.common.uefi_common import EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_APPEND_WRITE, EFI_VARIABLE_NON_VOLATILE
-from chipsec.hal.common.uefi_common import EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_RUNTIME_ACCESS, EFI_VARIABLE_HARDWARE_ERROR_RECORD, SECURE_BOOT_SIG_VAR
-from chipsec.hal.common.uefi_common import IS_VARIABLE_ATTRIBUTE, EFI_TABLE_HEADER_FMT, EFI_SYSTEM_TABLE_SIGNATURE, EFI_RUNTIME_SERVICES_SIGNATURE, EFI_BOOT_SERVICES_SIGNATURE
-from chipsec.hal.common.uefi_common import EFI_DXE_SERVICES_TABLE_SIGNATURE, EFI_CONFIGURATION_TABLE, ACPI_VARIABLE_SET_STRUCT_SIZE
+from chipsec.library.uefi.uefi_common import EFI_VENDOR_TABLE, EFI_VENDOR_TABLE_SIZE, EFI_VENDOR_TABLE_FORMAT, EFI_TABLE_HEADER_SIZE, EFI_TABLE_HEADER, EFI_TABLES, MAX_EFI_TABLE_SIZE
+from chipsec.library.uefi.uefi_common import S3BootScriptOpcode, S3_BOOTSCRIPT_VARIABLES, parse_efivar_file, EFI_REVISIONS, AUTH_SIG_VAR, ESAL_SIG_VAR
+from chipsec.library.uefi.uefi_common import EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_APPEND_WRITE, EFI_VARIABLE_NON_VOLATILE
+from chipsec.library.uefi.uefi_common import EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_RUNTIME_ACCESS, EFI_VARIABLE_HARDWARE_ERROR_RECORD, SECURE_BOOT_SIG_VAR
+from chipsec.library.uefi.uefi_common import IS_VARIABLE_ATTRIBUTE, EFI_TABLE_HEADER_FMT, EFI_SYSTEM_TABLE_SIGNATURE, EFI_RUNTIME_SERVICES_SIGNATURE, EFI_BOOT_SERVICES_SIGNATURE
+from chipsec.library.uefi.uefi_common import EFI_DXE_SERVICES_TABLE_SIGNATURE, EFI_CONFIGURATION_TABLE, ACPI_VARIABLE_SET_STRUCT_SIZE
 from chipsec.library.logger import logger, print_buffer_bytes
 from chipsec.library.file import write_file, read_file
 from chipsec.library.defines import bytestostring

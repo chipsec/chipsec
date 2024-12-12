@@ -54,7 +54,7 @@ from chipsec.module_common import BaseModule, MTAG_BIOS, MTAG_SMM, MTAG_SECUREBO
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.defines import BOUNDARY_1MB, BOUNDARY_4GB
 from chipsec.hal.common.uefi import UEFI, parse_script
-from chipsec.hal.common.uefi_common import S3BootScriptOpcode, S3BOOTSCRIPT_ENTRY
+from chipsec.library.uefi.uefi_common import S3BootScriptOpcode, S3BOOTSCRIPT_ENTRY
 from typing import List
 
 TAGS = [MTAG_BIOS, MTAG_SMM, MTAG_SECUREBOOT]
