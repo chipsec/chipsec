@@ -26,58 +26,23 @@ import struct
 import os
 from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
 if TYPE_CHECKING:
-    from chipsec.library.uefi.uefi_common import S3BOOTSCRIPT_ENTRY, EFI_SYSTEM_TABLE
+    from chipsec.library.uefi.sleep_states import S3BOOTSCRIPT_ENTRY
+    from chipsec.library.uefi.uefi_common import EFI_SYSTEM_TABLE
     from chipsec.library.uefi.uefi_platform import EfiVariableType, EfiTableType
 from chipsec.hal import hal_base
 from chipsec.library.uefi import uefi_platform
 from chipsec.hal.intel.spi import SPI, BIOS
 from chipsec.library.uefi.uefi_common import EFI_VENDOR_TABLE, EFI_VENDOR_TABLE_SIZE, EFI_VENDOR_TABLE_FORMAT, EFI_TABLE_HEADER_SIZE, EFI_TABLE_HEADER, EFI_TABLES, MAX_EFI_TABLE_SIZE
-from chipsec.library.uefi.uefi_common import S3BootScriptOpcode, S3_BOOTSCRIPT_VARIABLES, parse_efivar_file, EFI_REVISIONS, AUTH_SIG_VAR, ESAL_SIG_VAR
+from chipsec.library.uefi.uefi_common import parse_efivar_file, EFI_REVISIONS, AUTH_SIG_VAR, ESAL_SIG_VAR
 from chipsec.library.uefi.uefi_common import EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_APPEND_WRITE, EFI_VARIABLE_NON_VOLATILE
 from chipsec.library.uefi.uefi_common import EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_RUNTIME_ACCESS, EFI_VARIABLE_HARDWARE_ERROR_RECORD, SECURE_BOOT_SIG_VAR
 from chipsec.library.uefi.uefi_common import IS_VARIABLE_ATTRIBUTE, EFI_TABLE_HEADER_FMT, EFI_SYSTEM_TABLE_SIGNATURE, EFI_RUNTIME_SERVICES_SIGNATURE, EFI_BOOT_SERVICES_SIGNATURE
-from chipsec.library.uefi.uefi_common import EFI_DXE_SERVICES_TABLE_SIGNATURE, EFI_CONFIGURATION_TABLE, ACPI_VARIABLE_SET_STRUCT_SIZE
+from chipsec.library.uefi.uefi_common import EFI_DXE_SERVICES_TABLE_SIGNATURE, EFI_CONFIGURATION_TABLE
+from chipsec.library.uefi.sleep_states import ACPI_VARIABLE_SET_STRUCT_SIZE, S3_BOOTSCRIPT_VARIABLES, parse_script
 from chipsec.library.logger import logger, print_buffer_bytes
 from chipsec.library.file import write_file, read_file
 from chipsec.library.defines import bytestostring
 from chipsec.helper.oshelper import OsHelperError
-
-
-
-########################################################################################################
-#
-# S3 Resume Boot-Script Parsing Functionality
-#
-########################################################################################################
-
-def parse_script(script: bytes, log_script: bool = False) -> List['S3BOOTSCRIPT_ENTRY']:
-    off = 0
-    entry_type = 0
-    s3_boot_script_entries = []
-    len_s = len(script)
-
-    if log_script:
-        logger().log('[uefi] +++ S3 Resume Boot-Script +++\n')
-    script_type, script_header_length = uefi_platform.id_s3bootscript_type(script, log_script)
-    off += script_header_length
-
-    while (off < len_s) and (entry_type != S3BootScriptOpcode.EFI_BOOT_SCRIPT_TERMINATE_OPCODE):
-        entry_type, s3script_entry = uefi_platform.parse_s3bootscript_entry(script_type, script, off, log_script)
-        # couldn't parse the next entry - return what has been parsed so far
-        if s3script_entry is None:
-            return s3_boot_script_entries
-        s3_boot_script_entries.append(s3script_entry)
-        off += s3script_entry.length
-
-    if log_script:
-        logger().log('[uefi] +++ End of S3 Resume Boot-Script +++')
-
-    logger().log_hal(f'[uefi] S3 Resume Boot-Script size: 0x{off:X}')
-    logger().log_hal('\n[uefi] [++++++++++ S3 Resume Boot-Script Buffer ++++++++++]')
-    if logger().HAL:
-        print_buffer_bytes(script[: off])
-
-    return s3_boot_script_entries
 
 
 ########################################################################################################
@@ -165,6 +130,7 @@ def get_attr_string(attr: int) -> str:
     if IS_VARIABLE_ATTRIBUTE(attr, EFI_VARIABLE_APPEND_WRITE):
         attr_str = f'{attr_str}AW+'
     return attr_str[:-1].lstrip()
+
 
 def print_efi_variable(offset: int, var_buf: bytes, var_header: 'EfiTableType', var_name: str, var_data: bytes, var_guid: str, var_attrib: int) -> None:
     logger().log('\n--------------------------------')
