@@ -44,7 +44,7 @@ if TYPE_CHECKING:
     from chipsec.library.uefi.uefi_fv import EFI_MODULE
 from chipsec.library.logger import logger
 from chipsec.library.file import write_file, read_file
-from chipsec.hal.common.uefi_compression import COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_EFI_STANDARD, COMPRESSION_TYPES_ALGORITHMS, COMPRESSION_TYPE_UNKNOWN, COMPRESSION_TYPE_LZMAF86
+from chipsec.library.uefi.uefi_compression import COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_EFI_STANDARD, COMPRESSION_TYPES_ALGORITHMS, COMPRESSION_TYPE_UNKNOWN, COMPRESSION_TYPE_LZMAF86
 from chipsec.hal.common.uefi_common import bit_set, EFI_GUID_SIZE, EFI_GUID_FMT
 from chipsec.hal.common.uefi_platform import FWType, fw_types, EFI_NVRAM_GUIDS, EFI_PLATFORM_FS_GUIDS, NVAR_NVRAM_FS_FILE
 from chipsec.hal.common.uefi import identify_EFI_NVRAM, parse_EFI_variables
@@ -57,7 +57,7 @@ from chipsec.library.uefi.uefi_fv import EFI_FIRMWARE_CONTENTS_SIGNED_GUID, WIN_
 from chipsec.library.uefi.uefi_fv import EFI_SECTION_COMPRESSION, EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_SECTION_RAW, SECTION_NAMES, DEF_INDENT, WIN_CERT_TYPE_EFI_PKCS115
 from chipsec.library.uefi.uefi_fv import FILE_TYPE_NAMES, EFI_FS_GUIDS, EFI_FILE_HEADER_INVALID, EFI_FILE_HEADER_VALID, EFI_FILE_HEADER_CONSTRUCTION
 from chipsec.library.uefi.uefi_fv import EFI_COMPRESSION_SECTION_size, EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_FFS_PAD, EFI_FVB2_ERASE_POLARITY, EFI_FV_FILETYPE_RAW
-from chipsec.hal.common.uefi_compression import UEFICompression
+from chipsec.library.uefi.uefi_compression import UEFICompression
 
 CMD_UEFI_FILE_REMOVE = 0
 CMD_UEFI_FILE_INSERT_BEFORE = 1
