@@ -67,7 +67,7 @@ from chipsec.hal.common.uefi import UEFI, decode_EFI_variables, get_attr_string,
 from chipsec.hal.common.uefi import SECURE_BOOT_KEY_VARIABLES, parse_script, parse_EFI_variables
 from chipsec.library.uefi.uefi_fv import get_guid_bin, assemble_uefi_file, assemble_uefi_section, assemble_uefi_raw
 from chipsec.library.uefi.uefi_fv import FILE_TYPE_NAMES
-from chipsec.hal.common.uefi_platform import fw_types
+from chipsec.library.uefi.uefi_platform import fw_types
 
 
 # Unified Extensible Firmware Interface (UEFI)

@@ -27,9 +27,9 @@ import os
 from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
 if TYPE_CHECKING:
     from chipsec.library.uefi.uefi_common import S3BOOTSCRIPT_ENTRY, EFI_SYSTEM_TABLE
-    from chipsec.hal.common.uefi_platform import EfiVariableType, EfiTableType
+    from chipsec.library.uefi.uefi_platform import EfiVariableType, EfiTableType
 from chipsec.hal import hal_base
-from chipsec.hal.common import uefi_platform
+from chipsec.library.uefi import uefi_platform
 from chipsec.hal.intel.spi import SPI, BIOS
 from chipsec.library.uefi.uefi_common import EFI_VENDOR_TABLE, EFI_VENDOR_TABLE_SIZE, EFI_VENDOR_TABLE_FORMAT, EFI_TABLE_HEADER_SIZE, EFI_TABLE_HEADER, EFI_TABLES, MAX_EFI_TABLE_SIZE
 from chipsec.library.uefi.uefi_common import S3BootScriptOpcode, S3_BOOTSCRIPT_VARIABLES, parse_efivar_file, EFI_REVISIONS, AUTH_SIG_VAR, ESAL_SIG_VAR
