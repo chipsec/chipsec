@@ -51,7 +51,7 @@ from chipsec.command import BaseCommand, toLoad
 
 from chipsec.hal.intel.spi import FLASH_DESCRIPTOR, BIOS
 from chipsec.hal.common.spi_descriptor import get_spi_flash_descriptor, get_spi_regions, parse_spi_flash_descriptor
-from chipsec.hal.common.spi_uefi import decode_uefi_region
+from chipsec.library.uefi.spi_uefi import decode_uefi_region
 from chipsec.hal.common.uefi import uefi_platform
 
 

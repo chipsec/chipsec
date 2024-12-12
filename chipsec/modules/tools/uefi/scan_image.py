@@ -62,7 +62,7 @@ from chipsec.library.returncode import ModuleResult
 from chipsec.hal.common.uefi import UEFI
 from chipsec.hal.intel.spi import SPI, BIOS
 from chipsec.library.uefi.uefi_fv import EFI_MODULE, EFI_SECTION, SECTION_NAMES, EFI_SECTION_PE32
-from chipsec.hal.common.spi_uefi import build_efi_model, search_efi_tree, EFIModuleType, UUIDEncoder
+from chipsec.library.uefi.spi_uefi import build_efi_model, search_efi_tree, EFIModuleType, UUIDEncoder
 from chipsec.library.file import write_file, read_file
 
 TAGS = [MTAG_BIOS]

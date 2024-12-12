@@ -54,7 +54,7 @@ import os
 
 from chipsec.module_common import BaseModule, MTAG_BIOS
 from chipsec.library.returncode import ModuleResult
-from chipsec.hal.common.spi_uefi import search_efi_tree, build_efi_model, EFIModuleType
+from chipsec.library.uefi.spi_uefi import search_efi_tree, build_efi_model, EFIModuleType
 from chipsec.hal.common.uefi import UEFI
 from chipsec.hal.intel.spi import SPI, BIOS
 from chipsec.library.uefi.uefi_search import check_match_criteria
