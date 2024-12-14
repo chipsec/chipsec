@@ -80,7 +80,7 @@ class Vmm(HALBase):
 
     def hypercall64_extended_fast(self, hypervisor_input_value: int, parameter_block: bytes) -> int:
         (param0, param1, xmm_regs) = struct.unpack('<QQ96s', parameter_block)
-        self.cs.hals.Memory.mem.write_physical_mem(self.membuf0_pa, 0x60, xmm_regs)
+        self.cs.hals.Memory.write_physical_mem(self.membuf0_pa, 0x60, xmm_regs)
         return self.hypercall(hypervisor_input_value | 0x00010000, param0, param1, 0, 0, 0, 0, 0, 0, 0, self.membuf0_va)
 
     #
@@ -154,7 +154,7 @@ class VirtIO_Device:
             if isMMIO:
                 self.cs.hals.Mmio.dump_MMIO(bar, size)
             else:
-                self.cs.hals.Io.dump_IO(bar, size, 4)
+                self.cs.hals.PortIo.dump_range(bar, size, 4)
 
 
 haldata = {"arch": ['FFFF'], 'name': ['Vmm']}
