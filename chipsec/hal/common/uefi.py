@@ -23,263 +23,26 @@ Main UEFI component using platform specific and common UEFI functionality
 """
 
 import struct
-import os
 from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
 if TYPE_CHECKING:
     from chipsec.library.uefi.sleep_states import S3BOOTSCRIPT_ENTRY
     from chipsec.library.uefi.uefi_common import EFI_SYSTEM_TABLE
-    from chipsec.library.uefi.uefi_platform import EfiVariableType, EfiTableType
+    from chipsec.library.types import EfiVariableType
 from chipsec.hal import hal_base
-from chipsec.library.uefi import uefi_platform
 from chipsec.hal.intel.spi import SPI, BIOS
 from chipsec.library.uefi.uefi_common import EFI_VENDOR_TABLE, EFI_VENDOR_TABLE_SIZE, EFI_VENDOR_TABLE_FORMAT, EFI_TABLE_HEADER_SIZE, EFI_TABLE_HEADER, EFI_TABLES, MAX_EFI_TABLE_SIZE
-from chipsec.library.uefi.uefi_common import parse_efivar_file, EFI_REVISIONS, AUTH_SIG_VAR, ESAL_SIG_VAR
-from chipsec.library.uefi.uefi_common import EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_APPEND_WRITE, EFI_VARIABLE_NON_VOLATILE
-from chipsec.library.uefi.uefi_common import EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_RUNTIME_ACCESS, EFI_VARIABLE_HARDWARE_ERROR_RECORD, SECURE_BOOT_SIG_VAR
-from chipsec.library.uefi.uefi_common import IS_VARIABLE_ATTRIBUTE, EFI_TABLE_HEADER_FMT, EFI_SYSTEM_TABLE_SIGNATURE, EFI_RUNTIME_SERVICES_SIGNATURE, EFI_BOOT_SERVICES_SIGNATURE
+from chipsec.library.uefi.uefi_common import EFI_REVISIONS
+from chipsec.library.uefi.uefi_common import EFI_TABLE_HEADER_FMT, EFI_SYSTEM_TABLE_SIGNATURE, EFI_RUNTIME_SERVICES_SIGNATURE, EFI_BOOT_SERVICES_SIGNATURE
 from chipsec.library.uefi.uefi_common import EFI_DXE_SERVICES_TABLE_SIGNATURE, EFI_CONFIGURATION_TABLE
 from chipsec.library.uefi.sleep_states import ACPI_VARIABLE_SET_STRUCT_SIZE, S3_BOOTSCRIPT_VARIABLES, parse_script
 from chipsec.library.logger import logger, print_buffer_bytes
 from chipsec.library.file import write_file, read_file
 from chipsec.library.defines import bytestostring
 from chipsec.helper.oshelper import OsHelperError
+from chipsec.library.uefi.uefi_platform import FWType, fw_types
+from chipsec.library.uefi.varstore import find_EFI_variable_store, EFI_VAR_DICT
+from chipsec.library.uefi.variables import print_sorted_EFI_variables, get_attr_string
 
-
-########################################################################################################
-#
-# UEFI Variables Parsing Functionality
-#
-########################################################################################################
-
-
-EFI_VAR_NAME_PK = 'PK'
-EFI_VAR_NAME_KEK = 'KEK'
-EFI_VAR_NAME_db = 'db'
-EFI_VAR_NAME_dbx = 'dbx'
-EFI_VAR_NAME_SecureBoot = 'SecureBoot'
-EFI_VAR_NAME_SetupMode = 'SetupMode'
-EFI_VAR_NAME_CustomMode = 'CustomMode'
-EFI_VAR_NAME_SignatureSupport = 'SignatureSupport'
-EFI_VAR_NAME_certdb = 'certdb'
-EFI_VAR_NAME_AuthVarKeyDatabase = 'AuthVarKeyDatabase'
-
-#
-# \MdePkg\Include\Guid\ImageAuthentication.h
-#
-# define EFI_IMAGE_SECURITY_DATABASE_GUID \
-#  { \
-#    0xd719b2cb, 0x3d3a, 0x4596, { 0xa3, 0xbc, 0xda, 0xd0, 0xe, 0x67, 0x65, 0x6f } \
-#  }
-#
-# \MdePkg\Include\Guid\GlobalVariable.h
-#
-# define EFI_GLOBAL_VARIABLE \
-#  { \
-#    0x8BE4DF61, 0x93CA, 0x11d2, {0xAA, 0x0D, 0x00, 0xE0, 0x98, 0x03, 0x2B, 0x8C } \
-#  }
-#
-EFI_GLOBAL_VARIABLE_GUID = '8be4df61-93ca-11d2-aa0d-00e098032b8c'
-EFI_IMAGE_SECURITY_DATABASE_GUID = 'd719b2cb-3d3a-4596-a3bc-dad00e67656f'
-# EFI_VAR_GUID_SecureBoot = EFI_GLOBAL_VARIABLE
-# EFI_VAR_GUID_db         = EFI_IMAGE_SECURITY_DATABASE_GUID
-
-EFI_VARIABLE_DICT: Dict[str, str] = {
-    EFI_VAR_NAME_PK: EFI_GLOBAL_VARIABLE_GUID,
-    EFI_VAR_NAME_KEK: EFI_GLOBAL_VARIABLE_GUID,
-    EFI_VAR_NAME_db: EFI_IMAGE_SECURITY_DATABASE_GUID,
-    EFI_VAR_NAME_dbx: EFI_IMAGE_SECURITY_DATABASE_GUID,
-    EFI_VAR_NAME_SecureBoot: EFI_GLOBAL_VARIABLE_GUID,
-    EFI_VAR_NAME_SetupMode: EFI_GLOBAL_VARIABLE_GUID,
-    EFI_VAR_NAME_CustomMode: EFI_GLOBAL_VARIABLE_GUID,
-    EFI_VAR_NAME_SignatureSupport: EFI_GLOBAL_VARIABLE_GUID
-}
-
-
-SECURE_BOOT_KEY_VARIABLES = (EFI_VAR_NAME_PK, EFI_VAR_NAME_KEK, EFI_VAR_NAME_db)
-SECURE_BOOT_OPTIONAL_VARIABLES = (EFI_VAR_NAME_dbx,)
-SECURE_BOOT_VARIABLES = (EFI_VAR_NAME_SecureBoot, EFI_VAR_NAME_SetupMode) + SECURE_BOOT_KEY_VARIABLES + SECURE_BOOT_OPTIONAL_VARIABLES
-SECURE_BOOT_VARIABLES_ALL = (EFI_VAR_NAME_CustomMode, EFI_VAR_NAME_SignatureSupport) + SECURE_BOOT_VARIABLES
-AUTHENTICATED_VARIABLES = (EFI_VAR_NAME_AuthVarKeyDatabase, EFI_VAR_NAME_certdb) + SECURE_BOOT_KEY_VARIABLES
-
-
-def get_auth_attr_string(attr: int) -> str:
-    attr_str = ' '
-    if IS_VARIABLE_ATTRIBUTE(attr, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS):
-        attr_str = f'{attr_str}AWS+'
-    if IS_VARIABLE_ATTRIBUTE(attr, EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS):
-        attr_str = f'{attr_str}TBAWS+'
-    if IS_VARIABLE_ATTRIBUTE(attr, EFI_VARIABLE_APPEND_WRITE):
-        attr_str = f'{attr_str}AW+'
-    return attr_str[:-1].lstrip()
-
-
-def get_attr_string(attr: int) -> str:
-    attr_str = ' '
-    if IS_VARIABLE_ATTRIBUTE(attr, EFI_VARIABLE_NON_VOLATILE):
-        attr_str = f'{attr_str}NV+'
-    if IS_VARIABLE_ATTRIBUTE(attr, EFI_VARIABLE_BOOTSERVICE_ACCESS):
-        attr_str = f'{attr_str}BS+'
-    if IS_VARIABLE_ATTRIBUTE(attr, EFI_VARIABLE_RUNTIME_ACCESS):
-        attr_str = f'{attr_str}RT+'
-    if IS_VARIABLE_ATTRIBUTE(attr, EFI_VARIABLE_HARDWARE_ERROR_RECORD):
-        attr_str = f'{attr_str}HER+'
-    if IS_VARIABLE_ATTRIBUTE(attr, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS):
-        attr_str = f'{attr_str}AWS+'
-    if IS_VARIABLE_ATTRIBUTE(attr, EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS):
-        attr_str = f'{attr_str}TBAWS+'
-    if IS_VARIABLE_ATTRIBUTE(attr, EFI_VARIABLE_APPEND_WRITE):
-        attr_str = f'{attr_str}AW+'
-    return attr_str[:-1].lstrip()
-
-
-def print_efi_variable(offset: int, var_buf: bytes, var_header: 'EfiTableType', var_name: str, var_data: bytes, var_guid: str, var_attrib: int) -> None:
-    logger().log('\n--------------------------------')
-    logger().log(f'EFI Variable (offset = 0x{offset:X}):')
-    logger().log('--------------------------------')
-
-    # Print Variable Name
-    logger().log(f'Name      : {var_name}')
-    # Print Variable GUID
-    logger().log(f'Guid      : {var_guid}')
-
-    # Print Variable State
-    if var_header:
-        if 'State' in var_header._fields:
-            state = getattr(var_header, 'State')
-            state_str = 'State     :'
-            if uefi_platform.IS_VARIABLE_STATE(state, uefi_platform.VAR_IN_DELETED_TRANSITION):
-                state_str = f'{state_str} IN_DELETED_TRANSITION +'
-            if uefi_platform.IS_VARIABLE_STATE(state, uefi_platform.VAR_DELETED):
-                state_str =  f'{state_str} DELETED +'
-            if uefi_platform.IS_VARIABLE_STATE(state, uefi_platform.VAR_ADDED):
-                state_str = f'{state_str} ADDED +'
-            logger().log(state_str)
-
-        # Print Variable Complete Header
-        if logger().VERBOSE:
-            if var_header.__str__:
-                logger().log(str(var_header))
-            else:
-                decoded_header = uefi_platform.EFI_VAR_DICT[uefi_platform.FWType.EFI_FW_TYPE_UEFI]['name']
-                logger().log(f'Decoded Header ({decoded_header}):')
-                for attr in var_header._fields:
-                    attr_str = f'{attr:<16}'
-                    attr_value = getattr(var_header, attr)
-                    logger().log(f'{attr_str} = {attr_value:X}')
-
-    attr_str = (f'Attributes: 0x{var_attrib:X} ( {get_attr_string(var_attrib)} )')
-    logger().log(attr_str)
-
-    # Print Variable Data
-    logger().log('Data:')
-    print_buffer_bytes(var_data)
-
-    # Print Variable Full Contents
-    if logger().VERBOSE:
-        logger().log('Full Contents:')
-        if var_buf is not None:
-            print_buffer_bytes(var_buf)
-
-
-def print_sorted_EFI_variables(variables: Dict[str, List['EfiVariableType']]) -> None:
-    sorted_names = sorted(variables.keys())
-    rec: Tuple[int, bytes, EfiTableType, bytes, str, int]
-    for name in sorted_names:
-        for rec in variables[name]:
-            #                   off,    buf,     hdr,         data,   guid,   attrs
-            print_efi_variable(rec[0], rec[1], rec[2], name, rec[3], rec[4], rec[5])
-
-
-def decode_EFI_variables(efi_vars: Dict[str, List['EfiVariableType']], nvram_pth: str) -> None:
-    # print decoded and sorted EFI variables into a log file
-    print_sorted_EFI_variables(efi_vars)
-    # write each EFI variable into its own binary file
-    for name in efi_vars.keys():
-        n = 0
-        data: bytes
-        guid: str
-        attrs: int
-        for (_, _, _, data, guid, attrs) in efi_vars[name]: # Type: EfiVariableType
-            attr_str = get_attr_string(attrs)
-            var_fname = os.path.join(nvram_pth, f'{name}_{guid}_{attr_str.strip()}_{n:d}.bin')
-            write_file(var_fname, data)
-            if name in SECURE_BOOT_KEY_VARIABLES:
-                parse_efivar_file(var_fname, data, SECURE_BOOT_SIG_VAR)
-            elif name == EFI_VAR_NAME_certdb:
-                parse_efivar_file(var_fname, data, AUTH_SIG_VAR)
-            elif name == EFI_VAR_NAME_AuthVarKeyDatabase:
-                parse_efivar_file(var_fname, data, ESAL_SIG_VAR)
-            n = n + 1
-
-
-def identify_EFI_NVRAM(buffer: bytes) -> str:
-    b = buffer
-    for fw_type in uefi_platform.fw_types:
-        if uefi_platform.EFI_VAR_DICT[fw_type]['func_getnvstore']:
-            (offset, _, _) = uefi_platform.EFI_VAR_DICT[fw_type]['func_getnvstore'](b)
-            if offset != -1:
-                return fw_type
-    return ''
-
-
-def parse_EFI_variables(fname: str, rom: bytes, authvars: bool, _fw_type: Optional[str] = None) -> bool:
-    if (_fw_type in uefi_platform.fw_types) and (_fw_type is not None):
-        logger().log(f'[uefi] Using FW type (NVRAM format): {_fw_type}')
-    else:
-        logger().log_error(f"Unrecognized FW type '{_fw_type}' (NVRAM format) '{_fw_type}'.")
-        return False
-
-    logger().log('[uefi] Searching for NVRAM in the binary..')
-    efi_vars_store = find_EFI_variable_store(rom, _fw_type)
-    if efi_vars_store:
-        nvram_fname = f'{fname}.nvram.bin'
-        write_file(nvram_fname, efi_vars_store)
-        nvram_pth = f'{fname}.nvram.dir'
-        if not os.path.exists(nvram_pth):
-            os.makedirs(nvram_pth)
-        logger().log('[uefi] Extracting EFI Variables in the NVRAM..')
-        efi_vars = uefi_platform.EFI_VAR_DICT[_fw_type]['func_getefivariables'](efi_vars_store)
-        decode_EFI_variables(efi_vars, nvram_pth)
-    else:
-        logger().log_error('Did not find NVRAM')
-        return False
-
-    return True
-
-
-def find_EFI_variable_store(rom_buffer: Optional[bytes], _FWType: Optional[str]) -> bytes:
-    if rom_buffer is None:
-        logger().log_error('rom_buffer is None')
-        return b''
-
-    rom = rom_buffer
-    offset = 0
-    size = len(rom_buffer)
-    nvram_header = None
-    if _FWType is None:
-        logger().log_hal(f'[uefi] find_EFI_variable_store(): _FWType is None. Bypassing find_EFI_variable_store().')
-        return b''
-    if uefi_platform.EFI_VAR_DICT[_FWType]['func_getnvstore']:
-        (offset, size, nvram_header) = uefi_platform.EFI_VAR_DICT[_FWType]['func_getnvstore'](rom)
-        if (-1 == offset):
-            logger().log_error("'func_getnvstore' is defined but could not find EFI NVRAM. Exiting..")
-            return b''
-    else:
-        logger().log("[uefi] 'func_getnvstore' is not defined in EFI_VAR_DICT. Assuming start offset 0.")
-
-    if -1 == size:
-        size = len(rom_buffer)
-    nvram_buf = rom[offset: offset + size]
-
-    if logger().UTIL_TRACE:
-        logger().log(f'[uefi] Found EFI NVRAM at offset 0x{offset:08X}')
-        logger().log("""
-==================================================================
-NVRAM: EFI Variable Store
-==================================================================""")
-        if nvram_header:
-            logger().log(nvram_header)
-    return nvram_buf
 
 ########################################################################################################
 #
@@ -292,12 +55,7 @@ class UEFI(hal_base.HALBase):
     def __init__(self, cs):
         super(UEFI, self).__init__(cs)
         self.helper = cs.helper
-        # if cs is not None:
-        #    self.cs = cs
-        #    self.helper = cs.helper
-        # else:
-        #    self.helper = helper
-        self._FWType = uefi_platform.FWType.EFI_FW_TYPE_UEFI
+        self._FWType = FWType.EFI_FW_TYPE_UEFI
 
     ######################################################################
     # FWType defines platform/BIOS dependent formats like
@@ -309,7 +67,7 @@ class UEFI(hal_base.HALBase):
     ######################################################################
 
     def set_FWType(self, efi_nvram_format: str) -> None:
-        if efi_nvram_format in uefi_platform.fw_types:
+        if efi_nvram_format in fw_types:
             self._FWType = efi_nvram_format
 
     ######################################################################
@@ -331,7 +89,7 @@ class UEFI(hal_base.HALBase):
         self.logger.log_hal('[uefi] Looking for variables in SPI dump')
         efi_var_store = find_EFI_variable_store(rom, 'nvar')
         if efi_var_store:
-            efi_vars = uefi_platform.EFI_VAR_DICT['nvar']['func_getefivariables'](efi_var_store)
+            efi_vars = EFI_VAR_DICT['nvar']['func_getefivariables'](efi_var_store)
             return efi_vars
         return efi_var_store
 
@@ -350,7 +108,7 @@ class UEFI(hal_base.HALBase):
         if efi_var_store is None:
             logger().log_error('efi_var_store is None')
             return {}
-        variables: Dict[str, List[EfiVariableType]] = uefi_platform.EFI_VAR_DICT[self._FWType]['func_getefivariables'](efi_var_store)
+        variables: Dict[str, List[EfiVariableType]] = EFI_VAR_DICT[self._FWType]['func_getefivariables'](efi_var_store)
         if logger().UTIL_TRACE:
             print_sorted_EFI_variables(variables)
         return variables
