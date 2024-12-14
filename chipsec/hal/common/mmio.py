@@ -624,4 +624,4 @@ ecIDs = {
 }
 
 
-haldata = {"arch":['FFFF'], 'name': ['MMIO']}
+haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': ['MMIO']}

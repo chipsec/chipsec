@@ -257,4 +257,4 @@ class CPU(hal_base.HALBase):
             self.dump_page_tables(cr3)
 
 
-haldata = {"arch":['1022'], 'name': ['CPU']}
+haldata = {"arch":[hal_base.HALBase.MfgIds.AMD], 'name': ['CPU']}

@@ -22,12 +22,17 @@
 """
 Base for HAL Components
 """
-
+from enum import Enum
 import chipsec.library.logger
 from chipsec.library.exceptions import UnimplementedAPIError
 
 
 class HALBase:
+    class MfgIds(Enum):
+        Intel = ['GenuineIntel']
+        AMD = ['AuthenticAMD', 'AMD ISBETTER']
+        Any = ['Any']
+
     def __init__(self, cs):
         self.cs = cs
         self.logger = chipsec.library.logger.logger()

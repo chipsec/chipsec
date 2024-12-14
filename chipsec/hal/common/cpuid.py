@@ -25,15 +25,18 @@ usage:
     >>> cpuid(0)
 """
 
+from sys import byteorder
+from struct import unpack
 from typing import Tuple
 from chipsec.hal import hal_base
 from chipsec.library.logger import logger
+from chipsec.library.strings import bytestostring
 
 
-class CpuID(hal_base.HALBase):
+class CpuId(hal_base.HALBase):
 
     def __init__(self, cs):
-        super(CpuID, self).__init__(cs)
+        super(CpuId, self).__init__(cs)
         self.helper = cs.helper
 
     def cpuid(self, eax: int, ecx: int) -> Tuple[int, int, int, int]:
@@ -45,5 +48,12 @@ class CpuID(hal_base.HALBase):
     def get_proc_info(self):
         (eax, _, _, _) = self.cpuid(0x01, 0x00)
         return eax
+    
+    def get_mfgid(self) -> str:
+        (_,ebx, ecx, edx) = self.cpuid(0x00, 0x00)
+        mfg_barray = ebx.to_bytes(4, byteorder) + edx.to_bytes(4, byteorder) + ecx.to_bytes(4, byteorder)
+        return bytestostring(unpack('<12s', mfg_barray)[0])
+        
+        
 
-haldata = {"arch":['FFFF'], 'name': ['CpuID']} #change arch to CPUID genuine intel/amd
+haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': ['CpuId']} #change arch to CPUID genuine intel/amd

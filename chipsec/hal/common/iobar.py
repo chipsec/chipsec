@@ -205,4 +205,4 @@ class IOBAR(hal_base.HALBase):
             logger().log(f'{size * i:+04X}: {reg:{fmt}}')
 
 
-haldata = {"arch":['FFFF'], 'name': ['IOBAR']}
+haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': ['IOBAR']}

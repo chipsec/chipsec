@@ -106,4 +106,4 @@ class Io(HALBase):
         return self.write(io_port, value, 4)
 
 
-haldata = {"arch":['FFFF'], 'name': ['Io']}
+haldata = {"arch":[HALBase.MfgIds.Any], 'name': ['Io']}

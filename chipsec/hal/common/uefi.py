@@ -402,4 +402,4 @@ class UEFI(hal_base.HALBase):
             logger().log(str(table))
 
 
-haldata = {"arch": ['FFFF'], 'name': ['UEFI']}
+haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': ['UEFI']}

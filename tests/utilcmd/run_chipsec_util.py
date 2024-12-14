@@ -21,18 +21,21 @@
 
 from unittest.mock import Mock
 from typing import Tuple, List
+
+from chipsec.chipset import clear_cs
 import chipsec.helper.replay.replayhelper as rph
-from chipsec_util import ChipsecUtil, parse_args
 import chipsec.library.logger
+from chipsec_util import ChipsecUtil, parse_args
 
 
 
 def run_chipsec_util(csu: ChipsecUtil, util_replay_file: str) -> int:
-    csu._cs.init(csu._platform, csu._pch, csu._helper, not csu._no_driver, csu._load_config, csu._ignore_platform)
+    comm = csu.commands[csu._cmd](csu._cmd_args, cs=csu._cs)
+    reqs = comm.requirements()
+    csu._cs.init(csu._platform, csu._pch, csu._helper, reqs.load_driver(), reqs.load_config(), csu._ignore_platform)
     if util_replay_file:
         csu._helper.config_file = util_replay_file
         csu._helper._load()  
-    comm = csu.commands[csu._cmd](csu._cmd_args, cs=csu._cs)
     comm.parse_arguments()
     comm.set_up()
     comm.run()
@@ -56,6 +59,7 @@ def setup_run_destroy_util_get_log_output(init_replay_file: str, util_name: str,
     for func in logging_fucntions_to_capture:
         if hasattr(chipsec.library.logger._logger, func):
             logger_calls += getattr(chipsec.library.logger._logger, func).mock_calls
+    clear_cs()
     chipsec.library.logger._logger = chipsec.library.logger.Logger()
     return retval, " ".join([call.args[0] for call in logger_calls])
 

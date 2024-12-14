@@ -34,7 +34,6 @@ class TestMSRChipsecUtil(util.TestChipsecUtil):
                     return [0x1234, 0xcdef]
                 else:
                     return [0x0, 0x0]
-
         self._chipsec_util("msr 0x2FF", MSRHelper)
         self._assertLogValue("EAX", "00001234")
         self._assertLogValue("EDX", "0000CDEF")

@@ -78,7 +78,10 @@ class TestHelper(Helper):
         return 2
 
     def cpuid(self, eax, ecx):
+        if eax == 0 and ecx == 0:
+            return 0x906a2, 0x756E6547, 0x6C65746E, 0x49656E69
         return 0x406F1, 0, 0, 0
+
 
     def write_pci_reg(self, bus, device, function, address, value, size):
         raise UnimplementedAPIError('write_pci_reg')

@@ -370,4 +370,4 @@ class TPM(hal_base.HALBase):
             self.logger.log(f'\t{field}{" " * (max_field_len - len(field))}: {hex(register["FIELDS"][field]["value"])}')
 
 
-haldata = {"arch":['FFFF'], 'name': ['TPM']}
+haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': ['TPM']}

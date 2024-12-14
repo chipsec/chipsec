@@ -82,7 +82,10 @@ class Chipset:
     #
     ##################################################################################
     def get_cpuid(self):
-        return self.hals.CpuID.get_proc_info()
+        return self.hals.CpuId.get_proc_info()
+    
+    def get_mfgid(self) -> str:
+        return self.hals.CpuId.get_mfgid()
 
     @classmethod
     def basic_init_with_helper(cls, helper=None):
@@ -108,12 +111,15 @@ class Chipset:
         # platform detection
 
         # get cpuid only if driver using driver (otherwise it will cause problems)
-        self.cpuid = 0
+        cpuid = 0
         if start_helper:
             self.load_helper(helper_name)
             self.start_helper()
             # get cpuid only if using driver (otherwise it will cause problems)
-            self.cpuid = self.get_cpuid()
+            cpuid = self.get_cpuid()
+            mfgid = self.get_mfgid()
+            self.Cfg.set_cpuid(cpuid)
+            self.Cfg.set_mfgid(mfgid)
         else:
             self.load_helper(NoneHelper())
 
@@ -124,7 +130,7 @@ class Chipset:
             self.init_cfg_bus()
             self.init_topology()
             if not ignore_platform:
-                self.Cfg.platform_detection(platform_code, req_pch_code, self.cpuid)
+                self.Cfg.platform_detection(platform_code, req_pch_code, cpuid)
                 _unknown_proc = not bool(self.Cfg.get_chipset_code())
                 if self.Cfg.is_pch_req() is False or self.Cfg.get_pch_code() != CHIPSET_CODE_UNKNOWN:
                     _unknown_pch = False
@@ -332,10 +338,12 @@ class Chipset:
 
 _chipset = None
 
+def clear_cs():
+    global _chipset
+    _chipset = None
 
 def cs() -> Chipset:
     global _chipset
-
     if _chipset is None:
         _chipset = Chipset()
     return _chipset

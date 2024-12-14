@@ -543,4 +543,4 @@ class ACPI(HALBase):
         return table
 
 
-haldata = {"arch":['FFFF'], 'name': ['ACPI']}
+haldata = {"arch":[HALBase.MfgIds.Any], 'name': ['ACPI']}
