@@ -28,7 +28,6 @@ import chipsec.library.logger
 from chipsec_util import ChipsecUtil, parse_args
 
 
-
 def run_chipsec_util(csu: ChipsecUtil, util_replay_file: str) -> int:
     comm = csu.commands[csu._cmd](csu._cmd_args, cs=csu._cs)
     reqs = comm.requirements()
