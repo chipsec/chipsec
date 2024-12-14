@@ -125,7 +125,7 @@ def modify_uefi_region(data: bytes, command: int, guid: UUID, uefi_file: bytes =
 
                 fwbin = NextFwFile(fv.Image, fv.Size, next_offset, polarity)
             if FvEndOffset == 0:
-                logger().log_hal(f'Using FvEndOffset = 0')
+                logger().log_hal('Using FvEndOffset = 0')
             if FvLengthChange >= 0:
                 data = data[:FvEndOffset] + data[FvEndOffset + FvLengthChange:]
             else:
@@ -371,9 +371,9 @@ def find_efi_modules(data: bytes, fwtype: Optional[str], polarity: bool, data_si
 def update_efi_tree(modules: List['EFI_MODULE'], parent_guid: Optional[UUID] = None) -> str:
     ui_string = ''
     for m in modules:
-        if type(m) == EFI_FILE:
+        if type(m) is EFI_FILE:
             parent_guid = m.Guid
-        elif type(m) == EFI_SECTION:
+        elif type(m) is EFI_SECTION:
             # if it's a section update its parent file's GUID
             m.parentGuid = parent_guid
             if m.Type == EFI_SECTION_USER_INTERFACE:
@@ -388,7 +388,7 @@ def update_efi_tree(modules: List['EFI_MODULE'], parent_guid: Optional[UUID] = N
             # if it's a EFI file then update its ui_string with ui_string extracted from UI section
             if ui_string and (type(m) in (EFI_FILE, EFI_SECTION)):
                 m.ui_string = ui_string
-                if (type(m) == EFI_FILE):
+                if (type(m) is EFI_FILE):
                     ui_string = ''
     return ui_string
 
@@ -401,10 +401,10 @@ def build_efi_model(data: bytes, fwtype: Optional[str]) -> List['EFI_MODULE']:
 
 def FILENAME(mod: Union[EFI_FILE, EFI_SECTION], parent: Optional['EFI_MODULE'], modn: int) -> str:
     fname = f'{modn:02d}_{mod.Guid}'
-    if type(mod) == EFI_FILE:
+    if type(mod) is EFI_FILE:
         type_s = FILE_TYPE_NAMES[mod.Type] if mod.Type in FILE_TYPE_NAMES.keys() else f'UNKNOWN_{mod.Type:02X}'
         fname = f'{fname}.{type_s}'
-    elif type(mod) == EFI_SECTION:
+    elif type(mod) is EFI_SECTION:
         fname = f'{modn:02d}_{mod.Name}'
         if mod.Type in EFI_SECTIONS_EXE:
             if (parent is not None) and parent.ui_string:
@@ -420,8 +420,8 @@ def FILENAME(mod: Union[EFI_FILE, EFI_SECTION], parent: Optional['EFI_MODULE'], 
 def dump_efi_module(mod, parent: Optional['EFI_MODULE'], modn: int, path: str) -> str:
     fname = FILENAME(mod, parent, modn)
     mod_path = os.path.join(path, fname)
-    write_file(mod_path, mod.Image[mod.HeaderSize:] if type(mod) == EFI_SECTION else mod.Image)
-    if type(mod) == EFI_SECTION or WRITE_ALL_HASHES:
+    write_file(mod_path, mod.Image[mod.HeaderSize:] if type(mod) is EFI_SECTION else mod.Image)
+    if type(mod) is EFI_SECTION or WRITE_ALL_HASHES:
         if mod.MD5:
             write_file(f'{mod_path}.md5', mod.MD5)
         if mod.SHA1:
@@ -446,10 +446,10 @@ def search_efi_tree(modules: List['EFI_MODULE'],
     matching_modules = []
     for module in modules:
         if search_callback is not None:
-            if ((match_module_types & EFIModuleType.SECTION == EFIModuleType.SECTION) and type(module) == EFI_SECTION) or \
-               ((match_module_types & EFIModuleType.SECTION_EXE == EFIModuleType.SECTION_EXE) and (type(module) == EFI_SECTION and module.Type in EFI_SECTIONS_EXE)) or \
-               ((match_module_types & EFIModuleType.FV == EFIModuleType.FV) and type(module) == EFI_FV) or \
-               ((match_module_types & EFIModuleType.FILE == EFIModuleType.FILE) and type(module) == EFI_FILE):
+            if ((match_module_types & EFIModuleType.SECTION == EFIModuleType.SECTION) and type(module) is EFI_SECTION) or \
+               ((match_module_types & EFIModuleType.SECTION_EXE == EFIModuleType.SECTION_EXE) and (type(module) is EFI_SECTION and module.Type in EFI_SECTIONS_EXE)) or \
+               ((match_module_types & EFIModuleType.FV == EFIModuleType.FV) and type(module) is EFI_FV) or \
+               ((match_module_types & EFIModuleType.FILE == EFIModuleType.FILE) and type(module) is EFI_FILE):
                 if search_callback(module):
                     matching_modules.append(module)
                     if not findall:
@@ -508,7 +508,7 @@ def save_efi_tree(modules: List['EFI_MODULE'],
                             # @TODO: technically, NVRAM image should be m.Image but
                             # getNVstore_xxx functions expect FV than a FW file within FV
                             # so for EFI_FILE type of module using parent's Image as NVRAM
-                            nvram = parent.Image if (type(m) == EFI_FILE and type(parent) == EFI_FV) else m.Image
+                            nvram = parent.Image if (type(m) is EFI_FILE and type(parent) is EFI_FV) else m.Image
                             file_path = os.path.join(mod_dir_path, 'NVRAM')
                             parse_EFI_variables(file_path, nvram, False, m.NVRAMType)
                         else:

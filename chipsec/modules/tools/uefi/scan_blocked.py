@@ -151,4 +151,3 @@ class scan_blocked(BaseModule):
 
         self.res = self.check_blockedlist()
         return self.result.getReturnCode(self.res)
-

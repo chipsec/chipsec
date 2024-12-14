@@ -151,7 +151,7 @@ def EFI_GUID_STR(guid: bytes) -> str:
     return str(guid_str).upper()
 
 
-def align(of:int, size: int) -> int:
+def align(of: int, size: int) -> int:
     of = (((of + size - 1) // size) * size)
     return of
 
@@ -165,8 +165,6 @@ def bit_set(value: int, mask: int, polarity: bool = False) -> bool:
 def get_3b_size(s_data: bytes) -> int:
     s_str = bytestostring(s_data)
     return (ord(s_str[0]) + (ord(s_str[1]) << 8) + (ord(s_str[2]) << 16))
-
-
 
 
 # #################################################################################################
@@ -222,18 +220,18 @@ EFI_1_10_SYSTEM_TABLE_REVISION = ((1 << 16) | (10))
 EFI_1_02_SYSTEM_TABLE_REVISION = ((1 << 16) | (0o2))
 EFI_REVISIONS: List[int] = [
     EFI_2_80_SYSTEM_TABLE_REVISION,
-    EFI_2_70_SYSTEM_TABLE_REVISION, 
-    EFI_2_60_SYSTEM_TABLE_REVISION, 
-    EFI_2_50_SYSTEM_TABLE_REVISION, 
-    EFI_2_40_SYSTEM_TABLE_REVISION, 
+    EFI_2_70_SYSTEM_TABLE_REVISION,
+    EFI_2_60_SYSTEM_TABLE_REVISION,
+    EFI_2_50_SYSTEM_TABLE_REVISION,
+    EFI_2_40_SYSTEM_TABLE_REVISION,
     EFI_2_31_SYSTEM_TABLE_REVISION,
-    EFI_2_30_SYSTEM_TABLE_REVISION, 
-    EFI_2_20_SYSTEM_TABLE_REVISION, 
-    EFI_2_10_SYSTEM_TABLE_REVISION, 
-    EFI_2_00_SYSTEM_TABLE_REVISION, 
-    EFI_1_10_SYSTEM_TABLE_REVISION, 
+    EFI_2_30_SYSTEM_TABLE_REVISION,
+    EFI_2_20_SYSTEM_TABLE_REVISION,
+    EFI_2_10_SYSTEM_TABLE_REVISION,
+    EFI_2_00_SYSTEM_TABLE_REVISION,
+    EFI_1_10_SYSTEM_TABLE_REVISION,
     EFI_1_02_SYSTEM_TABLE_REVISION
-    ]
+]
 
 
 def EFI_SYSTEM_TABLE_REVISION(revision: int) -> str:

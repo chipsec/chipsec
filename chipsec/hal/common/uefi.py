@@ -208,7 +208,7 @@ class UEFI(hal_base.HALBase):
     def list_EFI_variables(self) -> Optional[Dict[str, List[Tuple[int, bytes, int, bytes, str, int]]]]:
         varlist = self.helper.list_EFI_variables()
         return varlist
-    
+
     def list_EFI_variables_spi(self, filename: str = None) -> Optional[Dict[str, List[Tuple[int, bytes, int, bytes, str, int]]]]:
         if filename:
             varlist = self.read_EFI_variables_from_file(filename)
@@ -354,7 +354,7 @@ class UEFI(hal_base.HALBase):
         if est is not None:
             logger().log_hal(f'[uefi] EFI Configuration Table ({est.NumberOfTableEntries:d} entries): VA = 0x{est.ConfigurationTable:016X}, PA = 0x{ect_pa:016X}')
         else:
-            logger().log_hal(f'[uefi] EFI Configuration Table (No entries found)')
+            logger().log_hal('[uefi] EFI Configuration Table (No entries found)')
 
         found = ect_pa is not None
         if found and (est is not None):
@@ -402,4 +402,4 @@ class UEFI(hal_base.HALBase):
             logger().log(str(table))
 
 
-haldata = {"arch":['FFFF'], 'name': ['UEFI']}
+haldata = {"arch": ['FFFF'], 'name': ['UEFI']}
