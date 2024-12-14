@@ -851,4 +851,4 @@ class SPI(hal_base.HALBase):
         return (jedec_id, manu, part)
 
 
-haldata = {"arch":['8086'], 'name': ['SPI']}
+haldata = {"arch":[hal_base.HALBase.MfgIds.Intel], 'name': ['SPI']}

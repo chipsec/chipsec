@@ -90,4 +90,4 @@ class CMOS(hal_base.HALBase):
         chipsec.library.logger.pretty_print_hex_buffer(self.dump_high())
 
 
-haldata = {"arch":['FFFF'], 'name': ['CMOS']}
+haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': ['CMOS']}

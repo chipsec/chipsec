@@ -37,6 +37,7 @@ import struct
 from typing import Any, List
 from collections import namedtuple
 
+from chipsec.hal.hal_base import HALBase
 from chipsec.library.logger import logger, print_buffer_bytes
 
 SPD_SMBUS_ADDRESS = 0xA0  # A2, A4, A6, A8, AA, AC, AE
@@ -407,4 +408,4 @@ class SPD: #TODO: Refactor to derive from HALBase.
             logger().log(str(spd))
 
 
-haldata = {"arch":['FFFF'], 'name': ['SPD']}
+haldata = {"arch":[HALBase.MfgIds.Any], 'name': ['SPD']}

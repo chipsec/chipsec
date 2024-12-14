@@ -21,7 +21,7 @@
 
 import unittest
 from unittest.mock import patch, Mock, MagicMock, call
-from chipsec.hal.common.cpu import CPU
+from chipsec.hal.intel.cpu import CPU
 
 
 class TestHalCpu(unittest.TestCase):
