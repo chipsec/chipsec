@@ -86,7 +86,12 @@ class ReplayHelper(Helper):
             targs = str(args)
         if str(cmd) in self._data:
             if targs in self._data[str(cmd)]:
-                return self._data[cmd][targs].pop()
+                try:
+                    return self._data[cmd][targs].pop()
+                except IndexError as err:
+                    logger().log_error(f'Ran out of entries for {str(cmd)} {targs}')
+                    err.args = (err.args[0] + f': {str(cmd)} {targs}',)
+                    raise err
         logger().log_error(f"Missing entry for {str(cmd)} {targs}")
         return None
     
