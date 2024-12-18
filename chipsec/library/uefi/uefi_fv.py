@@ -27,7 +27,7 @@ import struct
 from typing import Optional, Tuple
 from uuid import UUID
 from chipsec.library.defines import bytestostring
-from chipsec.hal.common.uefi_common import get_3b_size, bit_set, align
+from chipsec.library.uefi.uefi_common import get_3b_size, bit_set, align
 from chipsec.library.logger import logger
 
 ################################################################################################
@@ -140,6 +140,8 @@ EFI_GUID_DEFINED_SECTION_size = struct.calcsize(EFI_GUID_DEFINED_SECTION)
 WIN_CERTIFICATE = "<IHH16s"
 WIN_CERTIFICATE_size = struct.calcsize(WIN_CERTIFICATE)
 
+WIN_CERT_TYPE_PKCS_SIGNED_DATA = 0x0002
+WIN_CERT_TYPE_EFI_PKCS115 = 0x0EF0
 WIN_CERT_TYPE_EFI_GUID = 0x0EF1
 
 EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID = UUID("FC1BCDB0-7D31-49AA-936A-A4600D9DD083")

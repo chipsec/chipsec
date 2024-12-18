@@ -103,8 +103,8 @@ from chipsec.module_common import BaseModule
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.logger import print_buffer_bytes
 from chipsec.hal.common.uefi import UEFI
-from chipsec.hal.common.uefi_common import S3BootScriptOpcode, script_width_values, script_width_formats, op_io_pci_mem, op_dispatch
-from chipsec.hal.common.uefi_platform import encode_s3bootscript_entry, id_s3bootscript_type, create_s3bootscript_entry_buffer
+from chipsec.library.uefi.sleep_states import script_width_values, script_width_formats, op_io_pci_mem, op_dispatch, S3BootScriptOpcode
+from chipsec.library.uefi.sleep_states import encode_s3bootscript_entry, id_s3bootscript_type, create_s3bootscript_entry_buffer
 
 ########################################################################################################
 #
