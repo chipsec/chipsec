@@ -30,7 +30,6 @@ jobs:
     runs-on: ubuntu-22.04
     container:
       image: docker://${{ matrix.distro.image_prefix }}${{ matrix.distro.name }}:${{ matrix.distro.tag }}
-
     steps:
     - name: Harden Runner
       uses: step-security/harden-runner@c95a14d0e5bab51a9f56296a4eb0e416910cd350 # v2.10.3
@@ -246,7 +245,7 @@ jobs:
       run: |
         sudo apt-get update -q
         sudo apt-get install -qqy dkms nasm python3-setuptools
-        pip install distro pytest
+        pip install distro pytest pytest-cov
         pip install -r linux_requirements.txt
         sudo pip uninstall importlib_metadata 
         sudo pip install importlib_metadata --force-reinstall
@@ -266,8 +265,12 @@ jobs:
     - name: Run Python unit tests
       run: python3 -m unittest
 
+    - name: Get coverage requirement
+      run: echo "CODE_COVERAGE_REQ=$(curl https://raw.githubusercontent.com/chipsec/chipsec/refs/heads/main-cfg/codeCoverageRequirement.cfg)" >> $GITHUB_ENV
+
     - name: Run Python pytest
-      run: python -m pytest tests
+      run: |
+        python -m pytest --cov --cov-report=term-missing --cov-fail-under="${{ env.CODE_COVERAGE_REQ }}"
         
     - name: Run xml cfg checker
       run: |
