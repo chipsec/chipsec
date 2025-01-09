@@ -231,5 +231,5 @@ class SMBus(hal_base.HALBase):
     def write_range(self, target_address: int, start_offset: int, buffer: bytes) -> bool:
         for i, b in enumerate(buffer):
             self.write_byte(target_address, start_offset + i, b)
-        self.logger.log_hal(f'[smbus] writing {size:d} bytes to device 0x{target_address:X} at offset {start_offset:X}')
+        self.logger.log_hal(f'[smbus] writing {len(buffer):d} bytes to device 0x{target_address:X} at offset {start_offset:X}')
         return True
