@@ -21,6 +21,7 @@ XML configuration file for
     <sku did="0xA1C6" name="C627" code="PCH_C620" longname="Intel C627 (C620 series) PCH" />
     <sku did="0xA1C7" name="C628" code="PCH_C620" longname="Intel C628 (C620 series) PCH" />
     <sku did="0xA1CA" name="C629" code="PCH_C620" longname="Intel C629 (C620 series) PCH" />
+    <sku did="0xA1CB" name="C621A" code="PCH_C620" longname="Intel C621A (C620 series) PCH" />
     <sku did="0xA242" name="C624" code="PCH_C620" longname="Intel C624 (C620 series) PCH" />
     <sku did="0xA243" name="C627" code="PCH_C620" longname="Intel C627 (C620 series) PCH" />
     <sku did="0xA244" name="C621" code="PCH_C620" longname="Intel C621 (C620 series) PCH" />
