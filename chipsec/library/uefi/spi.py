@@ -432,10 +432,11 @@ def dump_efi_module(mod, parent: Optional['EFI_MODULE'], modn: int, path: str) -
 
 
 class EFIModuleType:
-    SECTION_EXE = 0
-    SECTION = 1
-    FV = 2
-    FILE = 4
+    SECTION_EXE = 1
+    SECTION = 2
+    FV = 4
+    FILE = 8
+    ALL = 15
 
 
 def search_efi_tree(modules: List['EFI_MODULE'],
