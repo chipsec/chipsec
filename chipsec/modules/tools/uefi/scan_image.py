@@ -162,7 +162,7 @@ class scan_image(BaseModule):
 
         if op in ['generate', 'check']:
 
-            if len(module_argv) <= 2:
+            if len(module_argv) <= 2 and len(module_argv) != 0:
                 self.usage()
                 return self.res
             elif len(module_argv) > 2:
