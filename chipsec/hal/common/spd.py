@@ -307,8 +307,8 @@ Base Configuration and DRAM Parameters
 ###############################################################################
 
 class SPD: #TODO: Refactor to derive from HALBase.
-    def __init__(self, smbus):
-        self.smbus = smbus
+    def __init__(self, cs):
+        self.smbus = cs.hals.SMBus
 
     def read_byte(self, offset: int, device: int = SPD_SMBUS_ADDRESS) -> int:
         return self.smbus.read_byte(device, offset)

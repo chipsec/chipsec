@@ -19,7 +19,6 @@
 
 from chipsec.cfg.parsers.ip.generic import GenericConfig
 
-
 class PCIObj:
     def __init__(self, cfg_obj):
         self.bus = cfg_obj['bus']
@@ -31,6 +30,10 @@ class PCIObj:
         ret = f'bus: {self.bus}, dev: {self.dev}, func: {self.fun}'
         ret += f', rid:{self.rid}'
         return ret
+    
+    def __repr__(self) -> str:
+        return str(self)
+
 
 
 class PCIConfig(GenericConfig):
@@ -55,6 +58,14 @@ class PCIConfig(GenericConfig):
                 rid = inst.rid
                 break
         return rid
+    
+    def get_enabled_instances(self) -> bool:
+        enabled = []
+        for inst in self.instances.values():
+            if inst.bus is not None:
+                enabled.append(inst)
+        return enabled
+
 
     def update_name(self, name):
         self.name = name

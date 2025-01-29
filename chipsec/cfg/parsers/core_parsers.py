@@ -162,6 +162,10 @@ class DevConfig(BaseConfigParser):
                 'msr': self.handle_msr,
                 'mmiobar': self.handle_mmiobar,
                 'iobar': self.handle_iobar}
+    
+    def get_subcomponent_handlers(self):
+        return {'mmiobar': self.handle_mmio_subcomponent,
+                'iobar': self.handle_io_subcomponent}
 
     def get_stage(self):
         return Stage.DEVICE_CFG
@@ -244,7 +248,7 @@ class DevConfig(BaseConfigParser):
                 print(dest, cfg_obj)
                 new_obj = cfg_obj(copy.deepcopy(node_attr))
                 dest[vid_str][dev_name] = new_obj
-            else:
+            else: # Q: This else doesn't seem right to me.
                 mobj = dest[vid_str][dev_name]
                 mobj.add_config(node_attr['config'])
             ret_val.extend(self._process_config(stage_data, dev_name, node_attr))
@@ -294,6 +298,10 @@ class DevConfig(BaseConfigParser):
             ret_val.extend(self._process_config_complex(stage_data, dev_name, self.cfg.CONFIG_PCI[stage_data.vid_str][dev_name]))
             hex_dict = make_dict_hex(dev_attr)
             self.logger.log_debug(f"    + {dev_attr['name']:16}: {hex_dict}")
+            for subcomponent in dev.iter('subcomponent'):
+                subcomponent.attrib['component'] = dev_name
+                subtype = subcomponent.attrib['type']
+                ret_val.extend(self.get_subcomponent_handlers()[subtype](subcomponent, stage_data))
         return ret_val
 
     def handle_memory(self, et_node, stage_data):
@@ -311,27 +319,44 @@ class DevConfig(BaseConfigParser):
     def handle_msr(self, et_node, stage_data): ## TODO
         return self._process_def(self.cfg.MSR, et_node, 'definition', stage_data, MSRConfig)
 
-    def _handle_bar(self, et_node, stage_data, dest, cfg_obj):
+    def _handle_bars(self, et_node, stage_data, dest, cfg_obj):
         ret_val = []
 
         for bar in et_node.iter('bar'):
-            bus_attr = _config_convert_data(bar, True)
-            if 'name' not in bus_attr or 'device' not in bus_attr:
-                self.logger.log_debug(f"Missing 'name' or 'device' in {bus_attr}")
-                continue
-            bar_name = bus_attr['name']
-            dev_name = bus_attr['device']
-            self._process_bar(stage_data.vid_str, bar_name, bus_attr, dest, cfg_obj)
-            ret_val.extend(self._process_config_complex(stage_data, bar_name, dest[stage_data.vid_str][dev_name][bar_name], dev_name))
-            hex_dict = make_dict_hex(bus_attr)
-            self.logger.log_debug(f"    + {bus_attr['name']:16}: {hex_dict}")
+            ret_val.extend(self._handle_bar(bar, stage_data, dest, cfg_obj))
+            
         return ret_val
 
+    def _handle_bar(self, et_node, stage_data, dest, cfg_obj):
+        ret_val = []
+        bus_attr = _config_convert_data(et_node, True)
+        if 'name' not in bus_attr or ('device' not in bus_attr and 'component' not in bus_attr):
+            self.logger.log_debug(f"Missing 'name' or 'device' in {bus_attr}")
+            return ret_val
+        bar_name = bus_attr['name']
+        dev_name = bus_attr['device'] = bus_attr['device'] if 'device' in bus_attr else bus_attr['component']
+        self._process_bar(stage_data.vid_str, bar_name, bus_attr, dest, cfg_obj)
+        # ret_val = (self._process_config(stage_data, dev_name, bus_attr))
+        ret_val.extend(self._process_config_complex(stage_data, bar_name, dest[stage_data.vid_str][dev_name][bar_name], dev_name))
+        hex_dict = make_dict_hex(bus_attr)
+        self.logger.log_debug(f"    + {bus_attr['name']:16}: {hex_dict}")
+        return ret_val
+
+    def handle_mmio_subcomponent(self, et_node, stage_data):
+        dest = self.cfg.MMIO_BARS
+        return self._handle_bar(et_node, stage_data, dest, MMIOBarConfig)
+        # return self._process_config_complex(stage_data, bar_name, dest[stage_data.vid_str][dev_name][bar_name], dev_name)
+    
+    def handle_io_subcomponent(self, et_node, stage_data):
+        dest = self.cfg.IO_BARS
+        return self._handle_bar(et_node, stage_data, dest, IOBarConfig)
+        # return self._process_config_complex(stage_data, bar_name, dest[stage_data.vid_str][dev_name][bar_name], dev_name)
+
     def handle_mmiobar(self, et_node, stage_data):
-        return self._handle_bar(et_node, stage_data, self.cfg.MMIO_BARS, MMIOBarConfig)
+        return self._handle_bars(et_node, stage_data, self.cfg.MMIO_BARS, MMIOBarConfig)
 
     def handle_iobar(self, et_node, stage_data):
-        return self._handle_bar(et_node, stage_data, self.cfg.IO_BARS, IOBarConfig)
+        return self._handle_bars(et_node, stage_data, self.cfg.IO_BARS, IOBarConfig)
 
 
 
@@ -439,9 +464,9 @@ class CoreConfig(BaseConfigParser):
             reg_attr['FIELDS'] = reg_fields
             reg_attr.update(stage_data.attrs)
             if reg_attr['type'] == 'pcicfg':
-                reg_obj = self.create_register_object_pci(PCIRegisters, reg_attr)
+                reg_obj = self.create_register_object_with_pointer(PCIRegisters, reg_attr)
             elif reg_attr['type'] == 'mmcfg':
-                reg_obj = self.create_register_object_pci(MMCFGRegisters, reg_attr)
+                reg_obj = self.create_register_object_with_pointer(MMCFGRegisters, reg_attr)
             elif reg_attr['type'] == 'mmio':
                 reg_obj = self.create_register_object_bar(MMIORegisters, reg_attr)
             elif reg_attr['type'] == 'iobar':
@@ -465,7 +490,7 @@ class CoreConfig(BaseConfigParser):
             elif reg_attr['type'] == 'mm_msgbus':
                 reg_obj = self.create_register_object(MM_MSGBUSRegisters, reg_attr, [None])
             elif reg_attr['type'] == 'memory':
-                reg_obj = self.create_register_object(MEMORYRegisters, reg_attr, [None])
+                reg_obj = self.create_register_object_with_pointer(MEMORYRegisters, reg_attr)
             else:
                 self.logger.log("Did not create register object for:")
                 self.logger.log(reg_attr)
@@ -483,14 +508,12 @@ class CoreConfig(BaseConfigParser):
         return reg_obj
 
     def create_register_object_bar(self, objtype, regattr):
-        reg_obj = []
-        for instance in regattr['tmp'].values():
-            regattr['instance'] = instance
-            reg_obj.append(objtype(regattr))
-        return reg_obj
+        return self.create_register_object(objtype, regattr, regattr['tmp'].values())
 
-    def create_register_object_pci(self, objtype, regattr):
+    def create_register_object_with_pointer(self, objtype, regattr):
         reg_obj = []
+        if 'tmp' not in regattr.keys():
+            return self.create_register_object(objtype, regattr, [None])
         for instance in regattr['tmp'].values():
             regattr['instance'] = instance
             reg_obj.append(objtype(regattr, instance))

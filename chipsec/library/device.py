@@ -21,6 +21,7 @@
 
 # from chipsec.library.logger import logger
 from typing import List, Optional, Tuple, Union
+from chipsec.cfg.parsers.ip.pci_device import PCIConfig
 from chipsec.library.exceptions import CSFirstNotFoundError, CSBusNotFoundError, DeviceNotFoundError
 
 
@@ -28,7 +29,7 @@ class Device:
     def __init__(self, cs) -> None:
         self.cs = cs
 
-    def get_obj(self, device_name: str):
+    def get_obj(self, device_name: str) -> PCIConfig:
         scope = self.cs.Cfg.get_scope(device_name)
         vid, device, _, _ = self.cs.Cfg.convert_internal_scope(scope, device_name)
         if vid in self.cs.Cfg.CONFIG_PCI and device in self.cs.Cfg.CONFIG_PCI[vid]:
