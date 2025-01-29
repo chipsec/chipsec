@@ -33,11 +33,11 @@ class MMIOObj:
 class MMIOBarConfig(GenericConfig):
     def __init__(self, cfg_obj):
         super(MMIOBarConfig, self).__init__(cfg_obj)
-        self.device = cfg_obj['device']
+        self.device = cfg_obj['device'] if 'device' in cfg_obj else cfg_obj['component'] if 'component' in cfg_obj else None
         self.register = cfg_obj['register']
         self.base_field = cfg_obj['base_field']
         self.size = cfg_obj['size'] if 'did' in cfg_obj else None
-        self.desc = cfg_obj['desc']
+        self.desc = cfg_obj['desc'] if 'desc' in cfg_obj else self.name
         self.reg_align = cfg_obj['reg_align'] if 'reg_align' in cfg_obj else None
         self.registerh = cfg_obj['registerh'] if 'registerh' in cfg_obj else None
         self.reg_alignh = cfg_obj['reg_alignh'] if 'reg_alignh' in cfg_obj else None

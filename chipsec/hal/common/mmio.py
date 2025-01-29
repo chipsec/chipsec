@@ -88,7 +88,9 @@ class MMIO(hal_base.HALBase):
     def read_MMIO_reg(self, bar_base: int, offset: int, size: int = 4, bar_size: Optional[int] = None) -> int:
         if size > 8:
             if self.logger.HAL:
-                self.logger.log_warning("MMIO read cannot exceed 8")
+                self.logger.log_warning("[mmio] MMIO read cannot exceed 8")
+        if offset + size > bar_size:
+            self.logger.log_warning(f"[mmio] Offset(0x{offset:x}) + size(0x{size:x}) is > bar_size(0x{bar_size:x})")
         reg_value = self.cs.helper.read_mmio_reg(bar_base+offset, size)
         self.logger.log_hal(f'[mmio] 0x{bar_base:08X} + 0x{offset:08X} = 0x{reg_value:08X}')
         return reg_value
@@ -188,15 +190,15 @@ class MMIO(hal_base.HALBase):
     #
     # Get base address of MMIO range by MMIO BAR name
     #
-    def get_MMIO_BAR_base_address(self, bar_name: str, bus: Optional[int] = None) -> Tuple[int, int]:
-        if self.cache_bar_addresses_resolution and (bar_name, bus) in self.cached_bar_addresses:
-            return self.cached_bar_addresses[(bar_name, bus)]
+    def get_MMIO_BAR_base_address(self, bar_name: str, pciobj: Optional[int] = None) -> Tuple[int, int]:
+        if self.cache_bar_addresses_resolution and (bar_name, pciobj) in self.cached_bar_addresses:
+            return self.cached_bar_addresses[(bar_name, pciobj)]
         bar = self.cs.register.mmio.get_def(bar_name)  #self.cs.Cfg.MMIO_BARS[bar_name]
         # if bar is None or bar == {}:
         #     return -1, -1
         if not bar:
             raise CSReadError(f'{bar_name} is not defined. check scoping and configuration')
-        base, size = bar.get_base(bus)
+        base, size = bar.get_base(pciobj)
         if base:
             return base, size
         base = 0
@@ -205,9 +207,9 @@ class MMIO(hal_base.HALBase):
         size = 0
         mmioaddr = 0
 
-        if bar.register and bus is not None:
+        if bar.register and pciobj is not None:
             preserve = True
-            bar_reg = self.cs.register.get_instance_by_name(bar.register, bus)
+            bar_reg = self.cs.register.get_instance_by_name(bar.register, pciobj)
             if bar_reg:
                 if bar.reg_align:
                     preserve = False
@@ -224,9 +226,9 @@ class MMIO(hal_base.HALBase):
             if not preserve:
                 base <<= bar.reg_align
                 reg_mask <<= bar.reg_align
-        if bar.registerh and bus is not None:
+        if bar.registerh and pciobj is not None:
             preserve = True
-            bar_reg = self.cs.register.get_instance_by_name(bar.registerh, bus)
+            bar_reg = self.cs.register.get_instance_by_name(bar.registerh, pciobj)
             if bar_reg:
                 if bar.regh_align:
                     preserve = False
@@ -256,7 +258,7 @@ class MMIO(hal_base.HALBase):
             base = dynbase
         if bar.mmio_base:
             mmiobar = bar.mmio_base
-            mmioaddr, _ = self.get_MMIO_BAR_base_address(mmiobar, bus)
+            mmioaddr, _ = self.get_MMIO_BAR_base_address(mmiobar, pciobj)
             if bar.mmio_align:
                 mmioaddr <<= bar.mmio_align
             base += mmioaddr
@@ -264,7 +266,7 @@ class MMIO(hal_base.HALBase):
         if bar.limit_register and bar.limit_field and bar.limit_align:
             limit_field = bar.limit_field
             limit_bar = bar.limit_register
-            lim_reg = self.cs.Cfg.get_register_obj(limit_bar, bus)
+            lim_reg = self.cs.Cfg.get_register_obj(limit_bar, pciobj)
             limit = lim_reg.read_field(limit_field)
             if bar.limit_align:
                 limit_align = bar.limit_align
@@ -288,8 +290,8 @@ class MMIO(hal_base.HALBase):
             raise CSReadError('[mmio] Base address was determined to be 0')
 
         if self.cache_bar_addresses_resolution:
-            self.cached_bar_addresses[(bar_name, bus)] = (base, size)
-        bar.update_base_address(base, bus)
+            self.cached_bar_addresses[(bar_name, pciobj)] = (base, size)
+        bar.update_base_address(base, pciobj)
         return base, size
 
     #

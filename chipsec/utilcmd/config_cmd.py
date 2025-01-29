@@ -108,7 +108,12 @@ class CONFIGCommand(BaseCommand):
         return ret
 
     def pci_details(self, regi: Dict[str, Any]) -> str:
-        ret = f'bus: {regi["bus"]}, dev: {regi["dev"]}, func: {regi["fun"]}, vid: {regi["vid"]}, did: {regi["did"] if "did" in regi.keys() else None}'
+        if 'bus' in regi:
+            ret = f'bus: {regi["bus"]}, dev: {regi["dev"]}, func: {regi["fun"]}, vid: {regi["vid"]}, did: {regi["did"] if "did" in regi.keys() else None}'
+        elif 'component' in regi:
+            ret = f'Component: {regi["component"]}'
+        if 'config' in regi:
+            ret += f', Config: {regi["config"]}'
         return ret
 
     def mmio_details(self, regi: Dict[str, Any]) -> str:

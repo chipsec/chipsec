@@ -17,6 +17,7 @@
 # Contact information:
 # chipsec@intel.com
 
+from chipsec.library.exceptions import CSConfigError
 from chipsec.library.register import BaseConfigRegisterHelper
 from chipsec.chipset import cs
 
@@ -25,12 +26,12 @@ class MEMORYRegisters(BaseConfigRegisterHelper):
     def __init__(self, cfg_obj):
         super(MEMORYRegisters, self).__init__(cfg_obj)
         self.offset = cfg_obj['offset']
+        self.range = cfg_obj['range']
         self.size = cfg_obj['size']
-        self.access = cfg_obj['access']
-        self.address = cfg_obj['address']
 
     def __repr__(self) -> str:
         reg_str = ''
+        self.populate_range()
         if self.value is not None:
             reg_val_str = f'0x{self.value:08X}'
         else:
@@ -39,7 +40,7 @@ class MEMORYRegisters(BaseConfigRegisterHelper):
             default = f'{self.default:X}'
         else:
             default = 'Not Provided'
-        reg_str = f'[*] {self.name} = {reg_val_str} << {self.desc} (0x{self.address:X} + 0x{self.offset:X}) [default: {default}]'
+        reg_str = f'[*] {self.name} = {reg_val_str} << {self.desc} (0x{self.range.address:X} + 0x{self.offset:X}) [default: {default}]'
 
         reg_str += self._register_fields_str(True)
         return reg_str
@@ -51,32 +52,26 @@ class MEMORYRegisters(BaseConfigRegisterHelper):
         else:
             reg_val_str = self.value
 
-        reg_str = f'[*] {self.name} = {reg_val_str} << {self.desc} (0x{self.address:X} + 0x{self.offset:X})'
+        reg_str = f'[*] {self.name} = {reg_val_str} << {self.desc} (0x{self.range.address:X} + 0x{self.offset:X})'
 
         reg_str += self._register_fields_str()
         return reg_str
+    
 
     def read(self):
         """Read the object"""
         self.logger.log_debug(f'reading {self.name}')
         _cs = cs()
-        if self.access == 'dram':
-            if 1 == self.size:
-                self.value = _cs.hals.Memory.read_physical_mem_byte(self.address)
-            elif 2 == self.size:
-                self.value = _cs.hals.Memory.read_physical_mem_word(self.address)
-            elif 4 == self.size:
-                self.value = _cs.hals.Memory.read_physical_mem_dword(self.address)
-            elif 8 == self.size:
-                self.value = _cs.hals.Memory.read_physical_mem_qword(self.address)
-        elif self.access == 'mmio':
-            self.value = _cs.hals.MMIO.read_MMIO_reg(self.address, self.offset, self.size)
+        if self.range.access == 'dram':
+            self.value = _cs.hals.MemRange.read(self.range + self.offset, self.size)
+        elif self.range.access == 'mmio':
+            self.value = _cs.hals.MMIO.read_MMIO_reg(self.range.address, self.offset, self.size)
         return self.value
 
     def write(self, value):
         """Write the object"""
         _cs = cs()
-        if self.access == 'dram':
+        if self.range.access == 'dram':
             _cs = _cs.hals.Memory.write_physical_mem(self.address + self.offset, self.size, value)
-        elif self.access == 'mmio':
-            _cs.hals.MMIO.write_MMIO_reg(self.address, self.offset, value, self.size, None)
+        elif self.range.access == 'mmio':
+            _cs.hals.MMIO.write_MMIO_reg(self.range.address, self.offset, value, self.size, None)

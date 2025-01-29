@@ -90,11 +90,11 @@ class remap(BaseModule):
     def check_remap_config(self) -> int:
         is_warning = False
 
-        remapbase = self.cs.register.read('PCI0.0.0_REMAPBASE')
-        remaplimit = self.cs.register.read('PCI0.0.0_REMAPLIMIT')
-        touud = self.cs.register.read('PCI0.0.0_TOUUD')
-        tolud = self.cs.register.read('PCI0.0.0_TOLUD')
-        tsegmb = self.cs.register.read('PCI0.0.0_TSEGMB')
+        remapbase = self.cs.register.read('REMAPBASE')
+        remaplimit = self.cs.register.read('REMAPLIMIT')
+        touud = self.cs.register.read('TOUUD')
+        tolud = self.cs.register.read('TOLUD')
+        tsegmb = self.cs.register.read('TSEGMB')
         self.logger.log('[*] Registers:')
         self.logger.log(f'[*]   TOUUD     : 0x{touud:016X}')
         self.logger.log(f'[*]   REMAPLIMIT: 0x{remaplimit:016X}')
