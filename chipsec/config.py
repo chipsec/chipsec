@@ -23,6 +23,7 @@ from fnmatch import fnmatch
 import importlib
 import re
 import os
+from typing import Dict
 import xml.etree.ElementTree as ET
 from chipsec.library.defines import is_hex, CHIPSET_CODE_UNKNOWN
 from chipsec.library.exceptions import CSConfigError, DeviceNotFoundError
@@ -71,6 +72,7 @@ class Cfg:
         self.code = CHIPSET_CODE_UNKNOWN
         self.longname = 'Unrecognized Platform'
         self.cpuid = 0xFFFFF
+        self.mfgid = 'Unknown CPU '
         self.pch_vid = 0xFFFF
         self.pch_did = 0xFFFF
         self.pch_rid = 0xFF
@@ -121,6 +123,11 @@ class Cfg:
                 continue
             self.CONFIG_PCI_RAW[vid_str][did_str].add_obj(pci_data)
 
+    def set_cpuid(self, cpuid: int):
+        self.cpuid = cpuid
+
+    def set_mfgid(self, mfgid: str):
+        self.mfgid = mfgid
     ###
     # CPU topology info
     ###
@@ -143,6 +150,7 @@ class Cfg:
         return self.req_pch
 
     def print_platform_info(self):
+        self.logger.log(f'Mfg ID  : {self.mfgid}')
         self.logger.log(f'Platform: {self.longname}')
         self.logger.log(f'\tCPUID: {self.cpuid:X}')
         self.logger.log(f'\tVID: {self.vid:04X}')
@@ -407,6 +415,9 @@ class Cfg:
                 if 0 in self.CONFIG_PCI_RAW[vid][did].cfg['bus'] and self.CONFIG_PCI_RAW[vid][did].cfg['dev'] == 0 and self.CONFIG_PCI_RAW[vid][did].cfg['fun'] == 0:
                     return self.CONFIG_PCI_RAW[vid][did].cfg
         return {'vid': 0xFFFF, 'did': 0xFFFF, 'rid': 0xFF}
+    
+    def add_memory_range(self, mem_range_obj:Dict):
+        self.cfg.MEMORY_RANGES[mem_range_obj['vid_str']][mem_range_obj['name']] = mem_range_obj
 
     def platform_detection(self, proc_code, pch_code, cpuid):
         # Detect processor files

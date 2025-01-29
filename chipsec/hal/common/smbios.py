@@ -513,4 +513,4 @@ class SMBIOS(hal_base.HALBase):
         return ret_val
 
 
-haldata = {"arch":['FFFF'], 'name': ['SMBIOS']}
+haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': ['SMBIOS']}

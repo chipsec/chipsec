@@ -181,4 +181,4 @@ class EC(hal_base.HALBase):
         return True
 
 
-haldata = {"arch":['FFFF'], 'name': ['EC']}
+haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': ['EC']}

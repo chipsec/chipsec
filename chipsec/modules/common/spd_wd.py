@@ -52,8 +52,6 @@ Examples:
 
 from chipsec.module_common import BaseModule
 from chipsec.library.returncode import ModuleResult
-from chipsec.hal.common.smbus import SMBus
-from chipsec.hal.common.spd import SPD
 from typing import List
 
 
@@ -62,11 +60,13 @@ class spd_wd(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.cs.set_scope({
-            'SPD_WD': '8086.SMBUS.SPD_WD',
+            'SMBUS_HCFG': '8086.SMBUS',
+            'SMBUS': '8086',
         })
 
     def is_supported(self) -> bool:
-        if self.cs.device.is_enabled('SMBUS'):
+        smbdev = self.cs.device.get_obj('SMBUS')
+        if smbdev.get_enabled_instances():
             if self.cs.register.has_field('SMBUS_HCFG', 'SPD_WD'):
                 return True
             else:
@@ -77,8 +77,7 @@ class spd_wd(BaseModule):
 
     def check_spd_wd(self) -> int:
         try:
-            _smbus = SMBus(self.cs)
-            _spd = SPD(_smbus)
+            _spd = self.cs.hals.SPD
         except BaseException as msg:
             self.logger.log_error(msg)
             self.result.setStatusBit(self.result.status.INFORMATION)

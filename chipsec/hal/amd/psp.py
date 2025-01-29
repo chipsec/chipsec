@@ -23,6 +23,7 @@
 
 import time
 from chipsec.library.logger import logger
+from chipsec.hal.hal_base import HALBase
 
 class PSP: #TODO: Derive from HALBase
     SMN_INDEX_ADDR = 0xb8
@@ -112,4 +113,4 @@ class PSP: #TODO: Derive from HALBase
             return 0 
 
 
-haldata = {"arch":['1022'], 'name': ['PSP']}
+haldata = {"arch":[HALBase.MfgIds.AMD], 'name': ['PSP']}

@@ -26,8 +26,10 @@
 # -------------------------------------------------------------------------------
 
 import os
+from enum import Enum
 from importlib import import_module
-from typing import Dict, Any
+from typing import Dict, Any, List
+from chipsec.hal.hal_base import HALBase
 from chipsec.library.logger import logger
 from chipsec.library.file import get_main_dir
 from chipsec.library.strings import make_hex_key_str
@@ -35,6 +37,8 @@ from chipsec.library.exceptions import HALNotFoundError, HALInitializationError
 # Search subfolders for hals
 
 class Hals:
+    
+
     def __init__(self, cs):
         self.cs = cs
         self.hals_import_location = "chipsec.hal."
@@ -72,10 +76,10 @@ class Hals:
         # hal_path = f'{self.hals_import_location}{name}'
         selected_hals = []
         for hal in self._available_hals:
-            if name in hal['name'] and make_hex_key_str(self.cs.Cfg.vid) in [arch.upper() for arch in hal['arch']]:
+            if name in hal['name'] and self.is_mfgid_in_haldata(hal):
                 hal['priority'] = 1
                 selected_hals.append(hal)
-            elif name in hal['name'] and 'FFFF' in [h.upper() for h in hal['arch']]:
+            elif name in hal['name'] and self.is_any_mfgid_in_haldata(hal):
                 hal['priority'] = 2 
                 selected_hals.append(hal)
 
@@ -84,6 +88,11 @@ class Hals:
 
         return sorted(selected_hals, key=lambda x: x['priority'])[0]
 
+    def is_mfgid_in_haldata(self, haldata: List) -> bool:
+        return any(self.cs.Cfg.mfgid in subl.value for subl in haldata['arch'])
+    
+    def is_any_mfgid_in_haldata(self, haldata: List) -> bool:
+        return HALBase.MfgIds.Any in haldata['arch']
 
     def update_available_hals(self) -> Dict[str, Any]:
         """Determine available HAL modules"""
@@ -93,7 +102,7 @@ class Hals:
         for hal_dir in hal_dirs:
             hals += ([f'{hal_dir}.{i[:-3]}' for i in os.listdir(os.path.join(hal_base_dir, hal_dir)) if i[-3:] == ".py" and not i[:2] == "__"])
         logger().log_debug('[CHIPSEC] Loaded HALs:')
-        logger().log_debug(f'   {hals}')
+        logger().log_debug(f'   {"\n".join(hals)}')
         module = None
         halsdata = []
         for hal in hals:
