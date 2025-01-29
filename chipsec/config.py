@@ -23,6 +23,7 @@ from fnmatch import fnmatch
 import importlib
 import re
 import os
+from typing import Dict
 import xml.etree.ElementTree as ET
 from chipsec.library.defines import is_hex, CHIPSET_CODE_UNKNOWN
 from chipsec.library.exceptions import CSConfigError, DeviceNotFoundError
@@ -414,6 +415,9 @@ class Cfg:
                 if 0 in self.CONFIG_PCI_RAW[vid][did].cfg['bus'] and self.CONFIG_PCI_RAW[vid][did].cfg['dev'] == 0 and self.CONFIG_PCI_RAW[vid][did].cfg['fun'] == 0:
                     return self.CONFIG_PCI_RAW[vid][did].cfg
         return {'vid': 0xFFFF, 'did': 0xFFFF, 'rid': 0xFF}
+    
+    def add_memory_range(self, mem_range_obj:Dict):
+        self.cfg.MEMORY_RANGES[mem_range_obj['vid_str']][mem_range_obj['name']] = mem_range_obj
 
     def platform_detection(self, proc_code, pch_code, cpuid):
         # Detect processor files

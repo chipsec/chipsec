@@ -82,8 +82,11 @@ class RegisterCommand(BaseCommand):
 
     def reg_read(self):
         if self.field_name is not None:
-            value = self.cs.register.read_field(self.reg_name, self.field_name)
-            self.logger.log("[CHIPSEC] {}.{}=0x{:X}".format(self.reg_name, self.field_name, value))
+            reglist = self.cs.register.get_list_by_name(self.reg_name)
+            values = reglist.read_field(self.field_name)
+            # value = self.cs.register.read_field(self.reg_name, self.field_name)
+            for value in values:
+                self.logger.log(f"[CHIPSEC] {self.reg_name}.{self.field_name}=0x{value:X}")
         else:
             # value = self.cs.register.read(self.reg_name)
             reglist = self.cs.register.get_list_by_name(self.reg_name)
