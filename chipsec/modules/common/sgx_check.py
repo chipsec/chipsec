@@ -209,7 +209,7 @@ class sgx_check(BaseModule):
 
         debug_res, debug_result = self.check_debug()
         if self.cs.control.is_defined('SamplePart') and self.cs.control.get('SamplePart') == 1:
-            self.logger.log_passed('CPU is a Sample Part. Test is N/A.')
+            self.res = ModuleResult.INFORMATION
         else:
             self.res = debug_res
             if debug_result is not None:
@@ -426,7 +426,9 @@ class sgx_check(BaseModule):
         self.logger.start_test('Check SGX feature support')
 
         self.res = self.check_sgx_config()
-        if self.res == ModuleResult.PASSED:
+        if self.res == ModuleResult.INFORMATION:
+            self.logger.log_passed('CPU is a Sample Part. Test is N/A.')
+        elif self.res == ModuleResult.PASSED:
             self.logger.log_passed('All SGX checks passed')
         elif self.res == ModuleResult.WARNING:
             self.logger.log_warning('One or more SGX checks detected a warning')
