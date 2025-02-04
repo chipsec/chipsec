@@ -359,7 +359,7 @@ class ChipsecMain:
             self.logger.set_log_file(self.log)
             self._autolog_disable = True
         if self._autolog_disable is False:
-            self.logger.set_autolog_file()
+            self.logger.set_autolog_file("main")
         if self._return_codes:
             self.logger.log_warning("Return codes feature is currently Work in Progress!!!")
             self._cs.using_return_codes = True
