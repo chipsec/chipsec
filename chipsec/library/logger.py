@@ -219,9 +219,9 @@ class Logger:
                 return False
         return True
 
-    def set_autolog_file(self):
+    def set_autolog_file(self, prefix: str="") -> None:
         if self.create_logs_folder():
-            log_file_name = f'{strftime("%a%b%d%y-%H%M%S")}.log'
+            log_file_name = f'{prefix}{"-" if prefix else ""}{strftime("%Y%b%d-%H%M%S")}.log'
             log_path = os.path.join(self.LOG_PATH, log_file_name)
             file_handler = logging.FileHandler(log_path)
             self.chipsecLogger.addHandler(file_handler)
