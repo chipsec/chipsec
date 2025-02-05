@@ -197,7 +197,8 @@ class SPI(hal_base.HALBase):
 
     def __init__(self, cs):
         super(SPI, self).__init__(cs)
-        self.instance = 0
+        spidev = cs.device.get_obj('8086.SPI')
+        self.instance = spidev.instances[0]
         self.mmio = cs.hals.MMIO
         self.get_registers()
         # self.rcba_spi_base = self.get_SPI_MMIO_base()
@@ -316,28 +317,29 @@ class SPI(hal_base.HALBase):
                 spi_regions[r] = (range_base, range_limit, range_size, SPI_REGION_NAMES[r], freg)
         return spi_regions
 
+
     def get_SPI_Protected_Range(self, pr_num: int) -> Tuple[int, int, int, int, int, int]:
         if pr_num > SPI_MAX_PR_COUNT:
             return (0, 0, 0, 0, 0, 0)
 
-        pr_name = f'PR{pr_num:x}'
-        pr_j_reg = self.cs.register.get_def(pr_name)['offset']
-        pr_j = self.cs.register.read(pr_name)
+        pr_name = f'8086.SPI.PR*'
+        pr_j_reg = self.cs.register.get_instance_by_name(pr_name, self.instance)
+        pr_j = pr_j_reg.read()
 
         # Protected Range Base corresponds to FLA bits 24:12
-        base = self.cs.register.get_field(pr_name, pr_j, 'PRB') << SPI_FLA_SHIFT
+        base = pr_j_reg.get_field('PRB') << SPI_FLA_SHIFT
         # Protected Range Limit corresponds to FLA bits 24:12
-        limit = self.cs.register.get_field(pr_name, pr_j, 'PRL') << SPI_FLA_SHIFT
+        limit = pr_j_reg.get_field('PRL') << SPI_FLA_SHIFT
 
-        wpe = (0 != self.cs.register.get_field(pr_name, pr_j, 'WPE'))
-        rpe = (0 != self.cs.register.get_field(pr_name, pr_j, 'RPE'))
+        wpe = (0 != pr_j_reg.get_field('WPE'))
+        rpe = (0 != pr_j_reg.get_field('RPE'))
 
         # Check if this is a valid PRx config
         if wpe or rpe:
             # FLA bits 11:0 are assumed to be FFFh for the limit comparison
             limit |= SPI_FLA_PAGE_MASK
 
-        return (base, limit, wpe, rpe, pr_j_reg, pr_j)
+        return (base, limit, wpe, rpe, pr_j_reg.offset, pr_j)
 
     ##############################################################################################################
     # SPI configuration

@@ -19,6 +19,7 @@
 #
 
 from collections import namedtuple
+from collections.abc import Iterable
 from fnmatch import fnmatch
 import importlib
 import re
@@ -506,6 +507,41 @@ class Cfg:
         else:
             sname = name
         return scope_name(*(sname.split('.', 3)))
+    
+    def get_objlist(self, objdict:dict, name:str):
+        scope = self.get_scope(name)
+        fullscope = self.convert_internal_scope(scope, name)
+        return self.get_objlist_from_scope(objdict, fullscope)
+
+    def __add_obj_to_regdef(self, reg_def, obj):
+        if isinstance(obj, Iterable):
+            reg_def.extend(obj)
+        else:
+            reg_def.append(obj)
+        return reg_def
+
+    #'vid', 'parent', 'register', 'field'; register.get_obj("8086.*.FREG*_BIOS")
+    def get_objlist_from_scope(self, objdict:dict, scope:scope_name):
+        reg_def = ObjList()
+        vid = scope.vid.replace('*', '.*')
+        dict_vids = [vid] if '*' not in vid and vid in objdict.keys() else objdict.keys()
+        for dict_vid in dict_vids:
+            if re.match(vid, dict_vid):
+                parent = scope.parent.replace('*', '.*')
+                dict_parents = [parent] if '*' not in parent and parent in objdict[dict_vid].keys() else objdict[dict_vid].keys()
+                for dict_parent in dict_parents:
+                    if re.match(parent, dict_parent):
+                        if scope.name:
+                            name = scope.name.replace('*', '.*')
+                            dict_names = [name] if '*' not in name and name in objdict[dict_vid][dict_parent].keys() else objdict[dict_vid][dict_parent].keys()
+                            for dict_name in dict_names:
+                                if re.match(name, dict_name):
+                                    self.__add_obj_to_regdef(reg_def, objdict[dict_vid][dict_parent][dict_name])
+                        else:
+
+                            self.__add_obj_to_regdef(reg_def, objdict[dict_vid][dict_parent])
+
+        return reg_def
 
     # TODO: Review for correctness compared to chipsec/library/control.py:get_list_by_name()
     # def get_control_obj(self, control_name, instance=None):

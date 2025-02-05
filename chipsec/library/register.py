@@ -119,33 +119,26 @@ class Register:
 
     # rework any call to this function
     def get_list_by_name(self, reg_name: str) -> 'ObjList':
-        reg_def = ObjList()
-        scope = self.cs.Cfg.get_scope(reg_name)
-        vid, dev_name, register, _ = self.cs.Cfg.convert_internal_scope(scope, reg_name)
-        if vid in self.cs.Cfg.REGISTERS and dev_name in self.cs.Cfg.REGISTERS[vid] and register in self.cs.Cfg.REGISTERS[vid][dev_name]:
-            reg_def.extend(self.cs.Cfg.REGISTERS[vid][dev_name][register])
-        return reg_def
+        return self.cs.Cfg.get_objlist(self.cs.Cfg.REGISTERS, reg_name)
+    
+    def get_list_by_name_without_scope(self, reg_name: str) -> 'ObjList':
+        return self.cs.Cfg.get_objlist(self.cs.Cfg.REGISTERS, "*.*." + reg_name)
 
     def get_instance_by_name(self, reg_name: str, instance: Any):
-        scope = self.cs.Cfg.get_scope(reg_name)
-        vid, dev_name, register, _ = self.cs.Cfg.convert_internal_scope(scope, reg_name)
-        if vid in self.cs.Cfg.REGISTERS and dev_name in self.cs.Cfg.REGISTERS[vid] and register in self.cs.Cfg.REGISTERS[vid][dev_name]:
-            for reg_obj in self.cs.Cfg.REGISTERS[vid][dev_name][register]:
-                if reg_obj.instance == instance:
-                    return reg_obj
+        for reg_obj in self.cs.Cfg.get_objlist(self.cs.Cfg.REGISTERS, reg_name):
+            if reg_obj.instance == instance:
+                return reg_obj
         return None #TODO Change to null register object
 
     def has_field(self, reg_name: str, field_name: str) -> bool:
-        scope = self.cs.Cfg.get_scope(reg_name)
-        vid, device, register, _ = self.cs.Cfg.convert_internal_scope(scope, reg_name)
         """Checks if the register has specific field"""
-        scope = self.cs.Cfg.get_scope(reg_name)
-        vid, device, register, _ = self.cs.Cfg.convert_internal_scope(scope, reg_name)
-        try:
-            reg_def = self.cs.Cfg.REGISTERS[vid][device][register]
-        except KeyError:
-            return False
-        return field_name in reg_def[0].fields
+        reg_defs = self.cs.Cfg.get_objlist(self.cs.Cfg.REGISTERS, reg_name)
+        for reg_def in reg_defs:
+            try:
+                return field_name in reg_def.fields
+            except KeyError:
+                return False
+        return False
 
     def get_match(self, name: str):
         vid, device, register, field = self.cs.Cfg.convert_internal_scope("", name)
