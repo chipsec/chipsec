@@ -207,10 +207,16 @@ class MMIO(hal_base.HALBase):
         size = 0
         mmioaddr = 0
 
-        if bar.register and pciobj is not None:
+        if bar.register:
+            
             preserve = True
-            bar_reg = self.cs.register.get_instance_by_name(bar.register, pciobj)
-            if bar_reg:
+            if pciobj is not None:
+                bar_reg_list = [self.cs.register.get_instance_by_name(bar.register, pciobj)]
+            else:
+                bar_reg_list = self.cs.register.get_list_by_name(bar.register)
+                
+            for bar_reg in bar_reg_list:
+            # if bar_reg:
                 if bar.reg_align:
                     preserve = False
                 if bar.base_field:
@@ -218,11 +224,14 @@ class MMIO(hal_base.HALBase):
                     try:
                         base = bar_reg.read_field(base_field, preserve)
                     except CSReadError:
-                        self.logger.log_hal('[mmio] Unable to determine MMIO Base register.  Using Base = 0x0')
+                        continue
+                        # self.logger.log_hal('[mmio] Unable to determine MMIO Base register.  Using Base = 0x0')
                     try:
                         reg_mask = bar_reg.get_field_mask(base_field, preserve)
                     except CSReadError:
-                        self.logger.log_hal('[mmio] Unable to determine MMIO Mask register.  Using Mask = 0xFFFF')
+                        continue
+                        # self.logger.log_hal('[mmio] Unable to determine MMIO Mask register.  Using Mask = 0xFFFF')
+                    break
             if not preserve:
                 base <<= bar.reg_align
                 reg_mask <<= bar.reg_align
@@ -286,6 +295,7 @@ class MMIO(hal_base.HALBase):
             size = DEFAULT_MMIO_BAR_SIZE
         self.logger.log_hal('[mmio] {}: 0x{:016X} (size = 0x{:X})'.format(bar_name, base, size))
         if base == 0:
+            breakpoint()
             self.logger.log_hal('[mmio] Base address was determined to be 0.')
             raise CSReadError('[mmio] Base address was determined to be 0')
 

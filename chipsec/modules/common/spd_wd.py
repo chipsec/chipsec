@@ -60,7 +60,7 @@ class spd_wd(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.cs.set_scope({
-            'SMBUS_HCFG': '8086.SMBUS',
+            'SMBUS_HCFG': '8086.SMBUS*',
             'SMBUS': '8086',
         })
 
@@ -83,7 +83,6 @@ class spd_wd(BaseModule):
             self.result.setStatusBit(self.result.status.INFORMATION)
             self.res = self.result.getReturnCode(ModuleResult.ERROR)
             return self.res
-
         spd_wd_reg = self.cs.register.get_list_by_name('SMBUS_HCFG')
         spd_wd_reg.read_and_print()
         spd_wd_mask = spd_wd_reg[0].get_field_mask("SPD_WD", True)

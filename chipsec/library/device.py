@@ -30,68 +30,78 @@ class Device:
         self.cs = cs
 
     def get_obj(self, device_name: str) -> PCIConfig:
-        scope = self.cs.Cfg.get_scope(device_name)
-        vid, device, _, _ = self.cs.Cfg.convert_internal_scope(scope, device_name)
-        if vid in self.cs.Cfg.CONFIG_PCI and device in self.cs.Cfg.CONFIG_PCI[vid]:
-            return self.cs.Cfg.CONFIG_PCI[vid][device]
-        else:
-            return None
+        devlist = self.get_objlist(device_name)
+        if devlist:
+            return devlist[0]
+        return None
+        
+    def get_objlist(self, device_name: str):
+        return self.cs.Cfg.get_objlist(self.cs.Cfg.CONFIG_PCI, device_name)
 
-    def get_first_bus(self, device: dict) -> int:
-        """Retrieves first value in bus list for PCI device"""
-        if 'bus' in device:
-            return self.get_first(device['bus'])
-        raise CSBusNotFoundError()
+    # def get_first_bus(self, device: dict) -> int:
+    #     """Retrieves first value in bus list for PCI device"""
+    #     if 'bus' in device:
+    #         return self.get_first(device['bus'])
+    #     raise CSBusNotFoundError()
 
-    def get_first(self, a_list: Union[list, int]) -> int:
-        """Returns received integer or first item from received list"""
-        if type(a_list) is int:
-            return a_list
-        if type(a_list) is list:
-            return a_list[0]
-        raise CSFirstNotFoundError()
+    # def get_first(self, a_list: Union[list, int]) -> int:
+    #     """Returns received integer or first item from received list"""
+    #     if type(a_list) is int:
+    #         return a_list
+    #     if type(a_list) is list:
+    #         return a_list[0]
+    #     raise CSFirstNotFoundError()
 
-    def get_BDF(self, device_name: str) -> Tuple[int, int, int]:
-        """Retrieves bus, device, and function values from PCI device"""
-        scope = self.cs.Cfg.get_scope(device_name)
-        vid, device, _, _ = self.cs.Cfg.convert_internal_scope(scope, device_name)
-        try:
-            device = self.cs.Cfg.CONFIG_PCI[vid][device]
-        except KeyError:
-            device = None
-        if device is None or device == {}:
-            raise DeviceNotFoundError(f'DeviceNotFound: {device_name}')
-        b = device['bus']
-        d = device['dev']
-        f = device['fun']
-        return (b, d, f)
+    # def get_BDF(self, device_name: str) -> Tuple[int, int, int]:
+    #     """Retrieves bus, device, and function values from PCI device"""
+    #     scope = self.cs.Cfg.get_scope(device_name)
+    #     vid, device, _, _ = self.cs.Cfg.convert_internal_scope(scope, device_name)
+    #     try:
+    #         device = self.cs.Cfg.CONFIG_PCI[vid][device]
+    #     except KeyError:
+    #         device = None
+    #     if device is None or device == {}:
+    #         raise DeviceNotFoundError(f'DeviceNotFound: {device_name}')
+    #     b = device['bus']
+    #     d = device['dev']
+    #     f = device['fun']
+    #     return (b, d, f)
 
-    def get_VendorID(self, device_name: str) -> Tuple[int, int]:
-        """Retrieves device ID and vendor ID from the PCI device"""
-        (b, d, f) = self.get_BDF(device_name)
-        return self.cs.hals.Pci.get_DIDVID(b, d, f)
+    # def get_VendorID(self, device_name: str) -> Tuple[int, int]:
+    #     """Retrieves device ID and vendor ID from the PCI device"""
+    #     (b, d, f) = self.get_BDF(device_name)
+    #     return self.cs.hals.Pci.get_DIDVID(b, d, f)
 
-    def is_enabled(self, device_name: str) -> bool:
-        """Checks if PCI device is enabled"""
-        if self.is_defined(device_name):
-            (b, d, f) = self.get_BDF(device_name)
-            return self.cs.hals.Pci.is_enabled(b, d, f)
-        return False
+    # def is_enabled(self, device_name: str) -> bool:
+    #     """Checks if PCI device is enabled"""
+    #     if self.is_defined(device_name):
+    #         (b, d, f) = self.get_BDF(device_name)
+    #         return self.cs.hals.Pci.is_enabled(b, d, f)
+    #     return False
 
     def is_defined(self, device_name: str) -> bool:
         """Checks if device is defined in the XML config"""
-        scope = self.cs.Cfg.get_scope(device_name)
-        vid, device, _, _ = self.cs.Cfg.convert_internal_scope(scope, device_name)
-        return self.cs.Cfg.CONFIG_PCI[vid].get(device, None) is not None
+        return self.get_obj(device_name) is not None
+        # scope = self.cs.Cfg.get_scope(device_name)
+        # vid, device, _, _ = self.cs.Cfg.convert_internal_scope(scope, device_name)
+        # return self.cs.Cfg.CONFIG_PCI[vid].get(device, None) is not None
 
     def get_bus(self, device_name: str) -> List[int]:
         """Retrieves bus value(s) from PCI device"""
-        scope = self.cs.Cfg.get_scope(device_name)
-        vid, device, _, _ = self.cs.Cfg.convert_internal_scope(scope, device_name)
-        if vid in self.cs.Cfg.CONFIG_PCI and device in self.cs.Cfg.CONFIG_PCI[vid]:
-            return self.cs.Cfg.CONFIG_PCI[vid][device].bus
-        else:
-            return []
+        dev_list = self.get_objlist(device_name)
+        buses = []
+        breakpoint()
+        for dev in dev_list:
+            for instance_key in dev.instances.keys():
+                buses.append(dev.instances[instance_key].bus)
+        return buses
+
+        # scope = self.cs.Cfg.get_scope(device_name)
+        # vid, device, _, _ = self.cs.Cfg.convert_internal_scope(scope, device_name)
+        # if vid in self.cs.Cfg.CONFIG_PCI and device in self.cs.Cfg.CONFIG_PCI[vid]:
+        #     return self.cs.Cfg.CONFIG_PCI[vid][device].bus
+        # else:
+        #     return []
 
         # buses = self.cs.Cfg.BUS.get(device_name, [])
         # if buses:
