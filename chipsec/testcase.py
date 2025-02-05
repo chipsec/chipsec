@@ -37,6 +37,7 @@ class ExitCode:
     EXCEPTION = 32
     INFORMATION = 64
     NOTAPPLICABLE = 128
+    ARCHIVED = 256
 
     help_epilog = """\
   Exit Code
@@ -203,13 +204,15 @@ class ChipsecResults:
         information = []
         notapplicable = []
         deprecated = []
+        archived = []
         destination = {'Passed': passed,
                        'Failed': failed,
                        'Error': error,
                        'Warning': warning,
                        'Information': information,
                        'NotApplicable': notapplicable,
-                       'Deprecated': deprecated
+                       'Deprecated': deprecated,
+                       'Archived': archived
                        }
 
         for test in self.test_cases:
@@ -234,7 +237,8 @@ class LegacyResults(ChipsecResults):
         logger().log(f'\n[CHIPSEC] {filler}  SUMMARY  {filler}')
         print_dictionary = {'failed to run': logger().log_error, 
                             'passed': logger().log_passed, 
-                            'information': logger().log_information, 
+                            'information': logger().log_information,
+                            'archived': logger().log_information, 
                             'failed': logger().log_failed, 
                             'not applicable': logger().log_not_applicable}
         if runtime is not None:
@@ -252,6 +256,8 @@ class LegacyResults(ChipsecResults):
                     logger().log(f'[CHIPSEC] Modules with {result:11}{len(summary[result]):d}:')
                     for mod in summary[result]:
                         logger().log_error(mod)
+            elif result == 'archived':
+                continue
             else:
                 logger().log(f'[CHIPSEC] Modules {result:16}{len(summary[result]):d}:')
                 for mod in summary[result]:
@@ -267,12 +273,14 @@ class LegacyResults(ChipsecResults):
         ret['failed'] = []
         ret['warnings'] = []
         ret['not applicable'] = []
+        ret['archived'] = []
         destination = {'Passed': 'passed',
                        'Failed': 'failed',
                        'Error': 'failed to run',
                        'Warning': 'warnings',
                        'Information': 'information',
-                       'NotApplicable': 'not applicable'
+                       'NotApplicable': 'not applicable',
+                       'Archived': 'archived'
                        }
         executed = 0
         for test in self.test_cases:
@@ -291,7 +299,8 @@ class LegacyResults(ChipsecResults):
                         'failed': ExitCode.FAIL,
                         'warnings': ExitCode.WARNING,
                         'not applicable': ExitCode.NOTAPPLICABLE,
-                        'information': ExitCode.INFORMATION
+                        'information': ExitCode.INFORMATION,
+                        'archived': ExitCode.ARCHIVED
                         }
         for result in destination.keys():
             if len(summary[result]) != 0:
@@ -314,6 +323,8 @@ class ReturnCodeResults(ChipsecResults):
                     logger().log(f'[CHIPSEC] Modules with {result:11}{len(summary[result]):d}:')
                     for mod in summary[result]:
                         logger().log_error(mod)
+            elif result == 'archived':
+                continue
             else:
                 logger().log(f'[CHIPSEC] Modules {result:16}{len(summary[result]):d}:')
                 for mod in summary[result]:
@@ -327,6 +338,7 @@ class ReturnCodeResults(ChipsecResults):
         ret = OrderedDict()
         passed = []
         failed = []
+        archived = []
         executed = 0
         for test in self.test_cases:
             executed += 1
@@ -335,9 +347,12 @@ class ReturnCodeResults(ChipsecResults):
                 passed.append(fields['name'])
             elif fields['result'] == 'Failed':
                 failed.append(fields['name'])
+            elif fields['result'] == 'Archived':
+                archived.append(fields['name'])
         ret['total'] = executed
         ret['failed'] = failed
         ret['passed'] = passed
+        ret['archived'] = archived
         ret['exceptions'] = self.exceptions
         return ret
 

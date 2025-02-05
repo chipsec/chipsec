@@ -50,14 +50,15 @@ Examples:
     Requires an OS with UEFI Runtime API support.
 """
 
-from chipsec.module_common import BaseModule, MTAG_BIOS, MTAG_SMM, MTAG_SECUREBOOT
+from chipsec.module_common import BaseModule, MTAG_BIOS, MTAG_SMM, MTAG_SECUREBOOT, ARCHIVED
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.defines import BOUNDARY_1MB, BOUNDARY_4GB
 from chipsec.hal.uefi import UEFI, parse_script
 from chipsec.hal.uefi_common import S3BootScriptOpcode, S3BOOTSCRIPT_ENTRY
 from typing import List
 
-TAGS = [MTAG_BIOS, MTAG_SMM, MTAG_SECUREBOOT]
+TAGS = [MTAG_BIOS, MTAG_SMM, MTAG_SECUREBOOT, ARCHIVED]
+MD_TAGS = ['CHIPSEC', 'COMMON', 'UEFI', 'S3BOOTSCRIPT', 'ARCHIVED']
 
 ########################################################################################################
 #

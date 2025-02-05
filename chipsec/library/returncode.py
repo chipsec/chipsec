@@ -57,6 +57,7 @@ class ReturnCode:
         UNSUPPORTED_OPTION = [bit(10), 'Option not supported']
         DEBUG_FEATURE = [bit(9), 'A debug feature is enabled or an unexpected debug state was discovered on this platform']
         NOT_APPLICABLE = [bit(8), 'Skipping module since it is not supported']
+        ARCHIVED = [bit(1), 'Archived module, to run use tag ARCHIVED']
         INFORMATION = [bit(0), 'For your information']
         INVALID = [0xFFFFFFFFFFFFFFFF, 'Error running the test']
 
@@ -87,19 +88,19 @@ class ReturnCode:
             self.logger.log_important(f"For next steps: {self.url}")
             self.logger.log_important(f"RC 0x{self._return_code:016x}: {self._message}")
 
-    def buildReturnCode(self) -> None:
+    def buildReturnCode(self, print_output: bool) -> None:
         self.setResultBits()
         self.setTestID()
-        self.printLogOutput()
+        if print_output: self.printLogOutput()
 
     def resetReturnCodeValues(self) -> None:
         self.id = 0x0
         self._result = 0x00000000
         self._return_code = self.status.SUCCESS.value[0]
 
-    def getReturnCode(self, result: int) -> int:
+    def getReturnCode(self, result: int, print_output: bool = True) -> int:
         if self.cs.using_return_codes:
-            self.buildReturnCode()
+            self.buildReturnCode(print_output)
         else:
             self._return_code = result
         ret_value = self._return_code
@@ -129,6 +130,7 @@ class ModuleResult(Enum):
     DEPRECATED = 4
     INFORMATION = 5
     NOTAPPLICABLE = 6
+    ARCHIVED = 7
     ERROR = -1
 
 
@@ -136,6 +138,7 @@ result_priority = {
     ModuleResult.PASSED: 0,
     ModuleResult.NOTAPPLICABLE: 0,
     ModuleResult.DEPRECATED: 0,
+    ModuleResult.ARCHIVED: 0,
     ModuleResult.INFORMATION: 1,
     ModuleResult.WARNING: 2,
     ModuleResult.FAILED: 3,
@@ -149,7 +152,8 @@ ModuleResultName = {
     ModuleResult.DEPRECATED: 'Deprecated',
     ModuleResult.INFORMATION: 'Information',
     ModuleResult.ERROR: 'Error',
-    ModuleResult.NOTAPPLICABLE: 'NotApplicable'
+    ModuleResult.NOTAPPLICABLE: 'NotApplicable',
+    ModuleResult.ARCHIVED: 'Archived',
 }
 
 
@@ -162,6 +166,12 @@ def getModuleResultName(res, using_return_codes) -> str:
     if using_return_codes:
         result_mask = 0xFFFFFFFF00000000
         status = [ReturnCode.status.SUCCESS.value[0], ReturnCode.status.INFORMATION.value[0], ReturnCode.status.NOT_APPLICABLE.value[0]]
-        return 'Passed' if ((res & result_mask) >> 32) in status else 'Failed'
+        if ((res & result_mask) >> 32) in status:
+            resultName = 'Passed' 
+        elif ((res & result_mask) >> 32) == ReturnCode.status.ARCHIVED.value[0]:
+            resultName = 'Archived'
+        else:
+            resultName = 'Failed'
+        return resultName
     return ModuleResultName[res] if res in ModuleResultName else ModuleResultName[ModuleResult.ERROR]
 # -------------------------------------------------------

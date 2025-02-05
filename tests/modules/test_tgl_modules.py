@@ -116,6 +116,7 @@ class TestTglModules(unittest.TestCase):
     def test_tgl_module_uefi_access_uefispec(self):
         self.run_and_test_module("common.uefi.access_uefispec", ExitCode.OK)
 
+    @unittest.skip("S3bootscript module was archived")
     def test_tgl_module_uefi_s3bootscript(self):
         self.run_and_test_module("common.uefi.s3bootscript", ExitCode.WARNING)
         
