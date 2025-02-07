@@ -23,7 +23,7 @@ Management and communication with Windows kernel mode driver which provides acce
 
 .. note::
     On Windows you need to install pywin32 Python extension corresponding to your Python version:
-    http://sourceforge.net/projects/pywin32/
+    https://github.com/mhammond/pywin32
 """
 
 import errno
