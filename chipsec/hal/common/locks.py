@@ -77,4 +77,4 @@ class Locks(HALBase):
 
 
 
-haldata = {"arch":['FFFF'], 'name': ['Locks']}
+haldata = {"arch":[HALBase.MfgIds.Any], 'name': ['Locks']}

@@ -200,4 +200,4 @@ MdeModulePkg/Core/PiSmmCore/PiSmmCorePrivateData.h
         return ReturnStatus
 
 
-haldata = {"arch":['FFFF'], 'name': ['Interrupts']}
+haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': ['Interrupts']}

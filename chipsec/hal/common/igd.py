@@ -223,4 +223,4 @@ class IGD(hal_base.HALBase):
         return buffer
 
 
-haldata = {"arch":['FFFF'], 'name': ['IGD']}
+haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': ['IGD']}

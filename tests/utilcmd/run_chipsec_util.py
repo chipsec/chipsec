@@ -21,17 +21,19 @@
 
 from unittest.mock import Mock
 
+from chipsec.chipset import clear_cs
 import chipsec.helper.replay.replayhelper as rph
-from chipsec_util import ChipsecUtil, parse_args
 import chipsec.library.logger
+from chipsec_util import ChipsecUtil, parse_args
 
 
 def run_chipsec_util(csu: ChipsecUtil, util_replay_file: str) -> int:
-    csu._cs.init(csu._platform, csu._pch, csu._helper, not csu._no_driver, csu._load_config, csu._ignore_platform)
+    comm = csu.commands[csu._cmd](csu._cmd_args, cs=csu._cs)
+    reqs = comm.requirements()
+    csu._cs.init(csu._platform, csu._pch, csu._helper, reqs.load_driver(), reqs.load_config(), csu._ignore_platform)
     if util_replay_file:
         csu._helper.config_file = util_replay_file
         csu._helper._load()  
-    comm = csu.commands[csu._cmd](csu._cmd_args, cs=csu._cs)
     comm.parse_arguments()
     comm.set_up()
     comm.run()
@@ -51,5 +53,6 @@ def setup_run_destroy_util(init_replay_file: str, util_name: str, util_args: str
     replayHelper = rph.ReplayHelper(init_replay_file)
     csu._helper = replayHelper
     retval = run_chipsec_util(csu, util_replay_file)
+    clear_cs()
     chipsec.library.logger._logger = chipsec.library.logger.Logger()
     return retval

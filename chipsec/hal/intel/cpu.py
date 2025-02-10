@@ -257,4 +257,4 @@ class CPU(hal_base.HALBase):
             self.dump_page_tables(cr3)
 
 
-haldata = {"arch":['FFFF', '8086', '1022'], 'name': ['CPU']} #change arch to CPUID genuine intel/amd
+haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': ['CPU']} #change arch to CPUID genuine intel/amd

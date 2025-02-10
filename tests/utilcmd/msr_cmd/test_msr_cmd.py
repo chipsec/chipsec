@@ -31,15 +31,13 @@ from chipsec.testcase import ExitCode
 
 class TestMsrUtilcmd(unittest.TestCase):
     def test_read(self) -> None:
-        init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate.json")
         msr_read_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "msr_cmd", "msr_read_1.json")
-        retval = setup_run_destroy_util(init_replay_file, "msr", "0x3A", util_replay_file=msr_read_replay_file)
+        retval = setup_run_destroy_util(msr_read_replay_file, "msr", "0x3A")
         self.assertEqual(retval, ExitCode.OK)
 
     def test_read_core(self) -> None:
-        init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate.json")
         msr_read_core_0_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "msr_cmd", "msr_read_core_0_1.json")
-        retval = setup_run_destroy_util(init_replay_file, "msr", "0x3A 0x0", util_replay_file=msr_read_core_0_replay_file)
+        retval = setup_run_destroy_util(msr_read_core_0_replay_file, "msr", "0x3A 0x0")
         self.assertEqual(retval, ExitCode.OK)
 
     def test_write(self) -> None:
