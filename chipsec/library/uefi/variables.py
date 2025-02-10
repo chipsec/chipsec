@@ -22,7 +22,7 @@ from typing import Dict, Tuple, List
 
 from chipsec.library.logger import logger, print_buffer_bytes
 from chipsec.library.types import EfiVariableType
-from chipsec.library.uefi.uefi_platform import FWType
+from chipsec.library.uefi.platform import FWType
 from chipsec.library.uefi.varstore import EfiTableType, EFI_VAR_DICT
 
 #

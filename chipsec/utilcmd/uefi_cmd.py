@@ -59,17 +59,17 @@ import uuid
 from argparse import ArgumentParser
 
 from chipsec.command import BaseCommand, toLoad
-from chipsec.library.uefi.uefi_common import EFI_STATUS_DICT
+from chipsec.library.uefi.common import EFI_STATUS_DICT
 from chipsec.library.file import write_file, read_file
-from chipsec.library.uefi.spi_uefi import decode_uefi_region, modify_uefi_region, compress_image, CMD_UEFI_FILE_REPLACE
-from chipsec.library.uefi.spi_uefi import CMD_UEFI_FILE_INSERT_AFTER, CMD_UEFI_FILE_INSERT_BEFORE, CMD_UEFI_FILE_REMOVE
+from chipsec.library.uefi.spi import decode_uefi_region, modify_uefi_region, compress_image, CMD_UEFI_FILE_REPLACE
+from chipsec.library.uefi.spi import CMD_UEFI_FILE_INSERT_AFTER, CMD_UEFI_FILE_INSERT_BEFORE, CMD_UEFI_FILE_REMOVE
 from chipsec.hal.common.uefi import UEFI
 from chipsec.library.uefi import SECURE_BOOT_KEY_VARIABLES, get_attr_string
 from chipsec.library.uefi.sleep_states import parse_script
 from chipsec.library.uefi.varstore import parse_efivar_file, decode_EFI_variables, identify_EFI_NVRAM, parse_EFI_variables
-from chipsec.library.uefi.uefi_fv import get_guid_bin, assemble_uefi_file, assemble_uefi_section, assemble_uefi_raw
-from chipsec.library.uefi.uefi_fv import FILE_TYPE_NAMES
-from chipsec.library.uefi.uefi_platform import fw_types
+from chipsec.library.uefi.fv import get_guid_bin, assemble_uefi_file, assemble_uefi_section, assemble_uefi_raw
+from chipsec.library.uefi.fv import FILE_TYPE_NAMES
+from chipsec.library.uefi.platform import fw_types
 
 
 # Unified Extensible Firmware Interface (UEFI)

@@ -41,23 +41,23 @@ from collections.abc import Callable
 from uuid import UUID
 from typing import Dict, List, Optional, Union, Any, TYPE_CHECKING
 if TYPE_CHECKING:
-    from chipsec.library.uefi.uefi_fv import EFI_MODULE
+    from chipsec.library.uefi.fv import EFI_MODULE
 from chipsec.library.logger import logger
 from chipsec.library.file import write_file, read_file
-from chipsec.library.uefi.uefi_compression import COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_EFI_STANDARD, COMPRESSION_TYPES_ALGORITHMS, COMPRESSION_TYPE_UNKNOWN, COMPRESSION_TYPE_LZMAF86
-from chipsec.library.uefi.uefi_common import bit_set, EFI_GUID_SIZE, EFI_GUID_FMT
-from chipsec.library.uefi.uefi_platform import FWType, fw_types, EFI_NVRAM_GUIDS, EFI_PLATFORM_FS_GUIDS, NVAR_NVRAM_FS_FILE
+from chipsec.library.uefi.compression import COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_EFI_STANDARD, COMPRESSION_TYPES_ALGORITHMS, COMPRESSION_TYPE_UNKNOWN, COMPRESSION_TYPE_LZMAF86
+from chipsec.library.uefi.common import bit_set, EFI_GUID_SIZE, EFI_GUID_FMT
+from chipsec.library.uefi.platform import FWType, fw_types, EFI_NVRAM_GUIDS, EFI_PLATFORM_FS_GUIDS, NVAR_NVRAM_FS_FILE
 from chipsec.library.uefi.varstore import identify_EFI_NVRAM, parse_EFI_variables
-from chipsec.library.uefi.uefi_fv import EFI_SECTION_PE32, EFI_SECTION_TE, EFI_SECTION_PIC, EFI_SECTION_COMPATIBILITY16, EFI_FIRMWARE_FILE_SYSTEM2_GUID
-from chipsec.library.uefi.uefi_fv import EFI_FIRMWARE_FILE_SYSTEM_GUID, EFI_SECTIONS_EXE, EFI_SECTION_USER_INTERFACE, EFI_SECTION_GUID_DEFINED
-from chipsec.library.uefi.uefi_fv import EFI_GUID_DEFINED_SECTION, EFI_GUID_DEFINED_SECTION_size, NextFwFile, NextFwFileSection, NextFwVolume, GetFvHeader
-from chipsec.library.uefi.uefi_fv import EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID, LZMA_CUSTOM_DECOMPRESS_GUID, TIANO_DECOMPRESSED_GUID, LZMAF86_DECOMPRESS_GUID
-from chipsec.library.uefi.uefi_fv import EFI_CERT_TYPE_RSA_2048_SHA256_GUID, EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size, EFI_SECTION, EFI_FV, EFI_FILE
-from chipsec.library.uefi.uefi_fv import EFI_FIRMWARE_CONTENTS_SIGNED_GUID, WIN_CERT_TYPE_EFI_GUID, WIN_CERTIFICATE_size, WIN_CERTIFICATE, WIN_CERT_TYPE_PKCS_SIGNED_DATA
-from chipsec.library.uefi.uefi_fv import EFI_SECTION_COMPRESSION, EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_SECTION_RAW, SECTION_NAMES, DEF_INDENT, WIN_CERT_TYPE_EFI_PKCS115
-from chipsec.library.uefi.uefi_fv import FILE_TYPE_NAMES, EFI_FS_GUIDS, EFI_FILE_HEADER_INVALID, EFI_FILE_HEADER_VALID, EFI_FILE_HEADER_CONSTRUCTION
-from chipsec.library.uefi.uefi_fv import EFI_COMPRESSION_SECTION_size, EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_FFS_PAD, EFI_FVB2_ERASE_POLARITY, EFI_FV_FILETYPE_RAW
-from chipsec.library.uefi.uefi_compression import UEFICompression
+from chipsec.library.uefi.fv import EFI_SECTION_PE32, EFI_SECTION_TE, EFI_SECTION_PIC, EFI_SECTION_COMPATIBILITY16, EFI_FIRMWARE_FILE_SYSTEM2_GUID
+from chipsec.library.uefi.fv import EFI_FIRMWARE_FILE_SYSTEM_GUID, EFI_SECTIONS_EXE, EFI_SECTION_USER_INTERFACE, EFI_SECTION_GUID_DEFINED
+from chipsec.library.uefi.fv import EFI_GUID_DEFINED_SECTION, EFI_GUID_DEFINED_SECTION_size, NextFwFile, NextFwFileSection, NextFwVolume, GetFvHeader
+from chipsec.library.uefi.fv import EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID, LZMA_CUSTOM_DECOMPRESS_GUID, TIANO_DECOMPRESSED_GUID, LZMAF86_DECOMPRESS_GUID
+from chipsec.library.uefi.fv import EFI_CERT_TYPE_RSA_2048_SHA256_GUID, EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size, EFI_SECTION, EFI_FV, EFI_FILE
+from chipsec.library.uefi.fv import EFI_FIRMWARE_CONTENTS_SIGNED_GUID, WIN_CERT_TYPE_EFI_GUID, WIN_CERTIFICATE_size, WIN_CERTIFICATE, WIN_CERT_TYPE_PKCS_SIGNED_DATA
+from chipsec.library.uefi.fv import EFI_SECTION_COMPRESSION, EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_SECTION_RAW, SECTION_NAMES, DEF_INDENT, WIN_CERT_TYPE_EFI_PKCS115
+from chipsec.library.uefi.fv import FILE_TYPE_NAMES, EFI_FS_GUIDS, EFI_FILE_HEADER_INVALID, EFI_FILE_HEADER_VALID, EFI_FILE_HEADER_CONSTRUCTION
+from chipsec.library.uefi.fv import EFI_COMPRESSION_SECTION_size, EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_FFS_PAD, EFI_FVB2_ERASE_POLARITY, EFI_FV_FILETYPE_RAW
+from chipsec.library.uefi.compression import UEFICompression
 
 CMD_UEFI_FILE_REMOVE = 0
 CMD_UEFI_FILE_INSERT_BEFORE = 1

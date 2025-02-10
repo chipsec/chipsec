@@ -30,14 +30,14 @@ from chipsec.library import defines
 from chipsec.library.file import read_file, write_file
 from chipsec.library.logger import logger
 from chipsec.library.types import EfiVariableType
-from chipsec.library.uefi.uefi_common import EFI_GUID_FMT, EFI_GUID_SIZE, EFI_GUID_STR, bit_set
-from chipsec.library.uefi.uefi_platform import FWType, NVAR_NVRAM_FS_FILE, NVRAM_ATTR_VLD, NVRAM_ATTR_DATA, NVRAM_ATTR_GUID, NVRAM_ATTR_DESC_ASCII, NVRAM_ATTR_EXTHDR, NVRAM_ATTR_RT
-from chipsec.library.uefi.uefi_platform import NVRAM_ATTR_HER, NVRAM_ATTR_AUTHWR, get_3b_size, ADDITIONAL_NV_STORE_GUID
-from chipsec.library.uefi.uefi_fv import NextFwVolume, NextFwFile, EFI_FVB2_ERASE_POLARITY, EFI_FV_FILETYPE_RAW
+from chipsec.library.uefi.common import EFI_GUID_FMT, EFI_GUID_SIZE, EFI_GUID_STR, bit_set
+from chipsec.library.uefi.platform import FWType, NVAR_NVRAM_FS_FILE, NVRAM_ATTR_VLD, NVRAM_ATTR_DATA, NVRAM_ATTR_GUID, NVRAM_ATTR_DESC_ASCII, NVRAM_ATTR_EXTHDR, NVRAM_ATTR_RT
+from chipsec.library.uefi.platform import NVRAM_ATTR_HER, NVRAM_ATTR_AUTHWR, get_3b_size, ADDITIONAL_NV_STORE_GUID
+from chipsec.library.uefi.fv import NextFwVolume, NextFwFile, EFI_FVB2_ERASE_POLARITY, EFI_FV_FILETYPE_RAW
 from chipsec.library.uefi.variables import EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_NON_VOLATILE, EFI_VARIABLE_RUNTIME_ACCESS, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS
 from chipsec.library.uefi.variables import EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_HARDWARE_ERROR_RECORD, IS_VARIABLE_ATTRIBUTE, print_sorted_EFI_variables
 from chipsec.library.uefi.variables import get_attr_string, SECURE_BOOT_KEY_VARIABLES, EFI_VAR_NAME_AuthVarKeyDatabase, EFI_VAR_NAME_certdb
-from chipsec.library.uefi.uefi_platform import fw_types
+from chipsec.library.uefi.platform import fw_types
 
 ################################################################################################
 #

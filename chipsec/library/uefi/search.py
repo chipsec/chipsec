@@ -29,7 +29,7 @@
 UEFI image search auxillary functionality
 
 usage:
-   >>> chipsec.hal.uefi_search.check_match_criteria(efi_module, match_criteria, self.logger)
+   >>> chipsec.library.uefi.search.check_match_criteria(efi_module, match_criteria, self.logger)
 """
 
 import re
@@ -38,7 +38,7 @@ from typing import Dict, Optional, Any
 from uuid import UUID
 
 from chipsec.library import defines
-from chipsec.hal.common.spi_uefi import EFI_SECTION
+from chipsec.library.uefi.spi import EFI_SECTION
 from chipsec.library.logger import logger
 
 #

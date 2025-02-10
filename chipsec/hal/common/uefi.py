@@ -26,20 +26,20 @@ import struct
 from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
 if TYPE_CHECKING:
     from chipsec.library.uefi.sleep_states import S3BOOTSCRIPT_ENTRY
-    from chipsec.library.uefi.uefi_common import EFI_SYSTEM_TABLE
+    from chipsec.library.uefi.common import EFI_SYSTEM_TABLE
     from chipsec.library.types import EfiVariableType
 from chipsec.hal import hal_base
 from chipsec.hal.intel.spi import SPI, BIOS
-from chipsec.library.uefi.uefi_common import EFI_VENDOR_TABLE, EFI_VENDOR_TABLE_SIZE, EFI_VENDOR_TABLE_FORMAT, EFI_TABLE_HEADER_SIZE, EFI_TABLE_HEADER, EFI_TABLES, MAX_EFI_TABLE_SIZE
-from chipsec.library.uefi.uefi_common import EFI_REVISIONS
-from chipsec.library.uefi.uefi_common import EFI_TABLE_HEADER_FMT, EFI_SYSTEM_TABLE_SIGNATURE, EFI_RUNTIME_SERVICES_SIGNATURE, EFI_BOOT_SERVICES_SIGNATURE
-from chipsec.library.uefi.uefi_common import EFI_DXE_SERVICES_TABLE_SIGNATURE, EFI_CONFIGURATION_TABLE
+from chipsec.library.uefi.common import EFI_VENDOR_TABLE, EFI_VENDOR_TABLE_SIZE, EFI_VENDOR_TABLE_FORMAT, EFI_TABLE_HEADER_SIZE, EFI_TABLE_HEADER, EFI_TABLES, MAX_EFI_TABLE_SIZE
+from chipsec.library.uefi.common import EFI_REVISIONS
+from chipsec.library.uefi.common import EFI_TABLE_HEADER_FMT, EFI_SYSTEM_TABLE_SIGNATURE, EFI_RUNTIME_SERVICES_SIGNATURE, EFI_BOOT_SERVICES_SIGNATURE
+from chipsec.library.uefi.common import EFI_DXE_SERVICES_TABLE_SIGNATURE, EFI_CONFIGURATION_TABLE
 from chipsec.library.uefi.sleep_states import ACPI_VARIABLE_SET_STRUCT_SIZE, S3_BOOTSCRIPT_VARIABLES, parse_script
 from chipsec.library.logger import logger, print_buffer_bytes
 from chipsec.library.file import write_file, read_file
 from chipsec.library.defines import bytestostring
 from chipsec.helper.oshelper import OsHelperError
-from chipsec.library.uefi.uefi_platform import FWType, fw_types
+from chipsec.library.uefi.platform import FWType, fw_types
 from chipsec.library.uefi.varstore import find_EFI_variable_store, EFI_VAR_DICT
 from chipsec.library.uefi.variables import print_sorted_EFI_variables, get_attr_string
 
