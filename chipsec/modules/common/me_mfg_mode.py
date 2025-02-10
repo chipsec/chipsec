@@ -102,12 +102,13 @@ class me_mfg_mode(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.cs.set_scope({
-            "MEI1": "8086.MEI1",
-            "HFS": "8086.MEI1.HFS",
+            "MEI1": "8086", # TODO: Must not have .MEI1 at the end. The ending item must only be in the key.
+            "HFS": "8086.MEI1",
         })
 
     def is_supported(self) -> bool:
-        if self.cs.device.get_bus('MEI1') and self.cs.device.is_enabled('MEI1'):
+        self.mei1_dev = self.cs.device.get_obj('MEI1')
+        if self.mei1_dev.instances and self.mei1_dev.instances[0].bus is not None:
             return True
         else:
             self.logger.log_important('MEI1 not enabled.  Skipping module.')
