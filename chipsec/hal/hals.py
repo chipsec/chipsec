@@ -34,6 +34,8 @@ from chipsec.library.logger import logger
 from chipsec.library.file import get_main_dir
 from chipsec.library.strings import make_hex_key_str
 from chipsec.library.exceptions import HALNotFoundError, HALInitializationError
+if logger().DEBUG:
+    import traceback
 # Search subfolders for hals
 
 class Hals:
@@ -69,6 +71,7 @@ class Hals:
             hal_class = getattr(best_hal['mod'], name)
             setattr(self, name, hal_class(self.cs))
         except Exception as err:
+            logger().log_debug(traceback.format_exc())
             raise HALInitializationError(f'HAL with name {name} was not able to be initialized: {str(err)}')
         return super(Hals, self).__getattribute__(name)
 
@@ -115,6 +118,7 @@ class Hals:
             except ImportError as err:
                 # Display the import error and continue to import commands
                 logger().log_error(f"Exception occurred during import of {hal}: '{str(err)}'")
+                logger().log_debug(traceback.format_exc())
                 continue
             except AttributeError as err:
                 logger().log_error(f"HAL {hal} has not been updated with 'haldata' attribute: '{str(err)}'")
