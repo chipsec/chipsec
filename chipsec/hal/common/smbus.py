@@ -236,4 +236,4 @@ class SMBus(hal_base.HALBase):
         return True
 
 
-haldata = {"arch":['FFFF'], 'name': ['SMBus']}
+haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': ['SMBus']}

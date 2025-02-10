@@ -26,7 +26,7 @@ XML configuration file for TPM address space
 -->
   <registers>
 
-    <register name="TPM_ACCESS" type="memory" access="mmio" address="0xFED40000" offset="0x000" size="1" desc="TPM ACCESS">
+    <register name="TPM_ACCESS" type="memory" range="TPM" offset="0x000" size="1" desc="TPM ACCESS">
       <field name="tpmRegValidSts"   bit="7" size="1" desc="tpmRegValidSts"/>
       <field name="reserved"         bit="6" size="1" desc="reserved"/>
       <field name="activeLocality"   bit="5" size="1" desc="activeLocality"/>
@@ -37,7 +37,7 @@ XML configuration file for TPM address space
       <field name="tpmEstablishment" bit="0" size="1" desc="tpmEstablishment"/>
     </register>
 
-    <register name="TPM_STS" type="memory" access="mmio" address="0xFED40018" offset="0x000" size="4" desc="TPM STATUS">
+    <register name="TPM_STS" type="memory" range="TPM" offset="0x018" size="4" desc="TPM STATUS">
       <field name="burstCount"    bit="8" size="24" desc="burstCount"/>
       <field name="stsValid"      bit="7" size="1"  desc="stsValid"/>
       <field name="commandReady"  bit="6" size="1"  desc="commandReady"/>
@@ -49,16 +49,16 @@ XML configuration file for TPM address space
       <field name="Reserved"      bit="0" size="1"  desc="Reserved"/>
     </register>
 
-    <register name="TPM_DID_VID" type="memory" access="mmio" address="0xFED40F00" offset="0x000" size="4" desc="TPM DID/VID">
+    <register name="TPM_DID_VID" type="memory" range="TPM" offset="0xF00" size="4" desc="TPM DID/VID">
       <field name="did" bit="16" size="16" desc="did"/>
       <field name="vid" bit="0"  size="16" desc="vid"/>
     </register>
 
-    <register name="TPM_RID" type="memory" access="mmio" address="0xFED40F04" offset="0x000" size="1" desc="TPM RID">
+    <register name="TPM_RID" type="memory" range="TPM" offset="0xF04" size="1" desc="TPM RID">
       <field name="rid" bit="0" size="8" desc="rid"/>
     </register>
 
-    <register name="TPM_INTF_CAPABILITY" type="memory" access="mmio" address="0xFED40014" offset="0x000" size="4" desc="TPM INTF CAPABILITY">
+    <register name="TPM_INTF_CAPABILITY" type="memory" range="TPM" offset="0x014" size="4" desc="TPM INTF CAPABILITY">
       <field name="Reserved"                 bit="9" size="23" desc="Reserved"/>
       <field name="BurstCountStatic"         bit="8" size="1"  desc="BurstCountStatic"/>
       <field name="CommandReadyIntSupport"   bit="7" size="1"  desc="CommandReadyIntSupport"/>
@@ -71,7 +71,7 @@ XML configuration file for TPM address space
       <field name="dataAvailIntSupport"      bit="0" size="1"  desc="dataAvailIntSupport"/>
     </register>
 
-    <register name="TPM_INT_ENABLE" type="memory" access="mmio" address="0xFED40008" offset="0x000" size="4" desc="TPM INT ENABLE">
+    <register name="TPM_INT_ENABLE" type="memory" range="TPM" offset="0x008" size="4" desc="TPM INT ENABLE">
       <field name="globalIntEnable"         bit="31" size="1"  desc="CommandReadyIntSupport"/>
       <field name="Reserved"                bit="8"  size="23" desc="InterruptEdgeFalling"/>
       <field name="commandReadyEnable"      bit="7"  size="1"  desc="InterruptEdgeRising"/>

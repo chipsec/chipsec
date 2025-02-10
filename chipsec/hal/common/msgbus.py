@@ -206,4 +206,4 @@ class MsgBus(hal_base.HALBase):
         return reg_val
 
 
-haldata = {"arch":['FFFF'], 'name': ['MsgBus']}
+haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': ['MsgBus']}

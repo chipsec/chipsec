@@ -19,10 +19,12 @@
 #
 
 from collections import namedtuple
+from collections.abc import Iterable
 from fnmatch import fnmatch
 import importlib
 import re
 import os
+from typing import Dict
 import xml.etree.ElementTree as ET
 from chipsec.library.defines import is_hex, CHIPSET_CODE_UNKNOWN
 from chipsec.library.exceptions import CSConfigError, DeviceNotFoundError
@@ -71,6 +73,7 @@ class Cfg:
         self.code = CHIPSET_CODE_UNKNOWN
         self.longname = 'Unrecognized Platform'
         self.cpuid = 0xFFFFF
+        self.mfgid = 'Unknown CPU '
         self.pch_vid = 0xFFFF
         self.pch_did = 0xFFFF
         self.pch_rid = 0xFF
@@ -121,6 +124,11 @@ class Cfg:
                 continue
             self.CONFIG_PCI_RAW[vid_str][did_str].add_obj(pci_data)
 
+    def set_cpuid(self, cpuid: int):
+        self.cpuid = cpuid
+
+    def set_mfgid(self, mfgid: str):
+        self.mfgid = mfgid
     ###
     # CPU topology info
     ###
@@ -143,6 +151,7 @@ class Cfg:
         return self.req_pch
 
     def print_platform_info(self):
+        self.logger.log(f'Mfg ID  : {self.mfgid}')
         self.logger.log(f'Platform: {self.longname}')
         self.logger.log(f'\tCPUID: {self.cpuid:X}')
         self.logger.log(f'\tVID: {self.vid:04X}')
@@ -407,6 +416,9 @@ class Cfg:
                 if 0 in self.CONFIG_PCI_RAW[vid][did].cfg['bus'] and self.CONFIG_PCI_RAW[vid][did].cfg['dev'] == 0 and self.CONFIG_PCI_RAW[vid][did].cfg['fun'] == 0:
                     return self.CONFIG_PCI_RAW[vid][did].cfg
         return {'vid': 0xFFFF, 'did': 0xFFFF, 'rid': 0xFF}
+    
+    def add_memory_range(self, mem_range_obj:Dict):
+        self.cfg.MEMORY_RANGES[mem_range_obj['vid_str']][mem_range_obj['name']] = mem_range_obj
 
     def platform_detection(self, proc_code, pch_code, cpuid):
         # Detect processor files
@@ -495,6 +507,41 @@ class Cfg:
         else:
             sname = name
         return scope_name(*(sname.split('.', 3)))
+    
+    def get_objlist(self, objdict:dict, name:str):
+        scope = self.get_scope(name)
+        fullscope = self.convert_internal_scope(scope, name)
+        return self.get_objlist_from_scope(objdict, fullscope)
+
+    def __add_obj_to_regdef(self, reg_def, obj):
+        if isinstance(obj, Iterable):
+            reg_def.extend(obj)
+        else:
+            reg_def.append(obj)
+        return reg_def
+
+    #'vid', 'parent', 'register', 'field'; register.get_obj("8086.*.FREG*_BIOS")
+    def get_objlist_from_scope(self, objdict:dict, scope:scope_name):
+        reg_def = ObjList()
+        vid = scope.vid.replace('*', '.*')
+        dict_vids = [vid] if '*' not in vid and vid in objdict.keys() else objdict.keys()
+        for dict_vid in dict_vids:
+            if re.match(vid, dict_vid):
+                parent = scope.parent.replace('*', '.*')
+                dict_parents = [parent] if '*' not in parent and parent in objdict[dict_vid].keys() else objdict[dict_vid].keys()
+                for dict_parent in dict_parents:
+                    if re.match(parent, dict_parent):
+                        if scope.name:
+                            name = scope.name.replace('*', '.*')
+                            dict_names = [name] if '*' not in name and name in objdict[dict_vid][dict_parent].keys() else objdict[dict_vid][dict_parent].keys()
+                            for dict_name in dict_names:
+                                if re.match(name, dict_name):
+                                    self.__add_obj_to_regdef(reg_def, objdict[dict_vid][dict_parent][dict_name])
+                        else:
+
+                            self.__add_obj_to_regdef(reg_def, objdict[dict_vid][dict_parent])
+
+        return reg_def
 
     # TODO: Review for correctness compared to chipsec/library/control.py:get_list_by_name()
     # def get_control_obj(self, control_name, instance=None):
