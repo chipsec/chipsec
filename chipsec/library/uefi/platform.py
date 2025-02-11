@@ -24,8 +24,6 @@ Platform specific UEFI functionality (parsing platform specific EFI NVRAM, capsu
 
 from uuid import UUID
 from typing import List
-from chipsec.library.uefi.varstore import VARIABLE_STORE_FV_GUID
-
 
 #
 # List of supported types of EFI NVRAM format (platform/vendor specific)
@@ -65,6 +63,7 @@ NVRAM_ATTR_VLD = 0x80
 #
 # Known GUIDs of NVRAM stored in EFI firmware volumes, FS files etc. of various firmware implementations
 #
+VARIABLE_STORE_FV_GUID = UUID('FFF12B8D-7696-4C8B-A985-2747075B4F50')
 ADDITIONAL_NV_STORE_GUID = UUID('00504624-8A59-4EEB-BD0F-6B36E96128E0')
 NVAR_NVRAM_FS_FILE = UUID("CEF5B9A3-476D-497F-9FDC-E98143E0422C")
 

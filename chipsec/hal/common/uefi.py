@@ -40,8 +40,8 @@ from chipsec.library.file import write_file, read_file
 from chipsec.library.defines import bytestostring
 from chipsec.helper.oshelper import OsHelperError
 from chipsec.library.uefi.platform import FWType, fw_types
-from chipsec.library.uefi.varstore import find_EFI_variable_store, EFI_VAR_DICT
-from chipsec.library.uefi.variables import print_sorted_EFI_variables, get_attr_string
+from chipsec.library.uefi.varstore import find_EFI_variable_store, EFI_VAR_DICT, print_sorted_EFI_variables
+from chipsec.library.uefi.variables import get_attr_string
 
 
 ########################################################################################################

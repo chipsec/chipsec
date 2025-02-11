@@ -28,16 +28,17 @@ from typing import Dict, Tuple, List, Optional, Any, Union
 
 from chipsec.library import defines
 from chipsec.library.file import read_file, write_file
-from chipsec.library.logger import logger
+from chipsec.library.logger import logger, print_buffer_bytes
 from chipsec.library.types import EfiVariableType
-from chipsec.library.uefi.common import EFI_GUID_FMT, EFI_GUID_SIZE, EFI_GUID_STR, bit_set
+from chipsec.library.uefi.common import EFI_GUID_FMT, EFI_GUID_SIZE, EFI_GUID_STR, bit_set, get_3b_size
 from chipsec.library.uefi.platform import FWType, NVAR_NVRAM_FS_FILE, NVRAM_ATTR_VLD, NVRAM_ATTR_DATA, NVRAM_ATTR_GUID, NVRAM_ATTR_DESC_ASCII, NVRAM_ATTR_EXTHDR, NVRAM_ATTR_RT
-from chipsec.library.uefi.platform import NVRAM_ATTR_HER, NVRAM_ATTR_AUTHWR, get_3b_size, ADDITIONAL_NV_STORE_GUID
+from chipsec.library.uefi.platform import NVRAM_ATTR_HER, NVRAM_ATTR_AUTHWR, ADDITIONAL_NV_STORE_GUID, VARIABLE_STORE_FV_GUID
 from chipsec.library.uefi.fv import NextFwVolume, NextFwFile, EFI_FVB2_ERASE_POLARITY, EFI_FV_FILETYPE_RAW
 from chipsec.library.uefi.variables import EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_NON_VOLATILE, EFI_VARIABLE_RUNTIME_ACCESS, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS
-from chipsec.library.uefi.variables import EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_HARDWARE_ERROR_RECORD, IS_VARIABLE_ATTRIBUTE, print_sorted_EFI_variables
+from chipsec.library.uefi.variables import EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_HARDWARE_ERROR_RECORD, IS_VARIABLE_ATTRIBUTE
 from chipsec.library.uefi.variables import get_attr_string, SECURE_BOOT_KEY_VARIABLES, EFI_VAR_NAME_AuthVarKeyDatabase, EFI_VAR_NAME_certdb
 from chipsec.library.uefi.platform import fw_types
+
 
 ################################################################################################
 #
@@ -71,9 +72,6 @@ def get_nvar_name(nvram: bytes, name_offset: int, isAscii: bool):
 
 
 VARIABLE_SIGNATURE_VSS = VARIABLE_DATA_SIGNATURE
-
-
-VARIABLE_STORE_FV_GUID = UUID('FFF12B8D-7696-4C8B-A985-2747075B4F50')
 
 
 # #################################################################################################
@@ -1279,3 +1277,75 @@ NVRAM: EFI Variable Store
         if nvram_header:
             logger().log(nvram_header)
     return nvram_buf
+
+
+EfiTableType = Union['EFI_HDR_VSS', 'EFI_HDR_VSS_AUTH', 'EFI_HDR_VSS_APPLE', None]
+
+#
+# Variable State flags
+#
+VAR_IN_DELETED_TRANSITION = 0xfe  # Variable is in obsolete transition
+VAR_DELETED = 0xfd  # Variable is obsolete
+VAR_ADDED = 0x7f  # Variable has been completely added
+
+
+def IS_VARIABLE_STATE(_c: int, _Mask: int) -> bool:
+    return ((((~_c) & 0xFF) & ((~_Mask) & 0xFF)) != 0)
+
+
+def print_efi_variable(offset: int, var_buf: bytes, var_header: 'EfiTableType', var_name: str, var_data: bytes, var_guid: str, var_attrib: int) -> None:
+    logger().log('\n--------------------------------')
+    logger().log(f'EFI Variable (offset = 0x{offset:X}):')
+    logger().log('--------------------------------')
+
+    # Print Variable Name
+    logger().log(f'Name      : {var_name}')
+    # Print Variable GUID
+    logger().log(f'Guid      : {var_guid}')
+
+    # Print Variable State
+    if var_header:
+        if 'State' in var_header._fields:
+            state = getattr(var_header, 'State')
+            state_str = 'State     :'
+            if IS_VARIABLE_STATE(state, VAR_IN_DELETED_TRANSITION):
+                state_str = f'{state_str} IN_DELETED_TRANSITION +'
+            if IS_VARIABLE_STATE(state, VAR_DELETED):
+                state_str = f'{state_str} DELETED +'
+            if IS_VARIABLE_STATE(state, VAR_ADDED):
+                state_str = f'{state_str} ADDED +'
+            logger().log(state_str)
+
+        # Print Variable Complete Header
+        if logger().VERBOSE:
+            if var_header.__str__:
+                logger().log(str(var_header))
+            else:
+                decoded_header = FWType.EFI_FW_TYPE_UEFI.upper()
+                logger().log(f'Decoded Header ({decoded_header}):')
+                for attr in var_header._fields:
+                    attr_str = f'{attr:<16}'
+                    attr_value = getattr(var_header, attr)
+                    logger().log(f'{attr_str} = {attr_value:X}')
+
+    attr_str = (f'Attributes: 0x{var_attrib:X} ( {get_attr_string(var_attrib)} )')
+    logger().log(attr_str)
+
+    # Print Variable Data
+    logger().log('Data:')
+    print_buffer_bytes(var_data)
+
+    # Print Variable Full Contents
+    if logger().VERBOSE:
+        logger().log('Full Contents:')
+        if var_buf is not None:
+            print_buffer_bytes(var_buf)
+
+
+def print_sorted_EFI_variables(variables: Dict[str, List['EfiVariableType']]) -> None:
+    sorted_names = sorted(variables.keys())
+    rec: Tuple[int, bytes, EfiTableType, bytes, str, int]
+    for name in sorted_names:
+        for rec in variables[name]:
+            #                   off,    buf,     hdr,         data,   guid,   attrs
+            print_efi_variable(rec[0], rec[1], rec[2], name, rec[3], rec[4], rec[5])

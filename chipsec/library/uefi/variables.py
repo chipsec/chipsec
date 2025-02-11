@@ -18,12 +18,8 @@
 # chipsec@intel.com
 #
 
-from typing import Dict, Tuple, List
+from typing import Dict, List
 
-from chipsec.library.logger import logger, print_buffer_bytes
-from chipsec.library.types import EfiVariableType
-from chipsec.library.uefi.platform import FWType
-from chipsec.library.uefi.varstore import EfiTableType, EFI_VAR_DICT
 
 #
 # Variable Attributes
@@ -189,73 +185,3 @@ SECURE_BOOT_OPTIONAL_VARIABLES = (EFI_VAR_NAME_dbx,)
 SECURE_BOOT_VARIABLES = (EFI_VAR_NAME_SecureBoot, EFI_VAR_NAME_SetupMode) + SECURE_BOOT_KEY_VARIABLES + SECURE_BOOT_OPTIONAL_VARIABLES
 SECURE_BOOT_VARIABLES_ALL = (EFI_VAR_NAME_CustomMode, EFI_VAR_NAME_SignatureSupport) + SECURE_BOOT_VARIABLES
 AUTHENTICATED_VARIABLES = (EFI_VAR_NAME_AuthVarKeyDatabase, EFI_VAR_NAME_certdb) + SECURE_BOOT_KEY_VARIABLES
-
-
-#
-# Variable State flags
-#
-VAR_IN_DELETED_TRANSITION = 0xfe  # Variable is in obsolete transition
-VAR_DELETED = 0xfd  # Variable is obsolete
-VAR_ADDED = 0x7f  # Variable has been completely added
-
-
-def IS_VARIABLE_STATE(_c: int, _Mask: int) -> bool:
-    return ((((~_c) & 0xFF) & ((~_Mask) & 0xFF)) != 0)
-
-
-def print_efi_variable(offset: int, var_buf: bytes, var_header: 'EfiTableType', var_name: str, var_data: bytes, var_guid: str, var_attrib: int) -> None:
-    logger().log('\n--------------------------------')
-    logger().log(f'EFI Variable (offset = 0x{offset:X}):')
-    logger().log('--------------------------------')
-
-    # Print Variable Name
-    logger().log(f'Name      : {var_name}')
-    # Print Variable GUID
-    logger().log(f'Guid      : {var_guid}')
-
-    # Print Variable State
-    if var_header:
-        if 'State' in var_header._fields:
-            state = getattr(var_header, 'State')
-            state_str = 'State     :'
-            if IS_VARIABLE_STATE(state, VAR_IN_DELETED_TRANSITION):
-                state_str = f'{state_str} IN_DELETED_TRANSITION +'
-            if IS_VARIABLE_STATE(state, VAR_DELETED):
-                state_str = f'{state_str} DELETED +'
-            if IS_VARIABLE_STATE(state, VAR_ADDED):
-                state_str = f'{state_str} ADDED +'
-            logger().log(state_str)
-
-        # Print Variable Complete Header
-        if logger().VERBOSE:
-            if var_header.__str__:
-                logger().log(str(var_header))
-            else:
-                decoded_header = EFI_VAR_DICT[FWType.EFI_FW_TYPE_UEFI]['name']
-                logger().log(f'Decoded Header ({decoded_header}):')
-                for attr in var_header._fields:
-                    attr_str = f'{attr:<16}'
-                    attr_value = getattr(var_header, attr)
-                    logger().log(f'{attr_str} = {attr_value:X}')
-
-    attr_str = (f'Attributes: 0x{var_attrib:X} ( {get_attr_string(var_attrib)} )')
-    logger().log(attr_str)
-
-    # Print Variable Data
-    logger().log('Data:')
-    print_buffer_bytes(var_data)
-
-    # Print Variable Full Contents
-    if logger().VERBOSE:
-        logger().log('Full Contents:')
-        if var_buf is not None:
-            print_buffer_bytes(var_buf)
-
-
-def print_sorted_EFI_variables(variables: Dict[str, List['EfiVariableType']]) -> None:
-    sorted_names = sorted(variables.keys())
-    rec: Tuple[int, bytes, EfiTableType, bytes, str, int]
-    for name in sorted_names:
-        for rec in variables[name]:
-            #                   off,    buf,     hdr,         data,   guid,   attrs
-            print_efi_variable(rec[0], rec[1], rec[2], name, rec[3], rec[4], rec[5])

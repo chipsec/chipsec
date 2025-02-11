@@ -423,7 +423,7 @@ def NextFwFile(FvImage: bytes, FvLength: int, fof: int, polarity: bool) -> Optio
             blank = b"\x00" * file_header_size
 
         if (blank == FvImage[cur_offset:cur_offset + file_header_size]):
-            #next_offset = fof + 8
+            # next_offset = fof + 8
             cur_offset += 8
             continue
         Name0, IntegrityCheck, Type, Attributes, Size, State = struct.unpack(EFI_FFS_FILE_HEADER, FvImage[cur_offset:cur_offset + file_header_size])
