@@ -45,7 +45,7 @@ import os
 
 from chipsec.command import BaseCommand, toLoad
 from chipsec.hal.common.interrupts import Interrupts
-from chipsec.hal.common.uefi_common import EFI_ERROR_STR
+from chipsec.library.uefi.common import EFI_ERROR_STR
 from argparse import ArgumentParser
 
 

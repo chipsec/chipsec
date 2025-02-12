@@ -42,9 +42,10 @@ Requires an OS with UEFI Runtime API support.
 
 from chipsec.module_common import BaseModule, MTAG_SECUREBOOT, MTAG_BIOS, OPT_MODIFY
 from chipsec.library.returncode import ModuleResult
-from chipsec.hal.common.uefi import UEFI, EFI_VARIABLE_NON_VOLATILE, EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_RUNTIME_ACCESS, get_attr_string
-from chipsec.hal.common.uefi import EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_APPEND_WRITE
-from chipsec.hal.common.uefi_common import StatusCode
+from chipsec.hal.common.uefi import UEFI
+from chipsec.library.uefi.variables import EFI_VARIABLE_NON_VOLATILE, EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_RUNTIME_ACCESS, get_attr_string
+from chipsec.library.uefi.variables import EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_APPEND_WRITE
+from chipsec.library.uefi.common import StatusCode
 from typing import List
 
 

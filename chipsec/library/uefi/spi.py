@@ -41,23 +41,23 @@ from collections.abc import Callable
 from uuid import UUID
 from typing import Dict, List, Optional, Union, Any, TYPE_CHECKING
 if TYPE_CHECKING:
-    from chipsec.hal.common.uefi_fv import EFI_MODULE
+    from chipsec.library.uefi.fv import EFI_MODULE
 from chipsec.library.logger import logger
 from chipsec.library.file import write_file, read_file
-from chipsec.hal.common.uefi_compression import COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_EFI_STANDARD, COMPRESSION_TYPES_ALGORITHMS, COMPRESSION_TYPE_UNKNOWN, COMPRESSION_TYPE_LZMAF86
-from chipsec.hal.common.uefi_common import bit_set, EFI_GUID_SIZE, EFI_GUID_FMT
-from chipsec.hal.common.uefi_platform import FWType, fw_types, EFI_NVRAM_GUIDS, EFI_PLATFORM_FS_GUIDS, NVAR_NVRAM_FS_FILE
-from chipsec.hal.common.uefi import identify_EFI_NVRAM, parse_EFI_variables
-from chipsec.hal.common.uefi_fv import EFI_SECTION_PE32, EFI_SECTION_TE, EFI_SECTION_PIC, EFI_SECTION_COMPATIBILITY16, EFI_FIRMWARE_FILE_SYSTEM2_GUID
-from chipsec.hal.common.uefi_fv import EFI_FIRMWARE_FILE_SYSTEM_GUID, EFI_SECTIONS_EXE, EFI_SECTION_USER_INTERFACE, EFI_SECTION_GUID_DEFINED
-from chipsec.hal.common.uefi_fv import EFI_GUID_DEFINED_SECTION, EFI_GUID_DEFINED_SECTION_size, NextFwFile, NextFwFileSection, NextFwVolume, GetFvHeader
-from chipsec.hal.common.uefi_fv import EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID, LZMA_CUSTOM_DECOMPRESS_GUID, TIANO_DECOMPRESSED_GUID, LZMAF86_DECOMPRESS_GUID
-from chipsec.hal.common.uefi_fv import EFI_CERT_TYPE_RSA_2048_SHA256_GUID, EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size, EFI_SECTION, EFI_FV, EFI_FILE
-from chipsec.hal.common.uefi_fv import EFI_FIRMWARE_CONTENTS_SIGNED_GUID, WIN_CERT_TYPE_EFI_GUID, WIN_CERTIFICATE_size, WIN_CERTIFICATE
-from chipsec.hal.common.uefi_fv import EFI_SECTION_COMPRESSION, EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_SECTION_RAW, SECTION_NAMES, DEF_INDENT
-from chipsec.hal.common.uefi_fv import FILE_TYPE_NAMES, EFI_FS_GUIDS, EFI_FILE_HEADER_INVALID, EFI_FILE_HEADER_VALID, EFI_FILE_HEADER_CONSTRUCTION
-from chipsec.hal.common.uefi_fv import EFI_COMPRESSION_SECTION_size, EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_FFS_PAD, EFI_FVB2_ERASE_POLARITY, EFI_FV_FILETYPE_RAW
-from chipsec.hal.common.uefi_compression import UEFICompression
+from chipsec.library.uefi.compression import COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_EFI_STANDARD, COMPRESSION_TYPES_ALGORITHMS, COMPRESSION_TYPE_UNKNOWN, COMPRESSION_TYPE_LZMAF86
+from chipsec.library.uefi.common import bit_set, EFI_GUID_SIZE, EFI_GUID_FMT
+from chipsec.library.uefi.platform import FWType, fw_types, EFI_NVRAM_GUIDS, EFI_PLATFORM_FS_GUIDS, NVAR_NVRAM_FS_FILE
+from chipsec.library.uefi.varstore import identify_EFI_NVRAM, parse_EFI_variables
+from chipsec.library.uefi.fv import EFI_SECTION_PE32, EFI_SECTION_TE, EFI_SECTION_PIC, EFI_SECTION_COMPATIBILITY16, EFI_FIRMWARE_FILE_SYSTEM2_GUID
+from chipsec.library.uefi.fv import EFI_FIRMWARE_FILE_SYSTEM_GUID, EFI_SECTIONS_EXE, EFI_SECTION_USER_INTERFACE, EFI_SECTION_GUID_DEFINED
+from chipsec.library.uefi.fv import EFI_GUID_DEFINED_SECTION, EFI_GUID_DEFINED_SECTION_size, NextFwFile, NextFwFileSection, NextFwVolume, GetFvHeader
+from chipsec.library.uefi.fv import EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID, LZMA_CUSTOM_DECOMPRESS_GUID, TIANO_DECOMPRESSED_GUID, LZMAF86_DECOMPRESS_GUID
+from chipsec.library.uefi.fv import EFI_CERT_TYPE_RSA_2048_SHA256_GUID, EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size, EFI_SECTION, EFI_FV, EFI_FILE
+from chipsec.library.uefi.fv import EFI_FIRMWARE_CONTENTS_SIGNED_GUID, WIN_CERT_TYPE_EFI_GUID, WIN_CERTIFICATE_size, WIN_CERTIFICATE, WIN_CERT_TYPE_PKCS_SIGNED_DATA
+from chipsec.library.uefi.fv import EFI_SECTION_COMPRESSION, EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_SECTION_RAW, SECTION_NAMES, DEF_INDENT, WIN_CERT_TYPE_EFI_PKCS115
+from chipsec.library.uefi.fv import FILE_TYPE_NAMES, EFI_FS_GUIDS, EFI_FILE_HEADER_INVALID, EFI_FILE_HEADER_VALID, EFI_FILE_HEADER_CONSTRUCTION
+from chipsec.library.uefi.fv import EFI_COMPRESSION_SECTION_size, EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_FFS_PAD, EFI_FVB2_ERASE_POLARITY, EFI_FV_FILETYPE_RAW
+from chipsec.library.uefi.compression import UEFICompression
 
 CMD_UEFI_FILE_REMOVE = 0
 CMD_UEFI_FILE_INSERT_BEFORE = 1
@@ -125,7 +125,7 @@ def modify_uefi_region(data: bytes, command: int, guid: UUID, uefi_file: bytes =
 
                 fwbin = NextFwFile(fv.Image, fv.Size, next_offset, polarity)
             if FvEndOffset == 0:
-                logger().log_hal(f'Using FvEndOffset = 0')
+                logger().log_hal('Using FvEndOffset = 0')
             if FvLengthChange >= 0:
                 data = data[:FvEndOffset] + data[FvEndOffset + FvLengthChange:]
             else:
@@ -212,6 +212,10 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
                         sec.Comments += " Cert of type RSA2048/SHA256!"
                     else:
                         sec.Comments += f" Cert of unknown type! But the guid is: {certGuid}"
+                elif cert_type == WIN_CERT_TYPE_PKCS_SIGNED_DATA:
+                    sec.Comments = "Found PKCS SIGNED Certificate"
+                elif cert_type == WIN_CERT_TYPE_EFI_PKCS115:
+                    sec.Comments = "Found UEFI PKCS1_15 SIGNED Certificate"
                 else:
                     sec.Comments = f"Unknown cert type: {cert_type}"
                 offset = sec.DataOffset + length
@@ -367,9 +371,9 @@ def find_efi_modules(data: bytes, fwtype: Optional[str], polarity: bool, data_si
 def update_efi_tree(modules: List['EFI_MODULE'], parent_guid: Optional[UUID] = None) -> str:
     ui_string = ''
     for m in modules:
-        if type(m) == EFI_FILE:
+        if type(m) is EFI_FILE:
             parent_guid = m.Guid
-        elif type(m) == EFI_SECTION:
+        elif type(m) is EFI_SECTION:
             # if it's a section update its parent file's GUID
             m.parentGuid = parent_guid
             if m.Type == EFI_SECTION_USER_INTERFACE:
@@ -384,7 +388,7 @@ def update_efi_tree(modules: List['EFI_MODULE'], parent_guid: Optional[UUID] = N
             # if it's a EFI file then update its ui_string with ui_string extracted from UI section
             if ui_string and (type(m) in (EFI_FILE, EFI_SECTION)):
                 m.ui_string = ui_string
-                if (type(m) == EFI_FILE):
+                if (type(m) is EFI_FILE):
                     ui_string = ''
     return ui_string
 
@@ -397,10 +401,10 @@ def build_efi_model(data: bytes, fwtype: Optional[str]) -> List['EFI_MODULE']:
 
 def FILENAME(mod: Union[EFI_FILE, EFI_SECTION], parent: Optional['EFI_MODULE'], modn: int) -> str:
     fname = f'{modn:02d}_{mod.Guid}'
-    if type(mod) == EFI_FILE:
+    if type(mod) is EFI_FILE:
         type_s = FILE_TYPE_NAMES[mod.Type] if mod.Type in FILE_TYPE_NAMES.keys() else f'UNKNOWN_{mod.Type:02X}'
         fname = f'{fname}.{type_s}'
-    elif type(mod) == EFI_SECTION:
+    elif type(mod) is EFI_SECTION:
         fname = f'{modn:02d}_{mod.Name}'
         if mod.Type in EFI_SECTIONS_EXE:
             if (parent is not None) and parent.ui_string:
@@ -416,8 +420,8 @@ def FILENAME(mod: Union[EFI_FILE, EFI_SECTION], parent: Optional['EFI_MODULE'], 
 def dump_efi_module(mod, parent: Optional['EFI_MODULE'], modn: int, path: str) -> str:
     fname = FILENAME(mod, parent, modn)
     mod_path = os.path.join(path, fname)
-    write_file(mod_path, mod.Image[mod.HeaderSize:] if type(mod) == EFI_SECTION else mod.Image)
-    if type(mod) == EFI_SECTION or WRITE_ALL_HASHES:
+    write_file(mod_path, mod.Image[mod.HeaderSize:] if type(mod) is EFI_SECTION else mod.Image)
+    if type(mod) is EFI_SECTION or WRITE_ALL_HASHES:
         if mod.MD5:
             write_file(f'{mod_path}.md5', mod.MD5)
         if mod.SHA1:
@@ -442,10 +446,10 @@ def search_efi_tree(modules: List['EFI_MODULE'],
     matching_modules = []
     for module in modules:
         if search_callback is not None:
-            if ((match_module_types & EFIModuleType.SECTION == EFIModuleType.SECTION) and type(module) == EFI_SECTION) or \
-               ((match_module_types & EFIModuleType.SECTION_EXE == EFIModuleType.SECTION_EXE) and (type(module) == EFI_SECTION and module.Type in EFI_SECTIONS_EXE)) or \
-               ((match_module_types & EFIModuleType.FV == EFIModuleType.FV) and type(module) == EFI_FV) or \
-               ((match_module_types & EFIModuleType.FILE == EFIModuleType.FILE) and type(module) == EFI_FILE):
+            if ((match_module_types & EFIModuleType.SECTION == EFIModuleType.SECTION) and type(module) is EFI_SECTION) or \
+               ((match_module_types & EFIModuleType.SECTION_EXE == EFIModuleType.SECTION_EXE) and (type(module) is EFI_SECTION and module.Type in EFI_SECTIONS_EXE)) or \
+               ((match_module_types & EFIModuleType.FV == EFIModuleType.FV) and type(module) is EFI_FV) or \
+               ((match_module_types & EFIModuleType.FILE == EFIModuleType.FILE) and type(module) is EFI_FILE):
                 if search_callback(module):
                     matching_modules.append(module)
                     if not findall:
@@ -504,7 +508,7 @@ def save_efi_tree(modules: List['EFI_MODULE'],
                             # @TODO: technically, NVRAM image should be m.Image but
                             # getNVstore_xxx functions expect FV than a FW file within FV
                             # so for EFI_FILE type of module using parent's Image as NVRAM
-                            nvram = parent.Image if (type(m) == EFI_FILE and type(parent) == EFI_FV) else m.Image
+                            nvram = parent.Image if (type(m) is EFI_FILE and type(parent) is EFI_FV) else m.Image
                             file_path = os.path.join(mod_dir_path, 'NVRAM')
                             parse_EFI_variables(file_path, nvram, False, m.NVRAMType)
                         else:

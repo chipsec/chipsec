@@ -61,8 +61,8 @@ from chipsec.library.returncode import ModuleResult
 
 from chipsec.hal.common.uefi import UEFI
 from chipsec.hal.intel.spi import SPI, BIOS
-from chipsec.hal.common.uefi_fv import EFI_MODULE, EFI_SECTION, SECTION_NAMES, EFI_SECTION_PE32
-from chipsec.hal.common.spi_uefi import build_efi_model, search_efi_tree, EFIModuleType, UUIDEncoder
+from chipsec.library.uefi.fv import EFI_MODULE, EFI_SECTION
+from chipsec.library.uefi.spi import build_efi_model, search_efi_tree, EFIModuleType, UUIDEncoder
 from chipsec.library.file import write_file, read_file
 
 TAGS = [MTAG_BIOS]
@@ -85,11 +85,11 @@ class scan_image(BaseModule):
         return True
 
     #
-    # callbacks to uefi_search.check_match_criteria
+    # callbacks to uefi.search.check_match_criteria
     #
     def genlist_callback(self, efi_module: EFI_MODULE) -> None:
         md = {}
-        if type(efi_module) == EFI_SECTION:
+        if type(efi_module) is EFI_SECTION:
             if efi_module.SHA1:
                 md["sha1"] = efi_module.SHA1
             if efi_module.parentGuid:

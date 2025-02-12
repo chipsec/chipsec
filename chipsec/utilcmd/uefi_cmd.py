@@ -59,15 +59,17 @@ import uuid
 from argparse import ArgumentParser
 
 from chipsec.command import BaseCommand, toLoad
-from chipsec.hal.common.uefi_common import EFI_STATUS_DICT, parse_efivar_file
+from chipsec.library.uefi.common import EFI_STATUS_DICT
 from chipsec.library.file import write_file, read_file
-from chipsec.hal.common.spi_uefi import decode_uefi_region, modify_uefi_region, compress_image, CMD_UEFI_FILE_REPLACE
-from chipsec.hal.common.spi_uefi import CMD_UEFI_FILE_INSERT_AFTER, CMD_UEFI_FILE_INSERT_BEFORE, CMD_UEFI_FILE_REMOVE
-from chipsec.hal.common.uefi import UEFI, decode_EFI_variables, get_attr_string, identify_EFI_NVRAM
-from chipsec.hal.common.uefi import SECURE_BOOT_KEY_VARIABLES, parse_script, parse_EFI_variables
-from chipsec.hal.common.uefi_fv import get_guid_bin, assemble_uefi_file, assemble_uefi_section, assemble_uefi_raw
-from chipsec.hal.common.uefi_fv import FILE_TYPE_NAMES
-from chipsec.hal.common.uefi_platform import fw_types
+from chipsec.library.uefi.spi import decode_uefi_region, modify_uefi_region, compress_image, CMD_UEFI_FILE_REPLACE
+from chipsec.library.uefi.spi import CMD_UEFI_FILE_INSERT_AFTER, CMD_UEFI_FILE_INSERT_BEFORE, CMD_UEFI_FILE_REMOVE
+from chipsec.hal.common.uefi import UEFI
+from chipsec.library.uefi.variables import SECURE_BOOT_KEY_VARIABLES, get_attr_string
+from chipsec.library.uefi.sleep_states import parse_script
+from chipsec.library.uefi.varstore import parse_efivar_file, decode_EFI_variables, identify_EFI_NVRAM, parse_EFI_variables
+from chipsec.library.uefi.fv import get_guid_bin, assemble_uefi_file, assemble_uefi_section, assemble_uefi_raw
+from chipsec.library.uefi.fv import FILE_TYPE_NAMES
+from chipsec.library.uefi.platform import fw_types
 
 
 # Unified Extensible Firmware Interface (UEFI)
@@ -296,9 +298,9 @@ class UEFICommand(BaseCommand):
             return
 
         _orig_logname = self.logger.LOG_FILE_NAME
-        self.logger.set_log_file( (self.romfilename + '.nv.lst'), False)
-        parse_EFI_variables( self.romfilename, rom, authvars, self.fwtype )
-        self.logger.set_log_file( _orig_logname )
+        self.logger.set_log_file((self.romfilename + '.nv.lst'), False)
+        parse_EFI_variables(self.romfilename, rom, authvars, self.fwtype)
+        self.logger.set_log_file(_orig_logname)
 
     def nvram_auth(self):
         authvars = 1
@@ -313,9 +315,9 @@ class UEFICommand(BaseCommand):
             return
 
         _orig_logname = self.logger.LOG_FILE_NAME
-        self.logger.set_log_file( (self.romfilename + '.nv.lst'), False)
-        parse_EFI_variables( self.romfilename, rom, authvars, self.fwtype )
-        self.logger.set_log_file( _orig_logname )
+        self.logger.set_log_file((self.romfilename + '.nv.lst'), False)
+        parse_EFI_variables(self.romfilename, rom, authvars, self.fwtype)
+        self.logger.set_log_file(_orig_logname)
 
     def decode(self):
         if not os.path.exists(self.filename):
@@ -335,7 +337,7 @@ class UEFICommand(BaseCommand):
                         ftypes.append(inv_filetypes[mtype])
                     break
         decode_uefi_region(cur_dir, self.filename, self.fwtype, ftypes)
-        self.logger.set_log_file( _orig_logname )
+        self.logger.set_log_file(_orig_logname)
 
     def keys(self):
         if not os.path.exists(self.filename):
