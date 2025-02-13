@@ -99,13 +99,12 @@ def pcrread(*command_argv: str) -> Tuple[bytes, int]:
     """
     The TPM_PCRRead operation provides non-cryptographic reporting  of the contents of a named PCR
     """
-    Size = 0x0E000000
-    try:
-        Pcr = PCR[int(command_argv[0])]
-    except:
+    Pcr = PCR.get(command_argv[0], None)
+    if Pcr is None:
         if logger().HAL:
             logger().log_bad("Invalid PCR value\n")
         return (b'', 0)
+    Size = 0x0E000000
     command = struct.pack(COMMAND_FORMAT, TPM_TAG_RQU_COMMAND, Size, TPM_ORD_PCRREAD, Pcr, 0, 0)
     size = Size >> 0x18
     return (command, size)
@@ -117,7 +116,10 @@ def nvread(*command_argv: str) -> Tuple[bytes, int]:
     Index, Offset, Size
     """
     Size = 0x18000000
-    command = struct.pack(COMMAND_FORMAT, TPM_TAG_RQU_COMMAND, Size, TPM_ORD_NV_READVALUE, int(command_argv[0], 16), int(command_argv[1], 16), int(command_argv[2], 16))
+    if len(command_argv) != 3:
+        logger().log_hal('command requires three values\n')
+        return (b'', 0)
+    command = struct.pack(COMMAND_FORMAT, TPM_TAG_RQU_COMMAND, Size, TPM_ORD_NV_READVALUE, command_argv[0], command_argv[1], command_argv[2])
     size = Size >> 0x18
     return (command, size)
 
@@ -130,11 +132,9 @@ def startup(*command_argv: str) -> Tuple[bytes, int]:
     2: TPM_ST_STATE
     3: TPM_ST_DEACTIVATED
     """
-    try:
-        startupType = STARTUP[int(command_argv[0])]
-    except:
-        if logger().HAL:
-            logger().log_bad("Invalid startup type option value\n")
+    startupType = STARTUP.get(command_argv[0], None)
+    if startupType is None:
+        logger().log_hal("Invalid startup type option value\n")
         return (b'', 0)
     Size = 0x0E000000
     command = struct.pack(COMMAND_FORMAT, TPM_TAG_RQU_COMMAND, Size, TPM_ORD_STARTUP, startupType, 0, 0)
@@ -160,7 +160,10 @@ def getcap(*command_argv: str) -> Tuple[bytes, int]:
     SubCap     - Subcapabilities
     """
     Size = 0x18000000
-    command = struct.pack(COMMAND_FORMAT, TPM_TAG_RQU_COMMAND, Size, TPM_ORD_GETCAPABILITY, int(command_argv[0], 16), int(command_argv[1], 16), int(command_argv[2], 16))
+    if len(command_argv) != 3:
+        logger().log_hal("Invalid startup type option value\n")
+        return (b'', 0)
+    command = struct.pack(COMMAND_FORMAT, TPM_TAG_RQU_COMMAND, Size, TPM_ORD_GETCAPABILITY, command_argv[0], command_argv[1], command_argv[2])
     size = Size >> 0x18
     return (command, size)
 

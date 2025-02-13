@@ -87,7 +87,7 @@ Review:    !!!
   <!--                                      -->
   <!-- #################################### -->
   <memory>
-    <range name="TPM" access="mmio" address="0xFED40000" size="0x10000" config="TPM.tpm12.xml" />
+    <range name="TPM" access="mmio" address="0xFED40000" limit="0xFED4FFFF" config="TPM.tpm12.xml" />
   </memory>
 
   
