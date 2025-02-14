@@ -107,7 +107,7 @@ class cpu_info(BaseModule):
         # Determine number of threads to check
         thread_count = 1
         if not self.cs.os_helper.is_efi():
-            (_, _, r_rcx, _) = self.cs.cpu.cpuid(0x80000008,0)
+            (_, _, r_rcx, _) = self.cs.cpu.cpuid(0x80000008, 0)
             thread_count = r_rcx & 0xff
 
         for thread in range(thread_count):
@@ -125,9 +125,9 @@ class cpu_info(BaseModule):
             self.logger.log(f'[*] Processor: {brand}')
 
             # "Authentic AMD"
-            e_rbx = int("htuA".encode('utf-8').hex(),16)    #0x68747541
-            e_rcx = int("DMAc".encode('utf-8').hex(),16)    #0x444D4163
-            e_rdx = int("itne".encode('utf-8').hex(),16)    #0x69746E65
+            e_rbx = int("htuA".encode('utf-8').hex(), 16)    #0x68747541
+            e_rcx = int("DMAc".encode('utf-8').hex(), 16)    #0x444D4163
+            e_rdx = int("itne".encode('utf-8').hex(), 16)    #0x69746E65
             (_, r_rbx, r_rcx, r_rdx) = self.cs.cpu.cpuid(0x00, 0x00)
 
             if not(e_rbx == r_rbx and e_rcx == r_rcx and e_rdx == r_rdx):

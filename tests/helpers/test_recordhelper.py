@@ -43,22 +43,22 @@ class RecordHelperTest(unittest.TestCase):
         self.assertTrue(self.recordhelper.create())
         self.assertTrue(self.recordhelper.start())
 
-        pci_read_value = self.recordhelper.read_pci_reg(0,0,0,0,0x1)
+        pci_read_value = self.recordhelper.read_pci_reg(0, 0, 0, 0, 0x1)
         self.assertEqual(pci_read_value, 0x86)
 
-        pci_read_value = self.recordhelper.read_pci_reg(0,0,0,0,0x2)
+        pci_read_value = self.recordhelper.read_pci_reg(0, 0, 0, 0, 0x2)
         self.assertEqual(pci_read_value, 0x8086)
 
-        pci_read_value = self.recordhelper.read_pci_reg(0,0,0,0,0x4)
+        pci_read_value = self.recordhelper.read_pci_reg(0, 0, 0, 0, 0x4)
         self.assertEqual(pci_read_value, 0x59048086)
 
-        pci_read_value = self.recordhelper.read_pci_reg(0,0x1f,0,0,0x1)
+        pci_read_value = self.recordhelper.read_pci_reg(0, 0x1f, 0, 0, 0x1)
         self.assertEqual(pci_read_value, 0x86)
 
-        pci_read_value = self.recordhelper.read_pci_reg(0,0x1f,0,0,0x2)
+        pci_read_value = self.recordhelper.read_pci_reg(0, 0x1f, 0, 0, 0x2)
         self.assertEqual(pci_read_value, 0x8086)
 
-        pci_read_value = self.recordhelper.read_pci_reg(0,0x1f,0,0,0x4)
+        pci_read_value = self.recordhelper.read_pci_reg(0, 0x1f, 0, 0, 0x4)
         self.assertEqual(pci_read_value, 0x9D4E8086)
 
         thread_count = self.recordhelper.get_threads_count()
@@ -70,7 +70,7 @@ class RecordHelperTest(unittest.TestCase):
         mem_value = self.recordhelper.read_phys_mem(0x5001, 0x2)
         self.assertEqual(mem_value, b'\x99\xaa')
 
-        mem_value = self.recordhelper.read_phys_mem(0x5010,0x2)
+        mem_value = self.recordhelper.read_phys_mem(0x5010, 0x2)
         self.assertEqual(mem_value, b'\xf3\x99')
 
         cpuid_value = self.recordhelper.cpuid(1, 0)
@@ -79,18 +79,18 @@ class RecordHelperTest(unittest.TestCase):
         cpuid_value = self.recordhelper.cpuid(2, 0)
         self.assertEqual(cpuid_value, (1979933441, 15775231, 0, 12779520))
 
-        self.recordhelper.write_pci_reg(0,0x3,0,0x2D, 0x33, 0x1)
-        pci_read_value = self.recordhelper.read_pci_reg(0,0x3,0,0x2d,0x1)
+        self.recordhelper.write_pci_reg(0, 0x3, 0, 0x2D, 0x33, 0x1)
+        pci_read_value = self.recordhelper.read_pci_reg(0, 0x3, 0, 0x2d, 0x1)
         self.assertEqual(pci_read_value, 0xFF)
 
-        self.recordhelper.write_pci_reg(0,0x0,0,0x0, 0x44, 0x1)
-        pci_read_value = self.recordhelper.read_pci_reg(0,0x0,0,0x0,0x2)
+        self.recordhelper.write_pci_reg(0, 0x0, 0, 0x0, 0x44, 0x1)
+        pci_read_value = self.recordhelper.read_pci_reg(0, 0x0, 0, 0x0, 0x2)
         self.assertEqual(pci_read_value, 32902)
 
         mmio_read_value = self.recordhelper.read_mmio_reg(0xfed0, 0x3)
         self.assertEqual(mmio_read_value, 0xababab)
 
-        self.recordhelper.write_mmio_reg(0x123,0x1, 0x22)
+        self.recordhelper.write_mmio_reg(0x123, 0x1, 0x22)
         mmio_read_value = self.recordhelper.read_mmio_reg(0x123, 0x1)
         self.assertEqual(mmio_read_value, 0x22)
 

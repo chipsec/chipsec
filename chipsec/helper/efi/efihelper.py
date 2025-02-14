@@ -181,7 +181,7 @@ class EfiHelper(Helper):
         else:
             return edk2.readpci(bus, device, function, address, size)
 
-    def write_pci_reg(self, bus: int, device: int, function: int, address:int, value: int, size: int) -> int:
+    def write_pci_reg(self, bus: int, device: int, function: int, address: int, value: int, size: int) -> int:
         return edk2.writepci(bus, device, function, address, value, size)
 
     #
