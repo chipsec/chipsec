@@ -295,7 +295,7 @@ class spectre_v2(BaseModule):
 
         elif self.cs.is_amd():
             res = ModuleResult.PASSED
-            fields = ['IBRS','STIBP','SSBD','PSFD']
+            fields = ['IBRS', 'STIBP', 'SSBD', 'PSFD']
             settings = {} 
             threads = {}
             fail = False
@@ -311,7 +311,7 @@ class spectre_v2(BaseModule):
             if fail:
                 self.logger.log_failed("Spectre V2 Mitigations Currently not enabled")
                 res = ModuleResult.PASSED
-                for t,s in threads.items():
+                for t, s in threads.items():
                     self.logger.log_warning(f"Thread[{t}]: {fields[0]}:{s[fields[0]]} {fields[1]}:{s[fields[1]]} {fields[2]}:{s[fields[2]]} {fields[3]}:{s[fields[3]]}")
             else:
                 self.logger.log_passed("Spectre V2 Mitigations Currently enabled")

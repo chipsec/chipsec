@@ -32,10 +32,10 @@ class TestTglModules(unittest.TestCase):
         self.folder_path = os.path.join(get_main_dir(), "tests", "modules", "tgl")
         self.init_replay_file = os.path.join(self.folder_path, "enumeration.json")
         
-    def derive_filename(self, module_name:str) -> str:
+    def derive_filename(self, module_name: str) -> str:
         return f"{module_name.replace('.', '-')}_test.json"
 
-    def run_and_test_module(self, module_name:str, expected_returncode:int) -> None:
+    def run_and_test_module(self, module_name: str, expected_returncode: int) -> None:
         test_recording = self.derive_filename(module_name)
         replay_file = os.path.join(self.folder_path, test_recording)
         retval = setup_run_destroy_module_with_mock_logger(self.init_replay_file, module_name, module_replay_file=replay_file)

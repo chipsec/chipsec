@@ -60,5 +60,5 @@ def setup_run_destroy_util_get_log_output(init_replay_file: str, util_name: str,
     return retval, " ".join([call.args[0] for call in logger_calls])
 
 def setup_run_destroy_util(init_replay_file: str, util_name: str, util_args: str = "", util_replay_file: str = "") -> int:
-    retval, _ = setup_run_destroy_util_get_log_output(init_replay_file,util_name, util_args, util_replay_file)    
+    retval, _ = setup_run_destroy_util_get_log_output(init_replay_file, util_name, util_args, util_replay_file)    
     return retval

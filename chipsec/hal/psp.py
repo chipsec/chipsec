@@ -40,12 +40,12 @@ class PSP:
         self.helper = cs.helper
 
     def smu_read32(self, reg):
-        self.cs.pci.write_dword(0,0,0,self.SMN_INDEX_ADDR,reg)
-        return self.cs.pci.read_dword(0,0,0,self.SMN_DATA_ADDR)
+        self.cs.pci.write_dword(0, 0, 0, self.SMN_INDEX_ADDR, reg)
+        return self.cs.pci.read_dword(0, 0, 0, self.SMN_DATA_ADDR)
 
     def smu_write32(self, reg, val):
-        self.cs.pci.write_dword(0,0,0,self.SMN_INDEX_ADDR,reg)
-        return self.cs.pci.write_dword(0,0,0, self.SMN_DATA_ADDR,val)
+        self.cs.pci.write_dword(0, 0, 0, self.SMN_INDEX_ADDR, reg)
+        return self.cs.pci.write_dword(0, 0, 0, self.SMN_DATA_ADDR, val)
 
     def psp_mbox_command(self, cmd):
         #  Command ID (bits [23:16]), Status (bits [15:0]) fields and Ready flag (bit #31)
@@ -71,11 +71,11 @@ class PSP:
             logger().log_bad(f'Timeout polling for PSP Mailbox Ready (Idle)')
             return [0xbaddbadd]
 
-        (buf_va,buf_pa) = self.helper.alloc_phys_mem(buf_size,0x1000_0000_0000)
+        (buf_va, buf_pa) = self.helper.alloc_phys_mem(buf_size, 0x1000_0000_0000)
 
         # send physical address for msg buffer
-        self.smu_write32(self.SMU_PSP_MBOX_CMD_BUF_LO,buf_pa & 0xFFFFFFFF)
-        self.smu_write32(self.SMU_PSP_MBOX_CMD_BUF_HI,(buf_pa >> 32) & 0xFFFFFFFF)
+        self.smu_write32(self.SMU_PSP_MBOX_CMD_BUF_LO, buf_pa & 0xFFFFFFFF)
+        self.smu_write32(self.SMU_PSP_MBOX_CMD_BUF_HI, (buf_pa >> 32) & 0xFFFFFFFF)
 
         # send command
         mbox_cmd_status_value = (cmd << 16) & 0x00ff0000
@@ -97,8 +97,8 @@ class PSP:
             return [0xbaddbadd]
         
         buffer = []
-        for i in range(0,num_buf):
-            buffer.append(int.from_bytes(self.helper.read_phys_mem(buf_pa + (i * dword_size),dword_size),'little'))
+        for i in range(0, num_buf):
+            buffer.append(int.from_bytes(self.helper.read_phys_mem(buf_pa + (i * dword_size), dword_size), 'little'))
 
         self.helper.free_phys_mem(buf_va)
 

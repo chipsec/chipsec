@@ -38,27 +38,27 @@ class ReplayHelperTest(unittest.TestCase):
         self.assertTrue(self.replayhelper.delete())
 
     def test_cpu_read_pci_reg_one_byte(self):
-        pci_read_value = self.replayhelper.read_pci_reg(0,0,0,0,0x1)
+        pci_read_value = self.replayhelper.read_pci_reg(0, 0, 0, 0, 0x1)
         self.assertEqual(pci_read_value, 0x86)
         
     def test_cpu_read_pci_reg_two_bytes(self):
-        pci_read_value = self.replayhelper.read_pci_reg(0,0,0,0,0x2)
+        pci_read_value = self.replayhelper.read_pci_reg(0, 0, 0, 0, 0x2)
         self.assertEqual(pci_read_value, 0x8086)
         
     def test_cpu_read_pci_reg_four_bytes(self):
-        pci_read_value = self.replayhelper.read_pci_reg(0,0,0,0,0x4)
+        pci_read_value = self.replayhelper.read_pci_reg(0, 0, 0, 0, 0x4)
         self.assertEqual(pci_read_value, 0x59048086)
 
     def test_pch_read_pci_reg_one_byte(self):
-        pci_read_value = self.replayhelper.read_pci_reg(0,0x1f,0,0,0x1)
+        pci_read_value = self.replayhelper.read_pci_reg(0, 0x1f, 0, 0, 0x1)
         self.assertEqual(pci_read_value, 0x86)
 
     def test_pch_read_pci_reg_two_bytes(self):
-        pci_read_value = self.replayhelper.read_pci_reg(0,0x1f,0,0,0x2)
+        pci_read_value = self.replayhelper.read_pci_reg(0, 0x1f, 0, 0, 0x2)
         self.assertEqual(pci_read_value, 0x8086)
     
     def test_pch_read_pci_reg_four_bytes(self):
-        pci_read_value = self.replayhelper.read_pci_reg(0,0x1f,0,0,0x4)
+        pci_read_value = self.replayhelper.read_pci_reg(0, 0x1f, 0, 0, 0x4)
         self.assertEqual(pci_read_value, 0x9D4E8086)
 
     def test_get_thread_count(self):
@@ -74,7 +74,7 @@ class ReplayHelperTest(unittest.TestCase):
         self.assertEqual(mem_value, b'\x99\xaa')
 
     def test_read_phyis_mem_oob(self):
-        mem_value = self.replayhelper.read_phys_mem(0x5010,0x2)
+        mem_value = self.replayhelper.read_phys_mem(0x5010, 0x2)
         self.assertEqual(mem_value, b'\xf3\x99')
 
     def test_cpuid_one(self):
@@ -86,13 +86,13 @@ class ReplayHelperTest(unittest.TestCase):
         self.assertEqual(cpuid_value, (1979933441, 15775231, 0, 12779520))
 
     def test_write_pci_reg_new_location(self):
-        self.replayhelper.write_pci_reg(0,0x3,0,0x2D, 0x33, 0x1)
-        pci_read_value = self.replayhelper.read_pci_reg(0,0x3,0,0x2d,0x1)
+        self.replayhelper.write_pci_reg(0, 0x3, 0, 0x2D, 0x33, 0x1)
+        pci_read_value = self.replayhelper.read_pci_reg(0, 0x3, 0, 0x2d, 0x1)
         self.assertEqual(pci_read_value, 0xFF)
 
     def test_write_pci_reg_defined_location(self):
-        self.replayhelper.write_pci_reg(0,0x0,0,0x0, 0x44, 0x1)
-        pci_read_value = self.replayhelper.read_pci_reg(0,0x0,0,0x0,0x2)
+        self.replayhelper.write_pci_reg(0, 0x0, 0, 0x0, 0x44, 0x1)
+        pci_read_value = self.replayhelper.read_pci_reg(0, 0x0, 0, 0x0, 0x2)
         self.assertEqual(pci_read_value, 32902)
 
     def test_read_mmio_reg(self):
@@ -100,7 +100,7 @@ class ReplayHelperTest(unittest.TestCase):
         self.assertEqual(mmio_read_value, 0xababab)
 
     def test_write_mmio_reg(self):
-        self.replayhelper.write_mmio_reg(0x123,0x1, 0x22)
+        self.replayhelper.write_mmio_reg(0x123, 0x1, 0x22)
         mmio_read_value = self.replayhelper.read_mmio_reg(0x123, 0x1)
         self.assertEqual(mmio_read_value, 0x22)
         

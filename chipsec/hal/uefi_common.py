@@ -217,7 +217,7 @@ def EFI_GUID_STR(guid: bytes) -> str:
     return str(guid_str).upper()
 
 
-def align(of:int, size: int) -> int:
+def align(of: int, size: int) -> int:
     of = (((of + size - 1) // size) * size)
     return of
 

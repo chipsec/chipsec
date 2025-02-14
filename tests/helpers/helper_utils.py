@@ -22,16 +22,16 @@ class packer():
         self.size_char = default_size_char
 
 
-    def custom_pack(self, num_of_chunks: int, expected_value: int, expected_value_index:int = 0) -> bytes:
+    def custom_pack(self, num_of_chunks: int, expected_value: int, expected_value_index: int = 0) -> bytes:
         input = [0] * num_of_chunks
         input[expected_value_index] = expected_value
-        return pack(f'{num_of_chunks}{self.size_char}',*input)
+        return pack(f'{num_of_chunks}{self.size_char}', *input)
 
     def pack_pci(self, expected_value: int) -> bytes:
         return self.custom_pack(5, expected_value, 4)
 
-    def pack_cpuinfo(self, expected_value:int) -> bytes:
+    def pack_cpuinfo(self, expected_value: int) -> bytes:
         return self.custom_pack(4, expected_value, 0)
 
-    def pack_ioport(self, expected_value:int) -> bytes:
+    def pack_ioport(self, expected_value: int) -> bytes:
         return self.custom_pack(3, expected_value, 2)
