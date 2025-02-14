@@ -62,7 +62,7 @@ class rom_armor(BaseModule):
 
     def check_RA_Fencing(self) -> int:
         # Confirm SPI Control Bass address is blocked
-        spi_ctrl_bar = self.cs.pci.read_dword(0,0x14,3,0xa0)
+        spi_ctrl_bar = self.cs.pci.read_dword(0, 0x14, 3, 0xa0)
 
         if(spi_ctrl_bar == 0xFFFFFFFF):
             self.logger.log_good("SPI BAR access from host is blocked")

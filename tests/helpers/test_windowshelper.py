@@ -84,9 +84,9 @@ class WindowsHelperTest(unittest.TestCase):
         (0x22e04c, b'\x01\x00\x00\x00\x00\x00\x00\x00'):
             ipacker.pack_cpuinfo(0x406F1),
         (0x22e070, b'\x00\x00\x00\x00\x00\x00\x01\xfe\x04\x00\x00\x00'):
-            ipacker.custom_pack(1,0x7FF0200,0),
+            ipacker.custom_pack(1, 0x7FF0200, 0),
         (0x22e048, b'\x00\x00\x00\x00\x00\x10\x00\x00\x08\x00\x00\x00'):
-            qpacker.custom_pack(2,1,0),
+            qpacker.custom_pack(2, 1, 0),
         (0x22e064, b'\x00\x00\x00\x00\x00\x00'):
             b'3\x00\x05\x80\x00\x00\x00\x00',
         (0x22e060, b'\x00\x003\x00\x05\x80\x00\x00\x00\x00\x00\x00\x00\x00'):
@@ -137,12 +137,12 @@ class WindowsHelperTest(unittest.TestCase):
         wh.FILE_ATTRIBUTE_NORMAL = 0x80
         wh.FILE_FLAG_OVERLAPPED = 0x40000000
         wh.INVALID_HANDLE_VALUE = -1
-        wh.c_char = type('',(object,),{"__mul__": lambda self, other: Mock()})()
+        wh.c_char = type('', (object,), {"__mul__": lambda self, other: Mock()})()
         os_path_isfile().return_value = True
         mock_win32sservice.CreateService.return_value = DRIVER_HANDLE
         mock_win32sservice.CloseServiceHandle().return_value = None
         self.wh = wh
-        with patch.dict(wh.os.__dict__, {'chown':lambda *args:None}):
+        with patch.dict(wh.os.__dict__, {'chown': lambda *args: None}):
             self.whelper = wh.WindowsHelper()
             self.assertTrue(self.whelper.create())
             self.assertTrue(self.whelper.start())        
@@ -278,7 +278,7 @@ class WindowsHelperTest(unittest.TestCase):
 
     def test_write_mmio_reg(self, *mocks):
         self._assign_mocks(mocks)
-        self.whelper.write_mmio_reg(0x123,0x1, 0x22)
+        self.whelper.write_mmio_reg(0x123, 0x1, 0x22)
     
     # TODO def test_get_ACPI_SDT(self, *mocks):
         # self._assign_mocks(mocks)
@@ -337,7 +337,7 @@ class WindowsHelperTest(unittest.TestCase):
     @patch('chipsec.helper.windows.windowshelper.addressof')
     @patch('chipsec.helper.windows.windowshelper.c_uint32')
     def test_retpoline_enabled(self, mock_c_uint32, *_):
-        mock_c_uint32.return_value = type('',(object,),{"value": 0x4000})()
+        mock_c_uint32.return_value = type('', (object,), {"value": 0x4000})()
         self.assertEqual(self.whelper.retpoline_enabled(), True)
 
 # test_reg_get_control
