@@ -59,7 +59,7 @@ class smm_close(BaseModule):
         TSegClose = bool(self.cs.register.get_field('SMMMASK', regval, 'TCLOSE'))
         ASegClose = bool(self.cs.register.get_field('SMMMASK', regval, 'ACLOSE'))
 
-        if(TSegClose or ASegClose):
+        if (TSegClose or ASegClose):
             self.logger.log_failed(f"TSeg Close {TSegClose}, Aseg Valid {ASegClose}")
             res = ModuleResult.FAILED
         else:

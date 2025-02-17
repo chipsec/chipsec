@@ -130,7 +130,7 @@ class cpu_info(BaseModule):
             e_rdx = int("itne".encode('utf-8').hex(), 16)    #0x69746E65
             (_, r_rbx, r_rcx, r_rdx) = self.cs.cpu.cpuid(0x00, 0x00)
 
-            if not(e_rbx == r_rbx and e_rcx == r_rcx and e_rdx == r_rdx):
+            if not (e_rbx == r_rbx and e_rcx == r_rcx and e_rdx == r_rdx):
                 self.logger.log_failed("Not Authentic AMD")
                 self.res = ModuleResult.FAILED
                 return self.res

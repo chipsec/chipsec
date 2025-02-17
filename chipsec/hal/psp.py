@@ -61,13 +61,13 @@ class PSP:
         # poll for mailbox ready
         start_time = time.time()
         timeout = False
-        while(True): 
+        while (True): 
             mbox_cmd_status_value = self.smu_read32(self.SMU_PSP_MBOX_CMD_STATUS)
             timeout = (time.time() - start_time > self.TIMEOUT)
-            if((mbox_cmd_status_value & 0x80000000) or timeout):
+            if ((mbox_cmd_status_value & 0x80000000) or timeout):
                 break
 
-        if(timeout):
+        if (timeout):
             logger().log_bad(f'Timeout polling for PSP Mailbox Ready (Idle)')
             return [0xbaddbadd]
 
@@ -85,13 +85,13 @@ class PSP:
         start_time = time.time()
         timeout = False
 
-        while(True): 
+        while (True): 
             mbox_cmd_status_value = self.smu_read32(self.SMU_PSP_MBOX_CMD_STATUS)
             timeout = (time.time() - start_time > self.TIMEOUT)
-            if((mbox_cmd_status_value & 0x80000000) or timeout):
+            if ((mbox_cmd_status_value & 0x80000000) or timeout):
                 break
 
-        if(timeout):
+        if (timeout):
             logger().log_bad(f'Timeout polling for PSP Mailbox Ready (Complete)')
             self.helper.free_phys_mem(buf_va)
             return [0xbaddbadd]
@@ -106,7 +106,7 @@ class PSP:
 
     def query_HSTI(self) -> int:
         hsti_buffer = self.psp_mbox_command(self.PSP_CMD_GET_HSTI_STATE)
-        if(len(hsti_buffer) > 1):
+        if (len(hsti_buffer) > 1):
             return hsti_buffer[2] 
         else:
             return 0 
