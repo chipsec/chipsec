@@ -305,7 +305,7 @@ class spectre_v2(BaseModule):
                 spec_ctrl_msr = self.cs.register.read('SPEC_CTRL', tid)
                 for f in fields:
                     settings[f] = bool(self.cs.register.get_field('SPEC_CTRL', spec_ctrl_msr, f))
-                if not(settings[f]):
+                if not (settings[f]):
                     fail = True
                 threads[tid] = settings
 
