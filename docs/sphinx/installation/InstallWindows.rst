@@ -3,7 +3,7 @@ Windows Installation
 
 | CHIPSEC supports the following versions:
 | Windows 8, 8.1, 10, 11 - x86 and AMD64
-| Windows Server 2012, 2016, 2019, 2022 - x86 and AMD64
+| Windows Server 2012, 2016, 2019, 2022, 2025 - x86 and AMD64
 
 .. note::
 
