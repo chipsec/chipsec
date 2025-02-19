@@ -105,7 +105,7 @@ class CPU(hal_base.HALBase):
 
     # determine number of logical processors in the core
     def get_number_threads_from_APIC_table(self) -> int:
-        _acpi = acpi.ACPI(self.cs)
+        _acpi = self.cs.hals.ACPI
         dACPIID = {}
         for apic in _acpi.get_parse_ACPI_table(acpi.ACPI_TABLE_SIG_APIC):  # (table_header, APIC_object, table_header_blob, table_blob)
             _, APIC_object, _, _ = apic
@@ -154,12 +154,9 @@ class CPU(hal_base.HALBase):
     # Return SMRR MSR physical base and mask
     #
     def get_SMRR(self) -> Tuple[int, int]:
-        if self.cs.is_intel():
-            smrambase = self.cs.register.read_field('IA32_SMRR_PHYSBASE', 'PhysBase', True)
-            smrrmask = self.cs.register.read_field('IA32_SMRR_PHYSMASK', 'PhysMask', True)
-        elif self.cs.is_amd():
-            smrambase = self.cs.register.read_field('SMM_BASE', 'SMMBASE', True)
-            smrrmask = self.cs.register.read_field('SMMMASK', 'TSEGMASK', True)
+        smrambase = self.cs.register.get_list_by_name('8086.MSR.IA32_SMRR_PHYSBASE').read_field('PhysBase')[0]
+        smrrmask = self.cs.register.get_list_by_name('8086.MSR.IA32_SMRR_PHYSMASK').read_field('PhysMask')[0]
+
         return (smrambase, smrrmask)
 
     #
@@ -176,24 +173,19 @@ class CPU(hal_base.HALBase):
     # Returns TSEG base, limit and size
     #
     def get_TSEG(self) -> Tuple[int, int, int]:
-        if self.cs.is_intel():
-            if self.cs.is_server():
-                # tseg register has base and limit
-                tseg_base = self.cs.register.read_field('TSEG_BASE', 'base', preserve_field_position=True)
-                tseg_limit = self.cs.register.read_field('TSEG_LIMIT', 'limit', preserve_field_position=True)
-                tseg_limit += 0xFFFFF
-            else:
-                # TSEG base is in TSEGMB, TSEG limit is BGSM - 1
-                tseg_base = self.cs.register.read_field('PCI0.0.0_TSEGMB', 'TSEGMB', preserve_field_position=True)
-                bgsm = self.cs.register.read_field('PCI0.0.0_BGSM', 'BGSM', preserve_field_position=True)
-                tseg_limit = bgsm - 1
+        if self.cs.is_server():
+            # tseg register has base and limit
+            tseg_base = self.cs.register.get_list_by_name('8086.MEMMAP_VTD.TSEG_BASE').read_field('base', True)[0]
+            tseg_limit = self.cs.register.get_list_by_name('8086.MEMMAP_VTD.TSEG_LIMIT').read_field('limit', True)[0]
+            tseg_limit += 0xFFFFF
+        else:
+            # TSEG base is in TSEGMB, TSEG limit is BGSM - 1
+            tseg_base = self.cs.register.get_list_by_name('8086.HOSTCTL.TSEGMB').read_field('TSEGMB', True)[0]
+            bgsm = self.cs.register.get_list_by_name('8086.HOSTCTL.BGSM').read_field('BGSM', True)[0]
+            tseg_limit = bgsm - 1
 
-            tseg_size = tseg_limit - tseg_base + 1
-        elif self.cs.is_amd():
-            tseg_base = self.cs.register.read_field('SMMADDR', 'TSEGBASE', preserve_field_position=True)
-            tseg_mask = self.cs.register.read_field('SMMMASK', 'TSEGMASK', preserve_field_position=True)
-            tseg_size = ((~tseg_mask + 0xFFFFFFFFFFFF) + 1)
-            tseg_limit = tseg_base + tseg_size
+        tseg_size = tseg_limit - tseg_base + 1
+
         return (tseg_base, tseg_limit, tseg_size)
 
     #
@@ -222,19 +214,10 @@ class CPU(hal_base.HALBase):
     # Check that SMRR is supported by CPU in IA32_MTRRCAP_MSR[SMRR]
     #
     def check_SMRR_supported(self) -> bool:
-        if self.cs.is_intel():
-            mtrrcap_msr_reg = self.cs.register.read('MTRRCAP')
-            if logger().HAL:
-                self.cs.register.print('MTRRCAP', mtrrcap_msr_reg)
-            smrr = self.cs.register.get_field('MTRRCAP', mtrrcap_msr_reg, 'SMRR')
-            return (1 == smrr)
-        elif self.cs.is_amd():
-            smmmask_msr_reg = self.cs.register.read('SMMMASK')
-            if logger().HAL:
-                self.cs.register.print('SMMMASK', smmmask_msr_reg)
-            avalid = self.cs.register.get_field('SMMMASK', smmmask_msr_reg, 'AVALID')
-            tvalid = self.cs.register.get_field('SMMMASK', smmmask_msr_reg, 'TVALID')
-            return (1 == avalid and 1 == tvalid)
+        mtrrcap_msr_reg = self.cs.register.get_list_by_name('8086.MSR.MTRRCAP')
+        mtrrcap_msr_reg.read_and_hal_print()
+        return mtrrcap_msr_reg.is_any_field_value(1, 'SMRR')
+        
     #
     # Dump CPU page tables at specified physical base of paging-directory hierarchy (CR3)
     #
