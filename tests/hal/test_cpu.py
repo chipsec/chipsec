@@ -186,9 +186,9 @@ class TestHalCpu(unittest.TestCase):
         self.assertEqual(result, expected_value)
 
     def test_hal_cpu_get_cpu_topology(self):
-        mock_self = Mock()
-        mock_self.cs.helper.get_threads_count.return_value = 4
-        mock_self.cs.hals.CPU.cpuid.side_effect = [(4, 0, 0, 0),
+        mock_cs = Mock()
+        mock_cs.helper.get_threads_count.return_value = 4
+        mock_cs.helper.cpuid.side_effect = [(4, 0, 0, 0),
                                               (1, 0, 0, 0),
                                               (4, 0, 0, 2),
                                               (1, 0, 0, 2),
@@ -197,8 +197,9 @@ class TestHalCpu(unittest.TestCase):
                                               (4, 0, 0, 3),
                                               (1, 0, 0, 3),
                                               ]
-        expected_result = {'cores': {0: [0, 2], 1: [1, 3]}, 'packages': {0: [0, 1, 2, 3]}}
-        result = CPU.get_cpu_topology(mock_self)
+        expected_result = {'cores': {0: [0, 2], 1: [1, 3]}, 'packages': {0: [0, 1, 2, 3]}, 'threads': 4}
+        cpu_hal = CPU(mock_cs)
+        result = cpu_hal.get_cpu_topology()
         self.assertEqual(result, expected_result)
 
     def test_hal_cpu_get_number_sockets_from_APIC_table(self):
@@ -313,8 +314,8 @@ class TestHalCpu(unittest.TestCase):
         result = CPU.check_SMRR_supported(mock_self)
         self.assertTrue(result)
 
-    @patch('chipsec.hal.cpu.logger', spec=True)
-    @patch('chipsec.hal.cpu.paging', spec=True)
+    @patch('chipsec.hal.intel.cpu.logger', spec=True)
+    @patch('chipsec.hal.intel.cpu.paging', spec=True)
     def test_hal_cpu_dump_page_tables_none(self, mock_paging, mock_logger):
         mock_self = Mock()
         mock_paging.c_ia32e_page_tables.return_value = Mock(failure=False)
@@ -322,16 +323,16 @@ class TestHalCpu(unittest.TestCase):
         CPU.dump_page_tables(mock_self, 0x16B334001, None)
         self.assertEqual(5, mock_logger.call_count)
 
-    @patch('chipsec.hal.cpu.logger', spec=True)
-    @patch('chipsec.hal.cpu.paging.c_ia32e_page_tables', spec=True)
+    @patch('chipsec.hal.intel.cpu.logger', spec=True)
+    @patch('chipsec.hal.intel.cpu.paging.c_ia32e_page_tables', spec=True)
     def test_hal_cpu_dump_page_tables(self, mock_paging, mock_logger):
         mock_self = Mock()
         mock_paging.return_value = Mock(failure=False)
         CPU.dump_page_tables(mock_self, 0x16B334001, 'cpu0_pt_16B334001')
         self.assertEqual(4, mock_logger.call_count)
 
-    @patch('chipsec.hal.cpu.logger', spec=True)
-    @patch('chipsec.hal.cpu.paging.c_ia32e_page_tables', spec=True)
+    @patch('chipsec.hal.intel.cpu.logger', spec=True)
+    @patch('chipsec.hal.intel.cpu.paging.c_ia32e_page_tables', spec=True)
     def test_hal_cpu_dump_page_tables_log_error(self, mock_paging, mock_logger):
         mock_self = Mock()
         mock_paging.return_value = Mock(failure=True)
