@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<configuration>
+
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- Memory Mapped I/O spaces (MMIO BARs) -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <mmio>
+    </mmio>
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- I/O spaces (I/O BARs)                -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <io>
+    </io>
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- Configuration registers              -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <registers>
+        <register name="RC" type="mm_msgbus" offset="0x3400" size="4" desc="RTC Configuration">
+            <field name="UE"   bit="2"  size="1" desc="Upper 128 Byte Enable"/>
+            <field name="LL"   bit="3"  size="1" desc="Lower 128 Byte Lock"/>
+            <field name="UL"   bit="4"  size="1" desc="Upper 128 Byte Lock"/>
+            <field name="BILD" bit="31" size="1" desc="BIOS Interface Lock-Down"/>
+        </register>
+        <register name="BUC" type="mm_msgbus" offset="0x3414" size="4" desc="Backed Up Control">
+            <field name="TS" bit="0" size="1" desc="Top Swap" lockedby="RC.BILD"/>
+        </register>
+
+    </registers>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- 'Controls'                           -->
+  <!--                                      -->
+  <!-- #################################### -->
+    <controls>
+        <control name="TopSwap"  register="BUC" field="TS" desc="Top Swap"/>
+    </controls>
+
+    <locks>
+        <lock register="RC" field="BILD" type="RW/L" value="0x1" desc="N/A"/>
+        <lock register="RC" field="LL" type="RW/L" value="0x1" desc="N/A"/>
+        <lock register="RC" field="UL" type="RW/L" value="0x1" desc="N/A"/>
+    </locks>
+
+</configuration>

@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<configuration>
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Configuration registers              -->
+  <!--                                      -->
+  <!-- #################################### -->
+
+  <registers>
+    <register name="RST_CNT" type="io" size="1" desc="Reset Control">
+      <field name="SYS_RST"            bit="1"  size="1"  desc="System Reset"/>
+      <field name="RST_CPU"            bit="2"  size="1"  desc="Reset Processor"/>
+      <field name="FULL_RST"           bit="3"  size="1"  desc="Full Reset"/>
+    </register>
+  </registers>
+
+  <controls>
+  </controls>
+
+</configuration>

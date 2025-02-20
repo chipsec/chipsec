@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<configuration>
+  <mmio>
+    <bar name="BAR" register="BAR" base_field="BA" size="0x1000" desc="SSRAM BAR0" />
+    <bar name="BAR1" register="BAR1" base_field="BA" size="0x1000" desc="SSRAM BAR1" />
+  </mmio>
+    <registers>
+        <register name="BAR"   type="pcicfg" offset="0x10" size="8" desc="Base Address">
+            <field name="BA" bit="14" size="18" desc="Base Address"/>
+        </register>
+        <register name="BAR1"   type="pcicfg" offset="0x18" size="8" desc="Base Address">
+            <field name="BA" bit="12" size="20" desc="Base Address"/>
+        </register>
+        <register name="SVID" type="pcicfg" offset="0x2C" size="2" desc="SVID">
+            <field name="SVID" bit="0" size="16" desc="Subsystem Vendor ID Number" />
+        </register>
+        <register name="SID" type="pcicfg" offset="0x2E" size="2" desc="SID">
+            <field name="SID" bit="0" size="16" desc="Subsystem ID Number" />
+        </register>
+
+        <register name="D0I3_MAX_POW_LAT_PG_CONFIG" type="pcicfg" offset="0xA0" size="4" desc="Device PG Config">
+            <field name="HAE" bit="21" size="1" desc="HAE" />
+            <field name="SLEEP_EN" bit="19" size="1" desc="SLEEP_EN" />
+            <field name="PGE" bit="18" size="1" desc="D3 Hen Field (PGE)" />
+            <field name="I3_Enable" bit="17" size="1" desc="I3_ENABLE" />
+            <field name="PMCRE" bit="16" size="1" desc="PMC Request Enable Field (PMCRE)" />
+            <field name="Reserved" bit="13" size="3" desc="Reserved" />
+            <field name="POW_LAT_SCALE" bit="10" size="3" desc="Power Latency Scale Field (POW_LAT_SCALE)" />
+            <field name="POW_LAT_VALUE" bit="0" size="10" desc="Power Latency Value Field (POW_LAT_VALUE)" />
+        </register>
+    </registers>
+
+    <locks>
+        <lock register="SVID" field="SVID" type="RW/O" value="0x8086" desc="N/A"/> 
+        <lock register="SID" field="SID" type="RW/O" value="0x3024" desc="N/A"/>
+        <lock register="D0I3_MAX_POW_LAT_PG_CONFIG" field="POW_LAT_SCALE" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="D0I3_MAX_POW_LAT_PG_CONFIG" field="POW_LAT_VALUE" type="RW/O" value="0x1" desc="N/A"/>
+    </locks>
+
+</configuration>

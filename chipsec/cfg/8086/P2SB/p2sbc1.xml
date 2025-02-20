@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<configuration>
+
+    <mmio>
+        <bar name="SBREGBAR" register="SBREG_BAR" base_field="RBA" size="0x1000000" fixed_address="0xFD000000" desc="Sideband Register Access BAR"/>
+    </mmio>
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- Configuration registers              -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <registers>
+        <register name="SBREG_BAR" type="pcicfg" offset="0x10" size="4" desc="Sideband Register Access BAR">
+            <field name="RBA" bit="24" size="8" desc="Register Base Address"/>
+        </register>
+
+        <register name="P2SBC" type="pcicfg" offset="0xE0" size="2" desc="P2SB Configuration Register">
+            <field name="HIDE" bit="8" size="1" desc="Hide SBREG_BAR"/>
+            <field name="MASKLOCK" bit="17" size="1" desc="P2SB Mask Lock"/>
+            <field name="SBILOCK" bit="31" size="1" desc="SBI register Lock"/>
+        </register>
+
+        <register name="P2SB_HIDE" type="pcicfg" offset="0xE1" size="1" desc="P2SB Configuration Register hide-unhide">
+            <field name="HIDE" bit="0" size="1" desc="Hide SBREG_BAR"/>
+        </register>
+    </registers>
+
+</configuration>
