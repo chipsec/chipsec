@@ -27,7 +27,7 @@ from typing import Any, Dict, List, Optional
 from chipsec.parsers import BaseConfigHelper
 from chipsec.library.logger import logger
 from chipsec.library.bits import set_bits, get_bits, make_mask
-from chipsec.library.exceptions import UninitializedRegisterError
+from chipsec.library.exceptions import CSReadError, UninitializedRegisterError
 from chipsec.library.registers.io import IO
 from chipsec.library.registers.iobar import IOBar
 from chipsec.library.registers.memory import Memory
@@ -322,7 +322,10 @@ class ObjList(list):
     def read(self) -> List[int]:
         ret = []
         for inst in self:
-            ret.append(inst.read())
+            try:
+                ret.append(inst.read())
+            except CSReadError as err:
+                logger().log_debug(f"Error reading instance: {err}")
         return ret
     
     def read_and_print(self):
