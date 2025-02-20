@@ -1,0 +1,94 @@
+<?xml version="1.0"?>
+<configuration>
+    <registers>
+      <register name="ABAR" type="pcicfg" offset="0x24" size="4" desc="AHCI Base Address">
+        <field name="BA" bit="11" size="21" desc="Base Address" />
+        <field name="PF" bit="3" size="1" desc="Pre-fetchable" />
+        <field name="TP" bit="1" size="2" desc="TP" />
+        <field name="RTE" bit="0" size="1" desc="Resource Type Indicator" />
+      </register>
+      <register name="SVID" type="pcicfg" offset="0x2C" size="2" desc="SVID">
+          <field name="SVID" bit="0" size="16" desc="Subsystem Vendor ID Number" />
+      </register>
+      <register name="SID" type="pcicfg" offset="0x2E" size="2" desc="SID">
+          <field name="SID" bit="0" size="16" desc="Subsystem ID Number" />
+      </register>
+      <register name="CAP" type="pcicfg" offset="0x34" size="1" desc="Capabilities Pointer">
+        <field name="CP" bit="0" size="8" desc="Register Lock" lockedby="SATAGC.REGLOCK"/>
+      </register>
+      <register name="INTR" type="pcicfg" offset="0x3C" size="2" desc="Interrupt Information">
+          <field name="IPIN" bit="8" size="8" desc="Interrupt Pin" />
+          <field name="ILINE" bit="0" size="8" desc="Interrupt Line" />
+      </register>
+      <register name="PID" type="pcicfg" offset="0x70" size="2" desc="PCI Power Managment Capability ID">
+        <field name="NEXT" bit="8" size="8" desc="Next Capability" lockedby="SATAGC.REGLOCK"/>
+      </register>
+
+      <register name="MID" type="pcicfg" offset="0x80" size="2" desc="Message Signaled Interrupt ID">
+        <field name="NEXT" bit="8" size="8" desc="Next Capability" lockedby="SATAGC.REGLOCK"/>
+      </register>
+
+      <register name="MAP" type="pcicfg" offset="0x90" size="4" desc="Port Mapping Register">
+        <field name="SPD7" bit="23" size="1" desc="SATA Port 7 Disable" />
+        <field name="SPD6" bit="22" size="1" desc="SATA Port 6 Disable" />
+        <field name="SPD5" bit="21" size="1" desc="SATA Port 5 Disable" />
+        <field name="SPD4" bit="20" size="1" desc="SATA Port 4 Disable" />
+        <field name="SPD3" bit="19" size="1" desc="SATA Port 3 Disable" />
+        <field name="SPD2" bit="18" size="1" desc="SATA Port 2 Disable" />
+        <field name="SPD1" bit="17" size="1" desc="SATA Port 1 Disable" />
+        <field name="SPD0" bit="16" size="1" desc="SATA Port 0 Disable" />
+        <field name="PCD" bit="0" size="8" desc="Port Clock Disable" />
+      </register>
+
+      <register name="SATAGC" type="pcicfg" offset="0x9C" size="4" desc="SATA General Configuration">
+        <field name="REGLOCK" bit="31" size="1" desc="Register Lock" />
+        <field name="AIE" bit="7" size="1" desc="Alternate ID Enable" />
+        <field name="DEVIDSEL" bit="6" size="1" desc="AIE0 DevID Selection"/>
+        <field name="FLRCSSEL" bit="5" size="1" desc="FLR Capability Selection"/>
+        <field name="MSS" bit="3" size="2" desc="MXTBA Size Select"/>
+        <field name="ASSEL" bit="0" size="3" desc="ABAR Size Select"/>
+      </register>
+
+      <register name="SATACR0" type="pcicfg" offset="0xA8" size="4" desc="Serial ATA Capability Register 0">
+        <field name="NEXT" bit="8" size="8" desc="Next Capability" lockedby="SATAGC.REGLOCK"/>
+      </register>
+
+      <register name="MXID" type="pcicfg" offset="0xD0" size="2" desc="MSI-X ID">
+        <field name="NEXT" bit="8" size="8" desc="Next Capability" lockedby="SATAGC.REGLOCK"/>
+      </register>
+
+      <register name="MXT" type="pcicfg" offset="0xD4" size="4" desc="MSIX Table Offset and Table BIR">
+        <field name="TO" bit="3" size="29" desc="Table Offset"/>
+        <field name="TBIR" bit="0" size="3" desc="Table BIR"/>
+      </register>
+
+      <register name="MXP" type="pcicfg" offset="0xD8" size="4" desc="MSI-X PBA Offset and PBA BIR">
+        <field name="PBAO" bit="3" size="29" desc="PBA Offset"/>
+        <field name="PBIR" bit="0" size="3" desc="PBA BIR"/>
+      </register>
+
+    </registers>
+
+    <locks>
+      <lock register="SVID" field="SVID" type="RW/O" value="0x1" desc="RW/O register" />
+      <lock register="SID" field="SID" type="RW/O" value="0x1" desc="RW/O register" />
+      <lock register="INTR" field="IPIN" type="RW/O" value="0x1" desc="RW/O register" />
+      <lock register="MAP" field="SPD7" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="MAP" field="SPD6" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="MAP" field="SPD5" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="MAP" field="SPD4" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="MAP" field="SPD3" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="MAP" field="SPD2" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="MAP" field="SPD1" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="MAP" field="SPD0" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="SATAGC" field="REGLOCK" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="SATAGC" field="AIE" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="SATAGC" field="DEVIDSEL" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="SATAGC" field="FLRCSSEL" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="SATAGC" field="MSS" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="SATAGC" field="ASSEL" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="MXT" field="TO" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="MXP" field="PBAO" value="0x1" type="RW/O" desc="RW/O Register"/>
+    </locks>
+
+</configuration>

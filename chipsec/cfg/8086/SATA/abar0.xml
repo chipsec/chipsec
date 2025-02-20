@@ -1,0 +1,275 @@
+<?xml version="1.0"?>
+<configuration>
+    <registers>
+      <register name="GHC_CAP" type="mmio" bar="ABAR" offset="0x0" size="4" desc="HBA Capabilities" >
+          <field name="S64A" bit="31" size="1" desc="Supports 64-bit Addressing" />
+          <field name="SCQA" bit="30" size="1" desc="Supports Native Command Queing Acceleration" />
+          <field name="SSNTF" bit="29" size="1" desc="Supports SNotification Register" />
+          <field name="SMPS" bit="28" size="1" desc="Supports Mechanical Presence Switch" />
+          <field name="SSS" bit="27" size="1" desc="Supports Staggered Spin-up" />
+          <field name="SALP" bit="26" size="1" desc="Supports Aggressive Link Power Management" />
+          <field name="SAL" bit="25" size="1" desc="Supports Activicty LED" />
+          <field name="SCLO" bit="24" size="1" desc="Supports Command List Override" />
+          <field name="ISS" bit="20" size="4" desc="Interface Speed Support" />
+          <field name="SAM" bit="18" size="1" desc="Supports AHCI mode Only" />
+          <field name="SPM" bit="17" size="1" desc="Supports Port Multiplier" />
+          <field name="FBSS" bit="16" size="1" desc="FIS-based Switching Supported" />
+          <field name="PMD" bit="15" size="1" desc="PIO Multiple DRQ Block" />
+          <field name="SSC" bit="14" size="1" desc="Slumber State Capable" />
+          <field name="PSC" bit="13" size="1" desc="Partial State Capable" />
+          <field name="NCS" bit="8" size="5" desc="Number of Command Slots" />
+          <field name="CCCS" bit="7" size="1" desc="Command Completion Coalescing Supported" />
+          <field name="EMS" bit="6" size="1" desc="Enclosure Managment Supported" />
+          <field name="SXS" bit="5" size="1" desc="Supports External SATA" />
+          <field name="NP" bit="0" size="5" desc="Number of Ports" />
+      </register>
+
+      <register name="GHC_PI" type="mmio" bar="ABAR" offset="0xC" size="4" desc="Ports Implemented" >
+          <field name="PI7" bit="7" size="1" desc="Port 7 Implemented" />
+          <field name="PI6" bit="6" size="1" desc="Port 6 Implemented" />
+          <field name="PI5" bit="5" size="1" desc="Port 5 Implemented" />
+          <field name="PI4" bit="4" size="1" desc="Port 4 Implemented" />
+          <field name="PI3" bit="3" size="1" desc="Port 3 Implemented" />
+          <field name="PI2" bit="2" size="1" desc="Port 2 Implemented" />
+          <field name="PI1" bit="1" size="1" desc="Port 1 Implemented" />
+          <field name="PI0" bit="0" size="1" desc="Port 0 Implemented" />
+      </register>
+
+      <register name="EM_CTL" type="mmio" bar="ABAR" offset="20" size="4" desc="Enclosure Managment Control" >
+          <field name="ATTR_ALHD" bit="26" size="1" desc="Activity LED Hardware Driven" />
+      </register>
+
+      <register name="GHC_CAP2" type="mmio" bar="ABAR" offset="0x24" size="4" desc="HBA Capabilities Extended" >
+          <field name="DESO" bit="5" size="1" desc="DEVSLP Enterance from Slumber Only" />
+          <field name="SADM" bit="4" size="1" desc="Supports Aggressive DEVSLP Management" />
+          <field name="SDS" bit="3" size="1" desc="Supports DEVSLP" />
+          <field name="APST" bit="2" size="1" desc="Automatic Partial to Slumber Transitions" />
+          <field name="BOH" bit="0" size="1" desc="BIOS/OS Handoff" />
+      </register>
+
+      <register name="VS_CAP" type="mmio" bar="ABAR" offset="0xA4" size="4" desc="Vendor Specific Capabilities " >
+          <field name="NRMO" bit="16" size="12" desc="NVM Remapped Register Offset" />
+          <field name="MSL" bit="1" size="12" desc="Memory Space Limit" />
+          <field name="NRMBE" bit="0" size="1" desc="PCIe NAND Memory BAR Remapped Enable" />
+      </register>
+
+    <register name="SFM" type="mmio" bar="ABAR" offset="0xC8" size="2" desc="SW Feature Mask" >
+          <field name="OROM_UI_Normal_Delay" bit="10" size="2" desc="OROM_UI_Normal_Delay" />
+          <field name="Smart_Respnse_Technology" bit="9" size="1" desc="Smart_Respnse_Technology" />
+          <field name="IRRT_Only_on_ESATA" bit="8" size="1" desc="IRRT_Only_on_ESATA" />
+          <field name="LED_Locate" bit="7" size="1" desc="LED_Locate" />
+          <field name="HDDUNLOCK" bit="6" size="1" desc="HDDUNLOCK" />
+          <field name="OROM_UI_and_BANNER" bit="5" size="1" desc="OROM_UI_and_BANNER" />
+          <field name="IRRT" bit="4" size="1" desc="IRRT" />
+          <field name="R5" bit="3" size="1" desc="R5" />
+          <field name="R10" bit="2" size="1" desc="R10" />
+          <field name="R1" bit="1" size="1" desc="R1" />
+          <field name="R0" bit="0" size="1" desc="R0" />
+      </register>
+
+      <register name="P0CMD" type="mmio" bar="ABAR" offset="0x118" size="4" desc="Port 0 Command" >
+          <field name="ESP" bit="21" size="1" desc="External SATA Port" />
+          <field name="MPSP" bit="19" size="1" desc="Mechanical Presence Switch Attached to Port" />
+          <field name="HPCP" bit="18" size="1" desc="Hot Plug Capable Port" />
+      </register>
+
+      <register name="P0DEVSLP" type="mmio" bar="ABAR" offset="0x144" size="4" desc="Port 0 Device Sleep" >
+          <field name="DM" bit="25" size="4" desc="DITO Multiplier" />
+          <field name="DITO" bit="15" size="10" desc="DEVSLP Idle Timeout" />
+          <field name="MDAT" bit="10" size="5" desc="DEVSLP Minimum Assertion Time" />
+          <field name="DETO" bit="2" size="8" desc="DEVSLP Exit Timeout" />
+          <field name="DSP" bit="1" size="1" desc="DEVSLP Present" />
+          <field name="ADSE" bit="0" size="1" desc="Aggressive DEVSLP Enable" />
+      </register>
+
+      <register name="P1CMD" type="mmio" bar="ABAR" offset="0x198" size="4" desc="Port 0 Command" >
+          <field name="ESP" bit="21" size="1" desc="External SATA Port" />
+          <field name="MPSP" bit="19" size="1" desc="Mechanical Presence Switch Attached to Port" />
+          <field name="HPCP" bit="18" size="1" desc="Hot Plug Capable Port" />
+      </register>
+
+      <register name="P1DEVSLP" type="mmio" bar="ABAR" offset="0x1C4" size="4" desc="Port 0 Device Sleep" >
+          <field name="DM" bit="25" size="4" desc="DITO Multiplier" />
+          <field name="DITO" bit="15" size="10" desc="DEVSLP Idle Timeout" />
+          <field name="MDAT" bit="10" size="5" desc="DEVSLP Minimum Assertion Time" />
+          <field name="DETO" bit="2" size="8" desc="DEVSLP Exit Timeout" />
+          <field name="DSP" bit="1" size="1" desc="DEVSLP Present" />
+          <field name="ADSE" bit="0" size="1" desc="Aggressive DEVSLP Enable" />
+      </register>
+
+      <register name="P2CMD" type="mmio" bar="ABAR" offset="0x218" size="4" desc="Port 0 Command" >
+          <field name="ESP" bit="21" size="1" desc="External SATA Port" />
+          <field name="MPSP" bit="19" size="1" desc="Mechanical Presence Switch Attached to Port" />
+          <field name="HPCP" bit="18" size="1" desc="Hot Plug Capable Port" />
+      </register>
+
+      <register name="P2DEVSLP" type="mmio" bar="ABAR" offset="0x244" size="4" desc="Port 0 Device Sleep" >
+          <field name="DM" bit="25" size="4" desc="DITO Multiplier" />
+          <field name="DITO" bit="15" size="10" desc="DEVSLP Idle Timeout" />
+          <field name="MDAT" bit="10" size="5" desc="DEVSLP Minimum Assertion Time" />
+          <field name="DETO" bit="2" size="8" desc="DEVSLP Exit Timeout" />
+          <field name="DSP" bit="1" size="1" desc="DEVSLP Present" />
+          <field name="ADSE" bit="0" size="1" desc="Aggressive DEVSLP Enable" />
+      </register>
+
+      <register name="P3CMD" type="mmio" bar="ABAR" offset="0x298" size="4" desc="Port 0 Command" >
+          <field name="ESP" bit="21" size="1" desc="External SATA Port" />
+          <field name="MPSP" bit="19" size="1" desc="Mechanical Presence Switch Attached to Port" />
+          <field name="HPCP" bit="18" size="1" desc="Hot Plug Capable Port" />
+      </register>
+
+      <register name="P3DEVSLP" type="mmio" bar="ABAR" offset="0x2C4" size="4" desc="Port 0 Device Sleep" >
+          <field name="DM" bit="25" size="4" desc="DITO Multiplier" />
+          <field name="DITO" bit="15" size="10" desc="DEVSLP Idle Timeout" />
+          <field name="MDAT" bit="10" size="5" desc="DEVSLP Minimum Assertion Time" />
+          <field name="DETO" bit="2" size="8" desc="DEVSLP Exit Timeout" />
+          <field name="DSP" bit="1" size="1" desc="DEVSLP Present" />
+          <field name="ADSE" bit="0" size="1" desc="Aggressive DEVSLP Enable" />
+      </register>
+
+        <register name="P4CMD" type="mmio" bar="ABAR" offset="0x318" size="4" desc="Port 0 Command" >
+          <field name="ESP" bit="21" size="1" desc="External SATA Port" />
+          <field name="MPSP" bit="19" size="1" desc="Mechanical Presence Switch Attached to Port" />
+          <field name="HPCP" bit="18" size="1" desc="Hot Plug Capable Port" />
+      </register>
+
+      <register name="P4DEVSLP" type="mmio" bar="ABAR" offset="0x344" size="4" desc="Port 0 Device Sleep" >
+          <field name="DM" bit="25" size="4" desc="DITO Multiplier" />
+          <field name="DITO" bit="15" size="10" desc="DEVSLP Idle Timeout" />
+          <field name="MDAT" bit="10" size="5" desc="DEVSLP Minimum Assertion Time" />
+          <field name="DETO" bit="2" size="8" desc="DEVSLP Exit Timeout" />
+          <field name="DSP" bit="1" size="1" desc="DEVSLP Present" />
+          <field name="ADSE" bit="0" size="1" desc="Aggressive DEVSLP Enable" />
+      </register>
+
+      <register name="P5CMD" type="mmio" bar="ABAR" offset="0x398" size="4" desc="Port 0 Command" >
+          <field name="ESP" bit="21" size="1" desc="External SATA Port" />
+          <field name="MPSP" bit="19" size="1" desc="Mechanical Presence Switch Attached to Port" />
+          <field name="HPCP" bit="18" size="1" desc="Hot Plug Capable Port" />
+      </register>
+
+      <register name="P5DEVSLP" type="mmio" bar="ABAR" offset="0x3C4" size="4" desc="Port 0 Device Sleep" >
+          <field name="DM" bit="25" size="4" desc="DITO Multiplier" />
+          <field name="DITO" bit="15" size="10" desc="DEVSLP Idle Timeout" />
+          <field name="MDAT" bit="10" size="5" desc="DEVSLP Minimum Assertion Time" />
+          <field name="DETO" bit="2" size="8" desc="DEVSLP Exit Timeout" />
+          <field name="DSP" bit="1" size="1" desc="DEVSLP Present" />
+          <field name="ADSE" bit="0" size="1" desc="Aggressive DEVSLP Enable" />
+      </register>
+
+        <register name="P6CMD" type="mmio" bar="ABAR" offset="0x418" size="4" desc="Port 0 Command" >
+          <field name="ESP" bit="21" size="1" desc="External SATA Port" />
+          <field name="MPSP" bit="19" size="1" desc="Mechanical Presence Switch Attached to Port" />
+          <field name="HPCP" bit="18" size="1" desc="Hot Plug Capable Port" />
+      </register>
+
+      <register name="P6DEVSLP" type="mmio" bar="ABAR" offset="0x444" size="4" desc="Port 0 Device Sleep" >
+          <field name="DM" bit="25" size="4" desc="DITO Multiplier" />
+          <field name="DITO" bit="15" size="10" desc="DEVSLP Idle Timeout" />
+          <field name="MDAT" bit="10" size="5" desc="DEVSLP Minimum Assertion Time" />
+          <field name="DETO" bit="2" size="8" desc="DEVSLP Exit Timeout" />
+          <field name="DSP" bit="1" size="1" desc="DEVSLP Present" />
+          <field name="ADSE" bit="0" size="1" desc="Aggressive DEVSLP Enable" />
+      </register>
+
+      <register name="P7CMD" type="mmio" bar="ABAR" offset="0x498" size="4" desc="Port 0 Command" >
+          <field name="ESP" bit="21" size="1" desc="External SATA Port" />
+          <field name="MPSP" bit="19" size="1" desc="Mechanical Presence Switch Attached to Port" />
+          <field name="HPCP" bit="18" size="1" desc="Hot Plug Capable Port" />
+      </register>
+
+      <register name="P7DEVSLP" type="mmio" bar="ABAR" offset="0x4C4" size="4" desc="Port 0 Device Sleep" >
+          <field name="DM" bit="25" size="4" desc="DITO Multiplier" />
+          <field name="DITO" bit="15" size="10" desc="DEVSLP Idle Timeout" />
+          <field name="MDAT" bit="10" size="5" desc="DEVSLP Minimum Assertion Time" />
+          <field name="DETO" bit="2" size="8" desc="DEVSLP Exit Timeout" />
+          <field name="DSP" bit="1" size="1" desc="DEVSLP Present" />
+          <field name="ADSE" bit="0" size="1" desc="Aggressive DEVSLP Enable" />
+      </register>
+
+    </registers>
+
+    <locks>
+      <lock register="GHC_CAP" field="S64A" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="GHC_CAP" field="SCQA" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="GHC_CAP" field="SSNTF" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="GHC_CAP" field="SMPS" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="GHC_CAP" field="SSS" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="GHC_CAP" field="SAL" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="GHC_CAP" field="SCLO" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="GHC_CAP" field="ISS" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="GHC_CAP" field="SPM" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="GHC_CAP" field="SSC" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="GHC_CAP" field="PSC" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="GHC_CAP" field="EMS" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="GHC_CAP" field="SXS" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="GHC_PI" field="PI7" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="GHC_PI" field="PI6" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="GHC_PI" field="PI5" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="GHC_PI" field="PI4" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="GHC_PI" field="PI3" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="GHC_PI" field="PI2" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="GHC_PI" field="PI1" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="GHC_PI" field="PI0" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="EM_CTL" field="ATTR_ALHD" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="GHC_CAP2" field="DESO" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="GHC_CAP2" field="SADM" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="GHC_CAP2" field="SDS" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="GHC_CAP2" field="APST" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="VS_CAP" field="NRMO" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="VS_CAP" field="MSL" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="VS_CAP" field="NRMBE" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="SFM" field="OROM_UI_Normal_Delay" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="SFM" field="Smart_Respnse_Technology" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="SFM" field="IRRT_Only_on_ESATA" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="SFM" field="LED_Locate" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="SFM" field="HDDUNLOCK" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="SFM" field="OROM_UI_and_BANNER" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="SFM" field="IRRT" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="SFM" field="R5" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="SFM" field="R10" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="SFM" field="R1" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="SFM" field="R0" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P0CMD" field="ESP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P0CMD" field="MPSP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P0CMD" field="HPCP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P0DEVSLP" field="DM" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P0DEVSLP" field="DSP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P0CMD" field="ESP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P0CMD" field="MPSP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P0CMD" field="HPCP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P0DEVSLP" field="DM" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P0DEVSLP" field="DSP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P1CMD" field="ESP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P1CMD" field="MPSP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P1CMD" field="HPCP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P1DEVSLP" field="DM" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P1DEVSLP" field="DSP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P2CMD" field="ESP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P2CMD" field="MPSP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P2CMD" field="HPCP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P2DEVSLP" field="DM" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P2DEVSLP" field="DSP" value="0x1" type="RW/O" desc="RW/O Register"/>\
+      <lock register="P3CMD" field="ESP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P3CMD" field="MPSP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P3CMD" field="HPCP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P3DEVSLP" field="DM" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P3DEVSLP" field="DSP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P4CMD" field="ESP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P4CMD" field="MPSP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P4CMD" field="HPCP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P4DEVSLP" field="DM" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P4DEVSLP" field="DSP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P5CMD" field="ESP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P5CMD" field="MPSP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P5CMD" field="HPCP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P5DEVSLP" field="DM" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P5DEVSLP" field="DSP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P6CMD" field="ESP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P6CMD" field="MPSP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P6CMD" field="HPCP" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P6DEVSLP" field="DM" value="0x1" type="RW/O" desc="RW/O Register"/>
+      <lock register="P6DEVSLP" field="DSP" value="0x1" type="RW/O" desc="RW/O Register"/>
+    </locks>
+
+</configuration>

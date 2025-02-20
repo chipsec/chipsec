@@ -1,0 +1,210 @@
+<?xml version="1.0"?>
+<configuration>
+  <mmio>
+    <bar name="BAR" register="BAR" base_field="BA" size="0x1000" desc="PCIE BAR0" />
+  </mmio>
+    <registers>
+        <register name="BAR"   type="pcicfg" offset="0x10" size="8" desc="Base Address">
+            <field name="BA" bit="13" size="51" desc="Base Address"/>
+            <field name="MMT" bit="1" size="2" desc ="Memory Mapping Type"/>
+        </register>
+
+        <register name="CAPP" type="pcicfg" offset="0x34" size="1" desc="Capabilities List Pointer">
+        <field name="PTR" bit="0" size="8" desc="Capabilities Pointer" />
+        </register>
+        <register name="CLIST" type="pcicfg" offset="0x40" size="2" desc="Capabilities List And PCI Express Capabilities">
+        <field name="NEXT" bit="8" size="8" desc="Next Capability" />
+        <field name="CID" bit="0" size="8" desc="Capability ID" />
+        </register>
+        <register name="DCAP" type="pcicfg" offset="0x44" size="4" desc="Device Capabilities">
+        <field name="ETFS" bit="5" size="1" desc="Extended Tag Field Supported" />
+        <field name="MPS" bit="0" size="3" desc="Max Payload Size Supported" />
+        </register>
+        <register name="LCAP" type="pcicfg" offset="0x4C" size="4" desc="Link Capabilities">
+        <field name="ASPMOC" bit="22" size="1" desc="ASPM Optionality Compliance" />
+        <field name="EL1" bit="15" size="3" desc="L1 Exit Latency" />
+        <field name="ASPM" bit="10" size="2" desc="Active State Link Power PM Support" />
+        </register>
+        <register name="LCTL" type="pcicfg" offset="0x50" size="4" desc="Link Control And Link Status">
+        <field name="RCBC" bit="3" size="1" desc="Read Completion Boundary Control" />
+        </register>
+        <register name="SLCAP" type="pcicfg" offset="0x54" size="4" desc="Slot Capabilities">
+        <field name="PSN" bit="19" size="13" desc="Physical Slot Number" />
+        <field name="NCCS" bit="18" size="1" desc="No Command Completed Support" />
+        <field name="EMIP" bit="17" size="1" desc="Electromechanical Interlock Present" />
+        <field name="SLS" bit="15" size="2" desc="Slot Power Limit Scale" />
+        <field name="SLV" bit="7" size="8" desc="Slot Power Limit Value" />
+        <field name="HPC" bit="6" size="1" desc="Hot Plug Capable" />
+        <field name="HPS" bit="5" size="1" desc="Hot Plug Surprise" />
+        <field name="PIP" bit="4" size="1" desc="Power Indicator Present" />
+        <field name="AIP" bit="3" size="1" desc="Attention Indicator Present" />
+        <field name="MSP" bit="2" size="1" desc="MRL Sensor Presentr" />
+        <field name="PCP" bit="1" size="1" desc="Power Controller Present" />
+        <field name="ABP" bit="0" size="1" desc="Attention Button Prenent" />
+        </register>
+        <register name="ROOTCAP" type="pcicfg" offset="0x5E" size="2" desc="Root Capabilities">
+        <field name="CRSSV" bit="0" size="1" desc="CRS Software Visibility" />
+        </register>
+        <register name="DCAP2" type="pcicfg" offset="0x64" size="4" desc="Device Capabilities 2">
+        <field name="MEETLPP" bit="22" size="2" desc="Max End-End TLP Prefixes" />
+        <field name="EETLPPS" bit="21" size="1" desc="End-End TLP Prefix supported" />
+        <field name="EFFS" bit="20" size="1" desc="Extended Fmt Field supported" />
+        <field name="OBFFS" bit="18" size="2" desc="Optimized Buffer Flush/Fill Supported" />
+        <field name="PX10BTRS" bit="17" size="1" desc="10-bit tag requester Supported" />
+        <field name="PX10BTCS" bit="16" size="1" desc="10-bit tag completer Supported" />
+        <field name="LTRMS" bit="11" size="1" desc="LTR Mechanism Supported" />
+        <field name="AC128BS" bit="9" size="1" desc="CAS Completer 128-bit Supported" />
+        <field name="AC64BS" bit="8" size="1" desc="AtomicOp Completer 64-bit Supported" />
+        <field name="AC32BS" bit="7" size="1" desc="LTR Mechanism Supported" />
+        <field name="ARS" bit="6" size="1" desc="LTR Mechanism Supported" />
+        </register>
+        <register name="LCAP2" type="pcicfg" offset="0x6C" size="4" desc="Link Capabilities 2">
+        <field name="TRPDS" bit="24" size="1" desc="Two Retimers Presence Detect Supported" />
+        <field name="RPDS" bit="23" size="1" desc="Retimers Presence Detect Supported" />
+        <field name="LSOSRSS" bit="16" size="7" desc="Lower SKP Reception supported Speeds Vector" />
+        <field name="LSOSGSSV" bit="9" size="7" desc="Lower SKP Generation supported Speeds Vector" />
+        </register>
+        <register name="MID" type="pcicfg" offset="0x80" size="4" desc="MSI ID and MSI Message Control">
+        <field name="NEXT" bit="8" size="8" desc="Next Pointer" />
+        </register>
+        <register name="SVCAP" type="pcicfg" offset="0x98" size="4" desc="Subsystem Vendor Capability">
+        <field name="NEXT" bit="8" size="8" desc="Next Pointer" />
+        </register>
+        <register name="SVID" type="pcicfg" offset="0x94" size="4" desc="Subsystem Vendor IDs">
+        <field name="SID" bit="16" size="16" desc="Subsystem Identifier" />
+        <field name="SVID" bit="0" size="16" desc="Subsystem Vendor Identifier" />
+        </register>
+        <register name="PMCS" type="pcicfg" offset="0xA4" size="4" desc="PCI Power Management Control And Status">
+        <field name="NSR" bit="3" size="1" desc="No Soft Reset" />
+        </register>
+        <register name="MPC" type="pcicfg" offset="0xD8" size="4" desc="Miscellaneous Port Configuration">
+        <field name="LHO" bit="29" size="1" desc="Link Hold Off" lockedby="MPC.SRL" />
+        <field name="IRRCE" bit="25" size="1" desc="Invalid Receive Range Check Enable" lockedby="MPC.SRL" />
+        <field name="BMERCE" bit="24" size="1" desc="BME Receive Check Enable" lockedby="MPC.SRL" />
+        <field name="SRL" bit="23" size="1" desc="Secured Register Lock" />
+        <field name="BT" bit="2" size="1" desc="Bridge Type" />
+        </register>
+        <register name="AECH" type="mmcfg" offset="0x100" size="4" desc="Advanced Error Extended Reporting Capability Header">
+        <field name="NCO" bit="20" size="12" desc="Next Capability Offset" />
+        <field name="CV" bit="16" size="4" desc="Capability Version" />
+        <field name="CID" bit="0" size="16" desc="Capability ID" />
+        </register>
+        <register name="L1SECH" type="mmcfg" offset="0x200" size="4" desc="L1 Sub-States Extended Capability Header">
+        <field name="NCO" bit="20" size="12" desc="Next Capability Offset" />
+        <field name="CV" bit="16" size="4" desc="Capability Version" />
+        <field name="PCIEEC" bit="0" size="16" desc="PCI Express Extended Capability ID" />
+        </register>
+        <register name="L1SCAP" type="mmcfg" offset="0x204" size="4" desc="L1 Sub-States Capabilities">
+        <field name="PTV" bit="19" size="5" desc="Port Tpower_on Value" />
+        <field name="PTPOS" bit="16" size="2" desc="Port Tpower_on Scale" />
+        <field name="PCMRT" bit="8" size="8" desc="Port Common Mode Restore Time" />
+        <field name="L1PSS" bit="4" size="1" desc="L1 PM Substates Supported" />
+        <field name="AL11S" bit="3" size="1" desc="ASPM L1.1 Substates Supported" />
+        <field name="AL12S" bit="2" size="1" desc="ASPM L1.2 Substates Supported" />
+        <field name="PP11S" bit="1" size="1" desc="PCI-PM L1.1 Supported" />
+        <field name="PP12S" bit="0" size="1" desc="PCI-PM L1.2 Supported" />
+        </register>
+        <register name="ACSCAPR" type="mmcfg" offset="0x224" size="2" desc="ACS Capability Register And ACS Control Register">
+        <field name="U" bit="4" size="1" desc="ACS Upstream Forwarding" />
+        <field name="C" bit="3" size="1" desc="ACS P2P Completion Redirect" />
+        <field name="R" bit="3" size="1" desc="ACS P2P Request Redirect" />
+        <field name="B" bit="1" size="1" desc="ACS Transaction Blocking" />
+        <field name="V" bit="0" size="1" desc="ACS Source Validation" />
+        </register>
+        <register name="PVCCR1" type="mmcfg" offset="0x284" size="4" desc="Port VC Capability Register">
+        <field name="EVCC" bit="0" size="3" desc="Extended VC Count" />
+        </register>
+        <register name="V0VCRC" type="mmcfg" offset="0x290" size="4" desc="Port VC Capability Register">
+        <field name="MTS" bit="16" size="7" desc="Maximum Time Slots" />
+        </register>
+        <register name="V1VCRC" type="mmcfg" offset="0x290" size="4" desc="Port VC Capability Register">
+        <field name="MTS" bit="16" size="7" desc="Maximum Time Slots" />
+        </register>
+        <register name="SPEECH" type="mmcfg" offset="0xA30" size="4" desc="Secondary PCIe Extended Capability Header">
+        <field name="NCO" bit="20" size="12" desc="Next Capability Offset" />
+        <field name="CV" bit="16" size="4" desc="Capability Version" />
+        <field name="PCIEECID" bit="0" size="16" desc="Capability ID" />
+        </register>
+        <register name="PL16GECH" type="mmcfg" offset="0xA9C" size="4" desc="Physical Layer 16.0 GT/s Extended Capability Header">
+        <field name="NCO" bit="20" size="12" desc="Next Capability Offset" />
+        <field name="CV" bit="16" size="4" desc="Capability Version" />
+        <field name="PCIEECID" bit="0" size="16" desc="Capability ID" />
+        </register>
+
+    </registers>
+
+    <locks>
+        <lock register="BAR" field="MMT" type="RW/O" value="0x10" desc="N/A"/>
+        <lock register="CAPP" field="PTR" type="RW/O" value="0x0" desc="N/A"/>
+        <lock register="CLIST" field="NEXT" type="RW/O" value="0x0" desc="N/A"/>
+        <lock register="DCAP" field="ETFS" type="RW/O" value="0x10" desc="N/A"/>
+        <lock register="LCAP" field="ASPMOC" type="RW/O" value="0x10" desc="N/A"/>
+        <lock register="LCAP" field="EL1" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="LCAP" field="ASPM" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="LCTL" field="RCBC" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="SLCAP" field="PSN" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="SLCAP" field="NCCS" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="SLCAP" field="EMIP" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="SLCAP" field="SLS" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="SLCAP" field="SLV" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="SLCAP" field="HPC" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="SLCAP" field="HPS" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="SLCAP" field="PIP" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="SLCAP" field="AIP" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="SLCAP" field="MSP" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="SLCAP" field="PCP" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="SLCAP" field="ABP" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="ROOTCAP" field="CRSSV" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="DCAP2" field="MEETLPP" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="DCAP2" field="EETLPPS" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="DCAP2" field="EFFS" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="DCAP2" field="OBFFS" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="DCAP2" field="PX10BTRS" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="DCAP2" field="PX10BTCS" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="DCAP2" field="LTRMS" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="DCAP2" field="AC128BS" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="DCAP2" field="AC64BS" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="DCAP2" field="AC32BS" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="DCAP2" field="ARS" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="LCAP2" field="TRPDS" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="LCAP2" field="RPDS" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="LCAP2" field="LSOSRSS" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="LCAP2" field="LSOSGSSV" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="MID" field="NEXT" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="SVCAP" field="NEXT" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="SVID" field="SID" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="SVID" field="SVID" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="PMCS" field="NSR" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="MPC" field="SRL" type="RW/L" value="0x1" desc="N/A"/>
+        <lock register="MPC" field="BT" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="AECH" field="NCO" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="AECH" field="CV" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="AECH" field="CID" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="L1SECH" field="NCO" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="L1SECH" field="CV" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="L1SECH" field="PCIEEC" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="L1SCAP" field="PTV" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="L1SCAP" field="PTPOS" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="L1SCAP" field="PCMRT" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="L1SCAP" field="L1PSS" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="L1SCAP" field="AL11S" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="L1SCAP" field="AL12S" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="L1SCAP" field="PP11S" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="L1SCAP" field="PP12S" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="ACSCAPR" field="U" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="ACSCAPR" field="C" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="ACSCAPR" field="R" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="ACSCAPR" field="B" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="ACSCAPR" field="V" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="PVCCR1" field="EVCC" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="V0VCRC" field="MTS" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="V1VCRC" field="MTS" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="SPEECH" field="NCO" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="SPEECH" field="CV" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="SPEECH" field="PCIEECID" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="PL16GECH" field="NCO" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="PL16GECH" field="CV" type="RW/O" value="0x1" desc="N/A"/>
+        <lock register="PL16GECH" field="PCIEECID" type="RW/O" value="0x1" desc="N/A"/>
+    </locks>
+
+</configuration>
