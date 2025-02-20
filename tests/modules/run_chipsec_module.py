@@ -23,6 +23,7 @@ from unittest.mock import Mock
 
 import chipsec.helper.replay.replayhelper as rph
 from chipsec_main import ChipsecMain, parse_args
+from chipsec.chipset import clear_cs
 import chipsec.chipset as cs
 import chipsec.library.logger
 
@@ -54,4 +55,6 @@ def setup_run_destroy_module(init_replay_file: str, module_str: str, module_args
     csm = ChipsecMain(par, cli_cmds)
     replayHelper = rph.ReplayHelper(init_replay_file)
     csm._helper = replayHelper
-    return run_chipsec_module(csm, module_replay_file)
+    chipsec_return = run_chipsec_module(csm, module_replay_file)
+    clear_cs()
+    return chipsec_return

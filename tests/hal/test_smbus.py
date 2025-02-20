@@ -21,7 +21,7 @@
 import unittest
 
 from unittest.mock import MagicMock, patch
-from chipsec.hal.smbus import SMBus, SMBUS_POLL_COUNT
+from chipsec.hal.common.smbus import SMBus, SMBUS_POLL_COUNT
 from chipsec.library.exceptions import IOBARNotFoundError,RegisterNotFoundError
 
 class TestSMBUS(unittest.TestCase):
