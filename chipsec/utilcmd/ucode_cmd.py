@@ -29,8 +29,6 @@ Examples:
 """
 
 from chipsec.command import BaseCommand, toLoad
-from chipsec.library.file import read_file
-from chipsec.hal.common.ucode import dump_ucode_update_header
 from argparse import ArgumentParser
 
 # ###################################################################
@@ -79,12 +77,9 @@ class UCodeCommand(BaseCommand):
             self.cs.ucode.update_ucode(self.cpu_thread_id, self.ucode_filename)
 
     def ucode_decode(self):
-        if (not self.ucode_filename.endswith('.pdb')):
-            self.logger.log("[CHIPSEC] Ucode update file is not PDB file: '{}'".format(self.ucode_filename))
-            return
-        pdb_ucode_buffer = read_file(self.ucode_filename)
-        self.logger.log("[CHIPSEC] Decoding Microcode Update header of PDB file: '{}'".format(self.ucode_filename))
-        dump_ucode_update_header(pdb_ucode_buffer)
+        ucode_buffer = self.cs.hals.Ucode.read_ucode_file(self.ucode_filename)
+        self.logger.log("[CHIPSEC] Decoding Microcode Update header file: '{}'".format(self.ucode_filename))
+        self.cs.hals.Ucode.dump_ucode_update_header(ucode_buffer)
 
 
 commands = {'ucode': UCodeCommand}
