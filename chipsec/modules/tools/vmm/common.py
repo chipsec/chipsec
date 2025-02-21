@@ -56,7 +56,7 @@ class BaseModuleDebug(BaseModule):
             sys.stdout.write(f'[{self.prompt}]  {message}\n')
         return
 
-    def hex(self, title: str, data:str, w=16) -> None:
+    def hex(self, title: str, data: str, w=16) -> None:
         if title and data:
             title = f'{"-" * 6}{title}{"-" * w * 3}'
             sys.stdout.write(f'[{self.prompt}]  {title[:w * 3 + 15]}')

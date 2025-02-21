@@ -135,7 +135,7 @@ class RecordHelper(Helper):
     #
     # physical_address is 64 bit integer
     #
-    def read_phys_mem(self, phys_address:int, length:int) -> bytes:
+    def read_phys_mem(self, phys_address: int, length: int) -> bytes:
         return self._call_subhelper(phys_address, length)
 
     def write_phys_mem(self, phys_address: int, length: int, buf: bytes) -> int:

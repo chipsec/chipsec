@@ -84,7 +84,7 @@ class LinuxHelperTest(unittest.TestCase):
         (0xC0084314, b'E#\x01\x00\x00\x00\x00\x00'):
             b'\x00\x00\x00\x00\x00\x00\x00\x00',
         (0xc0084315, b'\x02\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'):
-            cpacker.custom_pack(5,0x200, 4),
+            cpacker.custom_pack(5, 0x200, 4),
         (0xc0084316, b'\x00\x00\x00\x16\x00\x00\x00\x00'):
             cpacker.custom_pack(1, 0x1, 0),
          }
@@ -109,7 +109,7 @@ class LinuxHelperTest(unittest.TestCase):
         mock_fcntl().ioctl.side_effect = LinuxHelperTest.ioctlret
         import chipsec.helper.linux.linuxhelper as lh
         unittest.TestCase.setUp(self)
-        with patch.dict(lh.os.__dict__, {'chown':lambda *args:None}):
+        with patch.dict(lh.os.__dict__, {'chown': lambda *args: None}):
             self.lhelper = lh.LinuxHelper()
             mock_open().return_value = True
             os_chmod().return_value = True
@@ -128,7 +128,7 @@ class LinuxHelperTest(unittest.TestCase):
         self.assertTrue(self.lhelper.delete())
         
     def test_map_io_space(self, _, lh_ioctl):
-        self.assertRaises(UnimplementedAPIError, self.lhelper.map_io_space, 0,0,0)
+        self.assertRaises(UnimplementedAPIError, self.lhelper.map_io_space, 0, 0, 0)
 
 
     def test_write_phys_mem(self, _, _1):
@@ -245,7 +245,7 @@ class LinuxHelperTest(unittest.TestCase):
 
     def test_write_mmio_reg(self, _, lh_ioctl):
         lh_ioctl.side_effect = LinuxHelperTest.ioctlret
-        self.lhelper.write_mmio_reg(0x123,0x1, 0x22)
+        self.lhelper.write_mmio_reg(0x123, 0x1, 0x22)
 
     def test_get_ACPI_table(self, _, lh_ioctl):
         self.assertRaises(UnimplementedAPIError, self.lhelper.get_ACPI_table, "SDEV")

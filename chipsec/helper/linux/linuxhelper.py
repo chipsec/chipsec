@@ -393,7 +393,7 @@ class LinuxHelper(Helper):
         in_buf = struct.pack(f'3{self._pack}', phys_address, size, value)
         out_buf = self.ioctl(IOCTL_WRMMIO, in_buf)
 
-    def get_ACPI_table(self, table_name:str) -> Optional['Array']:
+    def get_ACPI_table(self, table_name: str) -> Optional['Array']:
         raise UnimplementedAPIError('get_ACPI_table')
 
     def enum_ACPI_tables(self) -> Optional['Array']:
