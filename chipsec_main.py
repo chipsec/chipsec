@@ -152,9 +152,13 @@ class ChipsecMain:
 
     def verify_module_tags(self, module):
         run_it = True
+        is_archived = False
         module_tags, metadata_tags = module.get_tags()
         if len(metadata_tags) > 0:
             self.logger.log(f'[*] Metadata tags: {metadata_tags}')
+            if 'ARCHIVED' in metadata_tags:
+                run_it = False
+                is_archived = True
         if len(self.USER_MODULE_TAGS) > 0 or self._list_tags:
             run_it = False
             for mt in module_tags:
@@ -163,7 +167,7 @@ class ChipsecMain:
                         self.AVAILABLE_TAGS.append(mt)
                 elif mt in self.USER_MODULE_TAGS:
                     run_it = True
-        return run_it
+        return run_it, is_archived
 
     ##
     # full_path can be one of three things:
@@ -270,11 +274,18 @@ class ChipsecMain:
             if self.logger.DEBUG and not self._list_tags:
                 self.logger.log(f'[*] Module path: {modx.get_location()}')
 
-            if self.verify_module_tags(modx):
+            run_it, is_archived = self.verify_module_tags(modx)
+            if run_it:
                 result = modx.run(module_argv)
             else:
-                modx.mod_obj.result.setStatusBit(modx.mod_obj.result.status.NOT_APPLICABLE)
-                return modx.mod_obj.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
+                modx.get_module_object()
+                if is_archived:
+                    modx.mod_obj.result.setStatusBit(modx.mod_obj.result.status.ARCHIVED)
+                    res = ModuleResult.ARCHIVED
+                else:
+                    modx.mod_obj.result.setStatusBit(modx.mod_obj.result.status.NOT_APPLICABLE)
+                    res = ModuleResult.NOTAPPLICABLE
+                return modx.mod_obj.result.getReturnCode(res, False)
         except BaseException as msg:
             if self.logger.DEBUG:
                 self.logger.log_bad(traceback.format_exc())

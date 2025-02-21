@@ -69,22 +69,28 @@ class BaseModule:
         raise NotImplementedError('Sub-class should overwrite the run() method')
 
 
-MTAG_BIOS = 'BIOS'
-MTAG_SMM = 'SMM'
-MTAG_SECUREBOOT = 'SECUREBOOT'
-MTAG_HWCONFIG = 'HWCONFIG'
-MTAG_CPU = 'CPU'
+BIOS = 'BIOS'
+SMM = 'SMM'
+SECUREBOOT = 'SECUREBOOT'
+HWCONFIG = 'HWCONFIG'
+CPU = 'CPU'
+ARCHIVED = 'ARCHIVED'
+IA = 'IA'
+AMD = 'AMD'
 
 
 # ! [Available Tags]
-MTAG_METAS = {
-    MTAG_BIOS: 'System Firmware (BIOS/UEFI) Modules',
-    MTAG_SMM: 'System Management Mode (SMM) Modules',
-    MTAG_SECUREBOOT: 'Secure Boot Modules',
-    MTAG_HWCONFIG: 'Hardware Configuration Modules',
-    MTAG_CPU: 'CPU Modules',
+MODULE_TAG_METAS = {
+    BIOS: 'System Firmware (BIOS/UEFI) Modules',
+    SMM: 'System Management Mode (SMM) Modules',
+    SECUREBOOT: 'Secure Boot Modules',
+    HWCONFIG: 'Hardware Configuration Modules',
+    CPU: 'CPU Modules',
+    ARCHIVED: 'Archived Modules',
+    IA: 'Intel Architecture Modules',
+    AMD: 'AMD Modules'
 }
 # ! [Available Tags]
-MODULE_TAGS = dict([(_tag, []) for _tag in MTAG_METAS])
+MODULE_TAGS = dict([(_tag, []) for _tag in MODULE_TAG_METAS])
 
 OPT_MODIFY = 'modify'

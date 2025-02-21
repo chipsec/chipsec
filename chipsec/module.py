@@ -148,7 +148,7 @@ class Module:
         try:
             if _importlib:
                 module_tags = getattr(self.module, 'TAGS')
-                metadata_tags = getattr(self.module, 'MD_TAGS')
+                metadata_tags = getattr(self.module, 'METADATA_TAGS')
         except:
             pass
 
