@@ -33,6 +33,7 @@ from chipsec.library.logger import logger
 
 EventType = TypeVar('EventType', bound='TcgPcrEvent')
 
+
 class TcgPcrEvent:
     """An Event (TPM 1.2 format) as recorded in the SML."""
 
@@ -93,7 +94,7 @@ class SCRTMVersion(TcgPcrEvent):
         _str = super(SCRTMVersion, self).__str__()
         try:
             _str += f'\n\t+ version: {self.version.decode("utf-16")}'
-        except:
+        except UnicodeDecodeError:
             if logger().HAL:
                 logger().log_warning("[tpm_eventlog] CRTM Version is not a valid string")
         return _str
@@ -154,7 +155,7 @@ SML_EVENT_TYPE: Dict[int, Any] = {
 }
 
 EVENT_TYPE_MAX_LENGTH: int = max([len(v) for v in SML_EVENT_TYPE.values()
-                             if isinstance(v, str)])
+                                 if isinstance(v, str)])
 
 
 class PcrLogParser:

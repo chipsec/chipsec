@@ -49,6 +49,10 @@ XML configuration file for TPM address space
       <field name="Reserved"      bit="0" size="1"  desc="Reserved"/>
     </register>
 
+    <register name="TPM_DATAFIFO" type="memory" range="TPM" offset="0x024" size="1" desc="TPM DATA FIFO">
+      <field name="data" bit="0"  size="8" desc="vid"/>
+    </register>
+
     <register name="TPM_DID_VID" type="memory" range="TPM" offset="0xF00" size="4" desc="TPM DID/VID">
       <field name="did" bit="16" size="16" desc="did"/>
       <field name="vid" bit="0"  size="16" desc="vid"/>

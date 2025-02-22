@@ -42,9 +42,7 @@ Examples:
 """
 
 from chipsec.command import BaseCommand, toLoad
-from chipsec.hal.common import tpm_eventlog
-from chipsec.hal.common import tpm
-from chipsec.library.exceptions import TpmRuntimeError
+from chipsec.library import tpm_eventlog
 from chipsec.testcase import ExitCode
 from argparse import ArgumentParser
 
@@ -65,12 +63,12 @@ class TPMCommand(BaseCommand):
 
         parser_command = subparsers.add_parser('command')
         parser_command.add_argument('command_name', type=str, help='Command')
-        parser_command.add_argument('locality', type=str, choices=['0', '1', '2', '3', '4'], help='Locality')
+        parser_command.add_argument('locality', type=int, choices=[0, 1, 2, 3, 4], help='Locality')
         parser_command.add_argument('command_parameters', nargs='*', type=int, help='Command Parameters')
         parser_command.set_defaults(func=self.tpm_command)
 
         parser_state = subparsers.add_parser('state')
-        parser_state.add_argument('locality', type=str, choices=['0', '1', '2', '3', '4'], help='Locality')
+        parser_state.add_argument('locality', type=int, choices=[0, 1, 2, 3, 4], help='Locality')
         parser_state.set_defaults(func=self.tpm_state)
         parser.parse_args(self.argv, namespace=self)
 
@@ -79,28 +77,21 @@ class TPMCommand(BaseCommand):
             tpm_eventlog.parse(log)
 
     def tpm_command(self):
-        self._tpm.command(self.command_name, self.locality, self.command_parameters)
+        self.cs.hals.TPM.command(self.command_name, self.locality, *self.command_parameters)
 
     def tpm_state(self):
-        self._tpm.dump_access(self.locality)
-        self._tpm.dump_status(self.locality)
-        self._tpm.dump_didvid(self.locality)
-        self._tpm.dump_rid(self.locality)
-        self._tpm.dump_intcap(self.locality)
-        self._tpm.dump_intenable(self.locality)
-
-    def set_up(self):
-        if self.func != self.tpm_parse:
-            try:
-                self._tpm = tpm.TPM(self.cs)
-            except TpmRuntimeError as msg:
-                self.logger.log(msg)
-                return
+        self.cs.hals.TPM.dump_access(self.locality)
+        self.cs.hals.TPM.dump_status(self.locality)
+        self.cs.hals.TPM.dump_didvid(self.locality)
+        self.cs.hals.TPM.dump_rid(self.locality)
+        self.cs.hals.TPM.dump_intcap(self.locality)
+        self.cs.hals.TPM.dump_intenable(self.locality)
 
     def run(self):
         try:
             self.func()
         except Exception:
             self.ExitCode = ExitCode.ERROR
+
 
 commands = {'tpm': TPMCommand}

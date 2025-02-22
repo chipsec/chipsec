@@ -32,7 +32,7 @@ from typing import Dict, Tuple
 
 from chipsec.library.logger import print_buffer_bytes
 from chipsec.hal import hal_base
-import chipsec.hal.common.tpm12_commands
+import chipsec.library.tpm12_commands
 
 
 COMMANDREADY = 0x40
@@ -168,11 +168,11 @@ LOCALITY: Dict[str, int] = {
 }
 
 COMMANDS: Dict[str, Callable] = {
-    "pcrread": chipsec.hal.common.tpm12_commands.pcrread,
-    "nvread": chipsec.hal.common.tpm12_commands.nvread,
-    "startup": chipsec.hal.common.tpm12_commands.startup,
-    "continueselftest": chipsec.hal.common.tpm12_commands.continueselftest,
-    "forceclear": chipsec.hal.common.tpm12_commands.forceclear
+    "pcrread": chipsec.library.tpm12_commands.pcrread,
+    "nvread": chipsec.library.tpm12_commands.nvread,
+    "startup": chipsec.library.tpm12_commands.startup,
+    "continueselftest": chipsec.library.tpm12_commands.continueselftest,
+    "forceclear": chipsec.library.tpm12_commands.forceclear
 }
 
 
@@ -180,35 +180,29 @@ class TPM_RESPONSE_HEADER(namedtuple('TPM_RESPONSE_HEADER', 'ResponseTag DataSiz
     __slots__ = ()
 
     def __str__(self) -> str:
+        return_code_value = STATUS.get(self.ReturnCode, 'Invalid return code')
         _str = f"""----------------------------------------------------------------
                      TPM response header
 ----------------------------------------------------------------
    Response TAG: 0x{self.ResponseTag:x}
    Data Size   : 0x{self.DataSize:x}
    Return Code : 0x{self.ReturnCode:x}
+        {return_code_value}
+
 """
-        _str += "\t"
-        try:
-            _str += STATUS[self.ReturnCode]
-        except:
-            _str += "Invalid return code"
-        _str += "\n"
         return _str
 
 
 class TPM(hal_base.HALBase):
     def __init__(self, cs):
         super(TPM, self).__init__(cs)
-        self.helper = cs.helper
-        self.TPM_BASE = self.cs.Cfg.MEMORY_RANGES["TPM"]["address"]
+        # @TODO is there an API to check if TPM is defined within the Configuraiton?
 
-    def command(self, commandName: str, locality: str, *command_argv: str) -> None:
+    def command(self, commandName: str, locality: int, *command_argv: str) -> None:
         """
         Send command to the TPM and receive data
         """
-        try:
-            Locality = LOCALITY[locality]
-        except:
+        if self.get_locality_value(locality) is None:
             if self.logger.HAL:
                 self.logger.log_bad("Invalid locality value\n")
             return
@@ -218,18 +212,20 @@ class TPM(hal_base.HALBase):
         #
         # Request locality use if needed
         #
-        access_address = self.TPM_BASE | Locality | TPM_ACCESS
-        if self.helper.read_mmio_reg(access_address, 4) == BEENSEIZED:
-            self.helper.write_mmio_reg(access_address, 4, REQUESTUSE)
+        access_value = self.read_register('TPM_ACCESS', locality)
+        if access_value == BEENSEIZED:
+            self.write_register('TPM_ACCESS', locality, REQUESTUSE)
             requestedUse = True
 
         #
         # Build command (big endian) and send/receive
         #
-        (command, size) = COMMANDS[commandName](command_argv)
-        self._send_command(Locality, command, size)
+        (command, size) = COMMANDS[commandName](*command_argv)
+        self._send_command(locality, command, size)
 
-        (header, _, _, data_blob) = self._read_response(Locality)
+        (header, _, _, data_blob) = self._read_response(locality)
+        if header is None:
+            return
         self.logger.log(str(header))
         print_buffer_bytes(data_blob)
         self.logger.log('\n')
@@ -237,40 +233,45 @@ class TPM(hal_base.HALBase):
         #
         # Release locality if needed
         #
-        if requestedUse == True:
-            self.helper.write_mmio_reg(access_address, 4, BEENSEIZED)
-        self.helper.write_mmio_reg(access_address, 1, ACTIVELOCALITY)
+        if requestedUse is True:
+            self.write_register('TPM_ACCESS', locality, BEENSEIZED)
+        self.write_subset_register('TPM_ACCESS', locality, ACTIVELOCALITY, 1)
 
-    def _send_command(self, Locality: int, command: bytes, size: int) -> None:
+    def _send_command(self, locality: int, command: bytes, size: int) -> None:
         """Send a command to the TPM using the locality specified"""
         count = 0
 
-        datafifo_address = self.TPM_BASE | Locality | TPM_DATAFIFO
-        sts_address = self.TPM_BASE | Locality | TPM_STS
-        access_address = self.TPM_BASE | Locality | TPM_ACCESS
+        self.write_subset_register('TPM_ACCESS', locality, REQUESTUSE, 1)
 
-        self.helper.write_mmio_reg(access_address, 1, REQUESTUSE)
         #
         # Set status to command ready
         #
-        sts_value = self.helper.read_mmio_reg(sts_address, 1)
-        while (0 == (sts_value & COMMANDREADY)):
-            self.helper.write_mmio_reg(sts_address, 1, COMMANDREADY)
-            sts_value = self.helper.read_mmio_reg(sts_address, 1)
+        sts_value = self.read_register('TPM_STS', locality)
+        while 0 == (sts_value & COMMANDREADY) and count < 100:
+            self.write_subset_register('TPM_STS', locality, COMMANDREADY, 1)
+            sts_value = self.read_register('TPM_STS', locality)
+            count += 1
+
+        if count == 100:
+            self.logger.log('TPM is not responding')
+            return
+        count = 0
 
         while count < size:
-            sts_value = self.helper.read_mmio_reg(sts_address, 4)
+            sts_value = self.read_register('TPM_STS', locality)
             burst_count = ((sts_value >> 8) & 0xFFFFFF)
             burst_index = 0
             while (burst_index < burst_count) and (count < size):
                 datafifo_value = command[count]
-                self.helper.write_mmio_reg(datafifo_address, 1, datafifo_value)
+                self.write_register('TPM_DATAFIFO', locality, datafifo_value)
                 count += 1
                 burst_index += 0x1
+            else:
+                count += 1
 
-        self.helper.write_mmio_reg(sts_address, 1, TPMGO)
+        self.write_subset_register('TPM_STS', locality, TPMGO, 1)
 
-    def _read_response(self, Locality: int) -> Tuple[TPM_RESPONSE_HEADER, bytes, bytearray, bytearray]:
+    def _read_response(self, locality: int) -> Tuple[TPM_RESPONSE_HEADER, bytes, bytearray, bytearray]:
         """Read the TPM's response using the specified locality"""
         count = 0
         header = b''
@@ -280,41 +281,43 @@ class TPM(hal_base.HALBase):
         #
         # Build FIFO address
         #
-        datafifo_address = self.TPM_BASE | Locality | TPM_DATAFIFO
-        access_address = self.TPM_BASE | Locality | TPM_ACCESS
-        sts_address = self.TPM_BASE | Locality | TPM_STS
-
-        sts_value = self.helper.read_mmio_reg(sts_address, 1)
+        sts_value = self.read_register('TPM_STS', locality)
         data_avail = bin(sts_value & (1 << 4))[2]
         #
         # Read data available
         #
         # watchdog?
         while data_avail == '0':
-            sts_value = self.helper.read_mmio_reg(sts_address, 1)
-            self.helper.write_mmio_reg(sts_address, 1, DATAAVAIL)
+            sts_value = self.read_register('TPM_STS', locality)
+            self.write_subset_register('TPM_STS', locality, DATAAVAIL, 1)
             data_avail = bin(sts_value & (1 << 4))[2]
 
         while count < HEADERSIZE:
-            sts_value = self.helper.read_mmio_reg(sts_address, 4)
+            sts_value = self.read_register('TPM_STS', locality)
             burst_count = ((sts_value >> 8) & 0xFFFFFF)
             burst_index = 0
             while (burst_index < burst_count) and (count < HEADERSIZE):
-                header_blob.append(self.helper.read_mmio_reg(datafifo_address, 1))
+                header_blob.append(self.read_register('TPM_DATAFIFO', locality))
                 count += 1
                 burst_index += 0x1
+            else:
+                count += 1
 
-        header = TPM_RESPONSE_HEADER(*struct.unpack_from(HEADERFORMAT, header_blob))
+        if header_blob and len(header_blob) >= struct.calcsize(HEADERFORMAT):
+            header = TPM_RESPONSE_HEADER(*struct.unpack_from(HEADERFORMAT, header_blob))
+        else:
+            self.logger.log('command is not responding correctly aborting')
+            return (None, None, None, None)
 
         count = 0
         if header.DataSize > 10 and header.ReturnCode == 0:
             length = header.DataSize - HEADERSIZE
             while count < length:
-                sts_value = self.helper.read_mmio_reg(sts_address, 4)
+                sts_value = self.read_register('TPM_STS', locality)
                 burst_count = ((sts_value >> 8) & 0xFFFFFF)
                 burst_index = 0
                 while (burst_index < burst_count) and (count < length):
-                    data_blob.append(self.helper.read_mmio_reg(datafifo_address, 1))
+                    data_blob.append(self.read_register('TPM_DATAFIFO', locality))
                     count += 1
                     burst_index += 0x1
 
@@ -357,17 +360,50 @@ class TPM(hal_base.HALBase):
         self.logger.log('=' * 64)
 
     def dump_register(self, register_name: str, locality: str) -> None:
-        self.cs.Cfg.REGISTERS[register_name]['address'] = self.cs.Cfg.REGISTERS[register_name]['address'] ^ LOCALITY[locality]
-        register = self.cs.register.read_dict(register_name)
+        value = self.read_register(register_name, locality)
+        # correct implementation but currently not supported
+        # reg_obj = self.cs.register.get_list_by_name(f'*.TPM.{register_name}')
+        reg_obj = self.cs.register.get_list_by_name(f'8086.TPM.{register_name}')[0]
+        reg_obj.set_value(value)
 
         self.log_register_header(register_name, locality)
-
         max_field_len = 0
-        for field in register['FIELDS']:
+        for field in reg_obj.fields:
             if len(field) > max_field_len:
                 max_field_len = len(field)
-        for field in register['FIELDS']:
-            self.logger.log(f'\t{field}{" " * (max_field_len - len(field))}: {hex(register["FIELDS"][field]["value"])}')
+        for field in reg_obj.fields:
+            self.logger.log(f'\t{field}{" " * (max_field_len - len(field))}: {hex(reg_obj.get_field(field))}')
+
+    def read_register(self, register_name: str, locality: int) -> int:
+        # correct implementation but currently not supported
+        # reg_obj = self.cs.register.get_list_by_name(f'*.TPM.{register_name}')
+        reg_obj = self.cs.register.get_list_by_name(f'8086.TPM.{register_name}')[0]
+        offset = reg_obj.offset + self.get_locality_value(locality)
+        value = self.cs.hals.MMIO.read_MMIO_reg(reg_obj.address, offset, reg_obj.size)
+        return value
+
+    def write_register(self, register_name: str, locality: int, value: int) -> None:
+        # correct implementation but currently not supported
+        # reg_obj = self.cs.register.get_list_by_name(f'*.TPM.{register_name}')
+        reg_obj = self.cs.register.get_list_by_name(f'8086.TPM.{register_name}')[0]
+        offset = reg_obj.offset + self.get_locality_value(locality)
+        self.cs.hals.MMIO.write_MMIO_reg(reg_obj.address, offset, value, reg_obj.size)
+
+    def write_subset_register(self, register_name: str, locality: int, value: int, size: int) -> None:
+        # correct implementation but currently not supported
+        # reg_obj = self.cs.register.get_list_by_name(f'*.TPM.{register_name}')
+        reg_obj = self.cs.register.get_list_by_name(f'8086.TPM.{register_name}')[0]
+        offset = reg_obj.offset + self.get_locality_value(locality)
+        if size > 0 and size <= reg_obj.size:
+            self.cs.hals.MMIO.write_MMIO_reg(reg_obj.address, offset, value, size)
+        else:
+            self.logger.log('[write_subset_register] Improper write size')
+
+    def get_locality_value(self, locality: int) -> int:
+        if locality in range(5):
+            value = locality << 12
+            return value
+        return None
 
 
-haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': ['TPM']}
+haldata = {"arch": [hal_base.HALBase.MfgIds.Any], 'name': ['TPM']}
