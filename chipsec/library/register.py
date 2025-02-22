@@ -334,10 +334,21 @@ class ObjList(list):
         if logger().VERBOSE:
             self.print()
 
-    def read_field(self, field: str) -> List[int]:
+    def read_and_hal_print(self):
+        self.read()
+        if logger().HAL:
+            self.print()
+
+    def read_field(self, field: str, preserve_field_position: Optional[bool] = False) -> List[int]:
         ret = []
         for inst in self:
-            ret.append(inst.read_field(field))
+            ret.append(inst.read_field(field, preserve_field_position))
+        return ret
+    
+    def get_field(self, field: str, preserve_field_position: Optional[bool] = False) -> List[int]:
+        ret = []
+        for inst in self:
+            ret.append(inst.get_field(field, preserve_field_position))
         return ret
 
     def write(self, value: int) -> None:
