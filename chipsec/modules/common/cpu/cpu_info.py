@@ -43,11 +43,13 @@ Registers used:
 """
 
 import struct
-from chipsec.module_common import BaseModule
+from chipsec.module_common import BaseModule, CPU
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.defines import bytestostring
 from typing import List
 
+TAGS = [CPU]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'COMMON', 'CPU', 'CPU_INFO']
 
 class cpu_info(BaseModule):
     def __init__(self):

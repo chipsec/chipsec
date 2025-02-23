@@ -21,7 +21,7 @@ Usage:
 """
 import time
 
-from chipsec.module_common import BaseModule, MTAG_BIOS
+from chipsec.module_common import BaseModule, BIOS
 from chipsec.library.returncode import ModuleResult
 from chipsec.hal.spi_uefi import search_efi_tree, build_efi_model, EFIModuleType
 from chipsec.hal.uefi import UEFI
@@ -34,7 +34,8 @@ try:
 except ImportError:
     has_virus_total_apis = False
 
-TAGS = [MTAG_BIOS]
+TAGS = [BIOS]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'TOOLS', 'UEFI', 'REPUTATION']
 
 DEF_FWIMAGE_FILE = 'fw.bin'
 

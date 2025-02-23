@@ -45,11 +45,11 @@ Registers used:
 
 """
 
-from chipsec.module_common import BaseModule, MTAG_SMM
+from chipsec.module_common import BaseModule, SMM
 from chipsec.library.returncode import ModuleResult
 
-
-TAGS = [MTAG_SMM]
+TAGS = [SMM]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'TOOLS', 'CPU', 'SINKHOLE']
 
 
 class sinkhole(BaseModule):
