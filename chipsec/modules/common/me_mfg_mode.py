@@ -92,9 +92,12 @@ Hardware registers used:
     - HFS.MFG_MODE
 """
 
-from chipsec.module_common import BaseModule
+from chipsec.module_common import BaseModule, HWCONFIG
 from chipsec.library.returncode import ModuleResult
 from typing import List
+
+TAGS = [HWCONFIG]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'COMMON', 'HWCONFIG']
 
 
 class me_mfg_mode(BaseModule):

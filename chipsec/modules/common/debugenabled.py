@@ -40,10 +40,13 @@ Registers used:
 
 """
 
-from chipsec.module_common import BaseModule
+from chipsec.module_common import BaseModule, CPU
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.defines import BIT11
 from typing import List
+
+TAGS = [CPU]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'COMMON', 'DEBUGENABLED']
 
 _MODULE_NAME = 'debugenabled'
 

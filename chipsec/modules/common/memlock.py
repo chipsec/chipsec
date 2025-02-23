@@ -41,10 +41,13 @@ Registers used:
 
 """
 
-from chipsec.module_common import BaseModule
+from chipsec.module_common import BaseModule, HWCONFIG
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.exceptions import HWAccessViolationError
 from typing import List
+
+TAGS = [HWCONFIG]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'COMMON', 'MEMLOCK']
 
 _MODULE_NAME = 'memlock'
 
