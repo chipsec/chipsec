@@ -52,7 +52,7 @@ Decodes ``uefi.rom`` binary with UEFI firmware image and checks for blocked EFI 
 import json
 import os
 
-from chipsec.module_common import BaseModule, MTAG_BIOS
+from chipsec.module_common import BaseModule, BIOS
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.uefi.spi import search_efi_tree, build_efi_model, EFIModuleType
 from chipsec.hal.common.uefi import UEFI
@@ -60,7 +60,8 @@ from chipsec.hal.intel.spi import SPI, BIOS
 from chipsec.library.uefi.search import check_match_criteria
 from chipsec.library.file import read_file, get_main_dir
 
-TAGS = [MTAG_BIOS]
+TAGS = [BIOS]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'TOOLS', 'UEFI', 'SCAN_BLOCKED']
 
 DEF_FWIMAGE_FILE = 'fw.bin'
 

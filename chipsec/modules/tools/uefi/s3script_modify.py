@@ -99,12 +99,15 @@ examples_str = """  Examples:
 
 import struct
 
-from chipsec.module_common import BaseModule
+from chipsec.module_common import BaseModule, BIOS
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.logger import print_buffer_bytes
 from chipsec.hal.common.uefi import UEFI
 from chipsec.library.uefi.sleep_states import script_width_values, script_width_formats, op_io_pci_mem, op_dispatch, S3BootScriptOpcode
 from chipsec.library.uefi.sleep_states import encode_s3bootscript_entry, id_s3bootscript_type, create_s3bootscript_entry_buffer
+
+TAGS = [BIOS]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'TOOLS', 'UEFI', 'S3SCRIPT_MODIFY']
 
 ########################################################################################################
 #

@@ -33,12 +33,13 @@ Examples:
 
 """
 
-from chipsec.module_common import BaseModule, MTAG_BIOS
+from chipsec.module_common import BaseModule, BIOS
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.logger import print_buffer_bytes
 from typing import List
 
-TAGS = [MTAG_BIOS]
+TAGS = [BIOS]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'COMMON', 'BIOS_KBRD_BUFFER']
 
 COMMON_FILL_PTRN = ''.join([f'{(chr(x + 0x1E)):1}' for x in range(32)])
 

@@ -33,11 +33,14 @@ Example:
     - Module is INFORMATION only and does NOT return a Pass/Fail
 """
 
-from chipsec.module_common import BaseModule
+from chipsec.module_common import BaseModule, CPU
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.defines import BIT7, BIT20
 from chipsec.library.exceptions import HWAccessViolationError
 from chipsec.library.register import ObjList
+
+TAGS = [CPU]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'COMMON', 'CET']
 
 
 class cet(BaseModule):

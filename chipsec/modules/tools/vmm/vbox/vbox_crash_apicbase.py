@@ -41,10 +41,13 @@ Registers used:
 """
 
 from chipsec.library.exceptions import HWAccessViolationError
-from chipsec.module_common import BaseModule
+from chipsec.module_common import BaseModule, CPU
 from chipsec.library.returncode import ModuleResult
 
 _MODULE_NAME = 'vbox_crash_apicbase'
+
+TAGS = [CPU]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'TOOLS', 'VMM', 'VBOX', 'VBOX_CRASH_APICBASE']
 
 
 class vbox_crash_apicbase(BaseModule):

@@ -40,7 +40,7 @@ NOTE:
 Requires an OS with UEFI Runtime API support.
 """
 
-from chipsec.module_common import BaseModule, MTAG_SECUREBOOT, MTAG_BIOS, OPT_MODIFY
+from chipsec.module_common import BaseModule, SECUREBOOT, BIOS, OPT_MODIFY
 from chipsec.library.returncode import ModuleResult
 from chipsec.hal.common.uefi import UEFI
 from chipsec.library.uefi.variables import EFI_VARIABLE_NON_VOLATILE, EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_RUNTIME_ACCESS, get_attr_string
@@ -49,7 +49,8 @@ from chipsec.library.uefi.common import StatusCode
 from typing import List
 
 
-TAGS = [MTAG_BIOS, MTAG_SECUREBOOT]
+TAGS = [BIOS, SECUREBOOT]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'COMMON', 'UEFI', 'ACCESS_UEFISPEC']
 
 
 class access_uefispec(BaseModule):

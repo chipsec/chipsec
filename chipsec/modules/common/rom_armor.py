@@ -33,11 +33,12 @@ Examples:
 
 """
 
-from chipsec.module_common import BaseModule, MTAG_BIOS, MTAG_SMM
+from chipsec.module_common import BaseModule, BIOS, SMM
 from chipsec.library.returncode import ModuleResult
 from typing import List
 
-TAGS = [MTAG_BIOS, MTAG_SMM]
+TAGS = [BIOS, SMM]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'COMMON', 'ROM_ARMOR']
 
 SMU_PSP_SMN_BASE = 0x3800000
 SMU_PSP_MBOX_CMD_STATUS = 0x00010970

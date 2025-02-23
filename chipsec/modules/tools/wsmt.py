@@ -34,12 +34,13 @@ Examples:
     - Analysis is only necessary if Windows is the primary OS
 
 """
-from chipsec.module_common import BaseModule, MTAG_BIOS, MTAG_SMM
+from chipsec.module_common import BaseModule, BIOS, SMM
 from chipsec.library.returncode import ModuleResult
 from chipsec.hal.common.acpi import ACPI
 from chipsec.library.acpi_tables import WSMT
 
-TAGS = [MTAG_BIOS, MTAG_SMM]
+TAGS = [BIOS, SMM]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'TOOLS', 'WSMT']
 
 
 class wsmt(BaseModule):

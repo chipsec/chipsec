@@ -37,11 +37,12 @@ Examples:
 This module will only run on client (core) platforms that have SMRAMC defined.
 """
 
-from chipsec.module_common import BaseModule, MTAG_BIOS, MTAG_SMM
+from chipsec.module_common import BaseModule, BIOS, SMM
 from chipsec.library.returncode import ModuleResult
 from typing import List
 
-TAGS = [MTAG_BIOS, MTAG_SMM]
+TAGS = [BIOS, SMM]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'COMMON', 'SMM']
 
 
 class smm(BaseModule):

@@ -43,12 +43,15 @@ Examples:
 
 """
 
-from chipsec.module_common import BaseModule
+from chipsec.module_common import BaseModule, CPU
 from chipsec.library.returncode import ModuleResult
 from chipsec.hal.common.vmm import VMM
 
 EVENT_CHANNEL_OP = 32
 EVTCHOP_INIT_CONTROL = 11
+
+TAGS = [CPU]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'TOOLS', 'VMM', 'XEN', 'XSA188']
 
 
 class xsa188(BaseModule):

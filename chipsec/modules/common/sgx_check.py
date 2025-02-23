@@ -65,12 +65,13 @@ Registers used:
 
 from typing import Tuple
 from chipsec.library.exceptions import HWAccessViolationError
-from chipsec.module_common import BaseModule, MTAG_HWCONFIG
+from chipsec.module_common import BaseModule, HWCONFIG
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.defines import BIT0, BIT1, BIT2, BIT5, BIT6, BIT7, BIT8
 from chipsec.modules.common.sgx_check_sidekick import SGX_Check_Sidekick
 
-TAGS = [MTAG_HWCONFIG]
+TAGS = [HWCONFIG]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'COMMON', 'SGX_CHECK']
 
 
 class sgx_check(BaseModule):
