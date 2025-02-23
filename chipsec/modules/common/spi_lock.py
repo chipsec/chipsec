@@ -44,11 +44,12 @@ Registers used:
 """
 
 from chipsec.library.exceptions import CSReadError
-from chipsec.module_common import BaseModule, MTAG_BIOS
+from chipsec.module_common import BaseModule, BIOS
 from chipsec.library.returncode import ModuleResult
 from typing import List
 
-TAGS = [MTAG_BIOS]
+TAGS = [BIOS]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'COMMON', 'SPI_LOCK']
 
 
 class spi_lock(BaseModule):

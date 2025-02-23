@@ -56,7 +56,7 @@ in it against a list defined in ``efilist.json``
 import json
 import os
 
-from chipsec.module_common import BaseModule, MTAG_BIOS
+from chipsec.module_common import BaseModule, BIOS
 from chipsec.library.returncode import ModuleResult
 
 from chipsec.hal.uefi import UEFI
@@ -65,7 +65,8 @@ from chipsec.hal.uefi_fv import EFI_MODULE, EFI_SECTION, SECTION_NAMES, EFI_SECT
 from chipsec.hal.spi_uefi import build_efi_model, search_efi_tree, EFIModuleType, UUIDEncoder
 from chipsec.library.file import write_file, read_file
 
-TAGS = [MTAG_BIOS]
+TAGS = [BIOS]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'TOOLS', 'UEFI', 'SCAN_IMAGE']
 
 DEF_FWIMAGE_FILE = 'fw.bin'
 DEF_EFILIST_FILE = 'efilist.json'

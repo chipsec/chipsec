@@ -42,12 +42,13 @@ Registers used:
 
 """
 
-from chipsec.module_common import BaseModule, MTAG_BIOS, MTAG_SMM
+from chipsec.module_common import BaseModule, BIOS, SMM
 from chipsec.library.returncode import ModuleResult
 from chipsec.hal.msr import MemType
 from typing import List
 
-TAGS = [MTAG_BIOS, MTAG_SMM]
+TAGS = [BIOS, SMM]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'COMMON', 'SMM_ADDR']
 
 
 class smm_addr(BaseModule):

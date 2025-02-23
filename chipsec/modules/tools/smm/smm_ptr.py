@@ -85,13 +85,16 @@ import sys
 import time
 import math
 
-from chipsec.module_common import BaseModule
+from chipsec.module_common import BaseModule, SMM
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.file import write_file
 from chipsec.library.logger import print_buffer_bytes
 from chipsec.hal.interrupts import Interrupts
 from chipsec.library.exceptions import BadSMIDetected
 from chipsec.helper.oshelper import OsHelper
+
+TAGS = [SMM]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'TOOLS', 'SMM', 'SMM_PTR']
 
 
 #################################################################

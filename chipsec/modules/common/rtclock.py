@@ -39,12 +39,14 @@ Registers used:
     - This module will only run on Core platforms
 """
 
-from chipsec.module_common import BaseModule, MTAG_BIOS, MTAG_HWCONFIG
+from chipsec.module_common import BaseModule, BIOS, HWCONFIG
 from chipsec.library.returncode import ModuleResult
 from chipsec.hal.cmos import CMOS
 from chipsec.config import CHIPSET_CODE_AVN
 from typing import List
-TAGS = [MTAG_BIOS, MTAG_HWCONFIG]
+
+TAGS = [BIOS, HWCONFIG]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'COMMON', 'RTCLOCK']
 
 
 class rtclock(BaseModule):

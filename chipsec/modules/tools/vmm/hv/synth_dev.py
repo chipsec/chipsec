@@ -34,16 +34,20 @@ Usage:
 
 Note: the fuzzer is incompatible with native VMBus driver (``vmbus.sys``). To use it, remove ``vmbus.sys``
 """
+
 import sys
 import traceback
 from struct import pack
 from chipsec.library.returncode import ModuleResult
-from chipsec.module_common import BaseModule
+from chipsec.module_common import BaseModule, CPU
 from chipsec.modules.tools.vmm.common import session_logger, get_int_arg
 from chipsec.modules.tools.vmm.hv.define import VMBUS_DATA_PACKET_FLAG_COMPLETION_REQUESTED, vm_pkt
 from chipsec.modules.tools.vmm.hv.vmbus import RingBuffer, VMBusDiscovery
 
 sys.stdout = session_logger(True, 'synth_dev')
+
+TAGS = [CPU]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'TOOLS', 'VMM', 'HV', 'SYNTH_DEV']
 
 
 class VMBusDeviceFuzzer(VMBusDiscovery):

@@ -63,13 +63,16 @@ from time import time
 from uuid import uuid4, UUID
 import struct
 
-from chipsec.module_common import BaseModule
+from chipsec.module_common import BaseModule, BIOS
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.file import write_file
 from chipsec.hal.uefi import UEFI
 from chipsec.library.defines import bytestostring
 
 from chipsec.fuzzing import primitives as prim
+
+TAGS = [BIOS]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'TOOLS', 'UEFI', 'UEFIVAR_FUZZ']
 
 
 class uefivar_fuzz(BaseModule):

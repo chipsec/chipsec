@@ -50,12 +50,13 @@ Registers used:
 
 """
 
-from chipsec.module_common import BaseModule, MTAG_BIOS, MTAG_SMM, OPT_MODIFY
+from chipsec.module_common import BaseModule, BIOS, SMM, OPT_MODIFY
 from chipsec.library.returncode import ModuleResult
 from chipsec.hal.msr import MemType
 from typing import List
 
-TAGS = [MTAG_BIOS, MTAG_SMM]
+TAGS = [BIOS, SMM]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'COMMON', 'SMRR']
 
 
 class smrr(BaseModule):

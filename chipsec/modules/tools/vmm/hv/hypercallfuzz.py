@@ -38,11 +38,14 @@ Note: the fuzzer is incompatible with native VMBus driver (``vmbus.sys``). To us
 """
 from chipsec.modules.tools.vmm.hv.define import *
 from chipsec.modules.tools.vmm.hv.hypercall import *
-from chipsec.module_common import BaseModule
+from chipsec.module_common import BaseModule, CPU
 
 # Hypercall vectors excluded from scan/fuzzing
 excluded_hypercalls_from_scan = []
 excluded_hypercalls_from_fuzzing = excluded_hypercalls_from_scan + [HV_POST_MESSAGE]
+
+TAGS = [CPU]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'TOOLS', 'VMM', 'HV', 'HYPERCALLFUZZ']
 
 
 class HypercallFuzz(BaseModule):
