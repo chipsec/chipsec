@@ -43,14 +43,14 @@ Registers used:
 
 """
 
-from chipsec.module_common import BaseModule, MTAG_HWCONFIG, MTAG_SMM
+from chipsec.module_common import BaseModule, HWCONFIG, SMM
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.defines import BIT32, ALIGNED_1MB
 
 _MODULE_NAME = 'remap'
 
-TAGS = [MTAG_SMM, MTAG_HWCONFIG]
-
+TAGS = [SMM, HWCONFIG]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'COMMON', 'REMAP']
 
 _REMAP_ADDR_MASK = 0x7FFFF00000
 _TOLUD_MASK = 0xFFFFF000

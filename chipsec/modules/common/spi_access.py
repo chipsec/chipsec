@@ -46,12 +46,13 @@ Registers used:
 """
 
 from chipsec.library.exceptions import CSReadError
-from chipsec.module_common import BaseModule, MTAG_BIOS
+from chipsec.module_common import BaseModule, BIOS
 from chipsec.library.returncode import ModuleResult
 from chipsec.hal.spi import SPI, GBE, PLATFORM_DATA, ME, FLASH_DESCRIPTOR
 from typing import List
 
-TAGS = [MTAG_BIOS]
+TAGS = [BIOS]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'COMMON', 'SPI_ACCESS']
 
 
 class spi_access(BaseModule):

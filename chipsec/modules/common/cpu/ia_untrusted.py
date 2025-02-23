@@ -33,11 +33,12 @@ Registers used:
 
 """
 
-from chipsec.module_common import BaseModule, MTAG_HWCONFIG
+from chipsec.module_common import BaseModule, HWCONFIG
 from chipsec.library.returncode import ModuleResult
 from typing import List
 
-TAGS = [MTAG_HWCONFIG]
+TAGS = [HWCONFIG]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'COMMON', 'CPU', 'IA_UNTRUSTED']
 
 
 class ia_untrusted(BaseModule):

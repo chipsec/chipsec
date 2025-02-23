@@ -33,13 +33,14 @@ Example:
     - This module will only run on Core (client) platforms.
 """
 
-from chipsec.module_common import BaseModule, MTAG_HWCONFIG
+from chipsec.module_common import BaseModule, HWCONFIG
 from chipsec.library.returncode import ModuleResult
 from typing import List
 
 _MODULE_NAME = 'memconfig'
 
-TAGS = [MTAG_HWCONFIG]
+TAGS = [HWCONFIG]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'COMMON', 'MEMCONFIG']
 
 
 class memconfig(BaseModule):

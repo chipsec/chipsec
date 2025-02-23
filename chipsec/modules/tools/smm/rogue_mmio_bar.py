@@ -40,12 +40,16 @@ Example:
 
 """
 
-from chipsec.module_common import BaseModule
+from chipsec.module_common import BaseModule, SMM
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.defines import BOUNDARY_4GB
 from chipsec.library.file import write_file
 from chipsec.hal.pci import PCI_HDR_BAR_STEP, PCI_HDR_BAR_BASE_MASK_MMIO64, PCI_HDR_BAR_CFGBITS_MASK
 from chipsec.hal.interrupts import Interrupts
+
+TAGS = [SMM]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'TOOLS', 'SMM', 'ROGUE_MMIO_BAR']
+
 
 #################################################################
 # Testing configuration

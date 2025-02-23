@@ -51,9 +51,12 @@ Examples:
 """
 
 from chipsec.modules.tools.vmm.xen.define import *
-from chipsec.module_common import BaseModule
+from chipsec.module_common import BaseModule, CPU
 from chipsec.library.returncode import ModuleResult
 from chipsec.modules.tools.vmm.xen.hypercall import XenHypercall
+
+TAGS = [CPU]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'TOOLS', 'VMM', 'XEN', 'HYPERCALLFUZZ']
 
 
 class HypercallFuzz(BaseModule):

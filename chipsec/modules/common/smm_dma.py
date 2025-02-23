@@ -55,13 +55,14 @@ Supported Platforms:
 
 """
 
-from chipsec.module_common import BaseModule, MTAG_SMM, MTAG_HWCONFIG
+from chipsec.module_common import BaseModule, SMM, HWCONFIG
 from chipsec.library.returncode import ModuleResult
 from typing import List
 
 _MODULE_NAME = 'smm_dma'
 
-TAGS = [MTAG_SMM, MTAG_HWCONFIG]
+TAGS = [SMM, HWCONFIG]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'COMMON', 'SMM_DMA']
 
 
 class smm_dma(BaseModule):

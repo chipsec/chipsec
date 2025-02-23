@@ -50,11 +50,14 @@ Examples:
         - SMBUS_HCFG.SPD_WD is defined for the platform
 """
 
-from chipsec.module_common import BaseModule
+from chipsec.module_common import BaseModule, BIOS
 from chipsec.library.returncode import ModuleResult
 from chipsec.hal.smbus import SMBus
 from chipsec.hal.spd import SPD
 from typing import List
+
+TAGS = [BIOS]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'COMMON', 'SPD_WD']
 
 
 class spd_wd(BaseModule):

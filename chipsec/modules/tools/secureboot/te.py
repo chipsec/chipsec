@@ -55,9 +55,12 @@ import shutil
 import struct
 import sys
 
-from chipsec.module_common import BaseModule
+from chipsec.module_common import BaseModule, SECUREBOOT
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.logger import logger
+
+TAGS = [SECUREBOOT]
+METADATA_TAGS = ['OPENSOURCE', 'IA', 'TOOLS', 'SECUREBOOT', 'TE']
 
 
 DEFAULT_PE_FILE_PATH = "chipsec/modules/tools/secureboot/Shell.efi"
