@@ -34,6 +34,8 @@ Example:
 Registers used:
     - PCI0.0.0_REMAPBASE
     - PCI0.0.0_REMAPLIMIT
+    - PCI0.0.0_REMAPBASEMC1
+    - PCI0.0.0_REMAPLIMITMC1
     - PCI0.0.0_TOUUD
     - PCI0.0.0_TOLUD
     - PCI0.0.0_TSEGMB
@@ -46,6 +48,8 @@ Registers used:
 from chipsec.module_common import BaseModule, MTAG_HWCONFIG, MTAG_SMM
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.defines import BIT32, ALIGNED_1MB
+from chipsec.library.exceptions import RegisterNotFoundError
+from typing import Tuple
 
 _MODULE_NAME = 'remap'
 
@@ -86,31 +90,60 @@ class remap(BaseModule):
         else:
             self.logger.log_verbose('IBECC is not defined!')
         return False
-
+    
+    def get_remap_registers(self, base_reg: str, limit_reg: str) -> Tuple[int, int]:
+        if self.cs.register.is_defined(base_reg) and self.cs.register.is_defined(limit_reg):
+            base = self.cs.register.read(base_reg)
+            limit = self.cs.register.read(limit_reg)
+            return base, limit
+        raise RegisterNotFoundError('Required register definitions not defined for platform.')
+    
     def check_remap_config(self) -> int:
         is_warning = False
+        remapMC0Found = True
+        remapMC1Found = True
 
-        remapbase = self.cs.register.read('PCI0.0.0_REMAPBASE')
-        remaplimit = self.cs.register.read('PCI0.0.0_REMAPLIMIT')
+        try:
+            remapbase, remaplimit = self.get_remap_registers('PCI0.0.0_REMAPBASE', 'PCI0.0.0_REMAPLIMIT')
+        except RegisterNotFoundError:
+            remapbase, remaplimit = 0, 0
+            remapMC0Found = False
+        try:
+            remapbasemc1, remaplimitmc1 = self.get_remap_registers('PCI0.0.0_REMAPBASEMC1', 'PCI0.0.0_REMAPLIMITMC1')
+        except RegisterNotFoundError:
+            remapMC1Found = False
+        
         touud = self.cs.register.read('PCI0.0.0_TOUUD')
         tolud = self.cs.register.read('PCI0.0.0_TOLUD')
         tsegmb = self.cs.register.read('PCI0.0.0_TSEGMB')
         self.logger.log('[*] Registers:')
         self.logger.log(f'[*]   TOUUD     : 0x{touud:016X}')
-        self.logger.log(f'[*]   REMAPLIMIT: 0x{remaplimit:016X}')
-        self.logger.log(f'[*]   REMAPBASE : 0x{remapbase:016X}')
+        if remapMC0Found:
+            self.logger.log(f'[*]   REMAPLIMIT: 0x{remaplimit:016X}')
+            self.logger.log(f'[*]   REMAPBASE : 0x{remapbase:016X}')
+        if remapMC1Found:
+            self.logger.log(f'[*]   REMAPLIMITMC1: 0x{remaplimitmc1:016X}')
+            self.logger.log(f'[*]   REMAPBASEMC1: 0x{remapbasemc1:016X}')
         self.logger.log(f'[*]   TOLUD     : 0x{tolud:08X}')
         self.logger.log(f'[*]   TSEGMB    : 0x{tsegmb:08X}')
         self.logger.log('')
+
+        if remapMC0Found and self.cs.register.is_all_ffs('PCI0.0.0_REMAPBASE', remapbase) and self.cs.register.is_all_ffs('PCI0.0.0_REMAPLIMIT', remaplimit) and remapMC1Found:
+            remapbase_register = 'PCI0.0.0_REMAPBASEMC1'
+            remaplimit_register = 'PCI0.0.0_REMAPLIMITMC1'
+            remapbase, remaplimit = remapbasemc1, remaplimitmc1
+        else:
+            remapbase_register = 'PCI0.0.0_REMAPBASE'
+            remaplimit_register = 'PCI0.0.0_REMAPLIMIT'
 
         ia_untrusted = 0
         remapbase_lock = 0
         remaplimit_lock = 0
         if self.cs.register.has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
             ia_untrusted = self.cs.register.read_field('MSR_BIOS_DONE', 'IA_UNTRUSTED')
-        if self.cs.register.has_field('PCI0.0.0_REMAPBASE', 'LOCK'):
+        if self.cs.register.has_field(remapbase_register, 'LOCK'):
             remapbase_lock = remapbase & 0x1
-        if self.cs.register.has_field('PCI0.0.0_REMAPLIMIT', 'LOCK'):
+        if self.cs.register.has_field(remaplimit_register, 'LOCK'):
             remaplimit_lock = remaplimit & 0x1
         touud_lock = touud & 0x1
         tolud_lock = tolud & 0x1
@@ -127,6 +160,12 @@ class remap(BaseModule):
         self.logger.log(f'[*]   Top Of Low Memory  : 0x{tolud:016X}')
         self.logger.log(f'[*]   TSEG (SMRAM) Base  : 0x{tsegmb:016X}')
         self.logger.log('')
+
+        if self.cs.register.is_all_ffs(remapbase_register, remapbase) or self.cs.register.is_all_ffs(remaplimit_register, remaplimit):
+            res = ModuleResult.FAILED
+            self.result.setStatusBit(self.result.status.CONFIGURATION)
+            self.logger.log('[!]   Memory Remap status is Unknown')
+            return self.result.getReturnCode(res)
 
         remap_ok = True
 
@@ -175,7 +214,7 @@ class remap(BaseModule):
         else:
             self.logger.log_bad('  TOLUD is not locked')
 
-        if self.cs.register.has_field('PCI0.0.0_REMAPBASE', 'LOCK') and self.cs.register.has_field('PCI0.0.0_REMAPLIMIT', 'LOCK'):
+        if self.cs.register.has_field(remapbase_register, 'LOCK') and self.cs.register.has_field(remaplimit_register, 'LOCK'):
             ok = ((0 != remapbase_lock) and (0 != remaplimit_lock)) or (0 != ia_untrusted)
             remap_ok = remap_ok and ok
             if ok:
