@@ -246,13 +246,18 @@ jobs:
         sudo apt-get update -q
         sudo apt-get install -qqy dkms nasm python3-setuptools
         pip install distro pytest pytest-cov
+        pip install --upgrade packaging
         pip install -r linux_requirements.txt
-        sudo pip uninstall importlib_metadata 
-        sudo pip install importlib_metadata --force-reinstall
-        sudo pip install -r linux_requirements.txt
+        pip uninstall importlib_metadata 
+        pip install importlib_metadata --force-reinstall
+        
+    - name: Show Python version
+      run: |
+        python -m pip list
+        python --version
 
     - name: Build the driver with Python
-      run: python3 setup.py build_ext -i
+      run: python setup.py build_ext -i
 
     - name: Build the driver with DKMS
       run: |
@@ -263,25 +268,26 @@ jobs:
         sudo dkms install -m chipsec -v "${CHIPSEC_MODULE_VER}" -k "${KERNEL_VER}"
 
     - name: Run Python unit tests
-      run: python3 -m unittest
+      run: python -m unittest
 
     - name: Get coverage requirement
       run: echo "CODE_COVERAGE_REQ=$(curl https://raw.githubusercontent.com/chipsec/chipsec/refs/heads/main-cfg/codeCoverageRequirement.cfg)" >> $GITHUB_ENV
 
     - name: Run Python pytest
       run: |
-        python -m pytest --cov --cov-report=term-missing --cov-fail-under="${{ env.CODE_COVERAGE_REQ }}"
+        python -m pytest --cov . --cov-report=term-missing --cov-fail-under="${{ env.CODE_COVERAGE_REQ }}"
         
     - name: Run xml cfg checker
       run: |
-        python3 tests/cfg_checker.py
+        python tests/cfg_checker.py
 
     - name: pylint pilot for modules folder
       run: |
         pylint chipsec/modules
 
     - name: Install chipsec
-      run: sudo python3 setup.py install
+      run: |
+        python setup.py install
 
     - name: Run chipsec_main test
       run: |
