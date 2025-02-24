@@ -120,4 +120,4 @@ class Ucode(hal_base.HALBase):
             return ucode_buf
 
 
-haldata = {"arch": ['FFFF'], 'name': ['Ucode']}
+haldata = {"arch": [hal_base.HALBase.MfgIds.Intel], 'name': ['Ucode']}
