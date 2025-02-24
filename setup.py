@@ -215,7 +215,7 @@ if platform.system().lower() == 'windows':
 
 elif platform.system().lower() == 'linux':
     package_data['chipsec_tools.compression'] = ['*']
-    data_files = [(os.path.abspath(os.path.join(os.sep,'usr','share', 'doc','chipsec')), ['chipsec-manual.pdf'])]
+    data_files = [(os.path.abspath(os.path.join(os.sep, 'usr', 'share', 'doc', 'chipsec')), ['chipsec-manual.pdf'])]
     extra_kw = [
         Extension(
             'EfiCompressor',
