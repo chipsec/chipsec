@@ -270,7 +270,7 @@ jobs:
 
     - name: Run Python pytest
       run: |
-        python -m pytest --cov --cov-report=term-missing --cov-fail-under="${{ env.CODE_COVERAGE_REQ }}"
+        python -m pytest --cov . --cov-report=term-missing --cov-fail-under="${{ env.CODE_COVERAGE_REQ }}"
         
     - name: Run xml cfg checker
       run: |
