@@ -39,6 +39,7 @@ Registers used:
     - This module will only run on Core platforms
 """
 
+from chipsec.library.exceptions import CSReadError
 from chipsec.module_common import BaseModule, MTAG_BIOS, MTAG_HWCONFIG
 from chipsec.library.returncode import ModuleResult
 from chipsec.hal.common.cmos import CMOS
@@ -69,23 +70,27 @@ class rtclock(BaseModule):
         return False
 
     def check_rtclock(self) -> int:
-        ll = ul = 0
+        ll = ul = False
         rc_list = self.cs.register.get_list_by_name('RC')
         res = ModuleResult.FAILED
         for rc in rc_list:
-            check_config_regs = rc.read() != 0xFFFFFFFF
+            try:
+                check_config_regs = rc.read() != 0xFFFFFFFF
+            except CSReadError as err:
+                check_config_regs = False
+                self.logger.log_debug(f'Error reading RC register: {err}')
 
             if check_config_regs:
                 rc.print()
-                ll = rc.get_field('LL')
-                ul = rc.get_field('UL')
+                ll = rc.is_all_field_value(1, 'LL')
+                ul = rc.is_all_field_value(1, 'UL')
             elif self.user_request:
                 self.logger.log_important('Writing to CMOS to determine write protection (original values will be restored)')
 
                 original_val = self.cmos.read_cmos_low(self.test_offset)
                 self.cmos.write_cmos_low(self.test_offset, original_val ^ self.test_value)
                 if original_val == self.cmos.read_cmos_low(self.test_offset):
-                    ll = 1
+                    ll = True
                 else:
                     self.logger.log_important('Restoring original value')
                     self.cmos.write_cmos_low(self.test_offset, original_val)
@@ -93,7 +98,7 @@ class rtclock(BaseModule):
                 original_val = self.cmos.read_cmos_high(self.test_offset)
                 self.cmos.write_cmos_high(self.test_offset, original_val ^ self.test_value)
                 if original_val == self.cmos.read_cmos_high(self.test_offset):
-                    ul = 1
+                    ul = True
                 else:
                     self.logger.log_important('Restoring original value')
                     self.cmos.write_cmos_high(self.test_offset, original_val)
@@ -104,16 +109,16 @@ class rtclock(BaseModule):
                 self.result.setStatusBit(self.result.status.VERIFY)
                 return self.result.getReturnCode(ModuleResult.WARNING)
 
-            if ll == 1:
+            if ll:
                 self.logger.log_good('Protected bytes (0x38-0x3F) in low 128-byte bank of RTC memory are locked')
             else:
                 self.logger.log_bad('Protected bytes (0x38-0x3F) in low 128-byte bank of RTC memory are not locked')
-            if ul == 1:
+            if ul:
                 self.logger.log_good('Protected bytes (0x38-0x3F) in high 128-byte bank of RTC memory are locked')
             else:
                 self.logger.log_bad('Protected bytes (0x38-0x3F) in high 128-byte bank of RTC memory are not locked')
 
-            if (ll == 1) and (ul == 1):
+            if ll and ul:
                 res = ModuleResult.PASSED
                 self.logger.log_passed('Protected locations in RTC memory are locked')
             else:
