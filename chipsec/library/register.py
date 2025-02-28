@@ -550,7 +550,7 @@ class Register:
         rtype = reg['type']
         reg_str = ''
         reg_width = reg["size"] * 2
-        reg_val_str = f'0x{reg_val:0{reg_width: d}X}'
+        reg_val_str = f'0x{reg_val:0{reg_width:d}X}'
         if RegisterType.PCICFG == rtype or RegisterType.MMCFG == rtype:
             if bus is not None:
                 b = bus
