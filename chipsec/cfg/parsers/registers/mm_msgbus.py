@@ -59,10 +59,10 @@ class MM_MSGBUSRegisters(BaseConfigRegisterHelper):
         """Read the object"""
         self.logger.log_debug(f'reading {self.name}')
         _cs = cs()
-        self.value = _cs.mm_msgbus.reg_read(self.port, self.offset)
+        self.value = _cs.hals.MsgBus.mm_msgbus_reg_read(self.port, self.offset)
         return self.value
 
     def write(self, value):
         """Write the object"""
         _cs = cs()
-        _cs.mm_msgbus.reg_write(self.port, self.offset, value)
+        _cs.MsgBus.mm_msgbus_reg_write(self.port, self.offset, value)

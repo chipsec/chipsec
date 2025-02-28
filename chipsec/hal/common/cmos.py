@@ -52,35 +52,35 @@ class CMOS(hal_base.HALBase):
         super(CMOS, self).__init__(cs)
 
     def read_cmos_high(self, offset: int) -> int:
-        self.cs.hals.Io.write(CMOS_ADDR_PORT_HIGH, offset)
-        return self.cs.hals.Io.read(CMOS_DATA_PORT_HIGH)
+        self.cs.hals.Io.write(CMOS_ADDR_PORT_HIGH, offset, 1)
+        return self.cs.hals.Io.read(CMOS_DATA_PORT_HIGH, 1)
 
     def write_cmos_high(self, offset: int, value: int) -> None:
-        self.cs.hals.Io.write(CMOS_ADDR_PORT_HIGH, offset)
-        self.cs.hals.Io.write(CMOS_DATA_PORT_HIGH, value)
+        self.cs.hals.Io.write(CMOS_ADDR_PORT_HIGH, offset, 1)
+        self.cs.hals.Io.write(CMOS_DATA_PORT_HIGH, value, 1)
 
     def read_cmos_low(self, offset: int) -> int:
-        self.cs.hals.Io.write(CMOS_ADDR_PORT_LOW, 0x80 | offset)
-        return self.cs.hals.Io.read(CMOS_DATA_PORT_LOW)
+        self.cs.hals.Io.write(CMOS_ADDR_PORT_LOW, 0x80 | offset, 1)
+        return self.cs.hals.Io.read(CMOS_DATA_PORT_LOW, 1)
 
     def write_cmos_low(self, offset: int, value: int) -> None:
-        self.cs.hals.Io.write(CMOS_ADDR_PORT_LOW, offset)
-        self.cs.hals.Io.write(CMOS_DATA_PORT_LOW, value)
+        self.cs.hals.Io.write(CMOS_ADDR_PORT_LOW, offset, 1)
+        self.cs.hals.Io.write(CMOS_DATA_PORT_LOW, value, 1)
 
     def dump_low(self) -> List[int]:
         cmos_buf = [0xFF] * 0x80
-        orig = self.cs.hals.Io.read(CMOS_ADDR_PORT_LOW)
+        orig = self.cs.hals.Io.read(CMOS_ADDR_PORT_LOW, 1)
         for off in range(0x80):
             cmos_buf[off] = self.read_cmos_low(off)
-        self.cs.hals.Io.write(CMOS_ADDR_PORT_LOW, orig)
+        self.cs.hals.Io.write(CMOS_ADDR_PORT_LOW, orig, 1)
         return cmos_buf
 
     def dump_high(self) -> List[int]:
         cmos_buf = [0xFF] * 0x80
-        orig = self.cs.hals.Io.read(CMOS_ADDR_PORT_HIGH)
+        orig = self.cs.hals.Io.read(CMOS_ADDR_PORT_HIGH, 1)
         for off in range(0x80):
             cmos_buf[off] = self.read_cmos_high(off)
-        self.cs.hals.Io.write(CMOS_ADDR_PORT_HIGH, orig)
+        self.cs.hals.Io.write(CMOS_ADDR_PORT_HIGH, orig, 1)
         return cmos_buf
 
     def dump(self) -> None:
