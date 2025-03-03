@@ -90,7 +90,6 @@ class Device:
         """Retrieves bus value(s) from PCI device"""
         dev_list = self.get_objlist(device_name)
         buses = []
-        breakpoint()
         for dev in dev_list:
             for instance_key in dev.instances.keys():
                 buses.append(dev.instances[instance_key].bus)

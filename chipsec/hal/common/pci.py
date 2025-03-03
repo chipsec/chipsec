@@ -358,4 +358,4 @@ class Pci(HALBase):
             return False
         return True
 
-haldata = {"arch":[HALBase.MfgIds.Any, HALBase.MfgIds.Intel], 'name': ['Pci']} #change arch to CPUID genuine intel/amd
+haldata = {"arch":[HALBase.MfgIds.Any, HALBase.MfgIds.Intel], 'name': ['Pci']}

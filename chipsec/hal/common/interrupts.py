@@ -35,11 +35,11 @@ from typing import Optional, Tuple
 from chipsec.hal import hal_base
 from chipsec.library.logger import logger, print_buffer_bytes
 from chipsec.hal.common.acpi import ACPI
+from chipsec.library.exceptions import CSReadError
 from chipsec.hal.common.acpi_tables import UEFI_TABLE, GAS
 from chipsec.library.defines import bytestostring
 
 SMI_APMC_PORT = 0xB2
-SMI_DATA_PORT = 0xB3
 
 NMI_TCO1_CTL = 0x8  # NMI_NOW is bit [8] in TCO1_CTL (or bit [1] in TCO1_CTL + 1)
 NMI_NOW = 0x1
@@ -76,14 +76,25 @@ class Interrupts(hal_base.HALBase):
 
     def send_SMI_APMC(self, SMI_code_port_value: int, SMI_data_port_value: int) -> None:
         logger().log_hal(f"[intr] sending SMI via APMC ports: code 0xB2 <- 0x{SMI_code_port_value:02X}, data 0xB3 <- 0x{SMI_data_port_value:02X}")
-        self.cs.hals.Io.write_port_byte(SMI_DATA_PORT, SMI_data_port_value)
-        return self.cs.hals.Io.write_port_byte(SMI_APMC_PORT, SMI_code_port_value)
+        SMI_code_data = (SMI_data_port_value << 8 | SMI_code_port_value)
+        return self.cs.hals.Io.write_port_word(SMI_APMC_PORT, SMI_code_data)
 
     def send_NMI(self) -> None:
-        logger().log_hal("[intr] Sending NMI# through TCO1_CTL[NMI_NOW]")
-        reg, ba = self.cs.device.get_IO_space("TCOBASE")
-        tcobase = self.cs.register.read_field(reg, ba)
-        return self.cs.hals.Io.write_port_byte(tcobase + NMI_TCO1_CTL + 1, NMI_NOW)
+        # logger().log_hal("[intr] Sending NMI# through TCO1_CTL[NMI_NOW]")
+        # reg, ba = self.cs.device.get_IO_space("TCOBASE")
+        # breakpoint()
+        # tcobase = self.cs.register.read_field(reg, ba)
+        # return self.cs.hals.Io.write_port_byte(tcobase + NMI_TCO1_CTL + 1, NMI_NOW)
+        smbus_instance = self.cs.device.get_obj('8086.SMBUS')
+        if smbus_instance is not None:
+            self.logger.log_hal("[intr] Sending NMI# through TCO1_CTL[NMI_NOW]")
+            try:
+                tcobase, _ = self.cs.hals.IOBAR.get_IO_BAR_base_address("8086.SMBUS.TCOBASE", smbus_instance.instances[0])
+                return self.cs.hals.IOBAR.write_port_byte(tcobase + NMI_TCO1_CTL + 1, NMI_NOW)
+            except CSReadError:
+                self.logger.log("Error finding register 8086.SMBUS.TCOBASE")
+        else:
+                self.logger.log("Unable to find register 8086.SMBUS.TCOBASE")
 
     def find_ACPI_SMI_Buffer(self) -> Optional[UEFI_TABLE.CommBuffInfo]:
         logger().log_hal("Parsing ACPI tables to identify Communication Buffer")
