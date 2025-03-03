@@ -18,7 +18,7 @@
 import unittest
 
 from unittest.mock import MagicMock
-from chipsec.hal.common.acpi_tables import RSDP
+from chipsec.library.acpi_tables import RSDP
 from chipsec.hal.common.acpi import ACPI
 
 class TestACPI(unittest.TestCase):
