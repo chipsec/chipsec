@@ -60,9 +60,12 @@ class IOBAR(hal_base.HALBase):
     #
     def get_IO_BAR_base_address(self, bar_name: str, instance) -> Tuple[int, int]:
         reglist = self.cs.register.get_list_by_name(bar_name)
-        bar = reglist[0].get_def(bar_name)
+        try:
+            bar = reglist[0].get_def(bar_name)
+        except IndexError:
+            raise IOBARNotFoundError(f'IOBARNotFound: {bar_name} is not defined. Check scoping and configuration')
         if not bar:
-            raise IOBARNotFoundError(f'IOBARNotFound: {bar_name}')
+            raise IOBARNotFoundError(f'IOBARNotFound: {bar_name} is not defined. Check scoping and configuration')
         base = 0
         empmty_base = 0
 

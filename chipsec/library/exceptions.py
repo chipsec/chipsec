@@ -110,6 +110,8 @@ class IOBARRuntimeError (RuntimeError):
 class IOBARNotFoundError (RuntimeError):
     pass
 
+class MMIOBARNotFoundError (RuntimeError):
+    pass
 
 class IOMMUError (RuntimeError):
     pass

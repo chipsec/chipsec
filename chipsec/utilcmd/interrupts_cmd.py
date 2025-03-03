@@ -105,9 +105,9 @@ class SMICommand(BaseCommand):
 
     def smi_count(self) -> None:
         self.logger.log("[CHIPSEC] SMI count:")
-        for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
-            smi_cnt = self.cs.register.read_field('MSR_SMI_COUNT', 'Count', cpu_thread=tid)
-            self.logger.log(f'  CPU{tid:d}: {smi_cnt:d}')
+        smi_cnt = self.cs.register.get_list_by_name('8086.MSR.MSR_SMI_COUNT')
+        for reg in smi_cnt:
+            self.logger.log(f'  CPU{reg.instance:d}: {reg.read_field('Count'):d}')
 
     def smi_smmc(self) -> None:
         if os.path.isfile(self.payload):
@@ -180,7 +180,10 @@ class NMICommand(BaseCommand):
             return
 
         self.logger.log("[CHIPSEC] Sending NMI#...")
-        interrupts.send_NMI()
+        try:
+            interrupts.send_NMI()
+        except Exception as err:
+            self.logger.log(err)
 
 
 commands = {'smi': SMICommand, 'nmi': NMICommand}
