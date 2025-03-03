@@ -32,11 +32,11 @@ from typing import Dict, List, Tuple, Optional, Union, TYPE_CHECKING
 from chipsec.library.defines import bytestostring
 from chipsec.library.exceptions import UnimplementedAPIError
 from chipsec.library.file import read_file
-from chipsec.hal.common import acpi_tables
+from chipsec.library import acpi_tables
 from chipsec.hal.hal_base import HALBase
 from chipsec.hal.common.uefi import UEFI
 from chipsec.library.logger import logger, print_buffer_bytes
-from chipsec.hal.common.acpi_tables import ACPI_TABLE
+from chipsec.library.acpi_tables import ACPI_TABLE
 
 if TYPE_CHECKING:
     from ctypes import Array

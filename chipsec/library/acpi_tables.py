@@ -35,7 +35,7 @@ from chipsec.library.logger import logger, dump_buffer_bytes
 from chipsec.library.uefi.common import EFI_GUID_FMT, EFI_GUID_STR
 
 
-class ACPI_TABLE:
+class ACPI_TABLE():
 
     def parse(self, table_content: bytes) -> None:
         return
