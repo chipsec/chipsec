@@ -295,7 +295,6 @@ class MMIO(hal_base.HALBase):
             size = DEFAULT_MMIO_BAR_SIZE
         self.logger.log_hal('[mmio] {}: 0x{:016X} (size = 0x{:X})'.format(bar_name, base, size))
         if base == 0:
-            breakpoint()
             self.logger.log_hal('[mmio] Base address was determined to be 0.')
             raise CSReadError('[mmio] Base address was determined to be 0')
 

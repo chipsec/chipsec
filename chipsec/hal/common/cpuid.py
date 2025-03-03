@@ -40,10 +40,7 @@ class CpuId(hal_base.HALBase):
         self.helper = cs.helper
 
     def cpuid(self, eax: int, ecx: int) -> Tuple[int, int, int, int]:
-        logger().log_hal(f'[cpuid] in: EAX=0x{eax:08X}, ECX=0x{ecx:08X}')
-        (eax, ebx, ecx, edx) = self.helper.cpuid(eax, ecx)
-        logger().log_hal(f'[cpuid] out: EAX=0x{eax:08X}, EBX=0x{ebx:08X}, ECX=0x{ecx:08X}, EDX=0x{edx:08X}')
-        return (eax, ebx, ecx, edx)
+        return self.cs.hals.CPU.cpuid(eax, ecx)
 
     def get_proc_info(self):
         (eax, _, _, _) = self.cpuid(0x01, 0x00)
@@ -53,7 +50,9 @@ class CpuId(hal_base.HALBase):
         (_,ebx, ecx, edx) = self.cpuid(0x00, 0x00)
         mfg_barray = ebx.to_bytes(4, byteorder) + edx.to_bytes(4, byteorder) + ecx.to_bytes(4, byteorder)
         return bytestostring(unpack('<12s', mfg_barray)[0])
+    
+
         
         
 
-haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': ['CpuId']} #change arch to CPUID genuine intel/amd
+haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': ['CpuId']}

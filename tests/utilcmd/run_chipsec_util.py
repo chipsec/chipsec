@@ -54,6 +54,7 @@ def setup_run_destroy_util_get_log_output(init_replay_file: str, util_name: str,
     replayHelper = rph.ReplayHelper(init_replay_file)
     csu._helper = replayHelper
     retval = run_chipsec_util(csu, util_replay_file)
+    clear_cs()
     logger_calls = []
     for func in logging_fucntions_to_capture:
         if hasattr(chipsec.library.logger._logger, func):
