@@ -45,7 +45,7 @@ usage:
 """
 from typing import List, Optional, Tuple
 from chipsec.hal import hal_base
-from chipsec.library.exceptions import CSReadError
+from chipsec.library.exceptions import CSReadError, MMIOBARNotFoundError
 from chipsec.library.logger import logger
 from chipsec.library.defines import get_bits, is_all_ones
 
@@ -193,11 +193,12 @@ class MMIO(hal_base.HALBase):
     def get_MMIO_BAR_base_address(self, bar_name: str, pciobj: Optional[int] = None) -> Tuple[int, int]:
         if self.cache_bar_addresses_resolution and (bar_name, pciobj) in self.cached_bar_addresses:
             return self.cached_bar_addresses[(bar_name, pciobj)]
-        bar = self.cs.register.mmio.get_def(bar_name)  #self.cs.Cfg.MMIO_BARS[bar_name]
-        # if bar is None or bar == {}:
-        #     return -1, -1
+        try:
+            bar = self.cs.register.mmio.get_def(bar_name)  #self.cs.Cfg.MMIO_BARS[bar_name]
+        except KeyError:
+            raise MMIOBARNotFoundError(f'MMIOBARNotFound: {bar_name} is not defined. Check scoping and configuration')
         if not bar:
-            raise CSReadError(f'{bar_name} is not defined. check scoping and configuration')
+            raise MMIOBARNotFoundError(f'MMIOBARNotFound: {bar_name} is not defined. Check scoping and configuration')
         base, size = bar.get_base(pciobj)
         if base:
             return base, size
