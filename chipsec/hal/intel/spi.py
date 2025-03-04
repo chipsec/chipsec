@@ -45,21 +45,19 @@ usage:
 import struct
 import time
 from typing import Dict, Tuple, Optional
-from chipsec.library.defines import ALIGNED_4KB, BIT0, BIT1, BIT2, BIT5
+from chipsec.library.defines import BIT0, BIT1, BIT2, BIT5
 from chipsec.library.file import write_file, read_file
 from chipsec.library.logger import print_buffer_bytes
 from chipsec.hal import hal_base
-from chipsec.hal.common import mmio
 from chipsec.library.spi_jedec_ids import JEDEC_ID
-from chipsec.library.exceptions import SpiRuntimeError, UnimplementedAPIError
+from chipsec.library.exceptions import SpiRuntimeError
+from chipsec.library.intel.spi import SPI_REGION, SPI_FLA_SHIFT, SPI_FLA_PAGE_MASK, SPI_REGION_NAMES, SPI_REGION_tuple, print_SPI_Flash_Regions
 
 SPI_READ_WRITE_MAX_DBC = 64
 SPI_READ_WRITE_DEF_DBC = 4
 SFDP_HEADER = 0x50444653
 
 SPI_MAX_PR_COUNT = 5
-SPI_FLA_SHIFT = 12
-SPI_FLA_PAGE_MASK = ALIGNED_4KB
 
 SPI_MMIO_BASE_LENGTH = 0x200
 PCH_RCBA_SPI_HSFSTS_SCIP = BIT5                          # SPI cycle in progress
@@ -75,9 +73,6 @@ PCH_RCBA_SPI_HSFCTL_FCYCLE_JEDEC = 6                             # Flash Cycle R
 PCH_RCBA_SPI_HSFCTL_FCYCLE_FGO = BIT0                          # Flash Cycle GO
 
 PCH_RCBA_SPI_FADDR_MASK = 0x07FFFFFF                      # SPI Flash Address Mask [0:26]
-
-PCH_RCBA_SPI_FREGx_LIMIT_MASK = 0x7FFF0000                    # Size
-PCH_RCBA_SPI_FREGx_BASE_MASK = 0x00007FFF                    # Base
 
 PCH_RCBA_SPI_OPTYPE_RDNOADDR = 0x00
 PCH_RCBA_SPI_OPTYPE_WRNOADDR = 0x01
@@ -97,12 +92,6 @@ HSFCTL_ERASE_CYCLE = ((PCH_RCBA_SPI_HSFCTL_FCYCLE_ERASE << 1) | PCH_RCBA_SPI_HSF
 HSFCTL_JEDEC_CYCLE = ((PCH_RCBA_SPI_HSFCTL_FCYCLE_JEDEC << 1) | PCH_RCBA_SPI_HSFCTL_FCYCLE_FGO)
 HSFCTL_SFDP_CYCLE = ((PCH_RCBA_SPI_HSFCTL_FCYCLE_SFDP << 1) | PCH_RCBA_SPI_HSFCTL_FCYCLE_FGO)
 
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# FGO bit cleared (for safety ;)
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#HSFCTL_WRITE_CYCLE = ( (PCH_RCBA_SPI_HSFCTL_FCYCLE_WRITE<<1) )
-#HSFCTL_ERASE_CYCLE = ( (PCH_RCBA_SPI_HSFCTL_FCYCLE_ERASE<<1) )
-
 HSFSTS_CLEAR = (PCH_RCBA_SPI_HSFSTS_AEL | PCH_RCBA_SPI_HSFSTS_FCERR | PCH_RCBA_SPI_HSFSTS_FDONE)
 
 #
@@ -113,84 +102,7 @@ SPI_HSFSTS_OFFSET = 0x04
 SPI_HSFSTS_FLOCKDN_MASK = (1 << 15)
 SPI_HSFSTS_FDOPSS_MASK = (1 << 13)
 
-#
-# Flash Regions
-#
-
-SPI_REGION_NUMBER_IN_FD = 12
-
-FLASH_DESCRIPTOR = 0
-BIOS = 1
-ME = 2
-GBE = 3
-PLATFORM_DATA = 4
-FREG5 = 5
-FREG6 = 6
-FREG7 = 7
-EMBEDDED_CONTROLLER = 8
-FREG9 = 9
-FREG10 = 10
-FREG11 = 11
-
-SPI_REGION: Dict[int, str] = {
-    FLASH_DESCRIPTOR: '8086.SPI.FREG0_FLASHD',
-    BIOS: '8086.SPI.FREG1_BIOS',
-    ME: '8086.SPI.FREG2_ME',
-    GBE: '8086.SPI.FREG3_GBE',
-    PLATFORM_DATA: '8086.SPI.FREG4_PD',
-    FREG5: '8086.SPI.FREG5',
-    FREG6: '8086.SPI.FREG6',
-    FREG7: '8086.SPI.FREG7',
-    EMBEDDED_CONTROLLER: '8086.SPI.FREG8_EC',
-    FREG9: '8086.SPI.FREG9',
-    FREG10: '8086.SPI.FREG10',
-    FREG11: '8086.SPI.FREG11'
-}
-
-SPI_REGION_NAMES: Dict[int, str] = {
-    FLASH_DESCRIPTOR: 'Flash Descriptor',
-    BIOS: 'BIOS',
-    ME: 'Intel ME',
-    GBE: 'GBe',
-    PLATFORM_DATA: 'Platform Data',
-    FREG5: 'Flash Region 5',
-    FREG6: 'Flash Region 6',
-    FREG7: 'Flash Region 7',
-    EMBEDDED_CONTROLLER: 'Embedded Controller',
-    FREG9: 'Flash Region 9',
-    FREG10: 'Flash Region 10',
-    FREG11: 'Flash Region 11'
-}
-
-#
-# Flash Descriptor Master Defines
-#
-
-MASTER_HOST_CPU_BIOS = 0
-MASTER_ME = 1
-MASTER_GBE = 2
-MASTER_EC = 3
-
-SPI_MASTER_NAMES: Dict[int, str] = {
-    MASTER_HOST_CPU_BIOS: 'CPU',
-    MASTER_ME: 'ME',
-    MASTER_GBE: 'GBe',
-    MASTER_EC: 'EC'
-}
-
-SPI_FLASH_DESCRIPTOR_SIGNATURE = struct.pack('=I', 0x0FF0A55A)
-SPI_FLASH_DESCRIPTOR_SIZE = 0x1000
-
 DEFAULT_PROGRESS_MAX = 50
-
-# @TODO: DEPRECATED
-
-
-# def get_SPI_region(flreg: int) -> Tuple[int, int]:
-#     range_base = (flreg & PCH_RCBA_SPI_FREGx_BASE_MASK) << SPI_FLA_SHIFT
-#     range_limit = ((flreg & PCH_RCBA_SPI_FREGx_LIMIT_MASK) >> 4)
-#     range_limit |= SPI_FLA_PAGE_MASK
-#     return (range_base, range_limit)
 
 
 class SPI(hal_base.HALBase):
@@ -292,7 +204,7 @@ class SPI(hal_base.HALBase):
         freg_name = SPI_REGION[spi_region_id]
         if not self.cs.register.is_defined(freg_name):
             return (0, 0, 0)
-        freg =  self.cs.register.get_instance_by_name(freg_name, self.instance)
+        freg = self.cs.register.get_instance_by_name(freg_name, self.instance)
         freg_val = freg.read()
         # Region Base corresponds to FLA bits 24:12
         range_base = freg.get_field('RB') << SPI_FLA_SHIFT
@@ -300,29 +212,25 @@ class SPI(hal_base.HALBase):
         range_limit = freg.get_field('RL') << SPI_FLA_SHIFT
         # FLA bits 11:0 are assumed to be FFFh for the limit comparison
         range_limit |= SPI_FLA_PAGE_MASK
-        return (range_base, range_limit, freg)
-
-    SpiRegions = Dict[int, Tuple[int, int, int, str, int]]
+        return (range_base, range_limit, freg_val)
 
     # all_regions = True : return all SPI regions
     # all_regions = False: return only available SPI regions (limit >= base)
-    def get_SPI_regions(self, all_regions: bool = True) -> SpiRegions:
+    def get_SPI_regions(self, all_regions: bool = True) -> SPI_REGION_tuple:
         spi_regions: Dict[int, Tuple[int, int, int, str, int]] = {}
         for r in SPI_REGION:
             (range_base, range_limit, freg) = self.get_SPI_region(r)
             if range_base is None:
                 continue
             if all_regions or (range_limit >= range_base):
-                range_size = range_limit - range_base + 1
-                spi_regions[r] = (range_base, range_limit, range_size, SPI_REGION_NAMES[r], freg)
+                spi_regions[r] = SPI_REGION_tuple(SPI_REGION_NAMES[r], freg, range_base, range_limit)
         return spi_regions
-
 
     def get_SPI_Protected_Range(self, pr_num: int) -> Tuple[int, int, int, int, int, int]:
         if pr_num > SPI_MAX_PR_COUNT:
             return (0, 0, 0, 0, 0, 0)
 
-        pr_name = f'8086.SPI.PR*'
+        pr_name = '8086.SPI.PR*'
         pr_j_reg = self.cs.register.get_instance_by_name(pr_name, self.instance)
         pr_j = pr_j_reg.read()
 
@@ -409,13 +317,8 @@ class SPI(hal_base.HALBase):
             self.logger.log(f'Opcode{j:d}  | 0x{(opmenu >> j * 8) & 0xFF:02X}   | {optype_j:x}      | {desc} ')
 
     def display_SPI_Flash_Regions(self) -> None:
-        self.logger.log("------------------------------------------------------------")
-        self.logger.log("Flash Region             | FREGx Reg | Base     | Limit     ")
-        self.logger.log("------------------------------------------------------------")
         regions = self.get_SPI_regions()
-        for (region_id, region) in regions.items():
-            base, limit, size, name, freg = region
-            self.logger.log(f'{region_id:d} {name:22} | {freg:08X}  | {base:08X} | {limit:08X} ')
+        print_SPI_Flash_Regions(regions)
 
     def display_BIOS_region(self) -> None:
         bfpreg = self.cs.register.read('BFPR')
@@ -545,7 +448,7 @@ class SPI(hal_base.HALBase):
             # time.sleep(0.001)
             hsfsts = self.spi_reg_read(self.hsfs_off, 1)
 
-            #cycle_done = (hsfsts & Cfg.Cfg.PCH_RCBA_SPI_HSFSTS_FDONE) and (0 == (hsfsts & Cfg.PCH_RCBA_SPI_HSFSTS_SCIP))
+            # cycle_done = (hsfsts & Cfg.Cfg.PCH_RCBA_SPI_HSFSTS_FDONE) and (0 == (hsfsts & Cfg.PCH_RCBA_SPI_HSFSTS_SCIP))
             cycle_done = not (hsfsts & PCH_RCBA_SPI_HSFSTS_SCIP)
             if cycle_done:
                 break
@@ -574,9 +477,9 @@ class SPI(hal_base.HALBase):
 
         self.spi_reg_write(self.faddr_off, (spi_fla & PCH_RCBA_SPI_FADDR_MASK))
         # Other options ;)
-        #chipsec.chipset.write_register( self.cs, "FADDR", (spi_fla & Cfg.PCH_RCBA_SPI_FADDR_MASK) )
-        #write_MMIO_reg( self.cs, spi_base, self.faddr_off, (spi_fla & Cfg.PCH_RCBA_SPI_FADDR_MASK) )
-        #self.cs.hals.Memory.write_physical_mem_dword( spi_base + self.faddr_off, (spi_fla & Cfg.PCH_RCBA_SPI_FADDR_MASK) )
+        # chipsec.chipset.write_register( self.cs, "FADDR", (spi_fla & Cfg.PCH_RCBA_SPI_FADDR_MASK) )
+        # write_MMIO_reg( self.cs, spi_base, self.faddr_off, (spi_fla & Cfg.PCH_RCBA_SPI_FADDR_MASK) )
+        # self.cs.hals.Memory.write_physical_mem_dword( spi_base + self.faddr_off, (spi_fla & Cfg.PCH_RCBA_SPI_FADDR_MASK) )
 
         if self.logger.HAL:
             _faddr = self.spi_reg_read(self.faddr_off)
@@ -588,7 +491,7 @@ class SPI(hal_base.HALBase):
             self.spi_reg_write(self.hsfc_off + 0x1, dbc, 1)
 
         self.spi_reg_write(self.hsfc_off, hsfctl_spi_cycle_cmd, 1)
-        #self.spi_reg_write( self.hsfc_off, ((dbc<<8)|hsfctl_spi_cycle_cmd), 2 )
+        # self.spi_reg_write( self.hsfc_off, ((dbc<<8)|hsfctl_spi_cycle_cmd), 2 )
 
         # Read HSFC back (logging only)
         if self.logger.HAL:
@@ -664,7 +567,7 @@ class SPI(hal_base.HALBase):
                         self.logger.log(f'[spi] FDATA00 + 0x{fdata_idx * 4:x}: 0x{dword_value:x}')
                     buf += struct.pack("I", dword_value)
         if self.logger.UTIL_TRACE:
-                self.logger.log('\nSPI read complete')
+            self.logger.log('\nSPI read complete')
 
         if (0 != r):
             self.logger.log_hal(f'[spi] Reading remaining 0x{r:x} bytes from 0x{spi_fla + n * dbc:x}')
@@ -853,4 +756,4 @@ class SPI(hal_base.HALBase):
         return (jedec_id, manu, part)
 
 
-haldata = {"arch":[hal_base.HALBase.MfgIds.Intel], 'name': ['SPI']}
+haldata = {"arch": [hal_base.HALBase.MfgIds.Intel], 'name': ['SPI']}
