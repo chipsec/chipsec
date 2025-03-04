@@ -49,8 +49,8 @@ from argparse import ArgumentParser
 from chipsec.library.file import read_file, write_file
 from chipsec.command import BaseCommand, toLoad
 
-from chipsec.hal.intel.spi import FLASH_DESCRIPTOR, BIOS
-from chipsec.hal.common.spi_descriptor import get_spi_flash_descriptor, get_spi_regions, parse_spi_flash_descriptor
+from chipsec.library.intel.spi import FLASH_DESCRIPTOR, BIOS
+from chipsec.hal.intel.spi_descriptor import get_spi_flash_descriptor, get_spi_regions, parse_spi_flash_descriptor
 from chipsec.library.uefi.spi import decode_uefi_region
 from chipsec.library.uefi import platform as uefi_platform
 
@@ -59,18 +59,17 @@ class DecodeCommand(BaseCommand):
 
     def requirements(self) -> toLoad:
         return toLoad.Nil
-    
+
     def parse_arguments(self) -> None:
         parser = ArgumentParser(usage=__doc__)
         parser.add_argument('_rom', metavar='<rom>', help='file to decode')
         parser.add_argument('_fwtype', metavar='fw_type', nargs='?', help='firmware type', default=None)
         parser.parse_args(self.argv, namespace=self)
-        
+
         if self._rom.lower() == 'types':
             self.func = self.decode_types
         else:
             self.func = self.decode_rom
-
 
     def decode_types(self) -> None:
         self.logger.log(f'\n<fw_type> should be in [ {" | ".join([f"{t}" for t in uefi_platform.fw_types])} ]\n')
@@ -102,12 +101,12 @@ class DecodeCommand(BaseCommand):
         if not os.path.exists(pth):
             os.makedirs(pth)
 
-        for r in flregs:
-            idx = r[0]
-            name = r[1]
-            base = r[3]
-            limit = r[4]
-            notused = r[5]
+        for r, region in flregs.items():
+            idx = r
+            name = region.name
+            base = region.base
+            limit = region.limit
+            notused = region.base > region.limit
             if not notused:
                 region_data = rom[base:limit + 1]
                 fname = os.path.join(pth, f'{idx:d}_{base:04X}-{limit:04X}_{name}.bin')
