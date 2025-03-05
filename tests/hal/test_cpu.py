@@ -220,8 +220,8 @@ class TestHalCpu(unittest.TestCase):
         mock_self.cs.register.get_list_by_name().read_field.side_effect = [[0x88400000], [0xFFC00000]]
         reg_call_1 = call('8086.MSR.IA32_SMRR_PHYSBASE')
         reg_call_2 = call('8086.MSR.IA32_SMRR_PHYSMASK')
-        field_call_1 = call('PhysBase') # TODO: Do these two \/ need to have a `, True` added to it?
-        field_call_2 = call('PhysMask')
+        field_call_1 = call('PHYSBASE') # TODO: Do these two \/ need to have a `, True` added to it?
+        field_call_2 = call('PHYSMASK')
         CPU.get_SMRR(mock_self)
         self.assertEqual(mock_self.cs.register.get_list_by_name.call_args_list, [call(), reg_call_1, reg_call_2])
         self.assertEqual(mock_self.cs.register.get_list_by_name().read_field.call_args_list, [field_call_1, field_call_2])

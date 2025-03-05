@@ -47,8 +47,8 @@ Registers used:
     - MSR_BIOS_DONE.IA_UNTRUSTED
     - PCI0.0.0_TSEGMB.TSEGMB
     - PCI0.0.0_BGSM.BGSM
-    - IA32_SMRR_PHYSBASE.PhysBase
-    - IA32_SMRR_PHYSMASK.PhysMask
+    - IA32_SMRR_PHYSBASE.PHYSBASE
+    - IA32_SMRR_PHYSMASK.PHYSMASK
 
 Supported Platforms:
     - Core (client)

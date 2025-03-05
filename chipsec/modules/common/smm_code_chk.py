@@ -19,7 +19,7 @@
 """
 SMM_CODE_CHK_EN (SMM Call-Out) Protection check
 
-SMM_CODE_CHK_EN is a bit found in the MSR_SMM_FEATURE_CONTROL register.
+SMM_CODE_CHK_EN is a bit found in the SMM_FEATURE_CONTROL register.
 Once set to '1', any CPU that attempts to execute SMM code not within the ranges defined by the SMRR will assert an unrecoverable MCE.
 As such, enabling and locking this bit is an important step in mitigating SMM call-out vulnerabilities.
 This CHIPSEC module simply reads the register and checks that SMM_CODE_CHK_EN is set and locked.
@@ -35,11 +35,11 @@ Examples:
     >>> chipsec_main.py -m common.smm_code_chk
 
 Registers used:
-    - MSR_SMM_FEATURE_CONTROL.LOCK
-    - MSR_SMM_FEATURE_CONTROL.SMM_CODE_CHK_EN
+    - SMM_FEATURE_CONTROL.LOCK
+    - SMM_FEATURE_CONTROL.SMM_CODE_CHK_EN
 
 .. note::
-    - MSR_SMM_FEATURE_CONTROL may not be defined or readable on all platforms.
+    - SMM_FEATURE_CONTROL may not be defined or readable on all platforms.
 
 """
 from chipsec.library.exceptions import HWAccessViolationError
@@ -54,35 +54,37 @@ class smm_code_chk(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.cs.set_scope({
+            "SMM_FEATURE_CONTROL": "8086.MSR",
+        })
 
     def is_supported(self) -> bool:
-        if not self.cs.register.is_defined('MSR_SMM_FEATURE_CONTROL'):
-            # The MSR_SMM_FEATURE_CONTROL register is available starting from:
+        if not self.cs.register.is_defined('SMM_FEATURE_CONTROL'):
+            # The SMM_FEATURE_CONTROL register is available starting from:
             # * 4th Generation Intel® Core™ Processors (Haswell microarchitecture)
             # * Atom Processors Based on the Goldmont Microarchitecture
-            self.logger.log_important('Register MSR_SMM_FEATURE_CONTROL not defined for platform.  Skipping module.')
+            self.logger.log_important('Register SMM_FEATURE_CONTROL not defined for platform.  Skipping module.')
             return False
 
-        # The Intel SDM states that MSR_SMM_FEATURE_CONTROL can only be accessed while the CPU executes in SMM.
+        # The Intel SDM states that SMM_FEATURE_CONTROL can only be accessed while the CPU executes in SMM.
         # However, in reality many users report that there is no problem reading this register from outside of SMM.
         # Just to be on the safe side of things, we'll verify we can read this register successfully before moving on.
+        self.smm_fc_reg = self.cs.register.get_list_by_name('SMM_FEATURE_CONTROL')
         try:
-            self.cs.register.read('MSR_SMM_FEATURE_CONTROL')
+            self.smm_fc_reg.read()
         except HWAccessViolationError:
-            self.logger.log_important('MSR_SMM_FEATURE_CONTROL is unreadable.  Skipping module.')
+            self.logger.log_important('SMM_FEATURE_CONTROL is unreadable.  Skipping module.')
             return False
         else:
             return True
 
-    def _check_SMM_Code_Chk_En(self, thread_id: int) -> int:
-        regval = self.cs.register.read('MSR_SMM_FEATURE_CONTROL', thread_id)
-        lock = self.cs.register.get_field('MSR_SMM_FEATURE_CONTROL', regval, 'LOCK')
-        code_chk_en = self.cs.register.get_field('MSR_SMM_FEATURE_CONTROL', regval, 'SMM_CODE_CHK_EN')
-
-        self.cs.register.print('MSR_SMM_FEATURE_CONTROL', regval, cpu_thread=thread_id)
-
-        if 1 == code_chk_en:
-            if 1 == lock:
+    def _check_SMM_Code_Chk_En(self) -> int:
+        self.smm_fc_reg.print()
+        enabled = self.smm_fc_reg.is_all_field_value(1, 'SMM_CODE_CHK_EN')
+        locked = self.smm_fc_reg.is_all_field_value(1, 'LOCK')
+        
+        if enabled:
+            if locked:
                 res = ModuleResult.PASSED
             else:
                 res = ModuleResult.FAILED
@@ -99,17 +101,9 @@ class smm_code_chk(BaseModule):
         return res
 
     def check_SMM_Code_Chk_En(self) -> int:
+        
+        res = self._check_SMM_Code_Chk_En()
 
-        results = []
-        for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
-            results.append(self._check_SMM_Code_Chk_En(tid))
-
-        if not all(_ == results[0] for _ in results):
-            self.logger.log_failed('MSR_SMM_FEATURE_CONTROL does not have the same value across all CPUs')
-            self.result.setStatusBit(self.result.status.POTENTIALLY_VULNERABLE)
-            return ModuleResult.FAILED
-
-        res = results[0]
         if res == ModuleResult.FAILED:
             self.logger.log_failed('SMM_Code_Chk_En is enabled but not locked down')
             self.result.setStatusBit(self.result.status.LOCKS)

@@ -49,7 +49,7 @@ class smm(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.cs.set_scope({
-            'SMRAMC': '8086.HOSTCTL.SMRAMC',
+            'SMRAMC': '8086.HOSTCTL',
         })
 
     def is_supported(self) -> bool:

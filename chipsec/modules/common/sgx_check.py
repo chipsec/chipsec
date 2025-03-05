@@ -21,6 +21,8 @@
 #  Sushmith Hiremath, INTEL DCG RED team
 #
 
+# TODO: Updated but not validated.
+
 """
 Check SGX related configuration
 
@@ -76,6 +78,9 @@ class sgx_check(BaseModule):
         BaseModule.__init__(self)
         self.helper = self.cs.helper
         self.res = ModuleResult.PASSED
+        self.cs.set_scope({
+            None: "8086.MSR"
+        })
 
     def is_supported(self) -> bool:
         sgx_cpu_support = False
@@ -104,10 +109,10 @@ class sgx_check(BaseModule):
 
         self.logger.log('\n[*] SGX BIOS enablement check')
         self.logger.log('[*] Verifying IA32_FEATURE_CONTROL MSR is configured')
-        bios_feature_control_enable = True
-        for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
-            if not (self.cs.register.read_field('IA32_FEATURE_CONTROL', 'SGX_GLOBAL_EN', False, tid) == 1):
-                bios_feature_control_enable = False
+        fc_reg_list = self.cs.register.get_list_by_name('IA32_FEATURE_CONTROL')
+        fc_reg_list.read()
+        bios_feature_control_enable = fc_reg_list.is_all_field_value(1, 'SGX_GLOBAL_EN')
+
         if bios_feature_control_enable:
             self.logger.log_good('Intel SGX is Enabled in BIOS')
         else:
@@ -116,12 +121,9 @@ class sgx_check(BaseModule):
             self.result.setStatusBit(self.result.status.FEATURE_DISABLED)
 
         self.logger.log('\n[*] Verifying IA32_FEATURE_CONTROL MSR is locked')
-        locked = True
-        for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
-            feature_cntl_lock = self.cs.control.get('Ia32FeatureControlLock', tid)
-            self.logger.log_verbose(f'[*] cpu{tid:d}: IA32_Feature_Control Lock = {feature_cntl_lock:d}')
-            if 0 == feature_cntl_lock:
-                locked = False
+        fc_lock_reg_list = self.cs.control.get_list_by_name('Ia32FeatureControlLock')
+        fc_lock_reg_list.read()
+        locked = fc_lock_reg_list.is_all_field_value(1, 'Ia32FeatureControlLock')
         if locked:
             self.logger.log_good('IA32_Feature_Control locked')
         else:
@@ -130,20 +132,18 @@ class sgx_check(BaseModule):
             self.result.setStatusBit(self.result.status.LOCKS)
 
         self.logger.log('\n[*] Verifying if Protected Memory Range (PRMRR) is configured')
+        prmrr_reg_list = self.cs.register.get_list_by_name('MTRRCAP')
+        prmrr_reg_list.read()
         prmrr_enable = False
-        for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
-            mtrrcap = self.cs.register.read_field('MTRRCAP', 'PRMRR', False, tid)
-            if mtrrcap == 0:
-                self.logger.log_verbose(f'[*] CPU{tid:d} Protected Memory Range configuration is not supported')
-            else:
-                prmrr_enable = True
-                self.logger.log_verbose(f'[*] CPU{tid:d} Protected Memory Range configuration is supported')
-        if prmrr_enable:
-            self.logger.log_good('Protected Memory Range configuration is supported')
-        else:
+        if prmrr_reg_list.is_any_field_value(0, 'PRMRR'):
             self.logger.log_bad('Protected Memory Range configuration is not supported')
             self.res = ModuleResult.FAILED
             self.result.setStatusBit(self.result.status.UNSUPPORTED_FEATURE)
+        else:
+            prmrr_enable = True
+            self.logger.log_good('Protected Memory Range configuration is supported')
+
+
 
         self.logger.log('\n[*] Verifying PRMRR Configuration on each core.')
 
@@ -204,8 +204,11 @@ class sgx_check(BaseModule):
             self.result.setStatusBit(self.result.status.FEATURE_DISABLED)
 
         if self.cs.register.is_defined('BIOS_SE_SVN') and self.cs.register.is_defined('BIOS_SE_SVN_STATUS'):
-            self.cs.register.print('BIOS_SE_SVN', self.cs.register.read('BIOS_SE_SVN'))
-            self.cs.register.print('BIOS_SE_SVN_STATUS', self.cs.register.read('BIOS_SE_SVN_STATUS'))
+            bios_se_svn_obj = self.cs.register.get_list_by_name('BIOS_SE_SVN')
+            bios_se_svn_obj.read_and_print()
+            bios_se_svn_status_obj = self.cs.register.get_list_by_name('BIOS_SE_SVN_STATUS')
+            bios_se_svn_status_obj.read_and_print()
+
 
         debug_res, debug_result = self.check_debug()
         if self.cs.control.is_defined('SamplePart') and self.cs.control.get('SamplePart') == 1:
@@ -366,6 +369,7 @@ class sgx_check(BaseModule):
             self.locked = False
             self.check_uncore_vals = False
 
+
         def _check_prmrr(self) -> None:
             self.reset_variables()
             first_iter = True
@@ -373,53 +377,61 @@ class sgx_check(BaseModule):
             self.locked = True
             self.check_uncore_vals = self.cs.register.is_defined('PRMRR_UNCORE_PHYBASE') and self.cs.register.is_defined('PRMRR_UNCORE_MASK')
             for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
-                self.valid_config_new = self.cs.register.read('PRMRR_VALID_CONFIG', tid)
-                self.base_new = self.cs.register.read_field('PRMRR_PHYBASE', 'PRMRR_base_address_fields', False, tid)
-                self.base_memtype_new = self.cs.register.read_field('PRMRR_PHYBASE', 'PRMRR_MEMTYPE', False, tid)
-                self.mask_new = self.cs.register.read_field('PRMRR_MASK', 'PRMRR_mask_bits', False, tid)
-                self.mask_vld_new = self.cs.register.read_field('PRMRR_MASK', 'PRMRR_VLD', False, tid)
-                self.mask_lock_new = self.cs.register.read_field('PRMRR_MASK', 'PRMRR_LOCK', False, tid)
-                if self.check_uncore_vals:
-                    self.uncore_base_new = self.cs.register.read_field('PRMRR_UNCORE_PHYBASE', 'PRMRR_base_address_fields', False, tid)
-                    self.uncore_mask_new = self.cs.register.read_field('PRMRR_UNCORE_MASK', 'PRMRR_mask_bits', False, tid)
-                    self.uncore_mask_vld_new = self.cs.register.read_field('PRMRR_UNCORE_MASK', 'PRMRR_VLD', False, tid)
-                    self.uncore_mask_lock_new = self.cs.register.read_field('PRMRR_UNCORE_MASK', 'PRMRR_LOCK', False, tid)
-                if self.logger.VERBOSE:
-                    self.logger.log(f'[*]      CPU{tid:d} PRMRR_VALID_CONFIG: 0x{self.valid_config_new:010X}')
-                    self.logger.log(f'[*]      CPU{tid:d} PRMRR base address: 0x{self.base_new:012X}')
-                    self.logger.log(f'[*]      CPU{tid:d} PRMRR memory type: 0x{self.base_memtype_new:d}')
-                    self.logger.log(f'[*]      CPU{tid:d} PRMRR mask address: 0x{self.mask_new:012X}')
-                    self.logger.log(f'[*]      CPU{tid:d} PRMRR mask valid: 0x{self.mask_vld_new:d}')
-                    self.logger.log(f'[*]      CPU{tid:d} PRMRR mask lock: 0x{self.mask_lock_new:d}')
+                self.valid_config_obj = self.cs.register.get_instance_by_name('PRMRR_VALID_CONFIG', tid)
+                if self.valid_config_obj:
+                    self.valid_config_new = self.valid_config_obj.read()
+                    self.base_obj = self.cs.register.get_instance_by_name('PRMRR_PHYBASE', tid)
+                    self.base_new = self.base_obj.read_field('PRMRR_base_address_fields')
+                    self.base_memtype_obj = self.cs.register.get_instance_by_name('PRMRR_PHYBASE', tid)
+                    self.base_memtype_new = self.base_memtype_obj.read_field('PRMRR_MEMTYPE')
+                    self.mask_obj = self.cs.register.get_instance_by_name('PRMRR_MASK', tid)
+                    self.mask_obj.read()
+                    self.mask_new = self.mask_obj.get_field('PRMRR_mask_bits')
+                    self.mask_vld_new = self.mask_obj.get_field('PRMRR_VLD')
+                    self.mask_lock_new = self.mask_obj.get_field('PRMRR_LOCK')
                     if self.check_uncore_vals:
-                        self.logger.log(f'[*]      CPU{tid:d} PRMRR uncore base address: 0x{self.uncore_base_new:012X}')
-                        self.logger.log(f'[*]      CPU{tid:d} PRMRR uncore mask address: 0x{self.uncore_mask_new:012X}')
-                        self.logger.log(f'[*]      CPU{tid:d} PRMRR uncore mask valid: 0x{self.uncore_mask_vld_new:d}')
-                        self.logger.log(f'[*]      CPU{tid:d} PRMRR uncore mask lock: 0x{self.uncore_mask_lock_new:d}')
-                if first_iter:
-                    self.valid_config = self.valid_config_new
-                    self.base = self.base_new
-                    self.base_memtype = self.base_memtype_new
-                    self.mask = self.mask_new
-                    self.mask_vld = self.mask_vld_new
-                    self.mask_lock = self.mask_lock_new
-                    self.uncore_base = self.uncore_base_new
-                    self.uncore_mask = self.uncore_mask_new
-                    self.uncore_mask_vld = self.uncore_mask_vld_new
-                    self.uncore_mask_lock = self.uncore_mask_lock_new
-                    first_iter = False
-                if self.mask_lock_new == 0:
-                    self.locked = False
-                if ((self.valid_config != self.valid_config_new) or
-                    (self.base != self.base_new) or (self.mask != self.mask_new) or
-                    (self.uncore_base != self.uncore_base_new) or
-                    (self.uncore_mask != self.uncore_mask_new) or
-                    (self.mask_lock != self.mask_lock_new) or
-                    (self.check_valid and ((self.mask_vld != self.mask_vld_new) or
-                    (self.uncore_mask_vld != self.uncore_mask_vld_new))) or
-                    (self.uncore_mask_lock != self.uncore_mask_lock_new) or
-                        (self.base_memtype != self.base_memtype_new)):
-                    self.uniform = False
+                        self.uncore_base_obj = self.cs.register.get_instance_by_name('PRMRR_UNCORE_PHYBASE', tid)
+                        self.uncore_base_new = self.uncore_base_obj.read_field('PRMRR_base_address_fields', False)
+                        self.uncore_mask_obj = self.cs.register.get_instance_by_name('PRMRR_UNCORE_MASK', tid)
+                        self.uncore_mask_new = self.uncore_mask_obj.read_field('PRMRR_mask_bits', False)
+                        self.uncore_mask_vld_new = self.uncore_mask_obj.read_field('PRMRR_VLD', False)
+                        self.uncore_mask_lock_new = self.uncore_mask_obj.read_field('PRMRR_LOCK', False)
+                    if self.logger.VERBOSE:
+                        self.logger.log(f'[*]      CPU{tid:d} PRMRR_VALID_CONFIG: 0x{self.valid_config_new:010X}')
+                        self.logger.log(f'[*]      CPU{tid:d} PRMRR base address: 0x{self.base_new:012X}')
+                        self.logger.log(f'[*]      CPU{tid:d} PRMRR memory type: 0x{self.base_memtype_new:d}')
+                        self.logger.log(f'[*]      CPU{tid:d} PRMRR mask address: 0x{self.mask_new:012X}')
+                        self.logger.log(f'[*]      CPU{tid:d} PRMRR mask valid: 0x{self.mask_vld_new:d}')
+                        self.logger.log(f'[*]      CPU{tid:d} PRMRR mask lock: 0x{self.mask_lock_new:d}')
+                        if self.check_uncore_vals:
+                            self.logger.log(f'[*]      CPU{tid:d} PRMRR uncore base address: 0x{self.uncore_base_new:012X}')
+                            self.logger.log(f'[*]      CPU{tid:d} PRMRR uncore mask address: 0x{self.uncore_mask_new:012X}')
+                            self.logger.log(f'[*]      CPU{tid:d} PRMRR uncore mask valid: 0x{self.uncore_mask_vld_new:d}')
+                            self.logger.log(f'[*]      CPU{tid:d} PRMRR uncore mask lock: 0x{self.uncore_mask_lock_new:d}')
+                    if first_iter:
+                        self.valid_config = self.valid_config_new
+                        self.base = self.base_new
+                        self.base_memtype = self.base_memtype_new
+                        self.mask = self.mask_new
+                        self.mask_vld = self.mask_vld_new
+                        self.mask_lock = self.mask_lock_new
+                        self.uncore_base = self.uncore_base_new
+                        self.uncore_mask = self.uncore_mask_new
+                        self.uncore_mask_vld = self.uncore_mask_vld_new
+                        self.uncore_mask_lock = self.uncore_mask_lock_new
+                        first_iter = False
+                    if self.mask_lock_new == 0:
+                        self.locked = False
+                    if ((self.valid_config != self.valid_config_new) or
+                        (self.base != self.base_new) or (self.mask != self.mask_new) or
+                        (self.uncore_base != self.uncore_base_new) or
+                        (self.uncore_mask != self.uncore_mask_new) or
+                        (self.mask_lock != self.mask_lock_new) or
+                        (self.check_valid and ((self.mask_vld != self.mask_vld_new) or
+                        (self.uncore_mask_vld != self.uncore_mask_vld_new))) or
+                        (self.uncore_mask_lock != self.uncore_mask_lock_new) or
+                            (self.base_memtype != self.base_memtype_new)):
+                        self.uniform = False
 
     def run(self, _) -> int:
         self.logger.start_test('Check SGX feature support')
