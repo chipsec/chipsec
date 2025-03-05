@@ -31,10 +31,10 @@ usage:
 
     >>> read_MMIO_BAR_reg('MCHBAR', 0x0, 4)
     >>> write_MMIO_BAR_reg('MCHBAR', 0x0, 0xFFFFFFFF, 4)
-    >>> get_MMIO_BAR_base_address('MCHBAR')
-    >>> is_MMIO_BAR_enabled('MCHBAR')
-    >>> is_MMIO_BAR_programmed('MCHBAR')
-    >>> dump_MMIO_BAR('MCHBAR')
+    >>> get_MMIO_BAR_base_address('8086.HOSTCTL.MCHBAR')
+    >>> is_MMIO_BAR_enabled('8086.HOSTCTL.MCHBAR')
+    >>> is_MMIO_BAR_programmed('8086.HOSTCTL.MCHBAR')
+    >>> dump_MMIO_BAR('8086.HOSTCTL.MCHBAR')
     >>> list_MMIO_BARs()
 
     Access Memory Mapped Config Space:
@@ -45,7 +45,7 @@ usage:
 """
 from typing import List, Optional, Tuple
 from chipsec.hal import hal_base
-from chipsec.library.exceptions import CSReadError, MMIOBARNotFoundError
+from chipsec.library.exceptions import CSConfigError, CSReadError, MMIOBARNotFoundError
 from chipsec.library.logger import logger
 from chipsec.library.defines import get_bits, is_all_ones
 
@@ -215,9 +215,9 @@ class MMIO(hal_base.HALBase):
                 bar_reg_list = [self.cs.register.get_instance_by_name(bar.register, pciobj)]
             else:
                 bar_reg_list = self.cs.register.get_list_by_name(bar.register)
-                
             for bar_reg in bar_reg_list:
-            # if bar_reg:
+                if bar_reg is None:
+                    raise MMIOBARNotFoundError(f'MMIOBARNotFound: {bar_name} is not defined. Check scoping and configuration')
                 if bar.reg_align:
                     preserve = False
                 if bar.base_field:
@@ -307,38 +307,24 @@ class MMIO(hal_base.HALBase):
     #
     # Check if MMIO range is enabled by MMIO BAR name
     #
-    def is_MMIO_BAR_enabled(self, bar_name: str, bus: Optional[int] = None) -> bool:
+    def is_MMIO_BAR_enabled(self, bar_name: str, instance: Optional[int] = None) -> bool:
         if not self.is_MMIO_BAR_defined(bar_name):
             return False
-        bar = self.cs.Cfg.MMIO_BARS[bar_name]
+        # reg = self.cs.register.get_def(bar_name)
+        bar = self.cs.register.mmio.get_def(bar_name)
         is_enabled = True
-        if 'register' in bar:
-            bar_reg = bar['register']
-            if 'enable_field' in bar:
-                bar_en_field = bar['enable_field']
-                is_enabled = (1 == self.cs.register.read_field(bar_reg, bar_en_field, bus=bus))
-        else:
-            # this method is not preferred (less flexible)
-            if bus is not None:
-                b = bus
-            else:
-                b = self.cs.device.get_first_bus(bar)
-            d = bar['dev']
-            f = bar['fun']
-            r = bar['reg']
-            width = bar['width']
-            if not self.cs.hals.Pci.is_enabled(b, d, f):
-                return False
-            if 8 == width:
-                base_lo = self.cs.hals.Pci.read_dword(b, d, f, r)
-                base_hi = self.cs.hals.Pci.read_dword(b, d, f, r + 4)
-                base = (base_hi << 32) | base_lo
-            else:
-                base = self.cs.hals.Pci.read_dword(b, d, f, r)
-
-            if 'enable_bit' in bar:
-                en_mask = 1 << int(bar['enable_bit'])
+        if bar.register:
+            bar_reg = self.cs.register.get_list_by_name(bar.register).filter_by_instance(instance)
+            if bar.enable_field:
+                is_enabled = bar_reg.is_all_field_value(1, bar.enable_field)
+            elif bar.enable_bit:
+                base = bar_reg.read()[0]
+                en_mask = 1 << bar.enable_bit
                 is_enabled = (0 != base & en_mask)
+            else:
+                self.logger.log_hal(f'No enable field/bit defined for MMIO BAR {bar_name}')
+        else:
+            raise CSConfigError(f"MMIO BAR {bar_name} does not have a register defined")
 
         return is_enabled
 
@@ -348,29 +334,15 @@ class MMIO(hal_base.HALBase):
     def is_MMIO_BAR_programmed(self, bar_name: str) -> bool:
         bar = self.cs.Cfg.MMIO_BARS[bar_name]
 
-        if 'register' in bar:
-            bar_reg = bar['register']
-            if 'base_field' in bar:
-                base_field = bar['base_field']
-                base = self.cs.register.read_field(bar_reg, base_field, preserve_field_position=True)
+        if bar.register:
+            bar_reg = self.cs.register.get_list_by_name(bar.register)
+            if bar.base_field:
+                return not bar_reg.is_any_field_value(0, bar.base_field)
             else:
-                base = self.cs.register.read(bar_reg)
+                bar_reg.read()
+                return not bar_reg.is_any_value(0)
         else:
-            # this method is not preferred (less flexible)
-            b = self.cs.device.get_first_bus(bar)
-            d = bar['dev']
-            f = bar['fun']
-            r = bar['reg']
-            width = bar['width']
-            if 8 == width:
-                base_lo = self.cs.hals.Pci.read_dword(b, d, f, r)
-                base_hi = self.cs.hals.Pci.read_dword(b, d, f, r + 4)
-                base = (base_hi << 32) | base_lo
-            else:
-                base = self.cs.hals.Pci.read_dword(b, d, f, r)
-
-        #if 'mask' in bar: base &= bar['mask']
-        return (0 != base)
+            raise CSConfigError(f"MMIO BAR {bar_name} does not have a register defined")
 
     #
     # Read MMIO register from MMIO range defined by MMIO BAR name
@@ -427,7 +399,17 @@ class MMIO(hal_base.HALBase):
                             bdf = 'fixed'
                         self.logger.log(f' {_bar_name:35} | {bdf:7} | {_base:016X} | {_size:08X} |  {_en:d}  |  {_valid:d}  | {_bar.desc}')
         
-        
+    def is_MMIO_BAR_valid(self, bar_name, instance=None):
+        if not self.is_MMIO_BAR_defined(bar_name):
+            return False
+        bar = self.cs.register.mmio.get_def(bar_name)
+        is_valid = True
+        if bar.register:
+            if bar.valid:
+                bar_en_field = bar.valid
+                bar_reg = self.cs.Cfg.register.get_list_by_name(bar.register).filter_by_instance(instance)
+                is_valid = bar_reg.is_all_field_value(1, bar_en_field)
+        return is_valid
         
         # self.logger.log('')
         # self.logger.log('--------------------------------------------------------------------------------------')

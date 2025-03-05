@@ -37,7 +37,7 @@ class MMIOBarConfig(GenericConfig):
         self.device = cfg_obj['device'] if 'device' in cfg_obj else cfg_obj['component'] if 'component' in cfg_obj else None
         self.register = cfg_obj['register']
         self.base_field = cfg_obj['base_field']
-        self.size = cfg_obj['size'] if 'did' in cfg_obj else None
+        self.size = cfg_obj['size'] if 'size' in cfg_obj else None
         self.desc = cfg_obj['desc'] if 'desc' in cfg_obj else self.name
         self.reg_align = cfg_obj['reg_align'] if 'reg_align' in cfg_obj else None
         self.registerh = cfg_obj['registerh'] if 'registerh' in cfg_obj else None
@@ -51,6 +51,7 @@ class MMIOBarConfig(GenericConfig):
         self.limit_align = cfg_obj['limit_align'] if 'limit_align' in cfg_obj else None
         self.fixed_address = cfg_obj['fixed_address'] if 'fixed_address' in cfg_obj else None
         self.enable_field = cfg_obj['enable_field'] if 'enable_field' in cfg_obj else None
+        self.enable_bit = cfg_obj['enable_bit'] if 'enable_bit' in cfg_obj else None
         self.valid = cfg_obj['valid'] if 'valid' in cfg_obj else None
         self.instances = {}
         for key in cfg_obj['ids']:
@@ -65,7 +66,7 @@ class MMIOBarConfig(GenericConfig):
 
     def get_base(self, instance):
         if instance in self.instances:
-            return self.instances[instance].base, self.instances[instance].size
+            return self.instances[instance].base, self.size
         else:
             return (None, 0)
 

@@ -74,7 +74,7 @@ class MMIORegisters(BaseConfigRegisterHelper):
     def populate_base_address(self):
         if self.bar_base is None:
             if self.bar:
-                (self.bar_base, self.bar_size) = self.cs.hals.MMIO.get_MMIO_BAR_base_address(self.bar, self.instance)
+                (self.bar_base, self.bar_size) = self.cs.hals.MMIO.get_MMIO_BAR_base_address(self.bar, self.get_instance())
             elif self.range:
                 mem_range_def = self.cs.hals.MemRange.get_def(self.range)
                 if mem_range_def:

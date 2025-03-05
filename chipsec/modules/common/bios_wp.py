@@ -60,7 +60,7 @@ Registers used: (n = 0,1,2,3,4)
 from chipsec.library.exceptions import CSReadError
 from chipsec.module_common import BaseModule, MTAG_BIOS
 from chipsec.library.returncode import ModuleResult
-from chipsec.hal.intel.spi import BIOS, SPI
+from chipsec.library.intel.spi import BIOS
 from typing import List
 
 
@@ -120,8 +120,8 @@ class bios_wp(BaseModule):
             self.logger.log(f'[*] BIOS Region: Base = 0x{bios_base:08X}, Limit = 0x{bios_limit:08X}')
 
             areas_to_protect = [(bios_base, bios_limit)]
-            for j in range(5):
-                (base, limit, wpe, _, _, _) = self.cs.hals.SPI.get_SPI_Protected_Range(j)
+            SPI_protected_ranges = self.cs.hals.SPI.get_SPI_Protected_Ranges()
+            for (base, limit, wpe, _, _, _) in SPI_protected_ranges:
                 if base > limit:
                     continue
                 if wpe == 1:

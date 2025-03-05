@@ -107,15 +107,18 @@ class Register:
 
     def get_def(self, reg_name: str) -> Dict[str, Any]:
         """Return complete register definition"""
+        breakpoint()
         scope = self.cs.Cfg.get_scope(reg_name)
         vid, dev_name, register, _ = self.cs.Cfg.convert_internal_scope(scope, reg_name)
         reg_def = self.cs.Cfg.REGISTERS[vid][dev_name][register]
+        if type(reg_def) is list:
+            reg_def = reg_def[0]
         def_type_map = {RegisterType.PCICFG: self._get_pci_def,
                         RegisterType.MMCFG: self._get_pci_def,
                         # RegisterType.MEMORY: self._get_memory_def,
                         RegisterType.MM_MSGBUS: self._get_mmmsgbus_def,
                         RegisterType.IMA: self._get_indirect_def}
-        return def_type_map[reg_def["type"]](reg_def, vid, dev_name)
+        return def_type_map[type(reg_def)](reg_def, vid, dev_name)
 
     # rework any call to this function
     def get_list_by_name(self, reg_name: str) -> 'ObjList':
@@ -380,6 +383,8 @@ class ObjList(list):
         return any(inst.get_field(field) == value for inst in self)
     
     def filter_by_instance(self, instance: Any) -> 'ObjList':
+        if instance is None:
+            return self
         return ObjList([inst for inst in self if inst.get_instance() == instance])
 
 
