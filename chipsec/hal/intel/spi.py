@@ -181,7 +181,7 @@ class SPI(hal_base.HALBase):
         # self.logger.log_hal(f'      FADDR  offset = 0x{self.faddr_off:04X}')
         # self.logger.log_hal(f'      FDATA0 offset = 0x{self.fdata0_off:04X}')
 
-    def set_instance(self, instance: int) -> None:
+    def set_instance(self, instance: 'PCIObj') -> None:
         self.instance = instance
         self.get_registers()
 

@@ -307,7 +307,7 @@ class MMIO(hal_base.HALBase):
     #
     # Check if MMIO range is enabled by MMIO BAR name
     #
-    def is_MMIO_BAR_enabled(self, bar_name: str, instance: Optional[int] = None) -> bool:
+    def is_MMIO_BAR_enabled(self, bar_name: str, instance: Optional['PCIObj'] = None) -> bool:
         if not self.is_MMIO_BAR_defined(bar_name):
             return False
         # reg = self.cs.register.get_def(bar_name)
