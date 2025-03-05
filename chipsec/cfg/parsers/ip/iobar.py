@@ -21,7 +21,7 @@ from chipsec.cfg.parsers.ip.generic import GenericConfig
 
 
 class IOObj:
-    def __init__(self, instance):
+    def __init__(self, instance: 'PCIObj'):
         self.base = None
         self.size = 0
         self.instance = instance
