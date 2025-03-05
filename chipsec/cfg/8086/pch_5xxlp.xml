@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<configuration platform="PCH_5XXLP">
+<!--
+XML configuration file for 5XX series pch
+-->
+<!--
+CHIPSEC: Platform Security Assessment Framework
+Copyright (c) 2020-2021, Intel Corporation
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; Version 2.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+Contact information:
+chipsec@intel.com
+-->
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Information                          -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <info>
+    <sku did="0xA082" name="5xx" code="PCH_5XXLP" longname="Premium UP3" />
+    <sku did="0xA087" name="5xx" code="PCH_5XXLP" longname="Premium UP4" />
+  </info>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Integrated devices                   -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <pci>
+    <device name="P2SBC"  bus="0" dev="0x1F" fun="1" config="P2SB.p2sbc1.xml" />
+    <device name="PMC"    bus="0" dev="0x1F" fun="2" config="PMC.pmc-pch5xx.xml" >
+      <subcomponent type="mmiobar" name="PWRMBASE" register="PWRMBASE" base_field="BA" size="0x1000" fixed_address="0xFE000000" desc="Power Management Register Range" config="MMIO.pwrm0.xml" />
+      <subcomponent type="iobar"   name="ABASE"    register="ABASE"    base_field="BA" size="0x100"  fixed_address="0x1800"     desc="ACPI Base Address" config="IO.acpi0.xml" />
+      <subcomponent type="iobar"   name="PMBASE"   register="ABASE"    base_field="BA" size="0x100"  fixed_address="0x1800"     desc="ACPI Base Address" config="IO.acpi0.xml" />
+    </device>
+    <device name="SMBUS"  bus="0" dev="0x1F" fun="4" config="SMBUS.smbus1.xml" />
+    <device name="SPI"    bus="0" dev="0x1F" fun="5" config="SPI.spi0.xml" />
+    <device name="SPI"    bus="0" dev="0x1F" fun="5" config="SPI.descriptor0.xml" />
+  </pci>
+
+  <io>
+    <definition name="IO" port="0xCF9" config="IO.io0.xml" />
+  </io>
+
+  <mm_msgbus>
+    <definition name="RTC" port="0xC3" config="RTC.rtc0.xml" />
+  </mm_msgbus>
+
+</configuration>

@@ -3,7 +3,7 @@
 
   <mmio>
     <bar name="PXPEPBAR" register="PXPEPBAR" base_field="PXPEPBAR" size="0x1000" enable_bit="0" desc="PCI Express Egress Port Register Range"/>
-    <!-- <bar name="MCHBAR"   register="MCHBAR" base_field="MCHBAR" size="0x8000" enable_bit="0" desc="Host Memory Mapped Register Range"/> -->
+    <bar name="MCHBAR"   register="MCHBAR" base_field="MCHBAR" size="0x8000" enable_bit="0" desc="Host Memory Mapped Register Range"/>
     <bar name="MMCFG"    register="PCIEXBAR" base_field="PXPEPBAR" size="0x1000" enable_bit="0" desc="PCI Express Register Range"/>
     <bar name="DMIBAR"   register="DMIBAR" base_field="DMIBAR" size="0x1000" enable_bit="0" desc="Root Complex Register Range"/>
     <bar name="VTBAR"    register="VTBAR"    base_field="Base" size="0x1000" enable_field="Enable" desc="Intel VT-d Register Register Range"/>
@@ -11,7 +11,6 @@
     <!-- VT-d BARs -->
     <bar name="VTBAR"    register="VTBAR"    base_field="Base" size="0x1000" enable_field="Enable" desc="Intel VT-d Register Register Range"/>
     <bar name="GFXVTBAR" register="GFXVTBAR" base_field="Base" size="0x1000" enable_field="Enable" desc="Intel Processor Graphics VT-d Register Range"/>
-
   </mmio>
 
   <!-- #################################### -->
@@ -29,9 +28,9 @@
       <field name="PXPEPBAREN" bit="0" size="1" desc="Enabled/Disabled"/>
     </register>
 
-    <register name="MCHBAR" type="pcicfg" offset="0x48" size="8" desc="MCH Base Address">
-        <field name="MCHBAR" bit="16" size="23" desc="MCHBAR" />
-        <field name="MCHBAREN" bit="0" size="1" desc="MCHBAR is Enabled" />
+    <register name="MCHBAR"     type="pcicfg" offset="0x48" size="8" desc="MCH Base Address">
+      <field name="MCHBAR" bit="17" size="22" desc="Base Address for Host Memory Mapped configuration space"/>
+      <field name="MCHBAREN" bit="0" size="1" desc="Enabled/Disabled"/>
     </register>
 
     <register name="GGC" type="pcicfg" offset="0x50" size="2" desc="Graphics Control">
@@ -46,6 +45,7 @@
         <field name="PCMBASE" bit="20" size="12" desc="PCMBASE" />
         <field name="ASMFEN" bit="6" size="1" desc="ASMF Method Enable" />
         <field name="OVTATTACK" bit="4" size="1" desc="Override Unsolicited Connection State Attack and Terminate" />
+        <field name="HVYMODSEL" bit="3" size="1" desc="HVY mode selection" />
         <field name="PAVPLCK" bit="2" size="1" desc="PAVP Lock" />
         <field name="PAVPE" bit="1" size="1" desc="PAVP Enable" />
         <field name="PCME" bit="0" size="1" desc="PCM Enable" />
@@ -123,9 +123,26 @@
     <register name="CAPID0_A"   type="pcicfg" offset="0xE4" size="4" desc="Capabilities A">
       <field name="VTDD" bit="23" size="1" desc="Enable/Disable VTd"/>
     </register>
+
     <register name="CAPID0_B"   type="pcicfg" offset="0xE8" size="4" desc="Capabilities B"/>
 
-    
+    <register name="GFXVTBAR" type="mmio" bar="MCHBAR" offset="0x5400" size="8" desc="Processor Graphics VT-d MMIO Base Address">
+      <field name="Enable" bit="0"  size="1" desc="Enable"/>
+      <field name="Base"   bit="12" size="27" desc="GFX VTD Base Address"/>
+    </register>
+
+    <register name="VTBAR" type="mmio" bar="MCHBAR" offset="0x5410" size="8" desc="VT-d MMIO Base Address">
+      <field name="Enable" bit="0"  size="1"  desc="Enable"/>
+      <field name="Base"   bit="12" size="27" desc="VTD Base Address"/>
+    </register>
+
+    <register name="REMAPBASE"  type="mmio" bar="MCHBAR" offset="0x5090" size="8" desc="Memory Remap Base Address">
+        <field name="REMAPBASE"  bit="20" size="19" desc="lower boundry of Remap Window"/>
+    </register>
+
+    <register name="REMAPLIMIT" type="mmio" bar="MCHBAR" offset="0x5098" size="8" desc="Memory Remap Limit Address">
+      <field name="REMAPLMT"  bit="20" size="19" desc="lower boundry of Remap Window"/>
+    </register>
 
   </registers>
 

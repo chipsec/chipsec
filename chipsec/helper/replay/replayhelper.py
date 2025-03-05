@@ -106,6 +106,9 @@ class ReplayHelper(Helper):
 
 
     def read_pci_reg(self, bus: int, device: int, function: int, offset: int, size: int) -> int:
+        # if bus == 0 and device == 0 and function == 0 and offset == 0 and size == 4:
+        #     breakpoint()
+        #     pass
         return self._get_element_eval("read_pci_reg", (bus, device, function, offset, size))
 
     def write_pci_reg(self, bus: int, device: int, function: int, offset: int, value: int, size: int) -> int:

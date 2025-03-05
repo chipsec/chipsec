@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<configuration>
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- Configuration registers              -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <registers>
+        <register name="ABASE" type="pcicfg" offset="0x20" size="4" desc="ACPI Base Address">
+            <field name="STYPE" bit="0" size="1" desc="Space Type (always 1 - I/O space)"/>
+            <field name="BA"    bit="7" size="25" desc="Base Address"/>
+        </register>
+        <register name="PWRMBASE" type="pcicfg" offset="0x10" size="8" desc="PM Base Address">
+            <field name="STYPE" bit="0"  size="1"  desc="Space Type (always 0 - memory space)"/>
+            <field name="BA"    bit="13" size="51" desc="Base Address"/>
+        </register>
+    </registers>
+
+
+</configuration>

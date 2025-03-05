@@ -19,6 +19,7 @@
 #
 
 
+from typing import List
 from unittest.mock import Mock
 
 import chipsec.helper.replay.replayhelper as rph
@@ -37,14 +38,23 @@ def run_chipsec_module(csm: ChipsecMain, module_replay_file: str) -> int:
     ret = csm.run_loaded_modules()
     return ret
 
-def setup_run_destroy_module_with_mock_logger(init_replay_file: str, module_str: str, module_args: str = "", module_replay_file: str = "") -> int:
+def setup_run_destroy_module_with_mock_logger_output(init_replay_file: str, module_str: str, module_args: str = "", module_replay_file: str = "", logging_fucntions_to_capture: List = ['log', 'log_error']) -> int:
     chipsec.library.logger._logger.remove_chipsec_logger()
     chipsec.library.logger._logger = Mock()
     chipsec.library.logger._logger.VERBOSE = False
     chipsec.library.logger._logger.DEBUG = False
     chipsec.library.logger._logger.HAL = False
     retval = setup_run_destroy_module(init_replay_file, module_str, module_args, module_replay_file)
+    logger_calls = []
+    for func in logging_fucntions_to_capture:
+        if hasattr(chipsec.library.logger._logger, func):
+            logger_calls += getattr(chipsec.library.logger._logger, func).mock_calls
+    clear_cs()
     chipsec.library.logger._logger = chipsec.library.logger.Logger()
+    return retval, "\n ---".join([call.args[0] for call in logger_calls])
+
+def setup_run_destroy_module_with_mock_logger(init_replay_file: str, module_str: str, module_args: str = "", module_replay_file: str = "") -> int:
+    retval, _ = setup_run_destroy_module_with_mock_logger_output(init_replay_file, module_str, module_args, module_replay_file)
     return retval
 
 def setup_run_destroy_module(init_replay_file: str, module_str: str, module_args: str = "", module_replay_file: str = "") -> int:
