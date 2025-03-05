@@ -89,7 +89,7 @@ class MMIO(hal_base.HALBase):
         if size > 8:
             if self.logger.HAL:
                 self.logger.log_warning("[mmio] MMIO read cannot exceed 8")
-        if offset + size > bar_size:
+        if bar_size and offset + size > bar_size:
             self.logger.log_warning(f"[mmio] Offset(0x{offset:x}) + size(0x{size:x}) is > bar_size(0x{bar_size:x})")
         reg_value = self.cs.helper.read_mmio_reg(bar_base+offset, size)
         self.logger.log_hal(f'[mmio] 0x{bar_base:08X} + 0x{offset:08X} = 0x{reg_value:08X}')

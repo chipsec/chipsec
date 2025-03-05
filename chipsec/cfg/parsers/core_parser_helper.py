@@ -94,11 +94,11 @@ class CoreParserHelper():
     def handle_bar(self, et_node, stage_data, dest, cfg_obj):
         ret_val = []
         bus_attr = config_convert_data(et_node, True)
-        if 'name' not in bus_attr or ('device' not in bus_attr and 'component' not in bus_attr):
+        if 'name' not in bus_attr or ('device' not in bus_attr and 'component' not in bus_attr and not stage_data.dev_name):
             self.logger.log_debug(f"Missing 'name' or 'device' in {bus_attr}")
             return ret_val
         bar_name = bus_attr['name']
-        dev_name = bus_attr['device'] = bus_attr['device'] if 'device' in bus_attr else bus_attr['component']
+        dev_name = bus_attr['device'] = bus_attr['device'] if 'device' in bus_attr else bus_attr['component'] if 'component' in bus_attr else stage_data.dev_name
         self.process_bar(stage_data.vid_str, bar_name, bus_attr, dest, cfg_obj)
         # ret_val = (self._process_config(stage_data, dev_name, bus_attr))
         ret_val.extend(self.process_config_complex(stage_data, bar_name, dest[stage_data.vid_str][dev_name][bar_name], dev_name))
