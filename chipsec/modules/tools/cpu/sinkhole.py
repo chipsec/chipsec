@@ -33,7 +33,7 @@ Examples:
 
 Registers used:
     - IA32_APIC_BASE.APICBase
-    - IA32_SMRR_PHYSBASE.PhysBase
+    - IA32_SMRR_PHYSBASE.PHYSBASE
     - IA32_SMRR_PHYSMASK
 
 .. note::
@@ -76,19 +76,19 @@ class sinkhole(BaseModule):
         self.cs.register.print('IA32_APIC_BASE', apic_base_msr)
         self.cs.register.print('IA32_SMRR_PHYSBASE', smrr_physbase_msr)
 
-        smrrbase = self.cs.register.get_field('IA32_SMRR_PHYSBASE', smrr_physbase_msr, 'PhysBase')
-        smrr_base = self.cs.register.get_field('IA32_SMRR_PHYSBASE', smrr_physbase_msr, 'PhysBase', True)
-        apic_base = self.cs.register.get_field('IA32_APIC_BASE', apic_base_msr, 'APICBase', True)
+        smrrbase = self.cs.register.get_field('IA32_SMRR_PHYSBASE', smrr_physbase_msr, 'PHYSBASE')
+        smrr_base = self.cs.register.get_field('IA32_SMRR_PHYSBASE', smrr_physbase_msr, 'PHYSBASE', True)
+        apic_base = self.cs.register.get_field('IA32_APIC_BASE', apic_base_msr, 'APICBASE', True)
 
         self.logger.log(f'[*] Local APIC Base: 0x{apic_base:016X}')
         self.logger.log(f'[*] SMRR Base      : 0x{smrr_base:016X}')
 
         self.logger.log('[*] Attempting to overlap Local APIC page with SMRR region')
-        self.logger.log(f'   Writing 0x{smrrbase:X} to IA32_APIC_BASE[APICBase]..')
+        self.logger.log(f'   Writing 0x{smrrbase:X} to IA32_APIC_BASE[APICBASE]..')
         self.logger.log_important('NOTE: The system may hang or process may crash when running this test.')
         self.logger.log('      In that case, the mitigation to this issue is likely working but we may not be handling the exception generated.')
 
-        res = self.cs.register.write_field('IA32_APIC_BASE', 'APICBase', smrrbase, preserve_field_position=False, cpu_thread=0)
+        res = self.cs.register.write_field('IA32_APIC_BASE', 'APICBASE', smrrbase, preserve_field_position=False, cpu_thread=0)
 
         if res is None:
             self.logger.log_important('Error encountered when attempting to modify IA32_APIC_BASE')

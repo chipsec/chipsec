@@ -67,12 +67,7 @@ class Register:
 
     def is_defined(self, reg_name: str) -> bool:
         """Checks if register is defined in the XML config"""
-        scope = self.cs.Cfg.get_scope(reg_name)
-        vid, device, register, _ = self.cs.Cfg.convert_internal_scope(scope, reg_name)
-        try:
-            return (self.cs.Cfg.REGISTERS[vid][device].get(register, None) is not None)
-        except KeyError:
-            return False
+        return len(self.cs.Cfg.get_objlist(self.cs.Cfg.REGISTERS, reg_name)) > 0
 
     def _get_pci_def(self, reg_def: Dict[str, Any], vid: str, dev_name: str) -> Dict[str, Any]:
         """Return Bus Dev Fun of a PCI register"""
@@ -270,8 +265,6 @@ class BaseConfigRegisterHelper(BaseConfigHelper):
         return mask
 
     def get_field_mask(self, reg_field: str, preserve_field_position: Optional[bool] = False) -> int:
-        if reg_field == "PAVPLCK":
-            breakpoint()
         field_attrs = self.fields[reg_field]
         mask_start = 0
         size = field_attrs['size']

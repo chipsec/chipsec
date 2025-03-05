@@ -17,7 +17,7 @@
         <field name="REMAPBASE"  bit="20" size="19" desc="lower boundry of Remap Window"/>
     </register>
 
-    <register name="REMAPLIMIT" type="mmio" bar="MCHBAR" offset="0xD890" size="8" desc="Memory Remap Limit Address">
+    <register name="REMAPLIMIT" type="mmio" bar="MCHBAR" offset="0xD898" size="8" desc="Memory Remap Limit Address">
       <field name="REMAPLMT"  bit="20" size="19" desc="lower boundry of Remap Window"/>
     </register>
 

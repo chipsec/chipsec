@@ -8,20 +8,20 @@
   <registers>
     <!-- CPU Model Specific Registers (MSR) -->
     <register name="IA32_MSR_CORE_THREAD_COUNT" type="msr" msr="0x35" desc="Core Thread Count">
-      <field name="Thread_Count" bit="0" size="16" desc="Number of Logical Processors currently enabled"/>
-      <field name="Core_Count" bit="16" size="16" desc="Number of Processor Cores currently enabled"/>
+      <field name="THREAD_COUNT" bit="0" size="16" desc="Number of Logical Processors currently enabled"/>
+      <field name="CORE_COUNT" bit="16" size="16" desc="Number of Processor Cores currently enabled"/>
     </register>
 
     <register name="IA32_BIOS_SIGN_ID"    type="msr" msr="0x8B" desc="Microcode Update Signature Register">
-      <field name="Microcode" bit="32" size="32" desc="Microcode update signature" />
+      <field name="MICROCODE" bit="32" size="32" desc="Microcode update signature" />
     </register>
     <register name="IA32_SMRR_PHYSBASE"   type="msr" msr="0x1F2" desc="SMRR Base Address MSR">
-      <field name="Type"     bit="0"  size="8"  desc="SMRR memory type" />
-      <field name="PhysBase" bit="12" size="20" desc="SMRR physical base address" />
+      <field name="TYPE"     bit="0"  size="8"  desc="SMRR memory type" />
+      <field name="PHYSBASE" bit="12" size="20" desc="SMRR physical base address" />
     </register>
     <register name="IA32_SMRR_PHYSMASK"   type="msr" msr="0x1F3" desc="SMRR Range Mask MSR">
-      <field name="Valid"    bit="11" size="1"  desc="SMRR valid" />
-      <field name="PhysMask" bit="12" size="20" desc="SMRR address range mask" />
+      <field name="VALID"    bit="11" size="1"  desc="SMRR valid" />
+      <field name="PHYSMASK" bit="12" size="20" desc="SMRR address range mask" />
     </register>
     <register name="MTRRCAP"              type="msr" msr="0xFE"  desc="MTRR Capabilities MSR">
       <field name="Fixed_Range_MTRR" bit="8" size="1" desc="Fixed range MTRRs Supported" />
@@ -44,9 +44,9 @@
     </register>
     <register name="IA32_APIC_BASE" type="msr" msr="0x1B"  desc="Local APIC Base">
       <field name="BSP"       bit="8"  size="1"  desc="Bootstrap Processor" />
-      <field name="x2APICEn"  bit="10" size="1"  desc="Enable x2APIC mode" />
-      <field name="En"        bit="11" size="1"  desc="APIC Global Enable" />
-      <field name="APICBase"  bit="12" size="20" desc="APIC Base" />
+      <field name="X2APICEN"  bit="10" size="1"  desc="Enable x2APIC mode" />
+      <field name="EN"        bit="11" size="1"  desc="APIC Global Enable" />
+      <field name="APICBASE"  bit="12" size="20" desc="APIC Base" />
     </register>
     <register name="MSR_SMI_COUNT" type="msr" msr="0x34" desc="SMI Count">
       <field name="Count" bit="0"  size="64" />
@@ -89,20 +89,20 @@
       <field name="SGX_DEBUG_MODE_STATUS_BIT"   bit="1"  size="1" desc="Debug mode status but"/>
     </register>
 
-    <register name="MSR_SMM_FEATURE_CONTROL" type="msr" msr="0x4E0" desc="Enhanced SMM Feature Control">
+    <register name="SMM_FEATURE_CONTROL" type="msr" msr="0x4E0" desc="Enhanced SMM Feature Control">
       <field name="LOCK"            bit="0" size="1"  desc="Lock bit" />
-      <field name="SMM_Code_Chk_En" bit="2" size="1"  desc="Prevents SMM from executing code outside the ranges defined by the SMRR" />
+      <field name="SMM_CODE_CHK_EN" bit="2" size="1"  desc="Prevents SMM from executing code outside the ranges defined by the SMRR" />
     </register>
 
     <register name="PRMRR_MASK" type="msr" msr="0x1F5" desc="PRMRR MASK register">
       <field name="PRMRR_LOCK" bit="10" size="1" desc = "PRMRR Lock Bit" />
       <field name="PRMRR_VLD" bit="11" size="1" desc = "PRMRR Valid Bit set by mcheck" />
-      <field name="PRMRR_mask_bits"   bit="12"  size="40" desc="PRMRR mask bits" />
+      <field name="PRMRR_MASK_BITS"   bit="12"  size="40" desc="PRMRR mask bits" />
     </register>
     <register name="PRMRR_PHYBASE" type="msr" msr="0x2A0" desc="PRMRR BASE Address 0">
       <field name="PRMRR_MEMTYPE" bit="0" size="3" desc="PRMRR Memory Type" />
       <field name="PRMRR_CONFIGURED" bit="3" size="1" desc="PRMRR Base Configured" />
-      <field name="PRMRR_base_address_fields" bit="12" size="40" desc="PRMRR base address bits" />
+      <field name="PRMRR_BASE_ADDRESS_FIELDS" bit="12" size="40" desc="PRMRR base address bits" />
     </register>
 
     <register name="MSR_BIOS_DONE" type="msr" msr="0x151" desc="BIOS Done Status">

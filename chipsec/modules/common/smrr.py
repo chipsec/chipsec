@@ -43,10 +43,10 @@ Examples:
     >>> chipsec_main.py -m common.smrr -a modify
 
 Registers used:
-    - IA32_SMRR_PHYSBASE.PhysBase
-    - IA32_SMRR_PHYSBASE.Type
-    - IA32_SMRR_PHYSMASK.PhysMask
-    - IA32_SMRR_PHYSMASK.Valid
+    - IA32_SMRR_PHYSBASE.PHYSBASE
+    - IA32_SMRR_PHYSBASE.TYPE
+    - IA32_SMRR_PHYSMASK.PHYSMASK
+    - IA32_SMRR_PHYSMASK.VALID
 
 """
 
@@ -91,13 +91,11 @@ class smrr(BaseModule):
         self.logger.log('')
         self.logger.log('[*] Checking SMRR range base programming..')
         msr_smrrbase = self.cs.register.get_list_by_name('IA32_SMRR_PHYSBASE')
-        msr_smrrbase.read_and_print()
-        #self.cs.register.print('IA32_SMRR_PHYSBASE', msr_smrrbase)
+        msr_smrrbase.read_and_verbose_print()
 
         for reg in msr_smrrbase:
-            self.logger.log_verbose(reg)
-            smrrbase = reg.get_field('PhysBase', True)
-            smrrtype = reg.get_field('Type')
+            smrrbase = reg.get_field('PHYSBASE', True)
+            smrrtype = reg.get_field('TYPE')
             self.logger.log(f'[*] SMRR range base: 0x{smrrbase:016X}')
 
             if smrrtype in MemType:
@@ -120,8 +118,8 @@ class smrr(BaseModule):
 
         for reg in msr_smrrmask:
             self.logger.log_verbose(reg)
-            smrrmask = reg.get_field('PhysMask', True)
-            smrrvalid = reg.get_field('Valid')
+            smrrmask = reg.get_field('PHYSMASK', True)
+            smrrvalid = reg.get_field('VALID')
             self.logger.log(f'[*] SMRR range mask: 0x{smrrmask:016X}')
 
             if not (smrrvalid and (0 != smrrmask)):

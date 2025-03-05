@@ -60,14 +60,22 @@ class remap(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.cs.set_scope({
+            None: "8086.HOSTCTL",
+            'MSR_BIOS_DONE': "8086.MSR",
+            'IA_UNTRUSTED': "8086.MSR",
+            'IBECC_ACTIVATE': "8086.MCHBAR",
+            'REMAPBASE': "8086.MCHBAR",
+            'REMAPLIMIT': "8086.MCHBAR"
+        })
 
     def is_supported(self) -> bool:
         if self.cs.is_core():
-            rbase_exist = self.cs.register.is_defined('PCI0.0.0_REMAPBASE')
-            rlimit_exist = self.cs.register.is_defined('PCI0.0.0_REMAPLIMIT')
-            touud_exist = self.cs.register.is_defined('PCI0.0.0_TOUUD')
-            tolud_exist = self.cs.register.is_defined('PCI0.0.0_TOLUD')
-            tseg_exist = self.cs.register.is_defined('PCI0.0.0_TSEGMB')
+            rbase_exist = self.cs.register.is_defined('REMAPBASE')
+            rlimit_exist = self.cs.register.is_defined('REMAPLIMIT')
+            touud_exist = self.cs.register.is_defined('TOUUD')
+            tolud_exist = self.cs.register.is_defined('TOLUD')
+            tseg_exist = self.cs.register.is_defined('TSEGMB')
             if rbase_exist and rlimit_exist and touud_exist and tolud_exist and tseg_exist:
                 return True
             self.logger.log_important('Required register definitions not defined for platform.  Skipping module.')
@@ -78,8 +86,9 @@ class remap(BaseModule):
 
     def is_ibecc_enabled(self) -> bool:
         if self.cs.register.is_defined('IBECC_ACTIVATE'):
-            edsr = self.cs.register.read_field('IBECC_ACTIVATE', 'IBECC_EN')
-            if edsr == 1:
+            ibecc = self.cs.register.get_list_by_name('IBECC_ACTIVATE')
+            ibecc.read() # TODO: Stopped here.
+            if ibecc.get_field('IBECC_EN') == 1:
                 return True
             else:
                 self.logger.log_verbose('IBECC is not enabled!')
@@ -90,11 +99,13 @@ class remap(BaseModule):
     def check_remap_config(self) -> int:
         is_warning = False
 
-        remapbase = self.cs.register.read('REMAPBASE')
-        remaplimit = self.cs.register.read('REMAPLIMIT')
-        touud = self.cs.register.read('TOUUD')
-        tolud = self.cs.register.read('TOLUD')
-        tsegmb = self.cs.register.read('TSEGMB')
+        remapbase_reg = self.cs.register.get_list_by_name('REMAPBASE')[0]
+        remapbase = remapbase_reg.read()
+        remaplimit_reg = self.cs.register.get_list_by_name('REMAPLIMIT')[0]
+        remaplimit = remaplimit_reg.read()
+        touud = self.cs.register.get_list_by_name('TOUUD')[0].read()
+        tolud = self.cs.register.get_list_by_name('TOLUD')[0].read()
+        tsegmb = self.cs.register.get_list_by_name('TSEGMB')[0].read()
         self.logger.log('[*] Registers:')
         self.logger.log(f'[*]   TOUUD     : 0x{touud:016X}')
         self.logger.log(f'[*]   REMAPLIMIT: 0x{remaplimit:016X}')
@@ -107,11 +118,11 @@ class remap(BaseModule):
         remapbase_lock = 0
         remaplimit_lock = 0
         if self.cs.register.has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
-            ia_untrusted = self.cs.register.read_field('MSR_BIOS_DONE', 'IA_UNTRUSTED')
-        if self.cs.register.has_field('PCI0.0.0_REMAPBASE', 'LOCK'):
-            remapbase_lock = remapbase & 0x1
-        if self.cs.register.has_field('PCI0.0.0_REMAPLIMIT', 'LOCK'):
-            remaplimit_lock = remaplimit & 0x1
+            ia_untrusted = self.cs.register.get_list_by_name('MSR_BIOS_DONE').read_field('IA_UNTRUSTED')
+        if remapbase_reg.has_field('LOCK'):
+            remapbase_lock = remapbase_reg.read_field('LOCK')
+        if remaplimit_reg.has_field('LOCK'):
+            remaplimit_lock = remaplimit_reg.read_field('LOCK')
         touud_lock = touud & 0x1
         tolud_lock = tolud & 0x1
         remapbase &= _REMAP_ADDR_MASK
@@ -161,6 +172,14 @@ class remap(BaseModule):
             self.logger.log_bad('  Not all addresses are 1MB aligned')
 
         self.logger.log('[*] Checking if memory remap configuration is locked..')
+        
+        ok = (0 != ia_untrusted)
+        remap_ok = remap_ok and ok
+        if ok:
+            self.logger.log_good('  IA_Untrusted is set')
+        else:
+            self.logger.log_bad('  IA_Untrusted is not set')
+
         ok = (0 != touud_lock) or (0 != ia_untrusted)
         remap_ok = remap_ok and ok
         if ok:
@@ -175,7 +194,7 @@ class remap(BaseModule):
         else:
             self.logger.log_bad('  TOLUD is not locked')
 
-        if self.cs.register.has_field('PCI0.0.0_REMAPBASE', 'LOCK') and self.cs.register.has_field('PCI0.0.0_REMAPLIMIT', 'LOCK'):
+        if remapbase_reg.has_field('LOCK') and remaplimit.has_field('LOCK'):
             ok = ((0 != remapbase_lock) and (0 != remaplimit_lock)) or (0 != ia_untrusted)
             remap_ok = remap_ok and ok
             if ok:

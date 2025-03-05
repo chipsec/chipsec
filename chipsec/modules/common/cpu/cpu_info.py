@@ -35,7 +35,7 @@ Examples:
     >>> chipsec_main.py -m common.cpu.cpu_info
 
 Registers used:
-    - IA32_BIOS_SIGN_ID.Microcode
+    - IA32_BIOS_SIGN_ID.MICROCODE
 
 .. note:
     No PASS/FAIL returned, INFORMATION only.
@@ -59,9 +59,9 @@ class cpu_info(BaseModule):
 
     def is_supported(self) -> bool:
         if self.cs.is_intel():
-            if self.cs.register.has_field('IA32_BIOS_SIGN_ID', 'Microcode'):
+            if self.cs.register.has_field('IA32_BIOS_SIGN_ID', 'MICROCODE'):
                 return True
-            self.logger.log_important('IA32_BIOS_SIGN_ID.Microcode not defined for platform.  Skipping module.')
+            self.logger.log_important('IA32_BIOS_SIGN_ID.MICROCODE not defined for platform.  Skipping module.')
         else:
             return self.cs.is_amd()
         return False
@@ -79,7 +79,7 @@ class cpu_info(BaseModule):
             # for this example.  No need to do this in UEFI Shell.
             if not self.cs.os_helper.is_efi():
                 self.cs.helper.set_affinity(reg.instance)
-            regdata = reg.read_field('Microcode')
+            regdata = reg.read_field('MICROCODE')
 
             self.logger.log(f'[*] Thread {reg.instance:04d}')
 

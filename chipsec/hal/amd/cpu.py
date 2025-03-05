@@ -155,8 +155,8 @@ class CPU(hal_base.HALBase):
     #
     def get_SMRR(self) -> Tuple[int, int]:
         if self.cs.is_intel():
-            smrambase = self.cs.register.read_field('IA32_SMRR_PHYSBASE', 'PhysBase', True)
-            smrrmask = self.cs.register.read_field('IA32_SMRR_PHYSMASK', 'PhysMask', True)
+            smrambase = self.cs.register.read_field('IA32_SMRR_PHYSBASE', 'PHYSBASE', True)
+            smrrmask = self.cs.register.read_field('IA32_SMRR_PHYSMASK', 'PHYSMASK', True)
         elif self.cs.is_amd():
             smrambase = self.cs.register.read_field('SMM_BASE', 'SMMBASE', True)
             smrrmask = self.cs.register.read_field('SMMMASK', 'TSEGMASK', True)
