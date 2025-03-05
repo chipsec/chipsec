@@ -154,8 +154,8 @@ class CPU(hal_base.HALBase):
     # Return SMRR MSR physical base and mask
     #
     def get_SMRR(self) -> Tuple[int, int]:
-        smrambase = self.cs.register.get_list_by_name('8086.MSR.IA32_SMRR_PHYSBASE').read_field('PhysBase')[0]
-        smrrmask = self.cs.register.get_list_by_name('8086.MSR.IA32_SMRR_PHYSMASK').read_field('PhysMask')[0]
+        smrambase = self.cs.register.get_list_by_name('8086.MSR.IA32_SMRR_PHYSBASE').read_field('PhysBase', True)[0]
+        smrrmask = self.cs.register.get_list_by_name('8086.MSR.IA32_SMRR_PHYSMASK').read_field('PhysMask', True)[0]
 
         return (smrambase, smrrmask)
 

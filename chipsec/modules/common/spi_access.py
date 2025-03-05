@@ -36,8 +36,8 @@ Examples:
     >>> chipsec_main.py -m common.spi_access
 
 Registers used:
-    - HSFS.FDV
-    - FRAP.BRWA
+    - 8086.SPIBAR.HSFS.FDV
+    - 8086.SPIBAR.FRAP.BRWA
 
 .. important::
     - Some platforms may use alternate means of protecting these regions.
@@ -48,7 +48,8 @@ Registers used:
 from chipsec.library.exceptions import CSReadError
 from chipsec.module_common import BaseModule, MTAG_BIOS
 from chipsec.library.returncode import ModuleResult
-from chipsec.hal.intel.spi import SPI, GBE, PLATFORM_DATA, ME, FLASH_DESCRIPTOR
+from chipsec.hal.intel.spi import SPI
+from chipsec.library.intel.spi import GBE, PLATFORM_DATA, ME, FLASH_DESCRIPTOR
 from typing import List
 
 TAGS = [MTAG_BIOS]
@@ -59,8 +60,8 @@ class spi_access(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.cs.set_scope({
-            "HSFS": "8086.SPI.HSFS",
-            "FRAP": "8086.SPI.FRAP",
+            "HSFS": "8086.SPIBAR",
+            "FRAP": "8086.SPIBAR",
         })
 
     def is_supported(self) -> bool:
@@ -74,7 +75,7 @@ class spi_access(BaseModule):
         frap_objs.read()
         for frap in frap_objs:
             self.logger.log_verbose(frap)
-            fdv_obj = self.cs.register.get_instance_by_name('HSFS', frap.instance)
+            fdv_obj = self.cs.register.get_instance_by_name('HSFS', frap.get_instance())
             fdv = fdv_obj.read_field('FDV') == 1
             brwa = frap.get_field('BRWA')
 

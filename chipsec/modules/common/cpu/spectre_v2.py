@@ -138,6 +138,10 @@ class spectre_v2(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.cpu.spectre_v2.html'
+        self.cs.set_scope({
+            "IA32_SPEC_CTRL": "8086.MSR",
+            "IA32_ARCH_CAPABILITIES": "8086.MSR",
+        })
 
     def is_supported(self) -> bool:
         if self.cs.is_intel():
@@ -183,20 +187,20 @@ class spectre_v2(BaseModule):
             else:
                 self.logger.log_bad('CPU does not support STIBP')
 
-            if arch_cap_supported:
+            if arch_cap_supported and self.cs.register.is_defined('IA32_ARCH_CAPABILITIES'):
                 ibrs_enh_supported = True
                 self.logger.log('[*] Checking enhanced IBRS support in IA32_ARCH_CAPABILITIES...')
-                for tid in range(cpu_thread_count):
-                    arch_cap_msr = 0
-                    try:
-                        arch_cap_msr = self.cs.register.read('IA32_ARCH_CAPABILITIES', tid)
-                    except HWAccessViolationError:
-                        self.logger.log_error('Could not read IA32_ARCH_CAPABILITIES')
-                        ibrs_enh_supported = False
-                        break
+                try:
+                    iacData = self.cs.register.get_list_by_name('IA32_ARCH_CAPABILITIES')
+                    iacData.read()
+                except HWAccessViolationError:
+                    self.logger.log_error("Couldn't read IA32_ARCH_CAPABILITIES")
+                    ibrs_enh_supported = False
+                    iacData = []
 
-                    ibrs_all = self.cs.register.get_field('IA32_ARCH_CAPABILITIES', arch_cap_msr, 'IBRS_ALL')
-                    self.logger.log(f'[*]   cpu{tid:d}: IBRS_ALL = {ibrs_all:x}')
+                for reg in iacData:
+                    ibrs_all = reg.read_field('IBRS_ALL')
+                    self.logger.log(f'[*]   cpu{reg.instance}: IBRS_ALL = {ibrs_all:x}')
                     if 0 == ibrs_all:
                         ibrs_enh_supported = False
                         break
@@ -213,23 +217,22 @@ class spectre_v2(BaseModule):
             stibp_enabled_count = 0
             if ibrs_enh_supported:
                 self.logger.log('[*] Checking if OS is using Enhanced IBRS...')
-                for tid in range(cpu_thread_count):
-                    spec_ctrl_msr = 0
-                    try:
-                        spec_ctrl_msr = self.cs.register.read('IA32_SPEC_CTRL', tid)
-                    except HWAccessViolationError:
-                        self.logger.log_error('Could not read IA32_SPEC_CTRL')
-                        ibrs_enabled = False
-                        break
-
-                    ibrs = self.cs.register.get_field('IA32_SPEC_CTRL', spec_ctrl_msr, 'IBRS')
-                    self.logger.log(f'[*]   cpu{tid:d}: IA32_SPEC_CTRL[IBRS] = {ibrs:x}')
+                spec_ctrl_msr = 0
+                try:
+                    spec_ctrl_msr = self.cs.register.get_list_by_name('IA32_SPEC_CTRL')
+                    spec_ctrl_msr.read()
+                except HWAccessViolationError:
+                    self.logger.log_error('Could not read IA32_SPEC_CTRL')
+                    ibrs_enabled = False
+                    spec_ctrl_msr = []
+                for reg in spec_ctrl_msr:
+                    ibrs = reg.read_field('IBRS')
+                    self.logger.log(f'[*]   cpu{reg.instance}: IA32_SPEC_CTRL[IBRS] = {ibrs:x}')
                     if 0 == ibrs:
                         ibrs_enabled = False
 
-                    # ok to access STIBP bit even if STIBP is not supported
-                    stibp = self.cs.register.get_field('IA32_SPEC_CTRL', spec_ctrl_msr, 'STIBP')
-                    self.logger.log(f'[*]   cpu{tid:d}: IA32_SPEC_CTRL[STIBP] = {stibp:x}')
+                    stibp = reg.read_field('STIBP')
+                    self.logger.log(f'[*]   cpu{reg.instance}: IA32_SPEC_CTRL[STIBP] = {stibp:x}')
                     if 1 == stibp:
                         stibp_enabled_count += 1
 

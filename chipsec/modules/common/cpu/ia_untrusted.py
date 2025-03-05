@@ -44,6 +44,9 @@ class ia_untrusted(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.cpu.ia_untrusted.html'
+        self.cs.set_scope({
+            "MSR_BIOS_DONE": "8086.MSR",
+        })
 
     def is_supported(self) -> bool:
         if self.cs.register.has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
@@ -54,27 +57,28 @@ class ia_untrusted(BaseModule):
     def check_untrusted(self) -> int:
         self.logger.log('[*] Check that untrusted mode has been set.')
         res = ModuleResult.PASSED
-        if self.cs.register.has_field('MSR_BIOS_DONE', 'SoC_BIOS_DONE'):
-            soc = self.cs.register.read_field('MSR_BIOS_DONE', 'SoC_BIOS_DONE')
-            if soc == 0:
-                res = ModuleResult.FAILED
-                self.result.setStatusBit(self.result.status.CONFIGURATION)
-                self.logger.log_bad('SoC_BIOS_DONE not set.')
-            else:
-                self.logger.log_good('SoC_BIOS_DONE set.')
+        msr_bios_done = self.cs.register.get_list_by_name('MSR_BIOS_DONE')
+        if msr_bios_done:
+            msr_bios_done.read()
+            if self.cs.register.has_field('MSR_BIOS_DONE', 'SoC_BIOS_DONE'):
+                soc = msr_bios_done[0].get_field('SoC_BIOS_DONE')
+                if soc == 0:
+                    res = ModuleResult.FAILED
+                    self.result.setStatusBit(self.result.status.CONFIGURATION)
+                    self.logger.log_bad('SoC_BIOS_DONE not set.')
+                else:
+                    self.logger.log_good('SoC_BIOS_DONE set.')
+                self.logger.log('')
 
-        self.logger.log('')
-        for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
-            bd = self.cs.register.read('MSR_BIOS_DONE', tid)
-            if self.logger.VERBOSE:
-                self.cs.register.print('MSR_BIOS_DONE', bd)
-            ia_untrusted = self.cs.register.get_field('MSR_BIOS_DONE', bd, 'IA_UNTRUSTED')
-            if ia_untrusted == 0:
-                res = ModuleResult.FAILED
-                self.result.setStatusBit(self.result.status.CONFIGURATION)
-                self.logger.log_bad(f'IA_UNTRUSTED not set on thread {tid:d}.')
-            else:
-                self.logger.log_good(f'IA_UNTRUSTED set on thread {tid:d}.')
+            for bd in msr_bios_done:
+                self.logger.log_verbose(bd)
+                ia_untrusted = bd.get_field('IA_UNTRUSTED')
+                if ia_untrusted == 0:
+                    res = ModuleResult.FAILED
+                    self.result.setStatusBit(self.result.status.CONFIGURATION)
+                    self.logger.log_bad(f'IA_UNTRUSTED not set on thread {bd.get_instace()}.')
+                else:
+                    self.logger.log_good(f'IA_UNTRUSTED set on thread {bd.get_instance()}.')
         return res
 
     def run(self, module_argv: List[str]) -> int:
