@@ -26,7 +26,8 @@ def config_convert_data(xml_node, did_is_range=False):
     INT_KEYS = ['dev', 'fun', 'vid', 'did', 'rid', 'offset',
                 'bit', 'size', 'port', 'msr', 'value', 'address',
                 'fixed_address', 'base_align', 'align_bits', 'mask',
-                'reg_align', 'limit_align', 'regh_align', 'default', 'limit']
+                'reg_align', 'limit_align', 'regh_align', 'default', 
+                'limit', 'enable_bit']
     BOOL_KEYS = ['req_pch']
     INT_LIST_KEYS = ['bus']
     STR_LIST_KEYS = ['config']

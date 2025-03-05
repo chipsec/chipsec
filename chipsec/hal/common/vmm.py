@@ -157,4 +157,4 @@ class VirtIO_Device:
                 self.cs.hals.PortIo.dump_range(bar, size, 4)
 
 
-haldata = {"arch": ['FFFF'], 'name': ['Vmm']}
+haldata = {"arch": [HALBase.MfgIds.Any], 'name': ['Vmm']}

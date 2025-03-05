@@ -44,7 +44,7 @@ usage:
 
 import struct
 import time
-from typing import Dict, Tuple, Optional
+from typing import Dict, List, Tuple, Optional
 from chipsec.library.defines import BIT0, BIT1, BIT2, BIT5
 from chipsec.library.file import write_file, read_file
 from chipsec.library.logger import print_buffer_bytes
@@ -124,31 +124,31 @@ class SPI(hal_base.HALBase):
         # Reading definitions of SPI flash controller registers
         # which are required to send SPI cycles once for performance reasons
     def get_registers(self) -> None:
-        self.hsfs = self.cs.register.get_instance_by_name('8086.SPI.HSFS', self.instance)
-        self.hsfc = self.cs.register.get_instance_by_name('8086.SPI.HSFC', self.instance)
-        self.faddr = self.cs.register.get_instance_by_name('8086.SPI.FADDR', self.instance)
-        self.fdata0 = self.cs.register.get_instance_by_name('8086.SPI.FDATA0', self.instance)
-        self.fdata1 = self.cs.register.get_instance_by_name('8086.SPI.FDATA1', self.instance)
-        self.fdata2 = self.cs.register.get_instance_by_name('8086.SPI.FDATA2', self.instance)
-        self.fdata3 = self.cs.register.get_instance_by_name('8086.SPI.FDATA3', self.instance)
-        self.fdata4 = self.cs.register.get_instance_by_name('8086.SPI.FDATA4', self.instance)
-        self.fdata5 = self.cs.register.get_instance_by_name('8086.SPI.FDATA5', self.instance)
-        self.fdata6 = self.cs.register.get_instance_by_name('8086.SPI.FDATA6', self.instance)
-        self.fdata7 = self.cs.register.get_instance_by_name('8086.SPI.FDATA7', self.instance)
-        self.fdata8 = self.cs.register.get_instance_by_name('8086.SPI.FDATA8', self.instance)
-        self.fdata9 = self.cs.register.get_instance_by_name('8086.SPI.FDATA9', self.instance)
-        self.fdata10 = self.cs.register.get_instance_by_name('8086.SPI.FDATA10', self.instance)
-        self.fdata11 = self.cs.register.get_instance_by_name('8086.SPI.FDATA11', self.instance)
-        self.fdata12 = self.cs.register.get_instance_by_name('8086.SPI.FDATA12', self.instance)
-        self.fdata13 = self.cs.register.get_instance_by_name('8086.SPI.FDATA13', self.instance)
-        self.fdata14 = self.cs.register.get_instance_by_name('8086.SPI.FDATA14', self.instance)
-        self.fdata15 = self.cs.register.get_instance_by_name('8086.SPI.FDATA15', self.instance)
-        self.ptinx = self.cs.register.get_instance_by_name('8086.SPI.PTINX', self.instance)
-        self.ptdata = self.cs.register.get_instance_by_name('8086.SPI.PTDATA', self.instance)
-        self.fdoc = self.cs.register.get_instance_by_name('8086.SPI.FDOC', self.instance)
-        self.fdod = self.cs.register.get_instance_by_name('8086.SPI.FDOD', self.instance)
-        self.frap = self.cs.register.get_instance_by_name('8086.SPI.FRAP', self.instance)
-        self.bfpr = self.cs.register.get_instance_by_name('8086.SPI.BFPR', self.instance)
+        self.hsfs = self.cs.register.get_instance_by_name('8086.SPIBAR.HSFS', self.instance)
+        self.hsfc = self.cs.register.get_instance_by_name('8086.SPIBAR.HSFC', self.instance)
+        self.faddr = self.cs.register.get_instance_by_name('8086.SPIBAR.FADDR', self.instance)
+        self.fdata0 = self.cs.register.get_instance_by_name('8086.SPIBAR.FDATA0', self.instance)
+        self.fdata1 = self.cs.register.get_instance_by_name('8086.SPIBAR.FDATA1', self.instance)
+        self.fdata2 = self.cs.register.get_instance_by_name('8086.SPIBAR.FDATA2', self.instance)
+        self.fdata3 = self.cs.register.get_instance_by_name('8086.SPIBAR.FDATA3', self.instance)
+        self.fdata4 = self.cs.register.get_instance_by_name('8086.SPIBAR.FDATA4', self.instance)
+        self.fdata5 = self.cs.register.get_instance_by_name('8086.SPIBAR.FDATA5', self.instance)
+        self.fdata6 = self.cs.register.get_instance_by_name('8086.SPIBAR.FDATA6', self.instance)
+        self.fdata7 = self.cs.register.get_instance_by_name('8086.SPIBAR.FDATA7', self.instance)
+        self.fdata8 = self.cs.register.get_instance_by_name('8086.SPIBAR.FDATA8', self.instance)
+        self.fdata9 = self.cs.register.get_instance_by_name('8086.SPIBAR.FDATA9', self.instance)
+        self.fdata10 = self.cs.register.get_instance_by_name('8086.SPIBAR.FDATA10', self.instance)
+        self.fdata11 = self.cs.register.get_instance_by_name('8086.SPIBAR.FDATA11', self.instance)
+        self.fdata12 = self.cs.register.get_instance_by_name('8086.SPIBAR.FDATA12', self.instance)
+        self.fdata13 = self.cs.register.get_instance_by_name('8086.SPIBAR.FDATA13', self.instance)
+        self.fdata14 = self.cs.register.get_instance_by_name('8086.SPIBAR.FDATA14', self.instance)
+        self.fdata15 = self.cs.register.get_instance_by_name('8086.SPIBAR.FDATA15', self.instance)
+        self.ptinx = self.cs.register.get_instance_by_name('8086.SPIBAR.PTINX', self.instance)
+        self.ptdata = self.cs.register.get_instance_by_name('8086.SPIBAR.PTDATA', self.instance)
+        self.fdoc = self.cs.register.get_instance_by_name('8086.SPIBAR.FDOC', self.instance)
+        self.fdod = self.cs.register.get_instance_by_name('8086.SPIBAR.FDOD', self.instance)
+        self.frap = self.cs.register.get_instance_by_name('8086.SPIBAR.FRAP', self.instance)
+        self.bfpr = self.cs.register.get_instance_by_name('8086.SPIBAR.BFPR', self.instance)
         self.ble = self.cs.control.get_instance_by_name('BiosLockEnable', self.instance)
         self.bioswe = self.cs.control.get_instance_by_name('BiosWriteEnable', self.instance)
         self.smmbwp = self.cs.control.get_instance_by_name('SmmBiosWriteProtection', self.instance)
@@ -226,28 +226,30 @@ class SPI(hal_base.HALBase):
                 spi_regions[r] = SPI_REGION_tuple(SPI_REGION_NAMES[r], freg, range_base, range_limit)
         return spi_regions
 
-    def get_SPI_Protected_Range(self, pr_num: int) -> Tuple[int, int, int, int, int, int]:
-        if pr_num > SPI_MAX_PR_COUNT:
-            return (0, 0, 0, 0, 0, 0)
-
-        pr_name = '8086.SPI.PR*'
-        pr_j_reg = self.cs.register.get_instance_by_name(pr_name, self.instance)
-        pr_j = pr_j_reg.read()
+    def get_SPI_Protected_Ranges(self) -> List[Tuple[int, int, int, int, int, int]]:
+        # if pr_num > SPI_MAX_PR_COUNT:
+        #     return (0, 0, 0, 0, 0, 0)
+        pr_list = []
+        pr_name = '8086.SPIBAR.PR*'
+        pr_j_reg = self.cs.register.get_list_by_name(pr_name).filter_by_instance(self.instance)
+        pr_j_reg.read()
+        for pr_j in pr_j_reg:
 
         # Protected Range Base corresponds to FLA bits 24:12
-        base = pr_j_reg.get_field('PRB') << SPI_FLA_SHIFT
+            base = pr_j.get_field('PRB') << SPI_FLA_SHIFT
         # Protected Range Limit corresponds to FLA bits 24:12
-        limit = pr_j_reg.get_field('PRL') << SPI_FLA_SHIFT
+            limit = pr_j.get_field('PRL') << SPI_FLA_SHIFT
 
-        wpe = (0 != pr_j_reg.get_field('WPE'))
-        rpe = (0 != pr_j_reg.get_field('RPE'))
+            wpe = (0 != pr_j.get_field('WPE'))
+            rpe = (0 != pr_j.get_field('RPE'))
 
         # Check if this is a valid PRx config
-        if wpe or rpe:
-            # FLA bits 11:0 are assumed to be FFFh for the limit comparison
-            limit |= SPI_FLA_PAGE_MASK
+            if wpe or rpe:
+                # FLA bits 11:0 are assumed to be FFFh for the limit comparison
+                limit |= SPI_FLA_PAGE_MASK
+            pr_list.append((base, limit, wpe, rpe, pr_j.offset, pr_j))
 
-        return (base, limit, wpe, rpe, pr_j_reg.offset, pr_j)
+        return pr_list
 
     ##############################################################################################################
     # SPI configuration
@@ -361,9 +363,8 @@ class SPI(hal_base.HALBase):
         self.logger.log("------------------------------------------------------------")
         self.logger.log("PRx (offset) | Value    | Base     | Limit    | WP? | RP?")
         self.logger.log("------------------------------------------------------------")
-        for j in range(5):
-            (base, limit, wpe, rpe, pr_reg_off, pr_reg_value) = self.get_SPI_Protected_Range(j)
-            self.logger.log(f'PR{j:d} ({pr_reg_off:02X})     | {pr_reg_value:08X} | {base:08X} | {limit:08X} | {wpe:d}   | {rpe:d} ')
+        for (base, limit, wpe, rpe, pr_reg_off, pr_reg) in self.get_SPI_Protected_Ranges():
+            self.logger.log(f'{pr_reg.name} ({pr_reg_off:02X})     | {pr_reg.value:08X} | {base:08X} | {limit:08X} | {wpe:d}   | {rpe:d} ')
 
     def display_SPI_map(self) -> None:
         self.logger.log("============================================================")

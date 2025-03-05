@@ -29,7 +29,8 @@ if TYPE_CHECKING:
     from chipsec.library.uefi.common import EFI_SYSTEM_TABLE
     from chipsec.library.types import EfiVariableType
 from chipsec.hal import hal_base
-from chipsec.hal.intel.spi import SPI, BIOS
+from chipsec.hal.intel.spi import SPI
+from chipsec.library.intel.spi import BIOS
 from chipsec.library.uefi.common import EFI_VENDOR_TABLE, EFI_VENDOR_TABLE_SIZE, EFI_VENDOR_TABLE_FORMAT, EFI_TABLE_HEADER_SIZE, EFI_TABLE_HEADER, EFI_TABLES, MAX_EFI_TABLE_SIZE
 from chipsec.library.uefi.common import EFI_REVISIONS
 from chipsec.library.uefi.common import EFI_TABLE_HEADER_FMT, EFI_SYSTEM_TABLE_SIGNATURE, EFI_RUNTIME_SERVICES_SIGNATURE, EFI_BOOT_SERVICES_SIGNATURE
