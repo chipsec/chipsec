@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<configuration>
+    <registers>
+        <register name="GEN_PMCON_1" type="mmio" bar="PWRMBASE" offset="0x1020" size="4" desc="General PM Configuration A">
+            <field name="ESPI_SMI_LOCK"    bit="8" size="1" desc="ESPI_SMI_LOCK"/>
+        </register>
+        <register name="GEN_PMCON_2" type="mmio" bar="PWRMBASE" offset="0x1024" size="4" desc="General PM Configuration B">
+            <field name="SMI_LOCK"    bit="4"     size="1"/>
+        </register>
+        <register name="ACTL" type="mmio" bar="PWRMBASE" offset="0x1BD8" size="4" desc="ACPI Control">
+            <field name="SCIS"    bit="0" size="3" desc="SCI IRQ Select"/>
+        </register>
+        <register name="PM_CFG" type="mmio" bar="PWRMBASE" offset="0x1818" size="4" desc="Power Management Configuration Reg 1"/>
+    </registers>
+    
+    <controls>
+        <control name="SMILock"                register="GEN_PMCON_2"          field="SMI_LOCK"           desc="SMI Global Configuration Lock"/>
+    </controls>
+
+</configuration>

@@ -25,7 +25,7 @@ import os
 
 from chipsec.library.file import get_main_dir
 from chipsec.testcase import ExitCode
-from tests.modules.run_chipsec_module import setup_run_destroy_module_with_mock_logger
+from tests.modules.run_chipsec_module import setup_run_destroy_module_with_mock_logger_output as run_util
 
 class TestTglModules(unittest.TestCase):
     def setUp(self) -> None:
@@ -38,8 +38,8 @@ class TestTglModules(unittest.TestCase):
     def run_and_test_module(self, module_name:str, expected_returncode:int) -> None:
         test_recording = self.derive_filename(module_name)
         replay_file = os.path.join(self.folder_path, test_recording)
-        retval = setup_run_destroy_module_with_mock_logger(self.init_replay_file, module_name, module_replay_file=replay_file)
-        self.assertEqual(retval, expected_returncode, f"Expected: {expected_returncode} but got: {retval}")
+        retval, logstr = run_util(self.init_replay_file, module_name, module_replay_file=replay_file)
+        self.assertEqual(retval, expected_returncode, f"Module: {module_name} Expected: {expected_returncode} but got: {retval}\n{logstr}")
                    
     def test_tgl_module_bios_smi(self):
         self.run_and_test_module("common.bios_smi", ExitCode.OK)

@@ -126,7 +126,7 @@ class Register:
 
     def get_instance_by_name(self, reg_name: str, instance: Any):
         for reg_obj in self.cs.Cfg.get_objlist(self.cs.Cfg.REGISTERS, reg_name):
-            if reg_obj.instance == instance:
+            if reg_obj.get_instance() == instance:
                 return reg_obj
         return None #TODO Change to null register object
 
@@ -238,11 +238,8 @@ class BaseConfigRegisterHelper(BaseConfigHelper):
     def __str__(self) -> str:
         return f'{self.name}: {self.value}'
 
-    def print(self) -> None:
-        self.logger.log(str(self))
-
-    def __str__(self) -> str:
-        return f'{self.name}: {self.value}'
+    def get_instance(self) -> Any:
+        return self.instance
 
     def set_value(self, value: int) -> None:
         self.value = value
@@ -381,6 +378,9 @@ class ObjList(list):
 
     def is_any_field_value(self, value: int, field: str) -> bool:
         return any(inst.get_field(field) == value for inst in self)
+    
+    def filter_by_instance(self, instance: Any) -> 'ObjList':
+        return ObjList([inst for inst in self if inst.get_instance() == instance])
 
 
 class RegData(object):

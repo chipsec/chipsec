@@ -288,7 +288,6 @@ class DevConfig(BaseConfigParser):
 
     def handle_pci(self, et_node, stage_data):
         ret_val = []
-
         for dev in et_node.iter('device'):
             dev_attr = _config_convert_data(dev, True)
             if 'name' not in dev_attr:
@@ -371,8 +370,8 @@ class CoreConfig(BaseConfigParser):
         return Stage.CORE_SUPPORT
 
     def _make_reg_name(self, stage_data, reg_name, override=False):
-        if hasattr(stage_data, "component_name") and stage_data.component_name is not None and override:
-            return '.'.join([stage_data.vid_str, stage_data.component_name, reg_name])
+        if hasattr(stage_data, "component") and stage_data.component is not None and override:
+            return '.'.join([stage_data.vid_str, stage_data.component, reg_name])
         return '.'.join([stage_data.vid_str, stage_data.dev_name, reg_name])
     
     def _add_entry_simple(self, dest, stage_data, et_node, node_name):

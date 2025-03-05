@@ -17,6 +17,7 @@
 # Contact information:
 # chipsec@intel.com
 
+from typing import Any
 from chipsec.chipset import cs
 from chipsec.library.register import BaseConfigRegisterHelper
 from chipsec.library.exceptions import CSReadError, CSConfigError
@@ -66,6 +67,9 @@ class MMIORegisters(BaseConfigRegisterHelper):
 
         reg_str += self._register_fields_str()
         return reg_str
+
+    def get_instance(self) -> Any:
+        return self.instance if not hasattr(self.instance, 'instance') else self.instance.instance
 
     def populate_base_address(self):
         if self.bar_base is None:

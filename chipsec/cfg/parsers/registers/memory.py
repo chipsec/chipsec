@@ -28,10 +28,12 @@ class MEMORYRegisters(BaseConfigRegisterHelper):
         self.offset = cfg_obj['offset']
         self.range = cfg_obj['range']
         self.size = cfg_obj['size']
+        self.address = cfg_obj['address']
+        self.limit = cfg_obj['limit']
+        self.access = cfg_obj['access']
 
     def __repr__(self) -> str:
         reg_str = ''
-        self.populate_range()
         if self.value is not None:
             reg_val_str = f'0x{self.value:08X}'
         else:
@@ -40,7 +42,7 @@ class MEMORYRegisters(BaseConfigRegisterHelper):
             default = f'{self.default:X}'
         else:
             default = 'Not Provided'
-        reg_str = f'[*] {self.name} = {reg_val_str} << {self.desc} (0x{self.range.address:X} + 0x{self.offset:X}) [default: {default}]'
+        reg_str = f'[*] {self.name} = {reg_val_str} << {self.desc} (0x{self.address:X} + 0x{self.offset:X}) [default: {default}]'
 
         reg_str += self._register_fields_str(True)
         return reg_str

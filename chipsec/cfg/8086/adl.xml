@@ -72,9 +72,7 @@ Review:    !!!
     <!-- <device name="HOSTCTL" bus="0x00" dev="0x00" fun="0" config=""/> -->
     <device name="IGD"     bus="0x00" dev="0x02" fun="0" config="IGD.igd0.xml" />
     <device name="MEI1"    bus="0x00" dev="0x16" fun="0" config="ME.mei0.xml" />
-    <device name="SMBUS"   bus="0x00" dev="0x1F" fun="4" config="SMBUS.smbus0.xml" />
-    <device name="SPI"     bus="0x00" dev="0x1F" fun="5" config="SPI.spi0.xml" />
-    <device name="SPI"     bus="0x00" dev="0x1F" fun="5" config="SPI.descriptor0.xml" />
+    
   </pci>
 
   <msr>

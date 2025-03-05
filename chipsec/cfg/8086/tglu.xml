@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<configuration platform="TGLU" req_pch="True">
+<!--
+CHIPSEC: Platform Security Assessment Framework
+Copyright (c) 2021, Intel Corporation
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; Version 2.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+Contact information:
+chipsec@intel.com
+-->
+
+<!--
+XML configuration file for TigerLake based platforms
+
+http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.html
+
+* 11th Generation Intel(R) Core Processor Family Datasheet
+
+* Intel(R) 500 Series Chipset Family on-package Platform Controller Hub (PCH)
+-->
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Information                          -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <info family="core">
+    <sku did="0x9A12" name="TigerLake" code="TGLU" longname="TGL UP4 4 Cores"/>
+    <sku did="0x9A02" name="TigerLake" code="TGLU" longname="TGL UP4 2 Cores"/>
+    <sku did="0x9A14" name="TigerLake" code="TGLU" longname="TGL UP3 4 Cores"/>
+    <sku did="0x9A04" name="TigerLake" code="TGLU" longname="TGL UP3 2 Cores"/>
+  </info>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Integrated devices                   -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <pci>
+    <device name="HOSTCTL" bus="0x0" dev="0x00" fun="0" did="0x9A14" config="HOSTCTL.hostctl11gen.xml"/>
+    <device name="HOSTCTL" bus="0x0" dev="0x00" fun="0" config="IOMMU.iommu.xml"/>
+    <device name="IGD"     bus="0x0" dev="0x02" fun="0" config="IGD.igd0.xml"/>
+    <device name="MEI1"    bus="0x0" dev="0x16" fun="0" config="ME.mei0.xml" />
+  </pci>
+
+  <msr>
+    <definition name="MSR" config="MSR.msr2.xml" />
+  </msr>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Memory ranges                        -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <memory>
+    <range name="TPM" access="mmio" address="0xFED40000" limit="0xFED4FFFF" config="TPM.tpm12.xml" />
+  </memory>
+
+</configuration>

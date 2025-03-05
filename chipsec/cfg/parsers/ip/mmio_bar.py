@@ -27,7 +27,8 @@ class MMIOObj:
         self.instance = instance
 
     def __str__(self) -> str:
-        return f'instance: {self.instance}, base: 0x{self.base:X}'
+        basestr = f'0x{self.base:X}' if self.base else 'None'
+        return f'instance: {self.instance}, base: {basestr}'
 
 
 class MMIOBarConfig(GenericConfig):
