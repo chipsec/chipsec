@@ -47,19 +47,22 @@ class memconfig(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.memmap_registers = {
-            'PCI0.0.0_GGC': 'GGCLOCK',
-            'PCI0.0.0_PAVPC': 'PAVPLCK',
-            'PCI0.0.0_DPR': 'LOCK',
-            'PCI0.0.0_MESEG_MASK': 'MELCK',
-            'PCI0.0.0_REMAPBASE': 'LOCK',
-            'PCI0.0.0_REMAPLIMIT': 'LOCK',
-            'PCI0.0.0_TOM': 'LOCK',
-            'PCI0.0.0_TOUUD': 'LOCK',
-            'PCI0.0.0_BDSM': 'LOCK',
-            'PCI0.0.0_BGSM': 'LOCK',
-            'PCI0.0.0_TSEGMB': 'LOCK',
-            'PCI0.0.0_TOLUD': 'LOCK'
+            "8086.HOSTCTL.GGC": 'GGCLOCK',
+            "8086.HOSTCTL.PAVPC": 'PAVPLCK',
+            "8086.HOSTCTL.DPR": 'LOCK',
+            "8086.HOSTCTL.MESEG_MASK": 'MELCK',
+            "8086.MCHBAR.REMAPBASE": 'LOCK',
+            "8086.MCHBAR.REMAPLIMIT": 'LOCK',
+            "8086.HOSTCTL.TOM": 'LOCK',
+            "8086.HOSTCTL.TOUUD": 'LOCK',
+            "8086.HOSTCTL.BDSM": 'LOCK',
+            "8086.HOSTCTL.BGSM": 'LOCK',
+            "8086.HOSTCTL.TSEGMB": 'LOCK',
+            "8086.HOSTCTL.TOLUD": 'LOCK'
         }
+        self.cs.set_scope({
+            "MSR_BIOS_DONE": "8086.MSR",
+        })
 
     def is_supported(self) -> bool:
         if self.cs.is_intel():
@@ -74,7 +77,8 @@ class memconfig(BaseModule):
 
         ia_untrusted = None
         if self.cs.register.has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
-            ia_untrusted = self.cs.register.read_field('MSR_BIOS_DONE', 'IA_UNTRUSTED')
+            bios_done = self.cs.register.get_list_by_name('MSR_BIOS_DONE')
+            ia_untrusted = bios_done.read_field('IA_UNTRUSTED')
 
         regs = sorted(self.memmap_registers.keys())
         all_locked = True
@@ -85,24 +89,22 @@ class memconfig(BaseModule):
         else:
             self.logger.log('[*] Checking register lock state:')
         for reg in regs:
-            reg_field = self.memmap_registers[reg]
-            if not self.cs.register.has_field(reg, reg_field):
-                self.logger.log_important(f'Skipping Validation: Register {reg} or field {reg_field} was not defined for this platform.')
+            if not self.cs.register.has_field(reg, self.memmap_registers[reg]):
+                self.logger.log_important(f'{reg}.{self.memmap_registers[reg]} not defined for platform.  Skipping register.')
                 continue
-            reg_def = self.cs.register.get_def(reg)
-            reg_value = self.cs.register.read(reg)
-            reg_desc = reg_def['desc']
-            locked = self.cs.register.get_field(reg, reg_value, reg_field)
-            if locked == 1:
-                self.logger.log_good(f'{reg:20} = 0x{reg_value:016X} - LOCKED   - {reg_desc}')
+            reglist = self.cs.register.get_list_by_name(reg)
+            description = reglist[0].desc
+            reglist.read_and_verbose_print()
+            if reglist.is_all_field_value(1, self.memmap_registers[reg]):
+                self.logger.log_good(f'{reg:20} - LOCKED   - {description}')
             else:
                 all_locked = False
-                self.logger.log_bad(f'{reg:20} = 0x{reg_value:016X} - UNLOCKED - {reg_desc}')
+                self.logger.log_bad(f'{reg:20} - UNLOCKED - {description}')
 
         if ia_untrusted is not None:
             self.logger.log('[*]')
             self.logger.log('[*] Checking if IA Untrusted mode is used to lock registers')
-            if ia_untrusted == 1:
+            if all(data == 1 for data in ia_untrusted):
                 self.logger.log_good('IA Untrusted mode set')
                 all_locked = True
             else:

@@ -190,16 +190,16 @@ class MMIO(hal_base.HALBase):
     #
     # Get base address of MMIO range by MMIO BAR name
     #
-    def get_MMIO_BAR_base_address(self, bar_name: str, pciobj: Optional[int] = None) -> Tuple[int, int]:
-        if self.cache_bar_addresses_resolution and (bar_name, pciobj) in self.cached_bar_addresses:
-            return self.cached_bar_addresses[(bar_name, pciobj)]
+    def get_MMIO_BAR_base_address(self, bar_name: str, instance: Optional['PCIObj'] = None) -> Tuple[int, int]:
+        if self.cache_bar_addresses_resolution and (bar_name, instance) in self.cached_bar_addresses:
+            return self.cached_bar_addresses[(bar_name, instance)]
         try:
             bar = self.cs.register.mmio.get_def(bar_name)  #self.cs.Cfg.MMIO_BARS[bar_name]
         except KeyError:
             raise MMIOBARNotFoundError(f'MMIOBARNotFound: {bar_name} is not defined. Check scoping and configuration')
         if not bar:
             raise MMIOBARNotFoundError(f'MMIOBARNotFound: {bar_name} is not defined. Check scoping and configuration')
-        base, size = bar.get_base(pciobj)
+        base, size = bar.get_base(instance)
         if base:
             return base, size
         base = 0
@@ -211,8 +211,8 @@ class MMIO(hal_base.HALBase):
         if bar.register:
             
             preserve = True
-            if pciobj is not None:
-                bar_reg_list = [self.cs.register.get_instance_by_name(bar.register, pciobj)]
+            if instance is not None:
+                bar_reg_list = [self.cs.register.get_instance_by_name(bar.register, instance)]
             else:
                 bar_reg_list = self.cs.register.get_list_by_name(bar.register)
             for bar_reg in bar_reg_list:
@@ -236,9 +236,9 @@ class MMIO(hal_base.HALBase):
             if not preserve:
                 base <<= bar.reg_align
                 reg_mask <<= bar.reg_align
-        if bar.registerh and pciobj is not None:
+        if bar.registerh and instance is not None:
             preserve = True
-            bar_reg = self.cs.register.get_instance_by_name(bar.registerh, pciobj)
+            bar_reg = self.cs.register.get_instance_by_name(bar.registerh, instance)
             if bar_reg:
                 if bar.regh_align:
                     preserve = False
@@ -268,7 +268,7 @@ class MMIO(hal_base.HALBase):
             base = dynbase
         if bar.mmio_base:
             mmiobar = bar.mmio_base
-            mmioaddr, _ = self.get_MMIO_BAR_base_address(mmiobar, pciobj)
+            mmioaddr, _ = self.get_MMIO_BAR_base_address(mmiobar, instance)
             if bar.mmio_align:
                 mmioaddr <<= bar.mmio_align
             base += mmioaddr
@@ -276,7 +276,7 @@ class MMIO(hal_base.HALBase):
         if bar.limit_register and bar.limit_field and bar.limit_align:
             limit_field = bar.limit_field
             limit_bar = bar.limit_register
-            lim_reg = self.cs.Cfg.get_register_obj(limit_bar, pciobj)
+            lim_reg = self.cs.Cfg.get_register_obj(limit_bar, instance)
             limit = lim_reg.read_field(limit_field)
             if bar.limit_align:
                 limit_align = bar.limit_align
@@ -300,8 +300,8 @@ class MMIO(hal_base.HALBase):
             raise CSReadError('[mmio] Base address was determined to be 0')
 
         if self.cache_bar_addresses_resolution:
-            self.cached_bar_addresses[(bar_name, pciobj)] = (base, size)
-        bar.update_base_address(base, pciobj)
+            self.cached_bar_addresses[(bar_name, instance)] = (base, size)
+        bar.update_base_address(base, instance)
         return base, size
 
     #

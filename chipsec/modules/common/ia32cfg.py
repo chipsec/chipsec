@@ -50,6 +50,9 @@ class ia32cfg(BaseModule):
         BaseModule.__init__(self)
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.ia32cfg.html'
         self.res = ModuleResult.PASSED
+        self.cs.set_scope({
+            "IA32_FEATURE_CONTROL": "8086.MSR",
+        })
 
     def is_supported(self) -> bool:
         if self.cs.register.is_defined('IA32_FEATURE_CONTROL'):
@@ -64,15 +67,15 @@ class ia32cfg(BaseModule):
         self.logger.log('[*] Verifying IA32_Feature_Control MSR is locked on all logical CPUs..')
 
         res = ModuleResult.PASSED
-        for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
-            if self.logger.VERBOSE:
-                feature_cntl = self.cs.register.read('IA32_FEATURE_CONTROL', tid)
-                self.cs.register.print('IA32_FEATURE_CONTROL', feature_cntl)
-            feature_cntl_lock = self.cs.control.get('Ia32FeatureControlLock', tid)
-            self.logger.log(f'[*] cpu{tid:d}: IA32_FEATURE_CONTROL Lock = {feature_cntl_lock:d}')
-            if 0 == feature_cntl_lock:
-                res = ModuleResult.FAILED
-                self.result.setStatusBit(self.result.status.LOCKS)
+        feature_cntl = self.cs.register.get_list_by_name('IA32_FEATURE_CONTROL')
+        feature_cntl.read_and_verbose_print()
+
+        feature_cntl_lock = self.cs.control.get_list_by_name('Ia32FeatureControlLock')
+        feature_cntl_lock.read_and_verbose_print()
+        if feature_cntl_lock.is_any_value(0):
+            res = ModuleResult.FAILED
+            self.result.setStatusBit(self.result.status.LOCKS)
+                
 
         if res == ModuleResult.PASSED:
             self.logger.log_passed('IA32_FEATURE_CONTROL MSR is locked on all logical CPUs')

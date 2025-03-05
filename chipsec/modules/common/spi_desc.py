@@ -42,7 +42,7 @@ Registers used:
 from chipsec.library.exceptions import CSReadError
 from chipsec.module_common import BaseModule, MTAG_BIOS
 from chipsec.library.returncode import ModuleResult
-from chipsec.hal.intel.spi import FLASH_DESCRIPTOR
+from chipsec.library.intel.spi import FLASH_DESCRIPTOR
 from typing import List
 
 TAGS = [MTAG_BIOS]
@@ -53,7 +53,7 @@ class spi_desc(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.cs.set_scope({
-            "FRAP": "8086.SPI.FRAP",
+            "FRAP": "8086.SPIBAR",
         })
 
     def is_supported(self) -> bool:

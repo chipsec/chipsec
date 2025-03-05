@@ -107,7 +107,7 @@ class Register:
 
     def get_def(self, reg_name: str) -> Dict[str, Any]:
         """Return complete register definition"""
-        breakpoint()
+        # breakpoint() # Not working right. RegisterTypes need to be changed to register objects. 
         scope = self.cs.Cfg.get_scope(reg_name)
         vid, dev_name, register, _ = self.cs.Cfg.convert_internal_scope(scope, reg_name)
         reg_def = self.cs.Cfg.REGISTERS[vid][dev_name][register]
@@ -127,7 +127,7 @@ class Register:
     def get_list_by_name_without_scope(self, reg_name: str) -> 'ObjList':
         return self.cs.Cfg.get_objlist(self.cs.Cfg.REGISTERS, "*.*." + reg_name)
 
-    def get_instance_by_name(self, reg_name: str, instance: Any):
+    def get_instance_by_name(self, reg_name: str, instance: 'PCIObj'):
         for reg_obj in self.cs.Cfg.get_objlist(self.cs.Cfg.REGISTERS, reg_name):
             if reg_obj.get_instance() == instance:
                 return reg_obj
@@ -175,14 +175,14 @@ class Register:
                                     ret.append(f'{v}.{d}.{r}.{f}')
         return ret
 
-    # def has_all_fields(self, reg_name: str, field_list: List[str]) -> bool:
-    #     """Checks if the register as all fields specified in list"""
-    #     ret = True
-    #     for field in field_list:
-    #         ret = ret and self.has_field(reg_name, field)
-    #         if not ret:
-    #             break
-    #     return ret
+    def has_all_fields(self, reg_name: str, field_list: List[str]) -> bool:
+        """Checks if the register as all fields specified in list"""
+        ret = True
+        for field in field_list:
+            ret = ret and self.has_field(reg_name, field)
+            if not ret:
+                break
+        return ret
 
     # def is_msr(self, reg_name: str) -> bool:
     #     """Returns True if register is type `msr`"""
@@ -270,6 +270,8 @@ class BaseConfigRegisterHelper(BaseConfigHelper):
         return mask
 
     def get_field_mask(self, reg_field: str, preserve_field_position: Optional[bool] = False) -> int:
+        if reg_field == "PAVPLCK":
+            breakpoint()
         field_attrs = self.fields[reg_field]
         mask_start = 0
         size = field_attrs['size']

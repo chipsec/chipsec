@@ -86,7 +86,7 @@ class bios_smi(BaseModule):
             if not gbl_smi_en.is_all_value(1):
                 ok = False
                 self.logger.log_bad('Global SMI is not enabled')
-            elif not (tco_en.is_all_value(1) and smm_bwp.is_all_value(1)):
+            elif not tco_en.is_all_value(1) and not smm_bwp.is_all_value(1):
                 warn = True
                 self.logger.log_warning('TCO SMI is not enabled. BIOS may not be using it')
             elif not tco_en.is_all_value(1) and smm_bwp.is_all_value(1):
@@ -99,6 +99,7 @@ class bios_smi(BaseModule):
 
         if self.cs.control.is_defined('TCOSMILock'):
             tco_lock = self.cs.control.get_list_by_name('TCOSMILock')
+            tco_lock.read_and_print()
             if not tco_lock.is_all_value(1):
                 ok = False
                 self.logger.log_bad('TCO SMI event configuration is not locked. TCO SMI events can be disabled')

@@ -30,7 +30,6 @@ usage:
 """
 from typing import Tuple, List
 from chipsec.hal import hal_base
-from chipsec.library.logger import logger
 from chipsec.library.exceptions import IOBARNotFoundError
 from chipsec.library.exceptions import CSReadError
 from chipsec.library.registers.io import IO
@@ -48,35 +47,44 @@ class IOBAR(hal_base.HALBase):
     # Use this function to fall-back to hardcoded config in case XML config is not available
     #
     def is_IO_BAR_defined(self, bar_name: str) -> bool:
+        is_bar_defined = False
         try:
-            return (self.cs.Cfg.IO_BARS[bar_name] is not None)
+            _bar = self.cs.register.io.get_def(bar_name)
+            if _bar is not None:
+                if _bar.register:
+                    is_bar_defined = self.cs.register.is_defined(_bar.register)
+                if not is_bar_defined and _bar.fixed_address:
+                    is_bar_defined = True
         except KeyError:
-            if logger().HAL:
-                logger().log_error(f"'{bar_name}' I/O BAR definition not found in XML config")
-            return False
+            pass
+        if not is_bar_defined:
+            if self.logger.HAL:
+                self.logger.log_warning(f"'{bar_name}' I/O BAR register definition not found in XML config")
+        return is_bar_defined
 
     #
     # Get base address of I/O range by IO BAR name
     #
-    def get_IO_BAR_base_address(self, bar_name: str, instance) -> Tuple[int, int]:
-        reglist = self.cs.register.get_list_by_name(bar_name)
+    def get_IO_BAR_base_address(self, bar_name: str, instance:'PCIObj') -> Tuple[int, int]:
         try:
-            bar = reglist[0].get_def(bar_name)
+            bar_def = self.cs.register.io.get_def(bar_name)
         except IndexError:
             raise IOBARNotFoundError(f'IOBARNotFound: {bar_name} is not defined. Check scoping and configuration')
-        if not bar:
+        if not bar_def:
             raise IOBARNotFoundError(f'IOBARNotFound: {bar_name} is not defined. Check scoping and configuration')
-        base = 0
-        empmty_base = 0
+        base, size = bar_def.get_base(instance)
+        if base:
+            return base, size
+        empty_base = 0
 
-        if bar.register:
+        if bar_def.register:
             if instance is not None:
-                bar_reg = self.cs.register.get_instance_by_name(bar.register, instance)
+                bar_reg = self.cs.register.get_instance_by_name(bar_def.register, instance)
             else:
-                bar_reg = self.cs.register.get_list_by_name(bar.register)[0]
+                bar_reg = self.cs.register.get_list_by_name(bar_def.register)[0]
 
-            if bar.base_field:
-                base_field = bar.base_field
+            if bar_def.base_field:
+                base_field = bar_def.base_field
                 try:
                     base = bar_reg.get_field(base_field)
                 except Exception:
@@ -94,19 +102,18 @@ class IOBAR(hal_base.HALBase):
                     empty_base = bar_reg.get_mask()
                 except Exception:
                     pass
-
-        if bar.fixed_address and (base == empty_base or base == 0):
-            base = bar.fixed_address
+        if bar_def.fixed_address and (not base or base == empty_base):
+            base = bar_def.fixed_address
             self.logger.log_hal(f'[iobar] Using fixed address for {bar_name}: 0x{base:016X}')
 
-        if bar.mask:
-            base = base & bar.mask
-        if bar.offset:
-            base = base + bar.offset
-        size = bar.size if bar.size else DEFAULT_IO_BAR_SIZE
+        if bar_def.mask:
+            base = base & bar_def.mask
+        if bar_def.offset:
+            base = base + bar_def.offset
+        size = bar_def.size if bar_def.size else DEFAULT_IO_BAR_SIZE
+        if not base:
+            raise CSReadError(f'IOBAR ({bar_name}) base address is 0 or not defined')
         self.logger.log_hal(f'[iobar] {bar_name}: 0x{base:04X} (size = 0x{size:X})')
-        if base == 0:
-            raise CSReadError(f'IOBAR ({bar_name}) base address is 0')
         return base, size
 
     #
@@ -138,20 +145,20 @@ class IOBAR(hal_base.HALBase):
     def is_IO_BAR_enabled(self, bar_name: str) -> bool:
         if not self.is_IO_BAR_defined(bar_name):
             return False
-        bar = IO.get_def(bar_name)
+        bar = self.cs.register.io.get_def(bar_name)
         is_enabled = True
         if bar.register:
             bar_reg = bar.register
             if bar.enable_field:
                 bar_en_field = bar.enable_field
-                is_enabled = (1 == bar_reg.read_field(bar_en_field))
+                is_enabled = bar_reg.is_all_field_value(1, bar_en_field)
         return is_enabled
 
     def list_IO_BARs(self) -> None:
-        logger().log('')
-        logger().log('--------------------------------------------------------------------------------')
-        logger().log(f' {"I/O Range":35} | {"B:D.F":7} | {"Base":16} | {"Size":8} | {"En?":3} | Description')
-        logger().log('--------------------------------------------------------------------------------')
+        self.logger.log('')
+        self.logger.log('--------------------------------------------------------------------------------')
+        self.logger.log(f' {"I/O Range":35} | {"B:D.F":7} | {"Base":16} | {"Size":8} | {"En?":3} | Description')
+        self.logger.log('--------------------------------------------------------------------------------')
         for vid in self.cs.Cfg.IO_BARS:
             for dev in self.cs.Cfg.IO_BARS[vid]:
                 for _bar_name in self.cs.Cfg.IO_BARS[vid][dev]:
@@ -163,13 +170,17 @@ class IOBAR(hal_base.HALBase):
                     for instance in _bar.instances:
                         (_base, _size) = _bar.get_base(instance)
                         if _base is None:
-                            (_base, _size) = self.get_IO_BAR_base_address(bar_name, instance)
-                        _en = self.is_IO_BAR_enabled(bar_name, instance)
+                            try:
+                                (_base, _size) = self.get_IO_BAR_base_address(bar_name, instance)
+                            except CSReadError as err:
+                                self.logger.log_hal(f'[iobar] {err}')
+                                continue
+                        _en = self.is_IO_BAR_enabled(bar_name)
                         if instance.bus is not None:
                             bdf = f'{instance.bus:02X}:{instance.dev:02X}.{instance.fun:1X}'
                         else:
                             bdf = 'fixed'
-                        logger().log(f' {_bar_name:35} | {bdf:7} | {_base:016X} | {_size:08X} | {_en:d}   | {_bar["desc"]}')
+                        self.logger.log(f' {_bar_name:35} | {bdf:7} | {_base:016X} | {_size:08X} | {_en:d}   | {_bar.desc}')
 
     #
     # Read I/O range by I/O BAR name
