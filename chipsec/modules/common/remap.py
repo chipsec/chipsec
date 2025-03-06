@@ -90,14 +90,14 @@ class remap(BaseModule):
         else:
             self.logger.log_verbose('IBECC is not defined!')
         return False
-    
+
     def get_remap_registers(self, base_reg: str, limit_reg: str) -> Tuple[int, int]:
         if self.cs.register.is_defined(base_reg) and self.cs.register.is_defined(limit_reg):
             base = self.cs.register.read(base_reg)
             limit = self.cs.register.read(limit_reg)
             return base, limit
         raise RegisterNotFoundError('Required register definitions not defined for platform.')
-    
+
     def check_remap_config(self) -> int:
         is_warning = False
         remapMC0Found = True
@@ -112,7 +112,7 @@ class remap(BaseModule):
             remapbasemc1, remaplimitmc1 = self.get_remap_registers('PCI0.0.0_REMAPBASEMC1', 'PCI0.0.0_REMAPLIMITMC1')
         except RegisterNotFoundError:
             remapMC1Found = False
-        
+
         touud = self.cs.register.read('PCI0.0.0_TOUUD')
         tolud = self.cs.register.read('PCI0.0.0_TOLUD')
         tsegmb = self.cs.register.read('PCI0.0.0_TSEGMB')

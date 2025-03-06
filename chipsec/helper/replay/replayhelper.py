@@ -47,7 +47,7 @@ class ReplayHelper(Helper):
             else:
                 raise FileNotFoundError("Cannot find a recorded file to load")
         self._data = {}
-        
+
 
     def create(self) -> bool:
         return True
@@ -61,7 +61,7 @@ class ReplayHelper(Helper):
 
     def delete(self) -> bool:
         return True
-    
+
     def _get_element_eval(self, cmd: str, args: Tuple) -> Optional[Any]:
         element = self._get_element(cmd, args)
         if type(element) is str:
@@ -94,7 +94,7 @@ class ReplayHelper(Helper):
                     raise err
         logger().log_error(f"Missing entry for {str(cmd)} {targs}")
         return None
-    
+
     def _load(self) -> None:
         file_data = read_file(self.config_file)
         if file_data == 0:
@@ -113,10 +113,10 @@ class ReplayHelper(Helper):
 
     def read_mmio_reg(self, phys_address: int, size: int) -> int:
         return self._get_element_eval("read_mmio_reg", (phys_address, size))
-    
+
     def write_mmio_reg(self, phys_address: int, size: int, value: int) -> int:
         return self._get_element_eval("write_mmio_reg", (phys_address, size, value))
-        
+
     #
     # physical_address is 64 bit integer
     #
@@ -201,7 +201,7 @@ class ReplayHelper(Helper):
 
     def get_ACPI_table(self, table_name: str) -> Optional['Array']:
         return self._get_element_eval("get_ACPI_table", (table_name, ))
-    
+
     def enum_ACPI_tables(self) -> Optional['Array']:
         return self._get_element_eval("enum_ACPI_tables", ())
 

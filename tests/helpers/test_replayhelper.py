@@ -40,11 +40,11 @@ class ReplayHelperTest(unittest.TestCase):
     def test_cpu_read_pci_reg_one_byte(self):
         pci_read_value = self.replayhelper.read_pci_reg(0, 0, 0, 0, 0x1)
         self.assertEqual(pci_read_value, 0x86)
-        
+
     def test_cpu_read_pci_reg_two_bytes(self):
         pci_read_value = self.replayhelper.read_pci_reg(0, 0, 0, 0, 0x2)
         self.assertEqual(pci_read_value, 0x8086)
-        
+
     def test_cpu_read_pci_reg_four_bytes(self):
         pci_read_value = self.replayhelper.read_pci_reg(0, 0, 0, 0, 0x4)
         self.assertEqual(pci_read_value, 0x59048086)
@@ -56,7 +56,7 @@ class ReplayHelperTest(unittest.TestCase):
     def test_pch_read_pci_reg_two_bytes(self):
         pci_read_value = self.replayhelper.read_pci_reg(0, 0x1f, 0, 0, 0x2)
         self.assertEqual(pci_read_value, 0x8086)
-    
+
     def test_pch_read_pci_reg_four_bytes(self):
         pci_read_value = self.replayhelper.read_pci_reg(0, 0x1f, 0, 0, 0x4)
         self.assertEqual(pci_read_value, 0x9D4E8086)
@@ -68,7 +68,7 @@ class ReplayHelperTest(unittest.TestCase):
     def test_read_phyis_mem_align(self):
         mem_value = self.replayhelper.read_phys_mem(0x5000, 0x2)
         self.assertEqual(mem_value, b'\xd1\x99')
-        
+
     def test_read_phyis_mem_unaligned(self):
         mem_value = self.replayhelper.read_phys_mem(0x5001, 0x2)
         self.assertEqual(mem_value, b'\x99\xaa')
@@ -80,7 +80,7 @@ class ReplayHelperTest(unittest.TestCase):
     def test_cpuid_one(self):
         cpuid_value = self.replayhelper.cpuid(1, 0)
         self.assertEqual(cpuid_value, (526057, 51382272, 2147154879, 3219913727))
-    
+
     def test_cpuid_two(self):
         cpuid_value = self.replayhelper.cpuid(2, 0)
         self.assertEqual(cpuid_value, (1979933441, 15775231, 0, 12779520))
@@ -103,4 +103,3 @@ class ReplayHelperTest(unittest.TestCase):
         self.replayhelper.write_mmio_reg(0x123, 0x1, 0x22)
         mmio_read_value = self.replayhelper.read_mmio_reg(0x123, 0x1)
         self.assertEqual(mmio_read_value, 0x22)
-        

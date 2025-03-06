@@ -26,7 +26,7 @@
 ##################################################################################
 
 import platform
-    
+
 if "windows" == platform.system().lower():
     __all__ = ["windowshelper"]
 else:

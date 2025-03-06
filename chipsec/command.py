@@ -49,16 +49,16 @@ class BaseCommand:
 
     def set_up(self) -> None:
         pass
-    
+
     def tear_down(self) -> None:
         pass
 
     def parse_arguments(self) -> None:
         raise NotImplementedError('sub class should overwrite the parse_arguments() method')
-    
+
     def requirements(self) -> 'toLoad':
         raise NotImplementedError('sub class should overwrite the requirements() method')
-    
+
 class toLoad(Enum):
     Nil = 0
     Config = 1

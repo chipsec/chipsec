@@ -166,7 +166,7 @@ class smm_addr(BaseModule):
         else:
             res = ModuleResult.PASSED
             self.logger.log_passed("SMMask protection against cache attack is properly configured")
-        
+
         res = ModuleResult.PASSED
 
         return self.result.getReturnCode(res)

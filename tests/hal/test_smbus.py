@@ -83,7 +83,7 @@ class TestSMBUS(unittest.TestCase):
         smbus_hal = SMBus(mock_cs)
         mock_cs.device.get_VendorID.return_value = (did, vid)
         self.assertTrue(smbus_hal.is_SMBus_supported())
-        
+
     def test_is_SMBus_supported_invalid(self):
         did = 1234
         vid = 0x5678
@@ -101,7 +101,7 @@ class TestSMBUS(unittest.TestCase):
         mock_cs.register.get_field.return_value = hst_en
         smbus_hal = SMBus(mock_cs)
         self.assertEqual(smbus_hal.is_SMBus_host_controller_enabled(), hst_en)
-    
+
     @patch("chipsec.hal.smbus.iobar")
     def test_enable_SMBus_host_controller(self, mock_iobar):
         base_address = 123456
@@ -113,21 +113,21 @@ class TestSMBUS(unittest.TestCase):
         smbus_hal.enable_SMBus_host_controller()
         self.assertEqual(smbus_hal.cs.register.write.call_count, 2)
         self.assertEqual(smbus_hal.cs.register.read.call_count, 2)
-    
+
     def test_reset_SMBus_controller_valid(self):
         mock_cs = MagicMock()
         smbus_hal = SMBus(mock_cs)
         mock_cs.register.read.side_effect = [321, 0x8, 0]
         self.assertTrue(smbus_hal.reset_SMBus_controller())
         self.assertEqual(smbus_hal.cs.register.read.call_count, 3)
-    
+
     def test_reset_SMBus_controller_invalid(self):
         mock_cs = MagicMock()
         smbus_hal = SMBus(mock_cs)
         mock_cs.register.read.return_value = 0x8
         self.assertFalse(smbus_hal.reset_SMBus_controller())
         self.assertEqual(smbus_hal.cs.register.read.call_count, SMBUS_POLL_COUNT + 1)
-    
+
     def test__is_smbus_ready_valid(self):
         mock_cs = MagicMock()
         smbus_hal = SMBus(mock_cs)
@@ -216,4 +216,3 @@ class TestSMBUS(unittest.TestCase):
         mock_cs.register.read_field.return_value = 1
         buffer = bytes([1])
         self.assertTrue(smbus_hal.write_range(1, 2, buffer))
-        

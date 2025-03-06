@@ -101,7 +101,7 @@ class cpu_info(BaseModule):
             self.logger.log('[*]')
 
         self.logger.log_information('Processor information displayed')
-        
+
         self.result.setStatusBit(self.result.status.INFORMATION)
         return self.result.getReturnCode(ModuleResult.INFORMATION)
 
@@ -154,9 +154,9 @@ class cpu_info(BaseModule):
             self.logger.log(f'[*]            Microcode: {microcode_rev:08X}')
             self.logger.log('[*]')
         self.logger.log_information('Processor information displayed')
-        
+
         self.res = ModuleResult.INFORMATION
-        return self.res 
+        return self.res
 
     def run(self, module_argv: List[str]) -> int:
         # Log the start of the test

@@ -39,7 +39,7 @@ class RecordHelper(Helper):
         self.driver_created = False
         self.driver_loaded = False
         self.name = "FileHelper"
-        
+
         dtstr = datetime.now().strftime("%Y%m%d%H%M%S")
         self.default_file_name = f"recording{dtstr}.json"
         self.default_file_location = os.path.join("chipsec", "helper", "record")
@@ -118,7 +118,7 @@ class RecordHelper(Helper):
         self.driver_created = False
         return self._subhelper.delete()
 
-    
+
 
     def read_pci_reg(self, bus: int, device: int, function: int, offset: int, size: int) -> int:
         return self._call_subhelper(bus, device, function, offset, size)
@@ -128,10 +128,10 @@ class RecordHelper(Helper):
 
     def read_mmio_reg(self, phys_address: int, size: int) -> int:
         return self._call_subhelper(phys_address, size)
-    
+
     def write_mmio_reg(self, phys_address: int, size: int, value: int) -> int:
         return self._call_subhelper(phys_address, size, value)
-        
+
     #
     # physical_address is 64 bit integer
     #
@@ -152,7 +152,7 @@ class RecordHelper(Helper):
 
     def map_io_space(self, physical_address: int, length: int, cache_type: int) -> int:
         return self._call_subhelper(physical_address, length, cache_type)
-        
+
     #
     # Read/Write I/O port
     #
@@ -161,7 +161,7 @@ class RecordHelper(Helper):
 
     def write_io_port(self, io_port: int, value: int, size: int) -> int:
         return self._call_subhelper(io_port, value, size)
-        
+
     #
     # Read/Write CR registers
     #
@@ -274,4 +274,3 @@ class RecordHelper(Helper):
 def get_helper():
     return RecordHelper()
 
-            

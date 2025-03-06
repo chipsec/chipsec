@@ -40,8 +40,8 @@ class TestCmosUtilcmd(unittest.TestCase):
         init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate.json")
         cmos_readl_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "cmos_cmd", "cmos_cmd_readl_1.json")
         retval = setup_run_destroy_util(init_replay_file, "cmos", "readl 0x0", util_replay_file=cmos_readl_replay_file)
-        self.assertEqual(retval, ExitCode.OK) 
-        
+        self.assertEqual(retval, ExitCode.OK)
+
     def test_writel(self) -> None:
         init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate.json")
         cmos_writel_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "cmos_cmd", "cmos_cmd_writel_1.json")

@@ -86,5 +86,5 @@ class ia_untrusted(BaseModule):
             self.logger.log_passed('IA_UNTRUSTED set on all threads')
         elif self.res == ModuleResult.FAILED:
             self.logger.log_failed('IA_UNTRUSTED not set on all threads')
-        
+
         return self.result.getReturnCode(self.res)

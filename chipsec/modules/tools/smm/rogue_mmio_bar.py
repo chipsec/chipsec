@@ -103,7 +103,7 @@ class rogue_mmio_bar(BaseModule):
             if self.cs.os_helper.is_windows():
                 self.logger.log_important('Try running in Linux for better coverage.')
             return False
-        
+
         if self.logger.VERBOSE:
             self.cs.mmio.dump_MMIO(base, size)
             write_file('mmio_mem.orig', orig_mmio)

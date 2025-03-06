@@ -85,5 +85,5 @@ class rom_armor(BaseModule):
         else:
             self.logger.log_good("Rom Armor enabled.")
         self.res = self.check_RA_Fencing()
-        
+
         return self.res

@@ -292,7 +292,7 @@ class ChipsecMain:
             self.logger.log_error(f'Exception occurred during {modx.get_name()}.run(): \'{str(msg)}\'')
             raise msg
         return result
-    
+
     def run_loaded_modules(self):
         results = ReturnCodeResults() if self._return_codes else LegacyResults()
         results.add_properties(self.properties())

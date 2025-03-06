@@ -63,7 +63,7 @@ class IgdCommand(BaseCommand):
         parser_write.set_defaults(func=self.write_dma)
 
         parser.parse_args(self.argv, namespace=self)
-        
+
 
     def read_dma(self) -> None:
         self.logger.log(f'[CHIPSEC] Reading buffer from memory: PA = 0x{self.address:016X}, len = 0x{self.width:X}..')

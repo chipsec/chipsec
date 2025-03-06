@@ -34,8 +34,8 @@ class TestTpmUtilcmd(unittest.TestCase):
         pass
 
     def test_command_pcrread(self) -> None:
-        pass 
-        
+        pass
+
     def test_command_nvread(self) -> None:
         pass
 
