@@ -483,7 +483,7 @@ class UEFI(hal_base.HALBase):
     def list_EFI_variables(self) -> Optional[Dict[str, List[Tuple[int, bytes, int, bytes, str, int]]]]:
         varlist = self.helper.list_EFI_variables()
         return varlist
-    
+
     def list_EFI_variables_spi(self, filename: str = None) -> Optional[Dict[str, List[Tuple[int, bytes, int, bytes, str, int]]]]:
         if filename:
             varlist = self.read_EFI_variables_from_file(filename)

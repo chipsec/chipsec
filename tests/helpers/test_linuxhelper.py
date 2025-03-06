@@ -32,14 +32,14 @@ from tests.helpers.helper_utils import packer
 
 
 @patch('chipsec.helper.linux.linuxhelper.fcntl.ioctl')
-@patch('chipsec.helper.linux.linuxhelper.fcntl')  
+@patch('chipsec.helper.linux.linuxhelper.fcntl')
 class LinuxHelperTest(unittest.TestCase):
-    
+
     @classmethod
     def setUpClass(cls):
         # Set up mock modules
         cls._mocked_modules = ['fcntl', 'resource', 'pywintypes', 'win32service',
-                               'winerror', 'win32file', 'win32api', 'win32process', 
+                               'winerror', 'win32file', 'win32api', 'win32process',
                                'win32security', 'win32serviceutil']
         for mod in cls._mocked_modules:
             sys.modules[mod] = Mock()
@@ -55,7 +55,7 @@ class LinuxHelperTest(unittest.TestCase):
             cpacker.pack_ioport(0x1),
         (0xc0084302, b'\xb8\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00U\x00\x00\x00\x00\x00\x00\x00'):
             0x01,
-        (0xC0084303, b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'): 
+        (0xC0084303, b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'):
             cpacker.pack_pci(0x86),
         (0xC0084303, b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'):
             cpacker.pack_pci(0x8086),
@@ -88,7 +88,7 @@ class LinuxHelperTest(unittest.TestCase):
         (0xc0084316, b'\x00\x00\x00\x16\x00\x00\x00\x00'):
             cpacker.custom_pack(1, 0x1, 0),
          }
-    
+
     def ioctlret(*arg):
         for i in arg:
             if type(i) is int:
@@ -98,7 +98,7 @@ class LinuxHelperTest(unittest.TestCase):
         if arg[1:] in LinuxHelperTest.ioctldict:
             return LinuxHelperTest.ioctldict[arg[1:]]
         return b'\xab'*40
-    
+
     @patch('chipsec.helper.linux.linuxhelper.open')
     @patch('chipsec.helper.linux.linuxhelper.subprocess.call')
     @patch('chipsec.helper.linux.linuxhelper.subprocess.check_output')
@@ -121,12 +121,12 @@ class LinuxHelperTest(unittest.TestCase):
             self.assertTrue(self.lhelper.start())
             # breakpoint()
             pass
-        
+
 
     def tearDown(self):
         unittest.TestCase.tearDown(self)
         self.assertTrue(self.lhelper.delete())
-        
+
     def test_map_io_space(self, _, lh_ioctl):
         self.assertRaises(UnimplementedAPIError, self.lhelper.map_io_space, 0, 0, 0)
 
@@ -143,30 +143,30 @@ class LinuxHelperTest(unittest.TestCase):
         self.lhelper.dev_fh = Mock()
         self.lhelper.dev_fh.seek.return_value = 0
         self.lhelper.dev_fh.read.return_value = b'\xac\xdc'
-        
+
         mem_value = self.lhelper.read_phys_mem(0x5000, 0x2)
         self.assertEqual(mem_value, b'\xac\xdc')
-    
-   
-   
-   
+
+
+
+
     def test_va2pa(self, _, lh_ioctl):
         lh_ioctl.side_effect = LinuxHelperTest.ioctlret
         pa = self.lhelper.va2pa(0x12345)
         self.assertEqual(pa, (0, 0))
-        
-        
+
+
 
     def test_read_pci_reg_cpu_one_byte(self, _, lh_ioctl):
         lh_ioctl.side_effect = LinuxHelperTest.ioctlret
         pci_read_value = self.lhelper.read_pci_reg(0, 0, 0, 0, 0x1)
         self.assertEqual(pci_read_value, 0x86)
-  
+
     def test_read_pci_reg_cpu_two_bytes(self, _, lh_ioctl):
         lh_ioctl.side_effect = LinuxHelperTest.ioctlret
         pci_read_value = self.lhelper.read_pci_reg(0, 0, 0, 0, 0x2)
         self.assertEqual(pci_read_value, 0x8086)
-        
+
     def test_read_pci_reg_cpu_four_bytes(self, _, lh_ioctl):
         lh_ioctl.side_effect = LinuxHelperTest.ioctlret
         pci_read_value = self.lhelper.read_pci_reg(0, 0, 0, 0, 0x4)
@@ -181,23 +181,23 @@ class LinuxHelperTest(unittest.TestCase):
         lh_ioctl.side_effect = LinuxHelperTest.ioctlret
         pci_read_value = self.lhelper.read_pci_reg(0, 0x1f, 0, 0, 0x2)
         self.assertEqual(pci_read_value, 0x8086)
-    
+
     def test_read_pci_reg_pch_four_bytes(self, _, lh_ioctl):
         lh_ioctl.side_effect = LinuxHelperTest.ioctlret
         pci_read_value = self.lhelper.read_pci_reg(0, 0x1f, 0, 0, 0x4)
         self.assertEqual(pci_read_value, 0xA0828086)
-        
+
     def test_write_pci_reg_cpu_one_byte(self, _, lh_ioctl):
         lh_ioctl.side_effect = LinuxHelperTest.ioctlret
         pci_write_return = self.lhelper.write_pci_reg(0, 0, 0, 0, 0x1, 0xab)
         self.assertEqual(pci_write_return, 0x1)
-    
-    # TODO Test: load_ucode_update() - Has error in implementation. 
+
+    # TODO Test: load_ucode_update() - Has error in implementation.
     # def test_load_ucode_update(self, _, lh_ioctl):
     #     lh_ioctl.side_effect = LinuxHelperTest.ioctlret
     #     load_ucode_update_return = self.lhelper.load_ucode_update(0, b'\x55')
     #     self.assertTrue(load_ucode_update_return)
-    
+
     def test_read_io_port(self, _, lh_ioctl):
         lh_ioctl.side_effect = LinuxHelperTest.ioctlret
         ioport_read_value = self.lhelper.read_io_port(0xB8, 4)
@@ -207,32 +207,32 @@ class LinuxHelperTest(unittest.TestCase):
         lh_ioctl.side_effect = LinuxHelperTest.ioctlret
         ioport_write_return = self.lhelper.write_io_port(0xB8, 0x55, 4)
         self.assertEqual(ioport_write_return, 0x1)
-    
+
     # TODO Test: read_cr
-    
+
     # TODO Test: write_cr
-    
+
     # TODO Test: read_msr
-    
+
     # TODO Test: write_msr
-    
+
     # TODO Test: get_descriptor_table
 
     def test_cpuid_one(self, _, lh_ioctl):
         lh_ioctl.side_effect = LinuxHelperTest.ioctlret
         cpuid_value = self.lhelper.cpuid(1, 0)
         self.assertEqual(cpuid_value, (0x406F1, 0, 0, 0))
-    
+
     def test_cpuid_two(self, _, lh_ioctl):
         lh_ioctl.side_effect = LinuxHelperTest.ioctlret
         cpuid_value = self.lhelper.cpuid(2, 0)
         self.assertEqual(cpuid_value, (0xFFFFF, 0, 0, 0))
-        
+
     def test_alloc_phys_mem(self, _, lh_ioctl):
         lh_ioctl.side_effect = LinuxHelperTest.ioctlret
         alloc_return = self.lhelper.alloc_phys_mem(0x8, 0x1000_0000_0000)
         self.assertEqual(alloc_return, (0x1, 0x0))
-    
+
     def test_free_phys_mem(self, _, lh_ioctl):
         lh_ioctl.side_effect = LinuxHelperTest.ioctlret
         free_return = self.lhelper.free_phys_mem(0x1600_0000)
@@ -254,35 +254,35 @@ class LinuxHelperTest(unittest.TestCase):
         lh_ioctl.side_effect = LinuxHelperTest.ioctlret
         msg_s_r_m = self.lhelper.msgbus_send_read_message(0x1, 0x2)
         self.assertEqual(msg_s_r_m, 0x200)
-    
+
     def test_msgbus_send_write_message(self, _, lh_ioctl):
         lh_ioctl.side_effect = LinuxHelperTest.ioctlret
         msg_s_r_m = self.lhelper.msgbus_send_write_message(0x1, 0x2, 0x3)
         self.assertIsNone(msg_s_r_m)
-    
+
     # TODO Test: get_affinity
-    
+
     # TODO Test: set_affinity
-    
+
     # TODO Test: EFI_supported
-    
+
     # TODO Test: delete_EFI_variable
-    
+
     # TODO Test: list_EFI_variables
-    
+
     # TODO Test: get_EFI_variable
-    
+
     # TODO Test: set_EFI_variable
-    
+
     # TODO Test: hypercall
-    
+
     # TODO Test: send_sw_smi
-    
+
     # TODO Test: get_tool_info
 
     def test_get_threads_count(self, _, _1):
         thread_count = self.lhelper.get_threads_count()
         self.assertEqual(thread_count, cpu_count())
-        
+
     def test_retpoline_enabled(self, _, lh_ioctl):
         self.assertRaises(NotImplementedError, self.lhelper.retpoline_enabled)

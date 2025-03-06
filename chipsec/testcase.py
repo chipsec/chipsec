@@ -113,7 +113,7 @@ class ChipsecResults:
 
     def get_return_code(self):
         pass
-        
+
     def order_summary(self):
         return {}
 
@@ -228,18 +228,18 @@ class ChipsecResults:
             # Category as header level 1
             ret_string += f'\n# {result:s}:{len(destination[result]):d}\n'
             ret_string += ''.join(destination[result])
-        return ret_string   
+        return ret_string
 
 class LegacyResults(ChipsecResults):
     def print_summary(self, runtime: Optional[float] = None) -> None:
         summary = self.order_summary()
         filler = '*' * 27
         logger().log(f'\n[CHIPSEC] {filler}  SUMMARY  {filler}')
-        print_dictionary = {'failed to run': logger().log_error, 
-                            'passed': logger().log_passed, 
+        print_dictionary = {'failed to run': logger().log_error,
+                            'passed': logger().log_passed,
                             'information': logger().log_information,
-                            'archived': logger().log_information, 
-                            'failed': logger().log_failed, 
+                            'archived': logger().log_information,
+                            'failed': logger().log_failed,
                             'not applicable': logger().log_not_applicable}
         if runtime is not None:
             logger().log(f'[CHIPSEC] Time elapsed            {runtime:.3f}')
@@ -306,7 +306,7 @@ class LegacyResults(ChipsecResults):
             if len(summary[result]) != 0:
                 return destination[result]
         return ExitCode.OK
-        
+
 class ReturnCodeResults(ChipsecResults):
     def print_summary(self, runtime: Optional[float] = None) -> None:
         summary = self.order_summary()

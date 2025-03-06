@@ -110,7 +110,7 @@ class chipsecStreamFormatter(logging.Formatter):
             'YELLOW': '\033[93m',
             'BLUE': '\033[94m',
             'PURPLE': '\033[95m',
-            'CYAN': '\033[96m', 
+            'CYAN': '\033[96m',
             'WHITE': '\033[97m',
             'END': '\033[0m'}
     else:
@@ -228,17 +228,17 @@ class Logger:
             file_handler.setFormatter(self.logFormatter)
         else:
             self.log('Unable to autolog')
-    
+
     def get_terminators(self) -> List[str]:
         terms = []
         for clhandler in self.chipsecLogger.handlers:
             terms.append(clhandler.terminator)
         return terms
-    
+
     def set_terminators(self, term: str) -> None:
         for clhandler in self.chipsecLogger.handlers:
             clhandler.terminator = term
-    
+
     def log_inline(self, msg: str) -> None:
         """Logs a plain message without a newline charater at the end"""
         orig_term = self.get_terminators().pop()

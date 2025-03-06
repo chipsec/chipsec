@@ -255,7 +255,7 @@ class ept_finder(BaseModule):
             if not ept.failure:
                 ept.save_configuration(self.path + f'ept_{eptp:08x}.py')
             count += 1
-            
+
         for (_, _, source_fp) in self.par:
             if source_fp:
                 source_fp.close()

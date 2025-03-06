@@ -37,7 +37,7 @@ from argparse import ArgumentParser
 
 
 class ModuleIdCommand(BaseCommand):
-    
+
     def requirements(self) -> toLoad:
         return toLoad.Nil
 

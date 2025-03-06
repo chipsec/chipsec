@@ -59,13 +59,13 @@ class DecodeCommand(BaseCommand):
 
     def requirements(self) -> toLoad:
         return toLoad.Nil
-    
+
     def parse_arguments(self) -> None:
         parser = ArgumentParser(usage=__doc__)
         parser.add_argument('_rom', metavar='<rom>', help='file to decode')
         parser.add_argument('_fwtype', metavar='fw_type', nargs='?', help='firmware type', default=None)
         parser.parse_args(self.argv, namespace=self)
-        
+
         if self._rom.lower() == 'types':
             self.func = self.decode_types
         else:

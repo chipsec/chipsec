@@ -28,7 +28,7 @@ class PSP:
     SMN_INDEX_ADDR = 0xb8
     SMN_DATA_ADDR = 0xbc
     SMU_PSP_SMN_BASE = 0x3800000
-    SMU_PSP_MBOX_CMD_STATUS = SMU_PSP_SMN_BASE + 0x00010970 
+    SMU_PSP_MBOX_CMD_STATUS = SMU_PSP_SMN_BASE + 0x00010970
     SMU_PSP_MBOX_CMD_BUF_LO = SMU_PSP_SMN_BASE + 0x00010974
     SMU_PSP_MBOX_CMD_BUF_HI = SMU_PSP_SMN_BASE + 0x00010978
     PSP_CMD_GET_CAPABILITIES = 0x27
@@ -61,7 +61,7 @@ class PSP:
         # poll for mailbox ready
         start_time = time.time()
         timeout = False
-        while (True): 
+        while (True):
             mbox_cmd_status_value = self.smu_read32(self.SMU_PSP_MBOX_CMD_STATUS)
             timeout = (time.time() - start_time > self.TIMEOUT)
             if ((mbox_cmd_status_value & 0x80000000) or timeout):
@@ -85,7 +85,7 @@ class PSP:
         start_time = time.time()
         timeout = False
 
-        while (True): 
+        while (True):
             mbox_cmd_status_value = self.smu_read32(self.SMU_PSP_MBOX_CMD_STATUS)
             timeout = (time.time() - start_time > self.TIMEOUT)
             if ((mbox_cmd_status_value & 0x80000000) or timeout):
@@ -95,7 +95,7 @@ class PSP:
             logger().log_bad(f'Timeout polling for PSP Mailbox Ready (Complete)')
             self.helper.free_phys_mem(buf_va)
             return [0xbaddbadd]
-        
+
         buffer = []
         for i in range(0, num_buf):
             buffer.append(int.from_bytes(self.helper.read_phys_mem(buf_pa + (i * dword_size), dword_size), 'little'))
@@ -107,6 +107,6 @@ class PSP:
     def query_HSTI(self) -> int:
         hsti_buffer = self.psp_mbox_command(self.PSP_CMD_GET_HSTI_STATE)
         if (len(hsti_buffer) > 1):
-            return hsti_buffer[2] 
+            return hsti_buffer[2]
         else:
-            return 0 
+            return 0

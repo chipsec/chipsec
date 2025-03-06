@@ -44,12 +44,12 @@ def print_args(args):
 @patch('chipsec.helper.windows.windowshelper.win32file.CreateFile')
 @patch('chipsec.helper.windows.windowshelper.win32file.DeviceIoControl')
 class WindowsHelperTest(unittest.TestCase):
-    
+
     @classmethod
     def setUpClass(cls):
         # Set up mock modules
         cls._mocked_modules = ['pywintypes', 'win32service', 'windll',
-                               'winerror', 'win32file', 'win32api', 'win32process', 
+                               'winerror', 'win32file', 'win32api', 'win32process',
                                'win32security', 'win32serviceutil', 'ctypes', 'win32.lib']
         for mod in cls._mocked_modules:
             sys.modules[mod] = Mock()
@@ -92,22 +92,22 @@ class WindowsHelperTest(unittest.TestCase):
         (0x22e060, b'\x00\x003\x00\x05\x80\x00\x00\x00\x00\x00\x00\x00\x00'):
             b'',
         (0x22e034, b'\x00\x00\x00\x00:\x00\x00\x00'):
-            b'\x01\x00\x00\x00\x00\x00\x00\x00',  
+            b'\x01\x00\x00\x00\x00\x00\x00\x00',
         (0x22e030, b'\x00\x00\x00\x00:\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00' ):
             b'',
         (0x22e040, b'\x00\x00\x00\x00\x01'):
             b'W\x00\xb0\x1f\xeav\x04\xf8\xff\xff\xb0\xbf0\x03\x00\x00\x00\x00',
     }
 
-    
-    
+
+
     def ioctlret(*args):
         if DEBUG:
             print_args(args)
         if args[1:3] in WindowsHelperTest.ioctl_dict:
             return WindowsHelperTest.ioctl_dict[args[1:3]]
         return b'\xab'*40
-                
+
     @patch('chipsec.helper.windows.windowshelper.windll.ntdll.NtQuerySystemInformation')
     @patch('chipsec.helper.windows.windowshelper.logger')
     @patch('chipsec.helper.windows.windowshelper.win32file')
@@ -145,14 +145,14 @@ class WindowsHelperTest(unittest.TestCase):
         with patch.dict(wh.os.__dict__, {'chown': lambda *args: None}):
             self.whelper = wh.WindowsHelper()
             self.assertTrue(self.whelper.create())
-            self.assertTrue(self.whelper.start())        
+            self.assertTrue(self.whelper.start())
 
     @patch('chipsec.helper.windows.windowshelper.win32api.CloseHandle')
     def tearDown(self, _):
         unittest.TestCase.tearDown(self)
         self.assertTrue(self.whelper.delete())
         self.whelper.__del__()
-        
+
     # TODO def test_map_io_space(self, _):
 
     def _assign_mocks(self, mocks):
@@ -160,7 +160,7 @@ class WindowsHelperTest(unittest.TestCase):
         mock_createfile = mocks[1]
         mock_ioctl.side_effect = WindowsHelperTest.ioctlret
         mock_createfile.return_value = DRIVER_HANDLE
-        
+
     def test_write_phys_mem(self, *mocks):
         self._assign_mocks(mocks)
         retval = self.whelper.write_phys_mem(0x1234, 0x8, "abc")
@@ -182,14 +182,14 @@ class WindowsHelperTest(unittest.TestCase):
         pci_bdf.side_effect = pcibdf_sideeffect
         pci_read_value = self.whelper.read_pci_reg(0, 0, 0, 0, 0x1)
         self.assertEqual(pci_read_value, 0x86)
-    
+
     @patch('chipsec.helper.windows.windowshelper.PCI_BDF')
     def test_read_pci_reg_cpu_two_bytes(self, pci_bdf, *mocks):
         self._assign_mocks(mocks)
         pci_bdf.side_effect = pcibdf_sideeffect
         pci_read_value = self.whelper.read_pci_reg(0, 0, 0, 0, 0x2)
         self.assertEqual(pci_read_value, 0x8086)
-    
+
     @patch('chipsec.helper.windows.windowshelper.PCI_BDF')
     def test_read_pci_reg_cpu_four_bytes(self, pci_bdf, *mocks):
         self._assign_mocks(mocks)
@@ -228,27 +228,27 @@ class WindowsHelperTest(unittest.TestCase):
         self._assign_mocks(mocks)
         ioport_write_return = self.whelper.write_io_port(0xB8, 0x55, 4)
         self.assertTrue(ioport_write_return)
-  
+
     def test_read_cr(self, *mocks):
         self._assign_mocks(mocks)
         read_cr_return = self.whelper.read_cr(0, 0)
         self.assertEqual(read_cr_return, 0x80050033)
-  
+
     def test_write_cr(self, *mocks):
         self._assign_mocks(mocks)
         write_cr_return = self.whelper.write_cr(0, 0, 0x80050033)
         self.assertTrue(write_cr_return)
-  
+
     def test_read_msr(self, *mocks):
         self._assign_mocks(mocks)
         read_msr_return = self.whelper.read_msr(0, 0x3A)
         self.assertEqual(read_msr_return, (1, 0))
-  
+
     def test_write_msr(self, *mocks):
         self._assign_mocks(mocks)
         write_msr_return = self.whelper.write_msr(0, 0x3a, 1, 0)
         self.assertTrue(write_msr_return)
-  
+
 
     def test_get_descriptor_table(self, *mocks):
         self._assign_mocks(mocks)
@@ -260,12 +260,12 @@ class WindowsHelperTest(unittest.TestCase):
         cpuid_value = self.whelper.cpuid(1, 0)
         self.assertEqual(cpuid_value, (0x406F1, 0, 0, 0))
 
-        
+
     def test_alloc_phys_mem(self, *mocks):
         self._assign_mocks(mocks)
         alloc_return = self.whelper.alloc_phys_mem(0x8, 0x1000_0000_0000)
         self.assertEqual(alloc_return, (0x1, 0x0))
-    
+
     def test_free_phys_mem(self, *mocks):
         self._assign_mocks(mocks)
         free_return = self.whelper.free_phys_mem(0x1600_0000)
@@ -279,19 +279,19 @@ class WindowsHelperTest(unittest.TestCase):
     def test_write_mmio_reg(self, *mocks):
         self._assign_mocks(mocks)
         self.whelper.write_mmio_reg(0x123, 0x1, 0x22)
-    
+
     # TODO def test_get_ACPI_SDT(self, *mocks):
         # self._assign_mocks(mocks)
 
     # TODO def test_get_ACPI_table(self, *mocks):
         # self._assign_mocks(mocks)
-    
+
     def test_msgbus_send_read_message(self, *_):
         self.assertRaises(UnimplementedAPIError, self.whelper.msgbus_send_read_message, 0x1, 0x2)
-    
+
     def test_msgbus_send_write_message(self, *_):
         self.assertRaises(UnimplementedAPIError, self.whelper.msgbus_send_write_message, 0x1, 0x2, 3)
-    
+
     def test_msgbus_send_message(self, *_):
         self.assertRaises(UnimplementedAPIError, self.whelper.msgbus_send_message, 0x1, 0x2, 3)
 
