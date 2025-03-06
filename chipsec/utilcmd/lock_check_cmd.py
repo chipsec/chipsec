@@ -33,7 +33,7 @@ Examples:
 KEY:
     Lock Name - Name of Lock within configuration file
     State     - Lock Configuration
-    
+
         Undefined - Lock is not defined within configuration
         Undoc     - Lock is missing configuration information
         Hidden    - Lock is in a disabled or hidden state (unable to read the lock)
@@ -86,7 +86,7 @@ class LOCKCHECKCommand(BaseCommand):
             self.cs.consistency_checking = True
         self.logger.set_always_flush(True)
         self._locks = locks(self.cs)
-    
+
     def tear_down(self) -> None:
         self.logger.set_always_flush(False)
         if self.flip_consistency_checking:

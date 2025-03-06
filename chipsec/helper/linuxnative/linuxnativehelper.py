@@ -392,7 +392,7 @@ class LinuxNativeHelper(Helper):
 
     def get_ACPI_table(self, table_name: str) -> Optional['Array']:
         raise NotImplementedError()
-    
+
     def enum_ACPI_tables(self) -> Optional['Array']:
         raise NotImplementedError()
 

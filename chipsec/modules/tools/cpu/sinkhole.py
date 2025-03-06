@@ -121,5 +121,5 @@ class sinkhole(BaseModule):
             self.logger.log_important('CPU does not support SMRR range protection of SMRAM.  Skipping module.')
             self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
             self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
-        
+
         return self.res

@@ -158,7 +158,7 @@ class ChipsecUtil:
         if reqs.load_driver() and self._no_driver:
             self.logger.log("Cannot run command without a driver loaded.", level.ERROR)
             return ExitCode.ERROR
-            
+
         if reqs.load_config() and not self._load_config:
             self.logger.log("Cannot run command without a config loaded. Please run with -p and/or --pch if needed.", level.ERROR)
             return ExitCode.ERROR
@@ -179,18 +179,18 @@ class ChipsecUtil:
             print_banner_properties(self._cs, os_version())
 
         self.logger.log(f"[CHIPSEC] Executing command '{self._cmd}' with args {self._cmd_args}\n")
-        
+
         try:
             comm.set_up()
         except Exception as msg:
             self.logger.log_error(msg)
             return
-        
+
         t = time()
         if comm.prerun():
             comm.run()
         self.logger.log(f"[CHIPSEC] Time elapsed {time()-t:.3f}")
-        
+
         comm.tear_down()
         if reqs.load_driver() and not self._no_driver:
             self._cs.destroy_helper()

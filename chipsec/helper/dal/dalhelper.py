@@ -375,7 +375,7 @@ class DALHelper(Helper):
     #
     def get_ACPI_table(self, table_name: str) -> Optional['Array']:
         raise UnimplementedAPIError('get_ACPI_table')
-    
+
     def enum_ACPI_tables(self) -> Optional['Array']:
         raise UnimplementedAPIError('enum_ACPI_table')
 

@@ -68,7 +68,7 @@ class IDTCommand(BaseCommand):
 
     def requirements(self) -> toLoad:
         return toLoad.Driver
-    
+
     def parse_arguments(self) -> None:
         parser = ArgumentParser(usage=IDTCommand.__doc__)
         parser.add_argument('_thread', metavar='thread', type=lambda x: int(x, 0), nargs='?', default=None, help="thread")
@@ -96,7 +96,7 @@ class GDTCommand(BaseCommand):
 
     def requirements(self) -> toLoad:
         return toLoad.Driver
-    
+
     def parse_arguments(self) -> None:
         parser = ArgumentParser(usage=GDTCommand.__doc__)
         parser.add_argument('_thread', metavar='thread', type=lambda x: int(x, 0), nargs='?', default=None, help="thread")
@@ -124,7 +124,7 @@ class LDTCommand(BaseCommand):
 
     def requirements(self) -> toLoad:
         return toLoad.Nil
-    
+
     def parse_arguments(self) -> None:
         return
 

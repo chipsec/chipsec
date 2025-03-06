@@ -81,7 +81,7 @@ class smrr(BaseModule):
             self.logger.log_not_applicable('CPU does not support SMRR range protection of SMRAM')
             self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
             self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
-        
+
         smrr_ok = True
 
         self.logger.log('')

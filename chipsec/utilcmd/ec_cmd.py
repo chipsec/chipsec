@@ -83,7 +83,7 @@ class ECCommand(BaseCommand):
         parser_index.set_defaults(func=self.index)
 
         parser.parse_args(self.argv, namespace=self)
-        
+
     def set_up(self) -> None:
         self._ec = EC(self.cs)
 
