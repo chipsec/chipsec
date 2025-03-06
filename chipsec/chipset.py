@@ -135,7 +135,7 @@ class Chipset:
                 if self.Cfg.is_pch_req() is False or self.Cfg.get_pch_code() != CHIPSET_CODE_UNKNOWN:
                     _unknown_pch = False
                 if _unknown_proc:
-                    msg.append(f'Unknown Platform: VID = 0x{self.Cfg.vid:04X}, DID = 0x{self.Cfg.did:04X}, RID = 0x{self.Cfg.rid:02X}, CPUID = 0x{self.cpuid:X}')
+                    msg.append(f'Unknown Platform: VID = 0x{self.Cfg.vid:04X}, DID = 0x{self.Cfg.did:04X}, RID = 0x{self.Cfg.rid:02X}, CPUID = 0x{cpuid:X}')
                     if start_helper:
                         self.logger.log_error(msg[-1])
                         raise_unknown_platform = True
