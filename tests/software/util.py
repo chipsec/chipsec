@@ -66,6 +66,8 @@ class TestChipsecUtil(unittest.TestCase):
             util.logger.close()
         with open(self.log_file, 'rb') as log:
             self.log = log.read()
+        if err_code != 0:
+            print(self.log)
         self.assertEqual(err_code, 0)
 
     def _assertLogValue(self, name, value):

@@ -99,8 +99,10 @@ class RegisterCommand(BaseCommand):
 
     def reg_read_field(self):
         if self.cs.register.has_field(self.reg_name, self.field_name):
-            value = self.cs.register.read_field(self.reg_name, self.field_name)
-            self.logger.log("[CHIPSEC] {}.{}=0x{:X}".format(self.reg_name, self.field_name, value))
+            reglist = self.cs.register.get_list_by_name(self.reg_name)
+            field_list = reglist.read_field(self.field_name)
+            for value in field_list:
+                self.logger.log(f"[CHIPSEC] {self.reg_name}.{self.field_name} = 0x{value:X}")
         else:
             self.logger.log_error("[CHIPSEC] Register '{}' doesn't have field '{}' defined".format(self.reg_name, self.field_name))
 
@@ -117,8 +119,10 @@ class RegisterCommand(BaseCommand):
 
     def reg_get_control(self):
         if self.cs.control.is_defined(self.control_name):
-            value = self.cs.control.get(self.control_name)
-            self.logger.log("[CHIPSEC] {} = 0x{:X}".format(self.control_name, value))
+            ctrl_list = self.cs.control.get_list_by_name(self.control_name)
+            for value in ctrl_list:
+                value.read()
+                self.logger.log(f"[CHIPSEC] {self.control_name} = 0x{value.value:X}")
         else:
             self.logger.log_error("[CHIPSEC] Control '{}' isn't defined".format(self.control_name))
 

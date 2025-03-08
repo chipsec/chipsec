@@ -57,6 +57,7 @@ class spi_lock(BaseModule):
         super(spi_lock, self).__init__()
 
     def is_supported(self) -> bool:
+        # breakpoint()
         if self.cs.control.is_defined('FlashLockDown'):
             return True
         self.logger.log_important('FlashLockDown control not define for platform.  Skipping module.')

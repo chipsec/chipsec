@@ -25,7 +25,7 @@ from chipsec.hal.common.smbus import SMBus, SMBUS_POLL_COUNT
 from chipsec.library.exceptions import IOBARNotFoundError,RegisterNotFoundError
 
 class TestSMBUS(unittest.TestCase):
-    @patch("chipsec.hal.smbus.iobar")
+    @patch("chipsec.hal.common.smbus.iobar")
     def test_get_SMBus_Base_Address_valid_base(self, mock_iobar):
         base_address = 123456
         mock_cs = MagicMock()
@@ -34,7 +34,7 @@ class TestSMBUS(unittest.TestCase):
         smbus_hal.iobar.get_IO_BAR_base_address.return_value = (base_address, None)
         self.assertEqual(smbus_hal.get_SMBus_Base_Address(), base_address)
 
-    @patch("chipsec.hal.smbus.iobar")
+    @patch("chipsec.hal.common.smbus.iobar")
     def test_get_SMBus_Base_Address_invalid_base(self, mock_iobar):
         mock_cs = MagicMock()
         smbus_hal = SMBus(mock_cs)
@@ -55,7 +55,7 @@ class TestSMBUS(unittest.TestCase):
         smbus_hal = SMBus(mock_cs)
         self.assertRaises(RegisterNotFoundError, smbus_hal.get_SMBus_HCFG)
 
-    @patch("chipsec.hal.smbus.iobar")
+    @patch("chipsec.hal.common.smbus.iobar")
     def test_display_SMBus_info(self, mock_iobar):
         reg_read_val = 123456
         base_address = 456789
@@ -102,7 +102,7 @@ class TestSMBUS(unittest.TestCase):
         smbus_hal = SMBus(mock_cs)
         self.assertEqual(smbus_hal.is_SMBus_host_controller_enabled(), hst_en)
     
-    @patch("chipsec.hal.smbus.iobar")
+    @patch("chipsec.hal.common.smbus.iobar")
     def test_enable_SMBus_host_controller(self, mock_iobar):
         base_address = 123456
         mock_cs = MagicMock()

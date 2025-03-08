@@ -36,8 +36,8 @@ Examples:
     >>> chipsec_main.py -m common.spi_access
 
 Registers used:
-    - 8086.SPIBAR.HSFS.FDV
-    - 8086.SPIBAR.FRAP.BRWA
+    - 8086.SPI.HSFS.FDV
+    - 8086.SPI.FRAP.BRWA
 
 .. important::
     - Some platforms may use alternate means of protecting these regions.
@@ -60,8 +60,8 @@ class spi_access(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.cs.set_scope({
-            "HSFS": "8086.SPIBAR",
-            "FRAP": "8086.SPIBAR",
+            "HSFS": "8086.SPI",
+            "FRAP": "8086.SPI",
         })
 
     def is_supported(self) -> bool:

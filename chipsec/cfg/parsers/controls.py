@@ -47,3 +47,6 @@ class CONTROLHelper(BaseConfigHelper):
         Register {self.__reg.name}
         Field {self.field}
         Value {self.value}"""
+    
+    def __repr__(self):
+        return f'''Control: {self.name} -> {self.value} ({self.__reg.name}: {self.field})'''

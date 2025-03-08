@@ -47,7 +47,9 @@ chipsec@intel.com
       <subcomponent type="iobar"   name="PMBASE"   register="ABASE"    base_field="BA" size="0x100"  fixed_address="0x1800"     desc="ACPI Base Address" config="IO.acpi0.xml" />
     </device>
     <device name="SMBUS"  bus="0" dev="0x1F" fun="4" config="SMBUS.smbus1.xml" />
-    <device name="SPI"    bus="0" dev="0x1F" fun="5" config="SPI.spi0.xml" />
+    <device name="SPI"    bus="0" dev="0x1F" fun="5" config="SPI.spi0.xml" >
+      <subcomponent type="mmiobar" name="SPIBAR" register="SPIBAR0" base_field="MEMBAR" size="0x1000" desc="SPI mmio Range" config="SPI.spibar0.xml" />
+    </device>
     <device name="SPI"    bus="0" dev="0x1F" fun="5" config="SPI.descriptor0.xml" />
   </pci>
 

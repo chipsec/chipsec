@@ -413,10 +413,13 @@ class Cfg:
             globals()[f'PCH_CODE_{pc[4:].upper()}'] = pc.upper()
 
     def get_dev_from_bdf_000(self):
-        for vid in self.CONFIG_PCI_RAW:
-            for did in self.CONFIG_PCI_RAW[vid]:
-                if 0 in self.CONFIG_PCI_RAW[vid][did].cfg['bus'] and self.CONFIG_PCI_RAW[vid][did].cfg['dev'] == 0 and self.CONFIG_PCI_RAW[vid][did].cfg['fun'] == 0:
-                    return self.CONFIG_PCI_RAW[vid][did].cfg
+        try:
+            for vid in self.CONFIG_PCI_RAW:
+                for did in self.CONFIG_PCI_RAW[vid]:
+                    if 0 in self.CONFIG_PCI_RAW[vid][did].cfg['bus'] and self.CONFIG_PCI_RAW[vid][did].cfg['dev'] == 0 and self.CONFIG_PCI_RAW[vid][did].cfg['fun'] == 0:
+                        return self.CONFIG_PCI_RAW[vid][did].cfg
+        except (TypeError, KeyError):
+            pass
         return {'vid': 0xFFFF, 'did': 0xFFFF, 'rid': 0xFF}
     
     def add_memory_range(self, mem_range_obj:Dict):

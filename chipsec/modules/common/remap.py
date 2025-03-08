@@ -64,9 +64,9 @@ class remap(BaseModule):
             None: "8086.HOSTCTL",
             'MSR_BIOS_DONE': "8086.MSR",
             'IA_UNTRUSTED': "8086.MSR",
-            'IBECC_ACTIVATE': "8086.MCHBAR",
-            'REMAPBASE': "8086.MCHBAR",
-            'REMAPLIMIT': "8086.MCHBAR"
+            'IBECC_ACTIVATE': "8086.HOSTCTL",
+            'REMAPBASE': "8086.HOSTCTL",
+            'REMAPLIMIT': "8086.HOSTCTL"
         })
 
     def is_supported(self) -> bool:

@@ -63,14 +63,14 @@ class TestHelper(Helper):
             elif size == 2:
                 return 0x8086
             else:
-                return 0x16008086
+                return 0x46218086
         elif (bus, device, function) == (0, 0x1f, 0):
             if size == 1:
                 return 0x86
             elif size == 2:
                 return 0x8086
             else:
-                return 0x9D438086
+                return 0x51828086
         else:
             return self._generate_size_ffs(size)
 
@@ -171,7 +171,7 @@ class TestHelper(Helper):
         raise UnimplementedAPIError('get_affinity')
 
     def set_affinity(self, value):
-        raise UnimplementedAPIError('set_affinity')
+        pass
 
     def send_sw_smi(self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi):
         raise UnimplementedAPIError('send_sw_smi')
@@ -366,8 +366,8 @@ class SPIHelper(TestHelper):
                 return self.RCBA_ADDR
             elif address == 0xDC:
                 return 0xDEADBEEF
-            elif address == 0x0:
-                return 0xAAAA8086
+            # elif address == 0x0:
+            #     return 0xAAAA8086
         return super(SPIHelper, self).read_pci_reg(bus, device,
                                                        function,
                                                        address, size)
@@ -402,17 +402,22 @@ class ValidChipsetHelper(TestHelper):
             elif size == 2:
                 return 0x8086
             else:
-                return 0x19048086
+                return 0x46218086
         elif (bus, device, function) == (0, 0x1f, 0):
             if size == 1:
                 return 0x86
             elif size == 2:
                 return 0x8086
             else:
-                return 0x9D438086
+                return 0x51828086
         else:
             return self._generate_size_ffs(size)
-
+        
+    def cpuid(self, eax, ecx):
+        if eax == 0 and ecx == 0:
+            return 0x406F1, 0x756E6547, 0x6C65746E, 0x49656E69
+        return 0x406F1, 0, 0, 0
+    
 
 class InvalidChipsetHelper(TestHelper):
     def read_pci_reg(self, bus, device, function, address, size):
@@ -435,6 +440,7 @@ class InvalidChipsetHelper(TestHelper):
 
     def cpuid(self, eax, ecx):
         return 0xfffff, 0, 0, 0
+    
 
 class InvalidPchHelper(TestHelper):
     def read_pci_reg(self, bus, device, function, address, size):
