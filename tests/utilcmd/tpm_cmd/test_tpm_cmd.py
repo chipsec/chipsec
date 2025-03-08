@@ -41,8 +41,8 @@ class TestTpmUtilcmd(unittest.TestCase):
 
     def test_command_startup(self) -> None:
         init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate.json")
-        tpm_command_startup_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "tpm_cmd", "tpm_cmd_startup_1.json")
-        retval = setup_run_destroy_util(init_replay_file, "tpm", "command startup 1", util_replay_file=tpm_command_startup_replay_file)
+        tpm_command_startup_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "tpm_cmd", "tpm_cmd_startup_0_1.json")
+        retval = setup_run_destroy_util(init_replay_file, "tpm", "command startup 0 1", util_replay_file=tpm_command_startup_replay_file)
         self.assertEqual(retval, ExitCode.OK)
 
 

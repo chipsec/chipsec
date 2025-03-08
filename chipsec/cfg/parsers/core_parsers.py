@@ -289,7 +289,12 @@ class CoreConfig(BaseConfigParser):
         if hasattr(stage_data, "component") and stage_data.component is not None and override:
             return '.'.join([stage_data.vid_str, stage_data.component, reg_name])
         return '.'.join([stage_data.vid_str, stage_data.dev_name, reg_name])
-    
+
+    def _get_parent_name(self, stage_data):
+        if hasattr(stage_data, "component") and stage_data.component is not None:
+            return stage_data.component
+        return stage_data.dev_name
+
     def _add_entry_simple(self, dest, stage_data, et_node, node_name):
         flat_storage = ['control']
         index_data = ['ima']
@@ -321,16 +326,16 @@ class CoreConfig(BaseConfigParser):
     def handle_ima(self, et_node, stage_data):
         self._add_entry_simple(self.cfg.IMA_REGISTERS, stage_data, et_node, 'ima')
 
-    def handle_registers(self, et_node, stage_data): # TODO: Refactor this function
+    def handle_registers(self, et_node, stage_data):  # TODO: Refactor this function
         for reg in et_node.iter('register'):
             reg_attr = _config_convert_data(reg)
             reg_name = reg_attr['name']
-
+            parent_name = self._get_parent_name(stage_data)
             # Create register storage location if needed and store data
             if stage_data.vid_str not in self.cfg.REGISTERS:
                 self.cfg.REGISTERS[stage_data.vid_str] = {}
-            if stage_data.dev_name not in self.cfg.REGISTERS[stage_data.vid_str]:
-                self.cfg.REGISTERS[stage_data.vid_str][stage_data.dev_name] = {}
+            if parent_name not in self.cfg.REGISTERS[stage_data.vid_str]:
+                self.cfg.REGISTERS[stage_data.vid_str][parent_name] = {}
 
             # Patch missing or incorrect data
             if 'desc' not in reg_attr:
@@ -340,13 +345,13 @@ class CoreConfig(BaseConfigParser):
             elif reg_attr['type'] in ['memory']:
                 reg_attr['range'] = stage_data.dev_name
             elif reg_attr['type'] in ['mmio', 'iobar']:
-                    reg_attr['bar'] = self._make_reg_name(stage_data, reg_attr['bar'], True)
+                reg_attr['bar'] = self._make_reg_name(stage_data, reg_attr['bar'], True)
             if 'size' not in reg_attr:
                 self.logger.log_hal(f'Error missing size within {reg_attr}')
 
             # Get existing field data
-            if reg_name in self.cfg.REGISTERS[stage_data.vid_str][stage_data.dev_name]:
-                reg_fields = self.cfg.REGISTERS[stage_data.vid_str][stage_data.dev_name][reg_name][0].fields
+            if reg_name in self.cfg.REGISTERS[stage_data.vid_str][parent_name]:
+                reg_fields = self.cfg.REGISTERS[stage_data.vid_str][parent_name][reg_name][0].fields
             else:
                 reg_fields = {}
 
@@ -410,10 +415,10 @@ class CoreConfig(BaseConfigParser):
                 self.logger.log("Did not create register object for:")
                 self.logger.log(reg_attr)
                 continue
-            self.cfg.REGISTERS[stage_data.vid_str][stage_data.dev_name][reg_name] = reg_obj
+            self.cfg.REGISTERS[stage_data.vid_str][parent_name][reg_name] = reg_obj
             hex_dict = make_dict_hex(reg_attr)
-            self.logger.log_debug(f'    + {reg_name:16}: {hex_dict}')
-
+            fullname = '.'.join([stage_data.vid_str, parent_name, reg_name])
+            self.logger.log_debug(f'    + {fullname:32}: {hex_dict}')
 
     def create_register_object(self, objtype, regattr, instance_list):
         reg_obj = []
@@ -439,9 +444,12 @@ class CoreConfig(BaseConfigParser):
             attrs = _config_convert_data(node)
             regs = []
             name = attrs['name']
-            if attrs['register'] in self.cfg.REGISTERS[stage_data.vid_str][stage_data.dev_name]:
-                regs.extend(self.cfg.REGISTERS[stage_data.vid_str][stage_data.dev_name][attrs['register']])
-            attrs['register'] = self._make_reg_name(stage_data, attrs['register'])
+            # if name == "FlashLockDown":
+            #     breakpoint()
+            parent = self._get_parent_name(stage_data)
+            if attrs['register'] in self.cfg.REGISTERS[stage_data.vid_str][parent]:
+                regs.extend(self.cfg.REGISTERS[stage_data.vid_str][parent][attrs['register']])
+            attrs['register'] = self._make_reg_name(stage_data, attrs['register'], True)
             objs = []
             for reg in regs:
                 cont_obj = CONTROLHelper(attrs, reg)

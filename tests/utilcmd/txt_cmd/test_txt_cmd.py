@@ -26,20 +26,26 @@ import unittest
 import os
 
 from chipsec.library.file import get_main_dir
-from tests.utilcmd.run_chipsec_util import setup_run_destroy_util
+from tests.utilcmd.run_chipsec_util import setup_run_destroy_util_get_log_output
 from chipsec.testcase import ExitCode
 
 class TestTxtUtilcmd(unittest.TestCase):
     def test_dump(self) -> None:
         init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate.json")
         txt_dump_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "txt_cmd", "txt_cmd_dump_1.json")
-        retval = setup_run_destroy_util(init_replay_file, "txt", "dump", util_replay_file=txt_dump_replay_file)
+        retval, log = setup_run_destroy_util_get_log_output(init_replay_file, "txt", "dump", util_replay_file=txt_dump_replay_file)
+        if retval != ExitCode.OK:
+            print(log)
         self.assertEqual(retval, ExitCode.OK)
 
     def test_state(self) -> None:
-        init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate.json")
-        txt_state_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "txt_cmd", "txt_cmd_state_1.json")
-        retval = setup_run_destroy_util(init_replay_file, "txt", "state", util_replay_file=txt_state_replay_file)
+        # init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate.json")
+        init_replay_file = os.path.join(get_main_dir(), "tests", "modules", "tgl", "tglenumeration.json")
+
+        txt_state_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "txt_cmd", "txt_cmd_state_2.json")
+        retval,log = setup_run_destroy_util_get_log_output(init_replay_file, "txt", "state", util_replay_file=txt_state_replay_file)
+        if retval != ExitCode.OK:
+            print(log)
         self.assertEqual(retval, ExitCode.OK)
 
 if __name__ == '__main__':

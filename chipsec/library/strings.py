@@ -21,7 +21,7 @@
 import string
 from collections.abc import Iterable
 from time import strftime
-from typing import AnyStr
+from typing import AnyStr, List
 
 
 def get_datetime_str() -> str:
@@ -40,6 +40,14 @@ def stringtobytes(mstr: AnyStr) -> bytes:
         return mstr.encode("latin_1")
     else:
         return mstr
+
+
+def join_hex_values(hex_list: List[int], size: str = "16", delimiter: str = ',') -> str:
+    return f'{delimiter} '.join([f'0x{val:0{size}X}' for val in hex_list])
+
+
+def join_int_values(int_list: List[int], size: str = "", delimiter: str = ',') -> str:
+    return f'{delimiter} '.join([f'{val:{size}d}' for val in int_list])
 
 
 def is_printable(seq: AnyStr) -> bool:

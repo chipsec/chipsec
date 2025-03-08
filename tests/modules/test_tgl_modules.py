@@ -30,7 +30,7 @@ from tests.modules.run_chipsec_module import setup_run_destroy_module_with_mock_
 class TestTglModules(unittest.TestCase):
     def setUp(self) -> None:
         self.folder_path = os.path.join(get_main_dir(), "tests", "modules", "tgl")
-        self.init_replay_file = os.path.join(self.folder_path, "enumeration.json")
+        self.init_replay_file = os.path.join(self.folder_path, "tglenumeration.json")
         
     def derive_filename(self, module_name:str) -> str:
         return f"{module_name.replace('.', '-')}_test.json"

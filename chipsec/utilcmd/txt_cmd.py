@@ -33,6 +33,12 @@ import struct
 
 
 class TXTCommand(BaseCommand):
+    def __init__(self, argv, cs=None):
+        super().__init__(argv, cs)
+        self.cs.set_scope({
+            None: "8086.TXT",
+            "IA32_FEATURE_CONTROL": "8086.MSR"
+        })
 
     def requirements(self) -> toLoad:
         return toLoad.All
@@ -65,24 +71,8 @@ class TXTCommand(BaseCommand):
         """Log the content of a register with lines starting with [CHIPSEC]"""
         if not self.cs.register.is_defined(reg_name):
             return
-        reg_def = self.cs.register.get_def(reg_name)
-        value = self.cs.register.read(reg_name)
-        desc = reg_def["desc"]
-        if reg_def["type"] == "memory":
-            addr = reg_def["address"] + reg_def["offset"]
-            desc += ", at {:08X}".format(addr)
-        self.logger.log("[CHIPSEC] {} = 0x{:0{width}X} ({})".format(
-            reg_name, value, desc, width=reg_def['size'] * 2))
-
-        if 'FIELDS' in reg_def:
-            sorted_fields = sorted(reg_def['FIELDS'].items(), key=lambda field: int(field[1]['bit']))
-            for field_name, field_attrs in sorted_fields:
-                field_bit = int(field_attrs['bit'])
-                field_size = int(field_attrs['size'])
-                field_mask = (1 << field_size) - 1
-                field_value = (value >> field_bit) & field_mask
-                self.logger.log("[CHIPSEC]     [{:02d}] {:23} = {:X} << {}".format(
-                    field_bit, field_name, field_value, field_attrs['desc']))
+        reg_object = self.cs.register.get_list_by_name(reg_name)
+        reg_object.read_and_print()
 
     def txt_state(self):
         """Dump Intel TXT state
@@ -106,19 +96,16 @@ class TXTCommand(BaseCommand):
 
         # Read bits in MSR IA32_FEATURE_CONTROL
         self._log_register("IA32_FEATURE_CONTROL")
-        self.logger.log("[CHIPSEC]")
+        self.logger.log("")
 
         # Read TXT Device ID
         self._log_register("TXT_DIDVID")
-        self.logger.log("[CHIPSEC]")
+        self.logger.log("")
 
+        pub_list = self.cs.register.get_list_by_name("TXT_PUBLIC_KEY_*")
+        pub_values = pub_list.read()
         # Read hashes of public keys
-        txt_pubkey = struct.pack("<QQQQ",
-                                 self.cs.register.read("TXT_PUBLIC_KEY_0"),
-                                 self.cs.register.read("TXT_PUBLIC_KEY_1"),
-                                 self.cs.register.read("TXT_PUBLIC_KEY_2"),
-                                 self.cs.register.read("TXT_PUBLIC_KEY_3"),
-                                 )
+        txt_pubkey = struct.pack("<QQQQ", *pub_values)
         self.logger.log("[CHIPSEC] TXT Public Key Hash: {}".format(txt_pubkey.hex()))
 
         try:
@@ -134,19 +121,19 @@ class TXTCommand(BaseCommand):
         except HWAccessViolationError as exc:
             # Report the exception and continue
             self.logger.log("[CHIPSEC] Unable to read Public Key Hash in MSR[0x20...0x23]: {}".format(exc))
-        self.logger.log("[CHIPSEC]")
+        self.logger.log("")
 
         # Read TXT status
         self._log_register("TXT_STS")
         self._log_register("TXT_ESTS")
         self._log_register("TXT_E2STS")
         self._log_register("TXT_ERRORCODE")
-        self.logger.log("[CHIPSEC]")
+        self.logger.log("")
         self._log_register("TXT_SPAD")
         self._log_register("TXT_ACM_STATUS")
         self._log_register("TXT_FIT")
         self._log_register("TXT_SCRATCHPAD")
-        self.logger.log("[CHIPSEC]")
+        self.logger.log("")
 
         # Read memory area for TXT components
         self._log_register("TXT_SINIT_BASE")
@@ -156,7 +143,7 @@ class TXTCommand(BaseCommand):
         self._log_register("TXT_HEAP_SIZE")
         self._log_register("TXT_MSEG_BASE")
         self._log_register("TXT_MSEG_SIZE")
-        self.logger.log("[CHIPSEC]")
+        self.logger.log("")
 
         # Read other registers in the TXT memory area
         self._log_register("TXT_DPR")
@@ -170,5 +157,8 @@ class TXTCommand(BaseCommand):
             self.func()
         except Exception:
             self.ExitCode = ExitCode.ERROR
+        else:
+            self.ExitCode = ExitCode.OK
+
 
 commands = {'txt': TXTCommand}

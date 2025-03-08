@@ -291,14 +291,14 @@ class spectre_v2(BaseModule):
                     self.logger.log_passed('Retpoline is enabled by the OS')
                 else:
                     self.logger.log_bad('Retpoline is NOT enabled by the OS')
-            except UnimplementedAPIError as e:
-                self.logger.log_warning(str(e))
             except NotImplementedError:
                 self.logger.log_warning('Retpoline check not implemented in current environment')
+            except (UnimplementedAPIError, ValueError) as e:
+                self.logger.log_warning(str(e))
 
         elif self.cs.is_amd():
             res = ModuleResult.PASSED
-            fields = ['IBRS','STIBP','SSBD','PSFD']
+            fields = ['IBRS', 'STIBP', 'SSBD', 'PSFD']
             settings = {} 
             threads = {}
             fail = False

@@ -90,7 +90,6 @@ class bios_wp(BaseModule):
         smmbwp = self.cs.control.get_list_by_name('SmmBiosWriteProtection')
         smmbwp.read_and_verbose_print()
 
-
         write_protected = False
         if ble.is_all_value(1) and bioswe.is_all_value(0):
             if smmbwp.is_all_value(1):
