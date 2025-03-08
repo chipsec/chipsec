@@ -51,7 +51,7 @@ def setup_run_destroy_module_with_mock_logger_output(init_replay_file: str, modu
             logger_calls += getattr(chipsec.library.logger._logger, func).mock_calls
     clear_cs()
     chipsec.library.logger._logger = chipsec.library.logger.Logger()
-    return retval, "\n ---".join([call.args[0] for call in logger_calls])
+    return retval, "\n ---".join([str(call.args[0]) for call in logger_calls])
 
 def setup_run_destroy_module_with_mock_logger(init_replay_file: str, module_str: str, module_args: str = "", module_replay_file: str = "") -> int:
     retval, _ = setup_run_destroy_module_with_mock_logger_output(init_replay_file, module_str, module_args, module_replay_file)

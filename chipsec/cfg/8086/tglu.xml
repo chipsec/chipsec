@@ -66,6 +66,7 @@ http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.
   <!-- #################################### -->
   <memory>
     <range name="TPM" access="mmio" address="0xFED40000" limit="0xFED4FFFF" config="TPM.tpm12.xml" />
+    <range name="TXT" access="mmio" address="0xFED30000" limit="0xFED4FFFF" config="TPM.txt.xml" />
   </memory>
 
 </configuration>

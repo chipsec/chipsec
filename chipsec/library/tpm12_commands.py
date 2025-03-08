@@ -132,7 +132,10 @@ def startup(*command_argv: str) -> Tuple[bytes, int]:
     2: TPM_ST_STATE
     3: TPM_ST_DEACTIVATED
     """
-    startupType = STARTUP.get(command_argv[0], None)
+    try:
+        startupType = STARTUP.get(command_argv[0], None)
+    except IndexError:
+        startupType = None
     if startupType is None:
         logger().log_hal("Invalid startup type option value\n")
         return (b'', 0)
