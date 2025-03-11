@@ -274,6 +274,8 @@ class UEFI(hal_base.HALBase):
                 logger().log_hal(f'[uefi] Unable to read memory at pa: {pa:016X} Error: {err}')
                 pa -= CHUNK_SZ
                 continue
+            if membuf is None:
+                breakpoint()
             pos = bytestostring(membuf).find(table_sig)
             if -1 != pos:
                 table_pa = pa + pos
