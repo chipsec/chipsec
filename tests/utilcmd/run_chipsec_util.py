@@ -30,12 +30,12 @@ from chipsec_util import ChipsecUtil, parse_args
 
 def run_chipsec_util(csu: ChipsecUtil, util_replay_file: str) -> int:
     comm = csu.commands[csu._cmd](csu._cmd_args, cs=csu._cs)
+    comm.parse_arguments()
     reqs = comm.requirements()
     csu._cs.init(csu._platform, csu._pch, csu._helper, reqs.load_driver(), reqs.load_config(), csu._ignore_platform)
     if util_replay_file:
         csu._helper.config_file = util_replay_file
         csu._helper._load()  
-    comm.parse_arguments()
     comm.set_up()
     comm.run()
     comm.tear_down()
@@ -64,5 +64,5 @@ def setup_run_destroy_util_get_log_output(init_replay_file: str, util_name: str,
     return retval, "\n ---".join([str(call.args[0]) for call in logger_calls])
 
 def setup_run_destroy_util(init_replay_file: str, util_name: str, util_args: str = "", util_replay_file: str = "") -> int:
-    retval, _ = setup_run_destroy_util_get_log_output(init_replay_file,util_name, util_args, util_replay_file)    
+    retval, _ = setup_run_destroy_util_get_log_output(init_replay_file,util_name, util_args, util_replay_file)
     return retval
