@@ -237,7 +237,7 @@ class ChipsecMain:
         #
         chipset_path = os.path.join(self.Modules_Path, self._cs.Cfg.code.lower())
         if (chipset.CHIPSET_CODE_UNKNOWN != self._cs.Cfg.code) and os.path.exists(chipset_path):
-            self.logger.log(f'[*] loading platform specific modules from \"{chipset_path.replace(os.getcwd(), ".")}\" ..')
+            self.logger.log(f'[*] loading platform specific modules from "{chipset_path.replace(os.getcwd(), ".")}" ..')
             self.load_modules_from_path(chipset_path)
         else:
             self.logger.log("[*] No platform specific modules to load")
@@ -245,12 +245,12 @@ class ChipsecMain:
         # Step 3.
         # Enumerate all modules from the root module directory
         #
-        self.logger.log(f'[*] loading modules from \"{self.Modules_Path.replace(os.getcwd(), ".")}\" ..')
+        self.logger.log(f'[*] loading modules from "{self.Modules_Path.replace(os.getcwd(), ".")}" ..')
         self.load_modules_from_path(self.Modules_Path, False)
 
     def load_user_modules(self):
         for import_path in self.IMPORT_PATHS:
-            self.logger.log(f'[*] loading modules from \"{import_path}\" ..')
+            self.logger.log(f'[*] loading modules from "{import_path}" ..')
             self.load_modules_from_path(import_path)
 
     def clear_loaded_modules(self):

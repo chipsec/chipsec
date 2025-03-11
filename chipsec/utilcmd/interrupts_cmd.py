@@ -107,7 +107,7 @@ class SMICommand(BaseCommand):
         self.logger.log("[CHIPSEC] SMI count:")
         smi_cnt = self.cs.register.get_list_by_name('8086.MSR.MSR_SMI_COUNT')
         for reg in smi_cnt:
-            self.logger.log(f'  CPU{reg.instance:d}: {reg.read_field('Count'):d}')
+            self.logger.log(f'  CPU{reg.instance:d}: {reg.read_field("Count"):d}')
 
     def smi_smmc(self) -> None:
         if os.path.isfile(self.payload):

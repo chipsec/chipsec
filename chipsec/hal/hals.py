@@ -105,7 +105,7 @@ class Hals:
         for hal_dir in hal_dirs:
             hals += ([f'{hal_dir}.{i[:-3]}' for i in os.listdir(os.path.join(hal_base_dir, hal_dir)) if i[-3:] == ".py" and not i[:2] == "__"])
         logger().log_debug('[CHIPSEC] Loaded HALs:')
-        logger().log_debug(f'   {"\n".join(hals)}')
+        logger().log_debug('\t' + '\n\t'.join(hals))
         module = None
         halsdata = []
         for hal in hals:

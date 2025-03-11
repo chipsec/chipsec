@@ -209,7 +209,6 @@ class MMIO(hal_base.HALBase):
         mmioaddr = 0
 
         if bar.register:
-            
             preserve = True
             if instance is not None:
                 bar_reg_list = [self.cs.register.get_instance_by_name(bar.register, instance)]
@@ -461,8 +460,9 @@ class MMIO(hal_base.HALBase):
 
     def get_MMCFG_base_address(self, bus: Optional[int] = None) -> Tuple[int, int]:
         (bar_base, bar_size) = self.get_MMIO_BAR_base_address('MMCFG', bus)
-        if self.cs.register.has_field("PCI0.0.0_PCIEXBAR", "LENGTH") and not self.cs.is_server():
-            len = self.cs.register.read_field("PCI0.0.0_PCIEXBAR", "LENGTH")
+        if self.cs.register.has_field("*.HOSTCTL.PCIEXBAR", "LENGTH") and not self.cs.is_server():
+            pciexbar_reg = self.cs.register.get_list_by_name("*.HOSTCTL.PCIEXBAR")[0]
+            len = pciexbar_reg.read_field("LENGTH")
             if len == PCI_PCIEXBAR_REG_LENGTH_256MB:
                 bar_base &= (PCI_PCIEBAR_REG_MASK << 2)
             elif len == PCI_PCIEXBAR_REG_LENGTH_128MB:
@@ -477,8 +477,9 @@ class MMIO(hal_base.HALBase):
                 bar_base &= (PCI_PCIEBAR_REG_MASK << 5)
             if len == PCI_PCIEXBAR_REG_LENGTH_4096MB:
                 bar_base &= (PCI_PCIEBAR_REG_MASK << 6)
-        if self.cs.register.has_field("MmioCfgBaseAddr", "BusRange"):
-            num_buses = self.cs.register.read_field("MmioCfgBaseAddr", "BusRange")
+        if self.cs.register.has_field("*.HOSTCTL.MmioCfgBaseAddr", "BusRange"):
+            mmiocfgbase_reg = self.cs.register.get_list_by_name("*.HOSTCTL.MmioCfgBaseAddr")
+            num_buses = mmiocfgbase_reg.read_field("BusRange")[0]
             if num_buses <= 8:
                 bar_size = 2**20 * 2**num_buses
             else:

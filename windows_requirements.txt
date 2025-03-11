@@ -1,5 +1,6 @@
 pywin32
 setuptools >= 62.4.0
 brotli >=1.0.9
+packaging >= 22.0
 pycryptodome
 pylint

@@ -85,7 +85,7 @@ class Io(HALBase):
         logger().log(f"[io] I/O register range [0x{range_base:04X}:0x{range_base:04X}+{range_size:04X}]:")
         read_ranges = self.read_range(range_base, range_size, size)
         for i, read_val in enumerate(read_ranges):
-            logger().log(f'+{size * i:04X}: {read_val:{f'0{size * 2:d}X'}}')
+            logger().log(f'+{size * i:04X}: {read_val:{f"0{size * 2:d}X"}}')
 
     def read_port_byte(self, io_port: int) -> int:
         return self.read(io_port, 1)

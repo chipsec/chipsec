@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<configuration platform="KBL" req_pch="True">
+<configuration platform="MTL" req_pch="True">
 <!-- XML configuration file for Ice Lake -->
 <!--
 CHIPSEC: Platform Security Assessment Framework

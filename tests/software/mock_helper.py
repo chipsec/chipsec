@@ -39,6 +39,13 @@ class TestHelper(Helper):
         self.os_machine = "test"
         self.driver_loaded = True
         self.name = "TestHelper"
+        self.affinity = 0
+        self.cpuidb0 = [(1, 1, 256, 0),
+                        (1, 1, 256, 1),
+                        (1, 1, 256, 8)]
+        self.cpuidb1 = [(6, 16, 513, 0),
+                        (6, 16, 513, 1),
+                        (6, 16, 513, 8)]
 
     def create(self):
         return True
@@ -71,6 +78,8 @@ class TestHelper(Helper):
                 return 0x8086
             else:
                 return 0x51828086
+        elif (bus, address, size) == (0, 8, 1):
+            return 1
         else:
             return self._generate_size_ffs(size)
 
@@ -79,7 +88,13 @@ class TestHelper(Helper):
 
     def cpuid(self, eax, ecx):
         if eax == 0 and ecx == 0:
-            return 0x906a2, 0x756E6547, 0x6C65746E, 0x49656E69
+            return (32, 1970169159, 1818588270, 1231384169)
+        elif eax == 1 and ecx == 0:
+            return (591522, 406849536, 2147154943, 3219913727)
+        elif eax == 0xb and ecx == 0:
+            return self.cpuidb0[self.affinity]
+        elif eax == 0xb and ecx == 1:
+            return self.cpuidb1[self.affinity]
         return 0x406F1, 0, 0, 0
 
 
@@ -171,7 +186,8 @@ class TestHelper(Helper):
         raise UnimplementedAPIError('get_affinity')
 
     def set_affinity(self, value):
-        pass
+        self.affinity = value
+        return value
 
     def send_sw_smi(self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi):
         raise UnimplementedAPIError('send_sw_smi')
@@ -352,8 +368,8 @@ class SPIHelper(TestHelper):
       * The flash descriptor [0x1000, 0x1FFF]
       * The BIOS image [0x2000, 0x2FFF]
     """
-    RCBA_ADDR = 0xFED0000
-    SPIBAR_ADDR = RCBA_ADDR + 0x3800
+    RCBA_ADDR = 0x68800000
+    SPIBAR_ADDR = RCBA_ADDR + 0x38000
     SPIBAR_END = SPIBAR_ADDR + 0x200
     HSFS = SPIBAR_ADDR + 0x4
     FRAP = SPIBAR_ADDR + 0x50
@@ -366,8 +382,22 @@ class SPIHelper(TestHelper):
                 return self.RCBA_ADDR
             elif address == 0xDC:
                 return 0xDEADBEEF
+            elif address == 0x10:
+                return self.SPIBAR_ADDR
             # elif address == 0x0:
             #     return 0xAAAA8086
+        if (bus, device, function, address) == (0, 0x1f, 0x05, 0):
+            if size == 1:
+                return 0x86
+            elif size == 2:
+                return 0x8086
+            else:
+                return 0x51A48086
+        if (bus, device, function, address, size) == (0, 31, 5, 16, 4):
+            return self.SPIBAR_ADDR
+        if (bus, device, function, address, size) == (0, 31, 5, 220, 4):
+            return 0x10000888
+            
         return super(SPIHelper, self).read_pci_reg(bus, device,
                                                        function,
                                                        address, size)

@@ -1,4 +1,5 @@
 brotli >=1.0.9
 setuptools >= 62.4.0
+packaging >= 22.0
 pylint
 distro

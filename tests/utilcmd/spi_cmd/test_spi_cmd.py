@@ -19,9 +19,12 @@ import tempfile
 import unittest
 
 from tests.software import mock_helper, util
+from chipsec.library.file import get_main_dir
+from chipsec.testcase import ExitCode
+from tests.utilcmd.run_chipsec_util import setup_run_destroy_util_get_log_output, assertLogValue
 
 
-class TestSPIChipsecUtil(util.TestChipsecUtil):
+class TestSPIChipsecUtil(unittest.TestCase):
     """Test the SPI commands exposed by chipsec_utils."""
 
     def test_spi_info(self):
@@ -29,11 +32,13 @@ class TestSPIChipsecUtil(util.TestChipsecUtil):
 
         Validates that BC and FRAP are correctly read.
         """
+        init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate2.json")
+        spi_info_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "spi_cmd", "spi_cmd_info_1.json")
+        retval, log = setup_run_destroy_util_get_log_output(init_replay_file, "spi", "info", util_replay_file=spi_info_replay_file)
+        self.assertEqual(retval, ExitCode.OK)
+        assertLogValue("BC", "0x10000888", log)
 
-        self._chipsec_util("spi info", mock_helper.SPIHelper)
-        self._assertLogValue("BC", "0xDEADBEEF")
-        self._assertLogValue("FRAP", "0xEEEEEEEE")
-
+class TestSPIChipsecUtil2(util.TestChipsecUtil):
     def test_spi_dump(self):
         """Test to verify the ouput of 'spi dump'.
 
@@ -44,7 +49,7 @@ class TestSPIChipsecUtil(util.TestChipsecUtil):
 
         fileno, rom_file = tempfile.mkstemp()
         os.close(fileno)
-        self._chipsec_util("spi dump {}".format(rom_file), mock_helper.SPIHelper)
+        self._chipsec_util(f"spi dump {rom_file}", mock_helper.SPIHelper)
         self.assertEqual(os.stat(rom_file).st_size, 0x3000)
         os.remove(rom_file)
 

@@ -46,7 +46,8 @@ Examples:
 
 import os
 from chipsec.command import BaseCommand, toLoad
-from chipsec.hal.intel.spi import SPI, BIOS
+from chipsec.hal.intel.spi import SPI
+from chipsec.library.intel.spi import BIOS
 from argparse import ArgumentParser
 
 
