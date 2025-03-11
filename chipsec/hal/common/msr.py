@@ -68,7 +68,7 @@ class Msr(HALBase):
     def get_cpu_thread_count(self) -> int:
         if not self.topo:
             self.topo = self.cs.hals.CPU.get_cpu_topology()
-        self.logger.log_hal(f'[Msr] # of logical CPUs: {self.topo['threads']:d}')
+        self.logger.log_hal(f'[Msr] # of logical CPUs: {self.topo["threads"]:d}')
         return self.topo['threads']
 
 

@@ -21,6 +21,7 @@
 
 from unittest.mock import Mock
 from typing import Tuple, List
+from re import search
 
 from chipsec.chipset import clear_cs
 import chipsec.helper.replay.replayhelper as rph
@@ -66,3 +67,15 @@ def setup_run_destroy_util_get_log_output(init_replay_file: str, util_name: str,
 def setup_run_destroy_util(init_replay_file: str, util_name: str, util_args: str = "", util_replay_file: str = "") -> int:
     retval, _ = setup_run_destroy_util_get_log_output(init_replay_file,util_name, util_args, util_replay_file)
     return retval
+
+
+def assertLogValue(name, value, log):
+        """Shortcut to validate the output.
+
+        Assert that at least one line exists within the log which matches the
+        expression: name [:=] value.
+        """
+        exp = rf'(\W){name}\s*[:=]\s*{value}(\W)'
+        if not search(exp, log):
+             assert False, f"Expected {name} to be {value} in log"
+        # self.assertRegex(log, exp.encode())

@@ -23,16 +23,17 @@
 import unittest
 import os
 
-from chipsec.library.returncode import ModuleResult
+from chipsec.testcase import  ExitCode
 from chipsec.library.file import get_main_dir
 from tests.modules.run_chipsec_module import setup_run_destroy_module
 
 class TestSgxCheck(unittest.TestCase):
     def test_sgx_check_warning(self) -> None:
-        init_replay_file = os.path.join(get_main_dir(), "tests", "modules", "adlenumerate.json")
-        sgx_replay_file = os.path.join(get_main_dir(), "tests", "modules", "sgx_check_1.json")
+        init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate2.json")
+        sgx_replay_file = os.path.join(get_main_dir(), "tests", "modules", "sgx_check_2.json")
         retval = setup_run_destroy_module(init_replay_file, "common.sgx_check", module_replay_file=sgx_replay_file)
-        self.assertEqual(retval, ModuleResult.WARNING.value)
+
+        self.assertEqual(retval, ExitCode.NOTAPPLICABLE)
 
 
 if __name__ == '__main__':
