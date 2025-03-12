@@ -28,7 +28,6 @@ Examples:
 
 from chipsec.command import BaseCommand, toLoad
 from chipsec.library.file import read_file
-from chipsec.hal.intel.spi_descriptor import parse_spi_flash_descriptor
 from argparse import ArgumentParser
 
 
@@ -48,7 +47,7 @@ class SPIDescCommand(BaseCommand):
         self.logger.log("[CHIPSEC] Parsing SPI Flash Descriptor from file '{}'\n".format(self.fd_file))
         fd = read_file(self.fd_file)
         if fd:
-            parse_spi_flash_descriptor(self.cs, fd)
+            self.cs.hals.SpiDescriptor.parse_spi_flash_descriptor(fd)
 
 
 commands = {'spidesc': SPIDescCommand}
