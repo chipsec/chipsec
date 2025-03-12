@@ -33,7 +33,7 @@ from typing import AnyStr, Dict, List, Optional, Tuple
 from chipsec.hal.hal_base import HALBase
 from chipsec.library.logger import logger, pretty_print_hex_buffer
 from chipsec.library.pcidb import VENDORS, DEVICES
-from chipsec.hal.common.paging import c_extended_page_tables
+from chipsec.library.paging import c_extended_page_tables
 
 
 class Vmm(HALBase):

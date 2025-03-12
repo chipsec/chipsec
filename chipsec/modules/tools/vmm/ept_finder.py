@@ -51,7 +51,7 @@ from chipsec.library.logger import logger
 from chipsec.library.file import write_file
 from chipsec.module_common import BaseModule
 from chipsec.library.returncode import ModuleResult
-from chipsec.hal.common.paging import c_extended_page_tables
+from chipsec.library.paging import c_extended_page_tables
 
 
 class c_extended_page_tables_from_file(c_extended_page_tables):
