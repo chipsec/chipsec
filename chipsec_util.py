@@ -207,8 +207,8 @@ def run(cli_cmd: str = '') -> int:
 def main(argv: Sequence[str] = sys.argv[1:]) -> int:
     par = parse_args(argv)
     if par is not None:
-        chipsecMain = ChipsecUtil(par, argv)
-        return chipsecMain.main()
+        csu = ChipsecUtil(par, argv)
+        return csu.main()
     return ExitCode.OK
 
 

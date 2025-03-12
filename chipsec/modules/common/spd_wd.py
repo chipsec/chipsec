@@ -24,19 +24,19 @@ References:
 
 This module checks the following:
 
-    SMBUS_HCFG.SPD_WD
+    HCFG.SPD_WD
 
 The module returns the following results:
 
-    PASSED : SMBUS_HCFG.SPD_WD is set
+    PASSED : HCFG.SPD_WD is set
 
-    FAILED : SMBUS_HCFG.SPD_WD is not set and SPDs were detected
+    FAILED : HCFG.SPD_WD is not set and SPDs were detected
 
-    INFORMATION: SMBUS_HCFG.SPD_WD is not set, but no SPDs were detected
+    INFORMATION: HCFG.SPD_WD is not set, but no SPDs were detected
 
 Hardware registers used:
 
-    SMBUS_HCFG
+    HCFG
 
 Usage:
     ``chipsec_main -m common.spd_wd``
@@ -47,7 +47,7 @@ Examples:
 .. NOTE::
     This module will only run if:
         - SMBUS device is enabled
-        - SMBUS_HCFG.SPD_WD is defined for the platform
+        - HCFG.SPD_WD is defined for the platform
 """
 
 from chipsec.module_common import BaseModule
@@ -60,17 +60,17 @@ class spd_wd(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.cs.set_scope({
-            'SMBUS_HCFG': '8086.SMBUS*',
+            'HCFG': '8086.SMBUS*',
             'SMBUS': '8086',
         })
 
     def is_supported(self) -> bool:
         smbdev = self.cs.device.get_obj('SMBUS')
         if smbdev.get_enabled_instances():
-            if self.cs.register.has_field('SMBUS_HCFG', 'SPD_WD'):
+            if self.cs.register.has_field('HCFG', 'SPD_WD'):
                 return True
             else:
-                self.logger.log_important('SMBUS_HCFG.SPD_WD is not defined for this platform.  Skipping module.')
+                self.logger.log_important('HCFG.SPD_WD is not defined for this platform.  Skipping module.')
         else:
             self.logger.log_important('SMBUS device appears disabled.  Skipping module.')
         return False
@@ -83,7 +83,7 @@ class spd_wd(BaseModule):
             self.result.setStatusBit(self.result.status.INFORMATION)
             self.res = self.result.getReturnCode(ModuleResult.ERROR)
             return self.res
-        spd_wd_reg = self.cs.register.get_list_by_name('SMBUS_HCFG')
+        spd_wd_reg = self.cs.register.get_list_by_name('HCFG')
         spd_wd_reg.read_and_print()
         spd_wd_mask = spd_wd_reg[0].get_field_mask("SPD_WD", True)
 

@@ -29,6 +29,10 @@
 class UninitializedRegisterError (RuntimeError):
     pass
 
+# Register/Device/Lock/Control Objs
+class ObjectInstanceNotFoundError (RuntimeError):
+    pass
+
 # Chipset
 class UnknownChipsetError(RuntimeError):
     pass
