@@ -50,7 +50,6 @@ from chipsec.library.file import read_file, write_file
 from chipsec.command import BaseCommand, toLoad
 
 from chipsec.library.intel.spi import FLASH_DESCRIPTOR, BIOS
-from chipsec.hal.intel.spi_descriptor import get_spi_flash_descriptor, get_spi_regions, parse_spi_flash_descriptor
 from chipsec.library.uefi.spi import decode_uefi_region
 from chipsec.library.uefi import platform as uefi_platform
 
@@ -79,7 +78,7 @@ class DecodeCommand(BaseCommand):
         f = read_file(self._rom)
         if not f:
             return False
-        (fd_off, fd) = get_spi_flash_descriptor(f)
+        (fd_off, fd) = self.cs.hals.SpiDescriptor.get_spi_flash_descriptor(f)
         if (-1 == fd_off) or (fd is None):
             self.logger.log_error(f'Could not find SPI Flash descriptor in the binary \'{self._rom}\'')
             self.logger.log_information("To decode an image without a flash decriptor try chipsec_util uefi decode")
@@ -89,7 +88,7 @@ class DecodeCommand(BaseCommand):
         rom = f[fd_off:]
 
         # Decoding SPI Flash Regions
-        flregs = get_spi_regions(fd)
+        flregs = self.cs.hals.SpiDescriptor.get_spi_regions(fd)
         if flregs is None:
             self.logger.log_error("SPI Flash descriptor region is not valid")
             self.logger.log_information("To decode an image with an invalid flash decriptor try chipsec_util uefi decode")
@@ -114,7 +113,7 @@ class DecodeCommand(BaseCommand):
                 if FLASH_DESCRIPTOR == idx:
                     # Decoding Flash Descriptor
                     self.logger.set_log_file(os.path.join(pth, fname + '.log'), False)
-                    parse_spi_flash_descriptor(self.cs, region_data)
+                    self.cs.hals.SpiDescriptor.parse_spi_flash_descriptor(region_data)
                 elif BIOS == idx:
                     # Decoding EFI Firmware Volumes
                     self.logger.set_log_file(os.path.join(pth, fname + '.log'), False)
