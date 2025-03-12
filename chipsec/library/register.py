@@ -274,10 +274,10 @@ class BaseConfigRegisterHelper(BaseConfigHelper):
         return mask
 
     def write_field(self, field_name: str, field_value: int, update_value: bool = False) -> None:
-        if update_value:
+        if update_value or self.value is None:
+            if self.value is None:
+                self.logger.log_debug(f'Value is None for {self.name}. Reading value')
             self.read()
-        if self.value is None:
-            raise UninitializedRegisterError()
         new_value = self.set_field(field_name, field_value)
         self.write(new_value)
 

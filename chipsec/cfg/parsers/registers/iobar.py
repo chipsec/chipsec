@@ -34,7 +34,7 @@ class IOBARRegisters(BaseConfigRegisterHelper):
     def __repr__(self) -> str:
         reg_str = ''
         if self.value is not None:
-            reg_val_str = '0x{self.value:0{self.size * 2}X}'
+            reg_val_str = f'0x{self.value:0{self.size * 2}X}'
         else:
             reg_val_str = self.value
         instance = f'{self.instance}' if self.instance is not None else 'Fixed'
@@ -50,7 +50,7 @@ class IOBARRegisters(BaseConfigRegisterHelper):
     def __str__(self) -> str:
         reg_str = ''
         if self.value is not None:
-            reg_val_str = '0x{self.value:0{self.size * 2}X}'
+            reg_val_str = f'0x{self.value:0{self.size * 2}X}'
         else:
             reg_val_str = self.value
 
@@ -65,7 +65,7 @@ class IOBARRegisters(BaseConfigRegisterHelper):
         self.logger.log_debug(f'reading {self.name}')
         _cs = cs()
         if self.io_port is None:
-            (self.bar_base, self.bar_size) = _cs.hals.IOBAR.get_IO_BAR_base_address(self.bar, self.instance)
+            (self.bar_base, self.bar_size) = _cs.hals.IOBAR.get_IO_BAR_base_address(self.bar, self.get_instance())
             self.io_port = self.bar_base + self.offset
         self.value = _cs.hals.Io.read(self.io_port, self.size)
         self.logger.log_debug('done reading')
@@ -75,6 +75,6 @@ class IOBARRegisters(BaseConfigRegisterHelper):
         """Write the object"""
         _cs = cs()
         if self.io_port is None:
-            (self.bar_base, self.bar_size) = _cs.hals.IOBAR.get_IO_BAR_base_address(self.bar, self.instance.instance)
+            (self.bar_base, self.bar_size) = _cs.hals.IOBAR.get_IO_BAR_base_address(self.bar, self.get_instance())
             self.io_port = self.bar_base + self.offset
         _cs.hals.Io.write(self.io_port, value, self.size)

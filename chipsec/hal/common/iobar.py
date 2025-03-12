@@ -86,7 +86,7 @@ class IOBAR(hal_base.HALBase):
             if bar_def.base_field:
                 base_field = bar_def.base_field
                 try:
-                    base = bar_reg.get_field(base_field)
+                    base = bar_reg.get_field(base_field, True)
                 except Exception:
                     pass
                 try:
