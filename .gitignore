@@ -9,6 +9,7 @@ chipsec.egg-info
 dist
 build
 MANIFEST
+.coverage
 
 # Linux driver
 *.so
