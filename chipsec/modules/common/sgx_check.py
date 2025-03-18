@@ -211,7 +211,7 @@ class sgx_check(BaseModule):
 
 
         debug_res, debug_result = self.check_debug()
-        if self.cs.control.is_defined('SamplePart') and self.cs.control.get('SamplePart') == 1:
+        if self.cs.control.is_defined('SamplePart') and self.cs.control.get_list_by_name('SamplePart').is_all_value(1):
             self.res = ModuleResult.INFORMATION
         else:
             self.res = debug_res
@@ -224,33 +224,39 @@ class sgx_check(BaseModule):
         debug_res = self.res
         debug_result = None
         self.logger.log('\n[*] Check SGX debug feature settings')
-        sgx_debug_status = self.cs.register.read_field('SGX_DEBUG_MODE', 'SGX_DEBUG_MODE_STATUS_BIT')
-        self.logger.log(f'[*] SGX Debug Enable             : {sgx_debug_status:d}')
+        sgx_debug_mode_reg = self.cs.register.get_list_by_name('SGX_DEBUG_MODE')
+        sgx_debug_status_list = sgx_debug_mode_reg.read_field('SGX_DEBUG_MODE_STATUS_BIT')
+        for sgx_debug_status in sgx_debug_status_list:
+            self.logger.log(f'[*] SGX Debug Enable             : {sgx_debug_status:d}')
         self.logger.log('[*] Check Silicon debug feature settings')
-        debug_interface = self.cs.register.read('IA32_DEBUG_INTERFACE')
-        self.logger.log(f'[*]   IA32_DEBUG_INTERFACE : 0x{debug_interface:08X}')
-        debug_enable = self.cs.register.get_field('IA32_DEBUG_INTERFACE', debug_interface, 'ENABLE')
-        debug_lock = self.cs.register.get_field('IA32_DEBUG_INTERFACE', debug_interface, 'LOCK')
-        self.logger.log(f'[*]     Debug enabled      : {debug_enable:d}')
-        self.logger.log(f'[*]     Lock               : {debug_lock:d}')
+        debug_interface_reg = self.cs.register.get_list_by_name('IA32_DEBUG_INTERFACE')
+        debug_interface_list = debug_interface_reg.read()
+        for debug_interface in debug_interface_list:
+            self.logger.log(f'[*]   IA32_DEBUG_INTERFACE : 0x{debug_interface:08X}')
+        debug_enable_list = debug_interface_reg.get_field('ENABLE')
+        for debug_enable in debug_enable_list:
+            self.logger.log(f'[*]     Debug enabled      : {debug_enable:d}')
+        debug_lock_list = debug_interface_reg.get_field('LOCK')
+        for debug_lock in debug_lock_list:
+            self.logger.log(f'[*]     Lock               : {debug_lock:d}')
 
-        if sgx_debug_status == 1:
+        if sgx_debug_status_list.is_all_value(1):
             self.logger.log_bad('SGX debug mode is enabled')
             debug_res = ModuleResult.FAILED
             debug_result = self.result.status.DEBUG_FEATURE
         else:
             self.logger.log_good('SGX debug mode is disabled')
-        if debug_enable == 0:
+        if debug_enable_list.is_all_value(0):
             self.logger.log_good('Silicon debug features are disabled')
         else:
             self.logger.log_bad('Silicon debug features are not disabled')
             debug_res = ModuleResult.FAILED
             debug_result = self.result.status.DEBUG_FEATURE
-        if (0 == debug_enable) and (1 == sgx_debug_status):
+        if (debug_enable_list.is_all_value(0)) and (sgx_debug_status_list.is_all_value(1)):
             self.logger.log_bad('Enabling sgx_debug without enabling debug mode in msr IA32_DEBUG_INTERFACE is not a valid configuration')
             debug_res = ModuleResult.FAILED
             debug_result = self.result.status.CONFIGURATION
-        if debug_lock == 1:
+        if debug_lock_list.is_all_value(1):
             self.logger.log_good('Silicon debug Feature Control register is locked')
         else:
             self.logger.log_bad('Silicon debug Feature Control register is not locked')

@@ -143,7 +143,8 @@ class debugenabled(BaseModule):
             self.logger.log_important('IA32_DEBUG_INTERFACE.LOCK bit is NOT set.')
 
         if self.cs.control.is_defined('SamplePart'):
-            if self.cs.control.get('SamplePart') == 1:
+            sp = self.cs.control.get_list_by_name('SamplePart')
+            if sp.is_all_value(1):
                 self.logger.log_passed('CPU is a Sample Part. Test is N/A.')
                 self.res = self.result.getReturnCode(ModuleResult.INFORMATION)
                 return self.res

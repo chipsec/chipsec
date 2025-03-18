@@ -85,7 +85,7 @@ class Interrupts(hal_base.HALBase):
         # breakpoint()
         # tcobase = self.cs.register.read_field(reg, ba)
         # return self.cs.hals.Io.write_port_byte(tcobase + NMI_TCO1_CTL + 1, NMI_NOW)
-        smbus_instance = self.cs.device.get_obj('8086.SMBUS')
+        smbus_instance = self.cs.device.get_instance_by_name('8086.SMBUS', 0)
         if smbus_instance is not None:
             self.logger.log_hal("[intr] Sending NMI# through TCO1_CTL[NMI_NOW]")
             try:

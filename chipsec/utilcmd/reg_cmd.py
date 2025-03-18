@@ -84,18 +84,14 @@ class RegisterCommand(BaseCommand):
         if self.field_name is not None:
             reglist = self.cs.register.get_list_by_name(self.reg_name)
             values = reglist.read_field(self.field_name)
-            # value = self.cs.register.read_field(self.reg_name, self.field_name)
             for value in values:
                 self.logger.log(f"[CHIPSEC] {self.reg_name}.{self.field_name}=0x{value:X}")
         else:
-            # value = self.cs.register.read(self.reg_name)
             reglist = self.cs.register.get_list_by_name(self.reg_name)
             if len(reglist) == 0:
                 self.logger.log(f'No register found with the name {self.reg_name}')
             else:
                 reglist.read_and_print()
-            # self.logger.log("[CHIPSEC] {}=0x{:X}".format(self.reg_name, value))
-            # self.cs.register.print(self.reg_name, value)
 
     def reg_read_field(self):
         if self.cs.register.has_field(self.reg_name, self.field_name):
@@ -107,28 +103,28 @@ class RegisterCommand(BaseCommand):
             self.logger.log_error("[CHIPSEC] Register '{}' doesn't have field '{}' defined".format(self.reg_name, self.field_name))
 
     def reg_write(self):
-        self.logger.log("[CHIPSEC] Writing {} < 0x{:X}".format(self.reg_name, self.value))
-        self.cs.register.write(self.reg_name, self.value)
+        self.logger.log(f"[CHIPSEC] Writing {self.reg_name} < 0x{self.value:X}")
+        self.cs.register.get_list_by_name(self.reg_name).write(self.value)
 
     def reg_write_field(self):
         if self.cs.register.has_field(self.reg_name, self.field_name):
-            self.logger.log("[CHIPSEC] Writing {}.{} < 0x{:X}".format(self.reg_name, self.field_name, self.value))
-            self.cs.register.write_field(self.reg_name, self.field_name, self.value)
+            self.logger.log(f"[CHIPSEC] Writing {self.reg_name}.{self.field_name} < 0x{self.value:X}")
+            self.cs.register.get_list_by_name(self.reg_name).write_field(self.field_name, self.value)
         else:
-            self.logger.log_error("[CHIPSEC] Register '{}' doesn't have field '{}' defined".format(self.reg_name, self.field_name))
+            self.logger.log_error("[CHIPSEC] Register '{self.reg_name}' doesn't have field '{self.field_name}' defined")
 
     def reg_get_control(self):
         if self.cs.control.is_defined(self.control_name):
             ctrl_list = self.cs.control.get_list_by_name(self.control_name)
-            for value in ctrl_list:
-                value.read()
-                self.logger.log(f"[CHIPSEC] {self.control_name} = 0x{value.value:X}")
+            for ctrl in ctrl_list:
+                ctrl.read()
+                self.logger.log(f"[CHIPSEC] {self.control_name} = 0x{ctrl.value:X}")
         else:
             self.logger.log_error("[CHIPSEC] Control '{}' isn't defined".format(self.control_name))
 
     def reg_set_control(self):
         if self.cs.control.is_defined(self.control_name):
-            self.cs.control.set(self.control_name, self.value)
+            self.cs.control.get_list_by_name(self.control_name).write(self.value)
             self.logger.log("[CHIPSEC] Setting control {} < 0x{:X}".format(self.control_name, self.value))
         else:
             self.logger.log_error("[CHIPSEC] Control '{}' isn't defined".format(self.control_name))

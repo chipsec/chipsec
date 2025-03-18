@@ -62,8 +62,8 @@ class SMBus(hal_base.HALBase):
         self.i2c_mode = is_i2c_mode_enabled
 
     def get_instances(self):
-        smbus_obj = self.cs.device.get_obj('8086.SMBUS')
-        if smbus_obj.instances:
+        smbus_obj = self.cs.device.get_list_by_name('8086.SMBUS')[0]
+        if smbus_obj and smbus_obj.instances:
             return smbus_obj.instances
         raise ObjectInstanceNotFoundError('SMBus instance not found')
 
