@@ -26,6 +26,7 @@ XML configuration file for RaptorLake based platforms
 
 http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.html
 https://cdrdv2.intel.com/v1/dl/getContent/743844
+https://edc.intel.com/content/www/us/en/design/publications/13th-generation-core-processor-datasheet-volume-2-of-2/Chapter-1%20RPL-P%20Datasheet/
 
 * 13th Generation Intel(R) Core Processor Family Datasheet
 -->
@@ -62,6 +63,7 @@ https://cdrdv2.intel.com/v1/dl/getContent/743844
 
     <mmio>
         <bar name="MCHBAR" bus="0" dev="0" fun="0" reg="0x48" width="8" mask="0x3FFFFFE0000" size="0x20000" enable_bit="0" desc="Host Memory Mapped Register Range"/>
+        <bar name="MCHBARMC1" bus="0" dev="0" fun="0" reg="0x48" width="8" mask="0x3FFFFFE0000" size="0x20000" offset="0x10000" enable_bit="0" desc="Host Memory Mapped Register Range for memory controller 1"/>
         <bar name="TMBAR"      register="TMBAR"      base_field="BA" size="0x20000"   desc=""/>
         <bar name="GTTMMADR"   register="GTTMMADR"   base_field="BA" size="0x1000000" desc=""/>
     </mmio>
@@ -267,6 +269,11 @@ https://cdrdv2.intel.com/v1/dl/getContent/743844
         </register>
         <register name="IMR_MASK_18" type="mmio" bar="MCHBAR" offset="0x7B54" size="4" desc="Isolated Memory Range 18 Mask">
             <field name="MASK" bit="0" size="32" desc="IMR Mask"/>
+        </register>
+
+        <register name="PCI0.0.0_REMAPBASEMC1" type="mmio" bar="MCHBARMC1" offset="0xD890" size="8" desc="" >
+        </register>
+        <register name="PCI0.0.0_REMAPLIMITMC1" type="mmio" bar="MCHBARMC1" offset="0xD898" size="8" desc="" >
         </register>
 
         <!-- VTBAR -->
