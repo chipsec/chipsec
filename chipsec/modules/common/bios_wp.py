@@ -111,7 +111,7 @@ class bios_wp(BaseModule):
         pr_partial_cover_bios = False
 
         # areas_to_protect = [(bios_base, bios_limit)]
-        device = self.cs.device.get_obj('8086.SPI')
+        device = self.cs.device.get_list_by_name('8086.SPI')[0]
         for instance in device.instances.values():
             self.cs.hals.SPI.set_instance(instance)
             (bios_base, bios_limit, _) = self.cs.hals.SPI.get_SPI_region(BIOS)

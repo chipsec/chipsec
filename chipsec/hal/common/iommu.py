@@ -69,7 +69,12 @@ class IOMMU(hal_base.HALBase):
         return gsts_obj.is_all_field_value(1, 'TES')
 
     def set_IOMMU_Translation(self, iommu_engine: str, te: int) -> bool:
-        return self.cs.register.write_field(f'{IOMMU_ENGINES[iommu_engine]}_GCMD', 'TE', te)
+        try:
+            gcmd_list = self.cs.register.get_list_by_name(f'{IOMMU_ENGINES[iommu_engine]}_GCMD')
+            gcmd_list.write_field('TE', te)
+        except Exception:
+            return False
+        return True
 
     def dump_IOMMU_configuration(self, iommu_engine: str) -> None:
         self.logger.log("==================================================================")

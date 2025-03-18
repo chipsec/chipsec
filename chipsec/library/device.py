@@ -29,13 +29,14 @@ class Device:
     def __init__(self, cs) -> None:
         self.cs = cs
 
-    def get_obj(self, device_name: str) -> PCIConfig:
-        devlist = self.get_objlist(device_name)
-        if devlist:
-            return devlist[0]
+    def get_instance_by_name(self, device_name: str, instance) -> PCIConfig:
+        devlist = self.get_list_by_name(device_name)
+        for dev in devlist:
+            if instance in dev.instances:
+                return dev.instances[instance]
         return None
         
-    def get_objlist(self, device_name: str):
+    def get_list_by_name(self, device_name: str):
         return self.cs.Cfg.get_objlist(self.cs.Cfg.CONFIG_PCI, device_name)
 
     # def get_first_bus(self, device: dict) -> int:
@@ -81,14 +82,14 @@ class Device:
 
     def is_defined(self, device_name: str) -> bool:
         """Checks if device is defined in the XML config"""
-        return self.get_obj(device_name) is not None
+        return self.get_list_by_name(device_name) is not None
         # scope = self.cs.Cfg.get_scope(device_name)
         # vid, device, _, _ = self.cs.Cfg.convert_internal_scope(scope, device_name)
         # return self.cs.Cfg.CONFIG_PCI[vid].get(device, None) is not None
 
     def get_bus(self, device_name: str) -> List[int]:
         """Retrieves bus value(s) from PCI device"""
-        dev_list = self.get_objlist(device_name)
+        dev_list = self.get_list_by_name(device_name)
         buses = []
         for dev in dev_list:
             for instance_key in dev.instances.keys():

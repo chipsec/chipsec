@@ -23,9 +23,10 @@ class SGX_Check_Sidekick():
         self.cs = cs
         self.sgx_global_en_defined = self.cs.register.has_field('IA32_FEATURE_CONTROL', 'SGX_GLOBAL_EN')
     
-    def check_valid(self, tid) -> bool:
+    def check_valid(self, instance) -> bool:
         if self.sgx_global_en_defined:
-            sgx_global_en = self.cs.register.read_field('IA32_FEATURE_CONTROL', 'SGX_GLOBAL_EN', tid)
+            sgx_global_en_reg = self.cs.register.get_instance_by_name('IA32_FEATURE_CONTROL', instance)
+            sgx_global_en = sgx_global_en_reg.read_field('SGX_GLOBAL_EN')
         else:
             sgx_global_en = True
         return sgx_global_en

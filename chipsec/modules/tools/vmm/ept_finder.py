@@ -95,13 +95,13 @@ class ept_finder(BaseModule):
         tsegmb = None
         touud = None
 
-        if self.cs.register.is_defined('PCI0.0.0_TSEGMB'):
-            tsegmb = self.cs.register.read('PCI0.0.0_TSEGMB') & MASK
+        if self.cs.register.is_defined('8086.HOSTCTL.TSEGMB'):
+            tsegmb = self.cs.register.get_list_by_name('8086.HOSTCTL.TSEGMB').read()[0] & MASK
         else:
             self.logger.log_error('Couldn not find definition of required registers: TSEGMB')
 
-        if self.cs.register.is_defined('PCI0.0.0_TOUUD'):
-            touud = self.cs.register.read('PCI0.0.0_TOUUD') & MASK
+        if self.cs.register.is_defined('8086.HOSTCTL.TOUUD'):
+            touud = self.cs.register.get_list_by_name('8086.HOSTCTL.TOUUD').read()[0] & MASK
         else:
             self.logger.log_error('Could not find definition of required registers: TOUUD')
 

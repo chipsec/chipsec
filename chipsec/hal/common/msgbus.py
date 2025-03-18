@@ -90,41 +90,50 @@ class MsgBus(hal_base.HALBase):
 
     def __init__(self, cs):
         super(MsgBus, self).__init__(cs)
-        self.helper = cs.helper
+        self.instance = 0
         self.p2sbHide = None
+        self.get_registers()
+
+    def get_registers(self):
+        self.msg_ctl_reg = self.cs.register.get_instance_by_name('8086.P2SBC.MSG_CTRL_REG', self.instance)
+        self.msg_ctl_reg_ext = self.cs.register.get_instance_by_name('8086.P2SBC.MSG_CTRL_REG_EXT', self.instance)
+        self.msg_data_reg = self.cs.register.get_instance_by_name('8086.P2SBC.MSG_DATA_REG', self.instance)
 
     def __MB_MESSAGE_MCR(self, port: int, reg: int, opcode: int) -> int:
-        mcr = 0x0
-        mcr = self.cs.register.set_field('MSG_CTRL_REG', mcr, 'MESSAGE_WR_BYTE_ENABLES', 0xF)
-        mcr = self.cs.register.set_field('MSG_CTRL_REG', mcr, 'MESSAGE_ADDRESS_OFFSET', reg)
-        mcr = self.cs.register.set_field('MSG_CTRL_REG', mcr, 'MESSAGE_PORT', port)
-        mcr = self.cs.register.set_field('MSG_CTRL_REG', mcr, 'MESSAGE_OPCODE', opcode)
-        return mcr
+        
+        self.msg_ctl_reg.set_value(0x0)
+        self.msg_ctl_reg.set_field('MESSAGE_WR_BYTE_ENABLES', 0xF)
+        self.msg_ctl_reg.set_field('MESSAGE_ADDRESS_OFFSET', reg)
+        self.msg_ctl_reg.set_field('MESSAGE_PORT', port)
+        self.msg_ctl_reg.set_field('MESSAGE_OPCODE', opcode)
+        return self.msg_ctl_reg.value
 
     def __MB_MESSAGE_MCRX(self, reg: int) -> int:
-        mcrx = 0x0
-        mcrx = self.cs.register.set_field('MSG_CTRL_REG_EXT', mcrx, 'MESSAGE_ADDRESS_OFFSET_EXT', (reg >> 8), preserve_field_position=True)
+        self.msg_ctl_reg_ext.set_value(0x0)
+        mcrx = self.msg_ctl_reg_ext.set_field('MESSAGE_ADDRESS_OFFSET_EXT', reg >> 8)
         return mcrx
 
     def __MB_MESSAGE_MDR(self, data: int) -> int:
-        mdr = 0x0
-        mdr = self.cs.register.set_field('MSG_DATA_REG', mdr, 'MESSAGE_DATA', data)
+        self.msg_data_reg.set_value(0x0)
+        mdr = self.msg_data_reg.set_field('MESSAGE_DATA', data)
         return mdr
 
     def __hide_p2sb(self, hide: bool) -> bool:
         if not self.p2sbHide:
-            if self.cs.register.has_field("P2SBC", "HIDE"):
-                self.p2sbHide = {'reg': 'P2SBC', 'field': 'HIDE'}
-            elif self.cs.register.has_field("P2SB_HIDE", "HIDE"):
-                self.p2sbHide = {'reg': 'P2SB_HIDE', 'field': 'HIDE'}
+            if self.cs.register.has_field("8086.P2SBC.P2SBC", "HIDE"):
+                self.p2sbHide = {'reg': '8086.P2SBC.P2SBC', 'field': 'HIDE'}
+            elif self.cs.register.has_field("8086.P2SBC.P2SB_HIDE", "HIDE"):
+                self.p2sbHide = {'reg': '8086.P2SBC.P2SB_HIDE', 'field': 'HIDE'}
             else:
-                raise RegisterNotFoundError('RegisterNotFound: P2SBC')
+                raise RegisterNotFoundError('RegisterNotFound: 8086.P2SBC.P2SBC')
 
-        hidden = not self.cs.device.is_enabled('P2SBC')
+        hidden = all(dev is None for dev in self.cs.device.get_bus('8086.P2SBC'))
+        
+        p2sbc_reg = self.cs.register.get_list_by_name(self.p2sbHide['reg'])
         if hide:
-            self.cs.register.write_field(self.p2sbHide['reg'], self.p2sbHide['field'], 1)
+            p2sbc_reg.write_field(self.p2sbHide['field'], 1)
         else:
-            self.cs.register.write_field(self.p2sbHide['reg'], self.p2sbHide['field'], 0)
+            p2sbc_reg.write_field(self.p2sbHide['field'], 0)
         return hidden
 
     #
@@ -137,7 +146,7 @@ class MsgBus(hal_base.HALBase):
         self.logger.log_hal(f'[msgbus] Read: port 0x{port:02X} + 0x{register:08X} (op = 0x{opcode:02X})')
         self.logger.log_hal(f'[msgbus]       MCR = 0x{mcr:08X}, MCRX = 0x{mcrx:08X}')
 
-        mdr_out = self.helper.msgbus_send_read_message(mcr, mcrx)
+        mdr_out = self.cs.helper.msgbus_send_read_message(mcr, mcrx)
 
         self.logger.log_hal(f'[msgbus]       < 0x{mdr_out:08X}')
 
@@ -154,7 +163,7 @@ class MsgBus(hal_base.HALBase):
         self.logger.log_hal(f'[msgbus] Write: port 0x{port:02X} + 0x{register:08X} (op = 0x{opcode:02X}) < data = 0x{data:08X}')
         self.logger.log_hal(f'[msgbus]        MCR = 0x{mcr:08X}, MCRX = 0x{mcrx:08X}, MDR = 0x{mdr:08X}')
 
-        return self.helper.msgbus_send_write_message(mcr, mcrx, mdr)
+        return self.cs.helper.msgbus_send_write_message(mcr, mcrx, mdr)
 
     #
     # Issues generic message on the message bus
@@ -169,7 +178,7 @@ class MsgBus(hal_base.HALBase):
             self.logger.log_hal(f'[msgbus]          data = 0x{data:08X}')
         self.logger.log_hal(f'[msgbus]          MCR = 0x{mcr:08X}, MCRX = 0x{mcrx:08X}, MDR = 0x{mdr:08X}')
 
-        mdr_out = self.helper.msgbus_send_message(mcr, mcrx, mdr)
+        mdr_out = self.cs.helper.msgbus_send_message(mcr, mcrx, mdr)
 
         self.logger.log_hal(f'[msgbus]          < 0x{mdr_out:08X}')
 
@@ -187,21 +196,21 @@ class MsgBus(hal_base.HALBase):
 
     def mm_msgbus_reg_read(self, port: int, register: int) -> int:
         was_hidden = False
-        if self.cs.register.is_defined('P2SBC'):
+        if self.cs.register.is_defined('8086.P2SBC.P2SBC'):
             was_hidden = self.__hide_p2sb(False)
         mmio_addr = self.cs.hals.MMIO.get_MMIO_BAR_base_address('8086.P2SBC.SBREGBAR')[0]
         reg_val = self.cs.hals.MMIO.read_MMIO_reg_dword(mmio_addr, ((port & 0xFF) << 16) | (register & 0xFFFF))
-        if self.cs.register.is_defined('P2SBC') and was_hidden:
+        if self.cs.register.is_defined('8086.P2SBC.P2SBC') and was_hidden:
             self.__hide_p2sb(True)
         return reg_val
 
     def mm_msgbus_reg_write(self, port: int, register: int, data: int) -> Optional[int]:
         was_hidden = False
-        if self.cs.register.is_defined('P2SBC'):
+        if self.cs.register.is_defined('8086.P2SBC.P2SBC'):
             was_hidden = self.__hide_p2sb(False)
         mmio_addr = self.cs.hals.MMIO.get_MMIO_BAR_base_address('8086.P2SBC.SBREGBAR')[0]
         reg_val = self.cs.hals.MMIO.write_MMIO_reg_dword(mmio_addr, ((port & 0xFF) << 16) | (register & 0xFFFF), data)
-        if self.cs.register.is_defined('P2SBC') and was_hidden:
+        if self.cs.register.is_defined('8086.P2SBC.P2SBC') and was_hidden:
             self.__hide_p2sb(True)
         return reg_val
 

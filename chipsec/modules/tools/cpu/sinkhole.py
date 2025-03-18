@@ -56,6 +56,11 @@ class sinkhole(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.cs.set_scope({
+            "IA32_APIC_BASE": "8086.MSR",
+            "IA32_SMRR_PHYSBASE": "8086.MSR",
+            'IA32_SMRR_PHYSMASK': '8086.MSR'
+        })
 
     def is_supported(self):
         if not (self.cs.os_helper.is_windows() or self.cs.os_helper.is_linux()):
@@ -71,14 +76,15 @@ class sinkhole(BaseModule):
             return True
 
     def check_LAPIC_SMRR_overlap(self):
-        smrr_physbase_msr = self.cs.register.read('IA32_SMRR_PHYSBASE', 0)
-        apic_base_msr = self.cs.register.read('IA32_APIC_BASE', 0)
-        self.cs.register.print('IA32_APIC_BASE', apic_base_msr)
-        self.cs.register.print('IA32_SMRR_PHYSBASE', smrr_physbase_msr)
+        
+        smrr_physbase_msr = self.cs.register.get_instance_by_name('IA32_SMRR_PHYSBASE', 0)
+        apic_base_msr = self.cs.register.get_instance_by_name('IA32_APIC_BASE', 0)
+        self.logger.log(smrr_physbase_msr)
+        self.logger.log(apic_base_msr)
 
-        smrrbase = self.cs.register.get_field('IA32_SMRR_PHYSBASE', smrr_physbase_msr, 'PHYSBASE')
-        smrr_base = self.cs.register.get_field('IA32_SMRR_PHYSBASE', smrr_physbase_msr, 'PHYSBASE', True)
-        apic_base = self.cs.register.get_field('IA32_APIC_BASE', apic_base_msr, 'APICBASE', True)
+        smrrbase = smrr_physbase_msr.read_field('PHYSBASE')
+        smrr_base = smrr_physbase_msr.get_field('PHYSBASE', True)
+        apic_base = apic_base_msr.read_field('APICBASE', True)
 
         self.logger.log(f'[*] Local APIC Base: 0x{apic_base:016X}')
         self.logger.log(f'[*] SMRR Base      : 0x{smrr_base:016X}')
@@ -88,23 +94,25 @@ class sinkhole(BaseModule):
         self.logger.log_important('NOTE: The system may hang or process may crash when running this test.')
         self.logger.log('      In that case, the mitigation to this issue is likely working but we may not be handling the exception generated.')
 
-        res = self.cs.register.write_field('IA32_APIC_BASE', 'APICBASE', smrrbase, preserve_field_position=False, cpu_thread=0)
+        res = apic_base.write_field('APICBASE', smrrbase, False)
 
         if res is None:
             self.logger.log_important('Error encountered when attempting to modify IA32_APIC_BASE')
 
-        apic_base_msr_new = self.cs.register.read('IA32_APIC_BASE', 0)
+        apic_base_old = apic_base_msr.value
+        apic_base_msr_new = apic_base_msr.read()
         self.logger.log(f'[*] New IA32_APIC_BASE: 0x{apic_base_msr_new:016X}')
 
-        if apic_base_msr_new == apic_base_msr:
+        if apic_base_msr_new == apic_base_old:
             self.logger.log_good('Could not modify IA32_APIC_BASE to overlap SMRR')
             self.logger.log_passed('CPU does not seem to have SMM memory sinkhole vulnerability')
             self.result.setStatusBit(self.result.status.SUCCESS)
             res = ModuleResult.PASSED
         else:
             self.logger.log_bad('Could modify IA32_APIC_BASE to overlap SMRR')
-            self.cs.register.write('IA32_APIC_BASE', apic_base_msr, 0)
-            self.logger.log(f'[*] Restored original value 0x{apic_base_msr:016X}')
+            apic_base_msr.write(apic_base_old)
+            apic_base_msr.read()
+            self.logger.log(f'[*] Restored original value 0x{apic_base_old:016X} > APIC_BASE: 0x{apic_base_msr.value:016X}')
             self.logger.log_failed('CPU is susceptible to SMM memory sinkhole vulnerability.  Verify that SMRR is programmed correctly.')
             self.result.setStatusBit(self.result.status.PROTECTION)
             res = ModuleResult.FAILED

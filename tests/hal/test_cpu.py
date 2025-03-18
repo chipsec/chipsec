@@ -297,8 +297,6 @@ class TestHalCpu(unittest.TestCase):
 
     def test_hal_cpu_check_SMRR_supported_cmd(self):
         mock_self = Mock()
-        mock_self.cs.register.read.return_value = 0x88442200
-        mock_self.cs.register.get_field.return_value = 0
         CPU.check_SMRR_supported(mock_self)
         mock_self.cs.register.get_list_by_name().is_any_field_value.assert_called_with(1, 'SMRR')
 

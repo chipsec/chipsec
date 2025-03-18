@@ -109,8 +109,7 @@ class SPI(hal_base.HALBase):
 
     def __init__(self, cs):
         super(SPI, self).__init__(cs)
-        spidev = cs.device.get_obj('8086.SPI')
-        self.instance = spidev.instances[0]
+        self.instance = cs.device.get_instance_by_name('8086.SPI', 0)
         self.mmio = cs.hals.MMIO
         self.get_registers()
         # self.rcba_spi_base = self.get_SPI_MMIO_base()
@@ -265,12 +264,16 @@ class SPI(hal_base.HALBase):
         self.logger.log("============================================================")
         self.logger.log("SPI Opcode Info")
         self.logger.log("------------------------------------------------------------")
-        preop = self.cs.register.read('PREOP')
+        preop_reg = self.cs.register.get_instance_by_name('*.SPI.PREOP', self.instance)
+        optype_reg = self.cs.register.get_instance_by_name('*.SPI.OPTYPE', self.instance)
+        opmenu_lo_reg = self.cs.register.get_instance_by_name('*.SPI.OPMENU_LO', self.instance)
+        opmenu_hi_reg = self.cs.register.get_instance_by_name('*.SPI.OPMENU_HI', self.instance)
+        preop = preop_reg.read()
+        optype = optype_reg.read()
+        opmenu_lo = opmenu_lo_reg.read()
+        opmenu_hi = opmenu_hi_reg.read()
         self.logger.log(f'PREOP : 0x{preop:04X}')
-        optype = self.cs.register.read('OPTYPE')
         self.logger.log(f'OPTYPE: 0x{optype:04X}')
-        opmenu_lo = self.cs.register.read('OPMENU_LO')
-        opmenu_hi = self.cs.register.read('OPMENU_HI')
         opmenu = ((opmenu_hi << 32) | opmenu_lo)
         self.logger.log(f'OPMENU: 0x{opmenu:016X}')
         self.logger.log('')
@@ -384,9 +387,9 @@ class SPI(hal_base.HALBase):
     def disable_BIOS_write_protection(self) -> bool:
         if self.logger.HAL:
             self.display_BIOS_write_protection()
-        ble = self.cs.control.get('BiosLockEnable')
-        bioswe = self.cs.control.get('BiosWriteEnable')
-        smmbwp = self.cs.control.get('SmmBiosWriteProtection')
+        ble = self.cs.control.get_instance_by_name('BiosLockEnable', self.instance).read()
+        bioswe = self.cs.control.get_instance_by_name('BiosWriteEnable', self.instance).read()
+        smmbwp = self.cs.control.get_instance_by_name('SmmBiosWriteProtection', self.instance).read()
 
         if smmbwp == 1:
             self.logger.log_hal("[spi] SMM BIOS write protection (SmmBiosWriteProtection) is enabled")
@@ -400,10 +403,10 @@ class SPI(hal_base.HALBase):
             self.logger.log_hal("[spi] BIOS write protection is enabled. Attempting to disable..")
 
         # Set BiosWriteEnable control bit
-        self.cs.control.set('BiosWriteEnable', 1)
+        self.cs.control.get_list_by_name('BiosWriteEnable').write(1)
 
         # read BiosWriteEnable back to check if BIOS writes are enabled
-        bioswe = self.cs.control.get('BiosWriteEnable')
+        bioswe = self.cs.control.get_instance_by_name('BiosWriteEnable', self.instance).read()
 
         if self.logger.HAL:
             self.display_BIOS_write_protection()

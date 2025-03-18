@@ -107,12 +107,15 @@ class me_mfg_mode(BaseModule):
         })
 
     def is_supported(self) -> bool:
-        self.mei1_dev = self.cs.device.get_obj('MEI1')
-        if self.mei1_dev.instances and self.mei1_dev.instances[0].bus is not None:
-            return True
+        if self.cs.device.is_defined('MEI1'):
+            self.mei1_dev = self.cs.device.get_list_by_name('MEI1')[0]
+            if self.mei1_dev.instances and self.mei1_dev.instances[0].bus is not None:
+                return True
+            else:
+                self.logger.log_important('MEI1 not enabled.  Skipping module.')
         else:
-            self.logger.log_important('MEI1 not enabled.  Skipping module.')
-            return False
+            self.logger.log_important('MEI1 device not defined.')
+        return False
 
     def check_me_mfg_mode(self) -> int:
         me_mfg_mode_res = ModuleResult.FAILED
