@@ -74,11 +74,9 @@ class debugenabled(BaseModule):
         self.logger.log('')
         self.logger.log('[*] Checking DCI register status')
         ectrl = self.cs.register.get_list_by_name('ECTRL')
-        # ectrl = self.cs.register.read('ECTRL')
         ectrl.read_and_verbose_print()
         hdcien_mask = ectrl[0].get_field_mask('ENABLE', True)
 
-        # HDCIEN = self.cs.register.get_field('ECTRL', ectrl, 'ENABLE') == 1
         if ectrl.is_all_field_value(ectrl[0].get_field('ENABLE'), 'ENABLE'):
             self.logger.log_good('CPU debug enable is set consistently')
         if ectrl.is_any_value(hdcien_mask, 'ENABLE'):
@@ -95,13 +93,11 @@ class debugenabled(BaseModule):
         TestFail = ModuleResult.PASSED
         dbg_regs = self.cs.register.get_list_by_name('IA32_DEBUG_INTERFACE')
         dbg_regs.read_and_verbose_print()
-        enable_mask = dbg_regs[0].get_field_mask('ENABLE', True)
-        occured_mask = dbg_regs[0].get_field_mask('DEBUG_OCCURRED', True)
 
 
         if dbg_regs.is_all_field_value(dbg_regs[0].get_field('ENABLE'), 'ENABLE'):
             self.logger.log_good('CPU debug enable is set consitently')
-        if dbg_regs.is_any_field_value(enable_mask, 'ENABLE'):
+        if dbg_regs.is_any_field_value(1, 'ENABLE'):
             self.logger.log_bad('CPU debug enable requested by software.')
             self.is_enable_set = True
             TestFail = ModuleResult.FAILED
@@ -113,7 +109,7 @@ class debugenabled(BaseModule):
             self.is_lock_set = False
             TestFail = ModuleResult.FAILED
             self.result.setStatusBit(self.result.status.LOCKS)
-        if dbg_regs.is_any_field_value(occured_mask, 'DEBUG_OCCURRED'):
+        if dbg_regs.is_any_field_value(1, 'DEBUG_OCCURRED'):
             self.logger.log_important('Debug Occurred bit set in IA32_DEBUG_INTERFACE MSR')
             self.is_debug_set = True
             self.result.setStatusBit(self.result.status.DEBUG_FEATURE)
