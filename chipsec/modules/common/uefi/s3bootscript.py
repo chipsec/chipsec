@@ -151,7 +151,6 @@ class s3bootscript(BaseModule):
                 self.result.setStatusBit(self.result.status.VERIFY)
                 return ModuleResult.WARNING
 
-
             self.logger.log_important(f'Found {len(bootscript_PAs):d} S3 boot-script(s) in EFI variables')
 
         for bootscript_pa in bootscript_PAs:

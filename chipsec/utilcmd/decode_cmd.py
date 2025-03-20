@@ -71,7 +71,6 @@ class DecodeCommand(BaseCommand):
         else:
             self.func = self.decode_rom
 
-
     def decode_types(self) -> None:
         self.logger.log(f'\n<fw_type> should be in [ {" | ".join([f"{t}" for t in uefi_platform.fw_types])} ]\n')
 

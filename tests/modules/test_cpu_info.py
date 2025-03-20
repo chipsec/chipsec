@@ -40,7 +40,5 @@ class TestCpuInfo(unittest.TestCase):
         result = cpu_info.is_supported(mock_self)
         self.assertTrue(result)
 
-
-
 if __name__ == '__main__':
     unittest.main()

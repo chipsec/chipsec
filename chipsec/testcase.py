@@ -120,7 +120,6 @@ class ChipsecResults:
     def print_summary(self):
         pass
 
-
     def set_time(self, pTime: Optional[float] = None) -> None:
         """Sets the time"""
         if pTime is not None:

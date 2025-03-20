@@ -45,7 +45,6 @@ class TestTpmUtilcmd(unittest.TestCase):
         retval = setup_run_destroy_util(init_replay_file, "tpm", "command startup 1", util_replay_file=tpm_command_startup_replay_file)
         self.assertEqual(retval, ExitCode.OK)
 
-
     def test_command_continueselftest(self) -> None:
         pass
 

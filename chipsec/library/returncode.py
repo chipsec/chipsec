@@ -107,8 +107,6 @@ class ReturnCode:
         self.resetReturnCodeValues()
         return ret_value
 
-
-
 def get_module_ids_dictionary() -> Dict[str, str]:
     with open(os.path.join(get_main_dir(), 'chipsec', 'library', 'module_ids.json'), 'r') as module_ids_file:
         module_ids = json.loads(module_ids_file.read())
@@ -167,7 +165,7 @@ def getModuleResultName(res, using_return_codes) -> str:
         result_mask = 0xFFFFFFFF00000000
         status = [ReturnCode.status.SUCCESS.value[0], ReturnCode.status.INFORMATION.value[0], ReturnCode.status.NOT_APPLICABLE.value[0]]
         if ((res & result_mask) >> 32) in status:
-            resultName = 'Passed' 
+            resultName = 'Passed'
         elif ((res & result_mask) >> 32) == ReturnCode.status.ARCHIVED.value[0]:
             resultName = 'Archived'
         else:

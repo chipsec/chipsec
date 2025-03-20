@@ -397,11 +397,8 @@ class DALHelper(Helper):
     def get_tool_info(self, tool_type: str) -> Tuple[str, str]:
         return ('', '')
 
-
     def hypercall(self, rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer):
         raise UnimplementedAPIError('hypercall')
-
-
 
 def get_helper() -> DALHelper:
     return DALHelper()

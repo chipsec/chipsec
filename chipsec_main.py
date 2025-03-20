@@ -382,7 +382,6 @@ class ChipsecMain:
             self.logger.log_warning("Most results cannot be trusted.")
             self.logger.log_warning("Unless a platform independent module is being run, do not file issues against this run.")
 
-
     def properties(self):
         ret = OrderedDict()
         ret["OS"] = f'{self._cs.helper.os_system} {self._cs.helper.os_release} {self._cs.helper.os_version} {self._cs.helper.os_machine}'

@@ -99,8 +99,6 @@ class WindowsHelperTest(unittest.TestCase):
             b'W\x00\xb0\x1f\xeav\x04\xf8\xff\xff\xb0\xbf0\x03\x00\x00\x00\x00',
     }
 
-
-
     def ioctlret(*args):
         if DEBUG:
             print_args(args)
@@ -249,7 +247,6 @@ class WindowsHelperTest(unittest.TestCase):
         write_msr_return = self.whelper.write_msr(0, 0x3a, 1, 0)
         self.assertTrue(write_msr_return)
 
-
     def test_get_descriptor_table(self, *mocks):
         self._assign_mocks(mocks)
         get_des_table_return = self.whelper.get_descriptor_table(0, 1)
@@ -259,7 +256,6 @@ class WindowsHelperTest(unittest.TestCase):
         self._assign_mocks(mocks)
         cpuid_value = self.whelper.cpuid(1, 0)
         self.assertEqual(cpuid_value, (0x406F1, 0, 0, 0))
-
 
     def test_alloc_phys_mem(self, *mocks):
         self._assign_mocks(mocks)
