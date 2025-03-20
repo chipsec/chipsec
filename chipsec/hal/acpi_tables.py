@@ -1013,7 +1013,7 @@ Generic Error Status Block
         return f"""
 ------------------------------------------------------------------
   Boot Region Length                                : {self.BootRegionLen:d}
-  Boot Region Address	                            : 0x{self.BootRegionAddr:016X}
+  Boot Region Address                               : 0x{self.BootRegionAddr:016X}
   Boot Region - {self.BootRegion}
 """
 
@@ -1407,7 +1407,7 @@ class HEST (ACPI_TABLE):
 
         self.resultsStr += f"""
     {title}
-    Source ID         				  : 0x{sourceID:04X}
+    Source ID                                     : 0x{sourceID:04X}
     Reserved                                      : 0x{reserved1:04X}
     Flags                                         : 0x{flags:02X}{flags_str}
       FIRMWARE_FIRST                              : {firmware_first} - {firmware_first_str}
@@ -2266,8 +2266,6 @@ FIXED_COMM_BUFFERS                  : {self.fixed_comm_buffers}
 COMM_BUFFER_NESTED_PTR_PROTECTION   : {self.comm_buffer_nested_ptr_protection}
 SYSTEM_RESOURCE_PROTECTION          : {self.system_resource_protection}
     """
-
-
 
 ########################################################################################################
 #

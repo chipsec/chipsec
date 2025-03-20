@@ -48,7 +48,6 @@ class ReplayHelper(Helper):
                 raise FileNotFoundError("Cannot find a recorded file to load")
         self._data = {}
 
-
     def create(self) -> bool:
         return True
 
@@ -103,7 +102,6 @@ class ReplayHelper(Helper):
             self._data = loads(file_data)
         except Exception:
             raise OsHelperError(f'Unable to load JSON File: {self.config_file}', EFAULT)
-
 
     def read_pci_reg(self, bus: int, device: int, function: int, offset: int, size: int) -> int:
         return self._get_element_eval("read_pci_reg", (bus, device, function, offset, size))

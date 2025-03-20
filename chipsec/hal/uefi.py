@@ -41,8 +41,6 @@ from chipsec.library.file import write_file, read_file
 from chipsec.library.defines import bytestostring
 from chipsec.helper.oshelper import OsHelperError
 
-
-
 ########################################################################################################
 #
 # S3 Resume Boot-Script Parsing Functionality

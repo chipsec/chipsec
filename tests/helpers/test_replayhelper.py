@@ -31,7 +31,6 @@ class ReplayHelperTest(unittest.TestCase):
         self.assertTrue(self.replayhelper.create())
         self.assertTrue(self.replayhelper.start())
 
-
     def tearDown(self):
         unittest.TestCase.tearDown(self)
         self.assertTrue(self.replayhelper.stop())

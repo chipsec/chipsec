@@ -55,7 +55,6 @@ class PSP:
         buf_size = num_buf * dword_size  # TODO: Build a table for each command
         cmd = self.PSP_CMD_GET_HSTI_STATE
 
-
         # Todo: Add Reset and Recovery checks
 
         # poll for mailbox ready

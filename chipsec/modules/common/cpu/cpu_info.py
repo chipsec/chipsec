@@ -148,7 +148,6 @@ class cpu_info(BaseModule):
             model = (extModel << 4) & baseModel
             self.logger.log(f'[*]            Family: {family:02X} Model: {model:02X} Stepping: {stepping:01X}')
 
-
             # Get microcode revision
             microcode_rev = self.cs.register.read_field('PATCH_LEVEL', 'PatchLevel', cpu_thread=thread)
             self.logger.log(f'[*]            Microcode: {microcode_rev:08X}')

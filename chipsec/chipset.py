@@ -187,7 +187,6 @@ class Chipset:
                 error_no = msg.errorcode
             raise OsHelperError(f'Message: "{msg}"', error_no)
 
-
     def switch_helper(self, helper_name):
         oldName = self.helper.name
         self.destroy_helper()

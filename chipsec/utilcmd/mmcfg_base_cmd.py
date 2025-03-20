@@ -52,6 +52,4 @@ class MMCfgBaseCommand(BaseCommand):
             self.logger.log(f'[CHIPSEC] Memory Mapped Config Size: 0x{pciexbar[1]:016X}')
             self.logger.log('')
 
-
-
 commands = {'mmcfg_base': MMCfgBaseCommand}

@@ -182,8 +182,6 @@ class TestHelper(Helper):
     def retpoline_enabled(self) -> bool:
         return False
 
-
-
 class ACPIHelper(TestHelper):
     """Generic ACPI emulation
 

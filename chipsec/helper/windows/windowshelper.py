@@ -330,7 +330,6 @@ class WindowsHelper(Helper):
 # Driver/service management functions
 ###############################################################################################
 
-
     def show_warning(self) -> None:
         logger().log("")
         logger().log_warning("*******************************************************************")

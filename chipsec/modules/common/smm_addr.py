@@ -22,7 +22,7 @@
 """
 CPU SMM Addr
 
-This module checks to see that SMMMask has Tseg and Aseg programmed correctly.  It also verifies that CPU access to SMM 
+This module checks to see that SMMMask has Tseg and Aseg programmed correctly.  It also verifies that CPU access to SMM
 is blocked while not in SMM.
 
 Usage:
@@ -88,7 +88,6 @@ class smm_addr(BaseModule):
         self.cs.register.print('SMMMASK', cpu0_smmmask)
         tseg_type = self.cs.register.get_field('SMMMASK', cpu0_smmmask, 'TMTYPEDRAM')
         aseg_type = self.cs.register.get_field('SMMMASK', cpu0_smmmask, 'AMTYPEDRAM')
-
 
         if tseg_type in MemType:
             self.logger.log(f"[*] TSEG range memory type is {MemType[tseg_type]}")

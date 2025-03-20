@@ -51,7 +51,6 @@ class CONFIGCommand(BaseCommand):
 
         parser.parse_args(self.argv, namespace=self)
 
-
     def show(self) -> None:
         if self.config == "ALL":
             config = ['CONFIG_PCI', 'REGISTERS', 'MMIO_BARS', 'IO_BARS', 'MEMORY_RANGES', 'CONTROLS', 'BUS', 'LOCKS']

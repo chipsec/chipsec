@@ -102,7 +102,6 @@ class MemCommand(BaseCommand):
         parser_search.set_defaults(func=self.mem_search)
         parser.parse_args(self.argv, namespace=self)
 
-
     def dump_region_to_path(self, path: str, pa_start: int, pa_end: int) -> None:
         if pa_start >= pa_end:
             return

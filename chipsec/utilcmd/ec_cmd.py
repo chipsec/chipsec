@@ -126,6 +126,4 @@ class ECCommand(BaseCommand):
             mem = [self._ec.read_idx(off) for off in range(0x10000)]
             print_buffer_bytes(mem)
 
-
-
 commands = {'ec': ECCommand}

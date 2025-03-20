@@ -118,8 +118,6 @@ class RecordHelper(Helper):
         self.driver_created = False
         return self._subhelper.delete()
 
-
-
     def read_pci_reg(self, bus: int, device: int, function: int, offset: int, size: int) -> int:
         return self._call_subhelper(bus, device, function, offset, size)
 
