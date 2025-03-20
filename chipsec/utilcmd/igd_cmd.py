@@ -64,7 +64,6 @@ class IgdCommand(BaseCommand):
 
         parser.parse_args(self.argv, namespace=self)
 
-
     def read_dma(self) -> None:
         self.logger.log(f'[CHIPSEC] Reading buffer from memory: PA = 0x{self.address:016X}, len = 0x{self.width:X}..')
         buffer = self.cs.igd.gfx_aperture_dma_read_write(self.address, self.width)

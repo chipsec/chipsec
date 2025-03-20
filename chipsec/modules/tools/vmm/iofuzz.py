@@ -136,7 +136,6 @@ class iofuzz(BaseModule):
         self.result.setStatusBit(self.result.status.VERIFY)
         return self.result.getReturnCode(ModuleResult.WARNING)
 
-
     def run(self, module_argv):
         self.logger.start_test('I/O port fuzzer')
 

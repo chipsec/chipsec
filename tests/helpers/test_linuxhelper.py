@@ -29,8 +29,6 @@ from tests.helpers.helper_utils import packer
 
 # assuming 64 bit system. Will break on 32bit system. (would need to swap Q > I in pack())
 
-
-
 @patch('chipsec.helper.linux.linuxhelper.fcntl.ioctl')
 @patch('chipsec.helper.linux.linuxhelper.fcntl')
 class LinuxHelperTest(unittest.TestCase):
@@ -122,7 +120,6 @@ class LinuxHelperTest(unittest.TestCase):
             # breakpoint()
             pass
 
-
     def tearDown(self):
         unittest.TestCase.tearDown(self)
         self.assertTrue(self.lhelper.delete())
@@ -130,14 +127,12 @@ class LinuxHelperTest(unittest.TestCase):
     def test_map_io_space(self, _, lh_ioctl):
         self.assertRaises(UnimplementedAPIError, self.lhelper.map_io_space, 0, 0, 0)
 
-
     def test_write_phys_mem(self, _, _1):
         self.lhelper.dev_fh = Mock()
         self.lhelper.dev_fh.seek.return_value = 0
         self.lhelper.dev_fh.write.return_value = 2
         write_return = self.lhelper.write_phys_mem(0x5000, 0x2, b'\xab\xab')
         self.assertEqual(write_return, 2)
-
 
     def test_read_phyis_mem(self, _, _1):
         self.lhelper.dev_fh = Mock()
@@ -147,15 +142,10 @@ class LinuxHelperTest(unittest.TestCase):
         mem_value = self.lhelper.read_phys_mem(0x5000, 0x2)
         self.assertEqual(mem_value, b'\xac\xdc')
 
-
-
-
     def test_va2pa(self, _, lh_ioctl):
         lh_ioctl.side_effect = LinuxHelperTest.ioctlret
         pa = self.lhelper.va2pa(0x12345)
         self.assertEqual(pa, (0, 0))
-
-
 
     def test_read_pci_reg_cpu_one_byte(self, _, lh_ioctl):
         lh_ioctl.side_effect = LinuxHelperTest.ioctlret

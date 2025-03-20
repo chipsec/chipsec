@@ -357,8 +357,6 @@ class ACPI(HALBase):
         sdt.parse(sdt_contents)
         return (is_xsdt, sdt_pa, sdt, sdt_header)
 
-
-
     def get_ACPI_SDT(self) -> Tuple[Optional['Array'], bool]:
         sdt = self.cs.helper.get_acpi_table('XSDT')  # FirmwareTableID_XSDT
         xsdt = sdt is not None

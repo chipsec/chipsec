@@ -85,7 +85,6 @@ class Msr:
 #
 ##########################################################################################################
 
-
     def read_msr(self, cpu_thread_id: int, msr_addr: int) -> Tuple[int, int]:
         (eax, edx) = self.helper.read_msr(cpu_thread_id, msr_addr)
         logger().log_hal(f'[cpu{cpu_thread_id:d}] RDMSR( 0x{msr_addr:x} ): EAX = 0x{eax:08X}, EDX = 0x{edx:08X}')
@@ -130,7 +129,6 @@ class Msr:
 # Dump CPU Descriptor Tables (IDT, GDT, LDT..)
 #
 ##########################################################################################################
-
 
     def dump_Descriptor_Table(self, cpu_thread_id: int, code: int, num_entries: Optional[int] = None) -> Tuple[int, int]:
         (limit, _, pa) = self.helper.get_descriptor_table(cpu_thread_id, code)
