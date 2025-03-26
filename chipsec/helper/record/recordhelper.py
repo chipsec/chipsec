@@ -87,7 +87,7 @@ class RecordHelper(Helper):
                 self._data = {}
 
     def _call_subhelper(self, *myargs):
-        fname= stack()[1][3] # gets the name of the function that called _call_subhelper
+        fname= stack()[1][3]  # gets the name of the function that called _call_subhelper
         func = getattr(self._subhelper, fname)
         err = None
         try:
@@ -105,7 +105,7 @@ class RecordHelper(Helper):
         return self._subhelper.create()
 
     def start(self) -> bool:
-        self._load() # Load file if it exists
+        self._load()  # Load file if it exists
         self.driver_loaded = True
         return self._subhelper.start()
 

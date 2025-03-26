@@ -48,7 +48,7 @@ from chipsec.command import BaseCommand, toLoad
 class ACPICommand(BaseCommand):
     def requirements(self) -> toLoad:
         if self.func == self.acpi_table and self._file:
-            return toLoad.Nil # TODO: Fix this case. Need to update ACPI HAL to not try to auto-populate tables.
+            return toLoad.Nil  # TODO: Fix this case. Need to update ACPI HAL to not try to auto-populate tables.
         return toLoad.All
 
     def parse_arguments(self) -> None:

@@ -230,7 +230,7 @@ def decode_EFI_variables(efi_vars: Dict[str, List['EfiVariableType']], nvram_pth
         data: bytes
         guid: str
         attrs: int
-        for (_, _, _, data, guid, attrs) in efi_vars[name]: # Type: EfiVariableType
+        for (_, _, _, data, guid, attrs) in efi_vars[name]:  # Type: EfiVariableType
             attr_str = get_attr_string(attrs)
             var_fname = os.path.join(nvram_pth, f'{name}_{guid}_{attr_str.strip()}_{n:d}.bin')
             write_file(var_fname, data)
