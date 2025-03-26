@@ -51,7 +51,7 @@ class PSP:
         #  Command ID (bits [23:16]), Status (bits [15:0]) fields and Ready flag (bit #31)
         mbox_cmd_status_value = 0
         dword_size = 4
-        num_buf = 4 # TODO: Build a table for each command
+        num_buf = 4  # TODO: Build a table for each command
         buf_size = num_buf * dword_size  # TODO: Build a table for each command
         cmd = self.PSP_CMD_GET_HSTI_STATE
 

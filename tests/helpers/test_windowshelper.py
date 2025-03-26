@@ -25,7 +25,7 @@ import sys
 from chipsec.library.exceptions import UnimplementedAPIError
 from tests.helpers.helper_utils import packer
 
-DEBUG = False # Set to True to print the args passed to the driver
+DEBUG = False  # Set to True to print the args passed to the driver
 DRIVER_HANDLE = '12345'
 class pcibdf_sideeffect():
     def __init__(self, b, d, f, o) -> None:
