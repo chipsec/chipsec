@@ -107,7 +107,7 @@ class pcie_overlap_fuzz(BaseModule):
     def fuzz_unaligned(self, bar, reg_off, is64bit):
         dummy = self.cs.mmio.read_MMIO_reg(bar, reg_off + 1)
         # @TODO: crosses the reg boundary
-        #self.cs.mmio.write_MMIO_reg(bar, reg_off + 1, 0xFFFFFFFF)
+        # self.cs.mmio.write_MMIO_reg(bar, reg_off + 1, 0xFFFFFFFF)
         self.cs.mem.write_physical_mem_word(bar + reg_off + 1, 0xFFFF)
         self.cs.mem.write_physical_mem_byte(bar + reg_off + 1, 0xFF)
 

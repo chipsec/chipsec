@@ -498,8 +498,8 @@ VARIABLE_STORE_SIGNATURE_VSS2 = UUID('DDCF3617-3275-4164-98B6-FE85707FFE7D').byt
 VARIABLE_STORE_SIGNATURE_VSS2_AUTH = UUID('AAF32C78-947B-439A-A180-2E144EC37792').bytes_le
 
 HDR_FMT_VSS = '<HBBIII16s'
-#HDR_SIZE_VSS                  = struct.calcsize( HDR_FMT_VSS )
-#NAME_OFFSET_IN_VAR_VSS        = HDR_SIZE_VSS
+# HDR_SIZE_VSS                  = struct.calcsize( HDR_FMT_VSS )
+# NAME_OFFSET_IN_VAR_VSS        = HDR_SIZE_VSS
 
 
 class EFI_HDR_VSS(namedtuple('EFI_HDR_VSS', 'StartId State Reserved Attributes NameSize DataSize guid')):
@@ -525,7 +525,7 @@ HDR_FMT_VSS_AUTH = '<HBBIQQQIII16s'
 class EFI_HDR_VSS_AUTH(namedtuple('EFI_HDR_VSS_AUTH', 'StartId State Reserved Attributes MonotonicCount TimeStamp1 TimeStamp2 PubKeyIndex NameSize DataSize guid')):
     __slots__ = ()
     # if you don't re-define __str__ method, initialize is to None
-    #__str__ = None
+    # __str__ = None
 
     def __str__(self) -> str:
         return f"""
@@ -841,8 +841,8 @@ def EFIvar_EVSA(nvram_buf: bytes) -> Dict[str, List[EfiVariableType]]:
         for i in var_list:
             name = i[0]
             VarId = i[1]
-            #NameTag0 = i[2]
-            #NameTag1 = i[3]
+            # NameTag0 = i[2]
+            # NameTag1 = i[3]
             if VarId in value_list:
                 var_value = value_list[VarId]
             else:
@@ -877,7 +877,7 @@ def EFIvar_EVSA(nvram_buf: bytes) -> Dict[str, List[EfiVariableType]]:
 #        __slots__ = ()
 #        def __str__(self):
 #            return f"""
-#Header (Windows)
+# Header (Windows)
 # ----------------
 # VendorGuid= {{self.guid0:08X}-{self.guid1:04X}-{self.guid2:04X}-{self.guid3[:2].encode('hex').upper():4}-{self.guid3[-6::].encode('hex').upper():6}}
 # Size      = 0x{self.Size:08X}

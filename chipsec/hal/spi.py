@@ -99,8 +99,8 @@ HSFCTL_SFDP_CYCLE = ((PCH_RCBA_SPI_HSFCTL_FCYCLE_SFDP << 1) | PCH_RCBA_SPI_HSFCT
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # FGO bit cleared (for safety ;)
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#HSFCTL_WRITE_CYCLE = ( (PCH_RCBA_SPI_HSFCTL_FCYCLE_WRITE<<1) )
-#HSFCTL_ERASE_CYCLE = ( (PCH_RCBA_SPI_HSFCTL_FCYCLE_ERASE<<1) )
+# HSFCTL_WRITE_CYCLE = ( (PCH_RCBA_SPI_HSFCTL_FCYCLE_WRITE<<1) )
+# HSFCTL_ERASE_CYCLE = ( (PCH_RCBA_SPI_HSFCTL_FCYCLE_ERASE<<1) )
 
 HSFSTS_CLEAR = (PCH_RCBA_SPI_HSFSTS_AEL | PCH_RCBA_SPI_HSFSTS_FCERR | PCH_RCBA_SPI_HSFSTS_FDONE)
 
@@ -502,7 +502,7 @@ class SPI(hal_base.HALBase):
             # time.sleep(0.001)
             hsfsts = self.spi_reg_read(self.hsfs_off, 1)
 
-            #cycle_done = (hsfsts & Cfg.Cfg.PCH_RCBA_SPI_HSFSTS_FDONE) and (0 == (hsfsts & Cfg.PCH_RCBA_SPI_HSFSTS_SCIP))
+            # cycle_done = (hsfsts & Cfg.Cfg.PCH_RCBA_SPI_HSFSTS_FDONE) and (0 == (hsfsts & Cfg.PCH_RCBA_SPI_HSFSTS_SCIP))
             cycle_done = not (hsfsts & PCH_RCBA_SPI_HSFSTS_SCIP)
             if cycle_done:
                 break
@@ -531,9 +531,9 @@ class SPI(hal_base.HALBase):
 
         self.spi_reg_write(self.faddr_off, (spi_fla & PCH_RCBA_SPI_FADDR_MASK))
         # Other options ;)
-        #chipsec.chipset.write_register( self.cs, "FADDR", (spi_fla & Cfg.PCH_RCBA_SPI_FADDR_MASK) )
-        #write_MMIO_reg( self.cs, spi_base, self.faddr_off, (spi_fla & Cfg.PCH_RCBA_SPI_FADDR_MASK) )
-        #self.cs.mem.write_physical_mem_dword( spi_base + self.faddr_off, (spi_fla & Cfg.PCH_RCBA_SPI_FADDR_MASK) )
+        # chipsec.chipset.write_register( self.cs, "FADDR", (spi_fla & Cfg.PCH_RCBA_SPI_FADDR_MASK) )
+        # write_MMIO_reg( self.cs, spi_base, self.faddr_off, (spi_fla & Cfg.PCH_RCBA_SPI_FADDR_MASK) )
+        # self.cs.mem.write_physical_mem_dword( spi_base + self.faddr_off, (spi_fla & Cfg.PCH_RCBA_SPI_FADDR_MASK) )
 
         if self.logger.HAL:
             _faddr = self.spi_reg_read(self.faddr_off)
@@ -545,7 +545,7 @@ class SPI(hal_base.HALBase):
             self.spi_reg_write(self.hsfc_off + 0x1, dbc, 1)
 
         self.spi_reg_write(self.hsfc_off, hsfctl_spi_cycle_cmd, 1)
-        #self.spi_reg_write( self.hsfc_off, ((dbc<<8)|hsfctl_spi_cycle_cmd), 2 )
+        # self.spi_reg_write( self.hsfc_off, ((dbc<<8)|hsfctl_spi_cycle_cmd), 2 )
 
         # Read HSFC back (logging only)
         if self.logger.HAL:

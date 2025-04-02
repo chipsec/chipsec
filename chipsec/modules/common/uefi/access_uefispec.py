@@ -141,7 +141,7 @@ class access_uefispec(BaseModule):
     def can_modify(self, name: str, guid: str, data: bytes) -> bool:
         ret = False
 
-        #origdata = _uefi.get_EFI_variable(name, guid)
+        # origdata = _uefi.get_EFI_variable(name, guid)
         origdata = data
         datalen = len(bytearray(data))
         baddata = 'Z' * datalen  # 0x5A is ASCII 'Z'

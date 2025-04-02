@@ -123,7 +123,7 @@ class SMBus(hal_base.HALBase):
     def _is_smbus_ready(self) -> bool:
         busy = None
         for i in range(SMBUS_POLL_COUNT):
-            #time.sleep( SMBUS_POLL_SLEEP_INTERVAL )
+            # time.sleep( SMBUS_POLL_SLEEP_INTERVAL )
             busy = self.cs.register.read_field(self.smb_reg_status, 'BUSY')
             if 0 == busy:
                 return True
@@ -133,7 +133,7 @@ class SMBus(hal_base.HALBase):
     def _wait_for_cycle(self) -> bool:
         busy = None
         for i in range(SMBUS_POLL_COUNT):
-            #time.sleep( SMBUS_POLL_SLEEP_INTERVAL )
+            # time.sleep( SMBUS_POLL_SLEEP_INTERVAL )
             sts = self.cs.register.read(self.smb_reg_status)
             busy = self.cs.register.get_field(self.smb_reg_status, sts, 'BUSY')
             intr = self.cs.register.get_field(self.smb_reg_status, sts, 'INTR')
@@ -144,7 +144,7 @@ class SMBus(hal_base.HALBase):
                 #    self.logger.log( "[smbus]: INTR = {:d}".format(intr) )
                 break
             elif 1 == failed:
-                #kill = 0
+                # kill = 0
                 # if chipsec.chipset.register_has_field( self.cs, self.smb_reg_control, 'KILL' ):
                 #    kill = chipsec.chipset.read_register_field( self.cs, self.smb_reg_control, 'KILL' )
                 if self.logger.HAL:
@@ -188,8 +188,8 @@ class SMBus(hal_base.HALBase):
         # clear status bits
         self.cs.register.write(self.smb_reg_status, 0xFF)
         # clear address/offset registers
-        #chipsec.chipset.write_register( self.cs, self.smb_reg_address, 0x0 )
-        #chipsec.chipset.write_register( self.cs, self.smb_reg_command, 0x0 )
+        # chipsec.chipset.write_register( self.cs, self.smb_reg_address, 0x0 )
+        # chipsec.chipset.write_register( self.cs, self.smb_reg_command, 0x0 )
         self.logger.log_hal(f'[smbus] read device {target_address:X} off {offset:X} = {value:X}')
         return value
 
@@ -218,8 +218,8 @@ class SMBus(hal_base.HALBase):
         # clear status bits
         self.cs.register.write(self.smb_reg_status, 0xFF)
         # clear address/offset registers
-        #chipsec.chipset.write_register( self.cs, self.smb_reg_address, 0x0 )
-        #chipsec.chipset.write_register( self.cs, self.smb_reg_command, 0x0 )
+        # chipsec.chipset.write_register( self.cs, self.smb_reg_address, 0x0 )
+        # chipsec.chipset.write_register( self.cs, self.smb_reg_command, 0x0 )
         self.logger.log_hal(f'[smbus] write to device {target_address:X} off {offset:X} = {value:X}')
         return True
 
