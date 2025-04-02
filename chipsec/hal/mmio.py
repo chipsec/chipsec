@@ -348,7 +348,7 @@ class MMIO(hal_base.HALBase):
             else:
                 base = self.cs.pci.read_dword(b, d, f, r)
 
-        #if 'mask' in bar: base &= bar['mask']
+        # if 'mask' in bar: base &= bar['mask']
         return (0 != base)
 
     #

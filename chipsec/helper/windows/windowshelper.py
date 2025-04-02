@@ -143,7 +143,7 @@ _smi_msg_t_fmt = 7 * _pack
 # UEFI constants
 #
 # Default buffer size for EFI variables
-#EFI_VAR_MAX_BUFFER_SIZE = 128*1024
+# EFI_VAR_MAX_BUFFER_SIZE = 128*1024
 EFI_VAR_MAX_BUFFER_SIZE = 1024 * 1024
 
 attributes: Dict[str, int] = {
@@ -720,7 +720,7 @@ class WindowsHelper(Helper):
             if logger().DEBUG:
                 logger().log_error(f'GetFirmwareEnvironmentVariable[Ex] returned error: {WinError()}')
             efi_var_data = None
-            #raise WinError(errno.EIO,"Unable to get EFI variable")
+            # raise WinError(errno.EIO,"Unable to get EFI variable")
         else:
             efi_var_data = bytes(efi_var[:length])
 

@@ -191,7 +191,7 @@ class rogue_mmio_bar(BaseModule):
 
         # allocate a page or SMM communication buffer (often supplied in EBX register)
         _, self.comm = self.cs.mem.alloc_physical_mem(0x1000, BOUNDARY_4GB - 1)
-        #self.cs.mem.write_physical_mem( self.comm, 0x1000, chr(0)*0x1000 )
+        # self.cs.mem.write_physical_mem( self.comm, 0x1000, chr(0)*0x1000 )
 
         # allocate range in physical memory (should cover all MMIO ranges including GTTMMADR)
         bsz = 2 * MAX_MMIO_RANGE_SIZE

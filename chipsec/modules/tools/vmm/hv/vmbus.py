@@ -199,7 +199,7 @@ class HyperV(BaseModuleDebug):
         self.sint3 = self.cs.msr.read_msr(0, HV_X64_MSR_SINT3)
         self.cs.msr.write_msr(0, HV_X64_MSR_SINT2, self.sint3[0], self.sint3[1])
         self.cs.msr.write_msr(0, HV_X64_MSR_SIEFP, (pa & 0xFFFFFFFF) | 0x1, pa >> 32)
-        #self.cs.msr.write_msr(0, HV_X64_MSR_SCONTROL, 0x1, 0x0)
+        # self.cs.msr.write_msr(0, HV_X64_MSR_SCONTROL, 0x1, 0x0)
         self.simp = self.cs.msr.read_msr(0, HV_X64_MSR_SIMP)
         self.siefp = self.cs.msr.read_msr(0, HV_X64_MSR_SIEFP)
         self.simp = (self.simp[0] + (self.simp[1] << 32)) & 0xFFFFFFFFFFFFF000
