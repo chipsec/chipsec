@@ -28,12 +28,8 @@ from chipsec.hal import hal_base
 from chipsec.hal.common import acpi
 from chipsec.library.logger import logger
 from chipsec.library import paging
+from chipsec.library.cpu import VMM_NONE, VMM_XEN, VMM_HYPER_V, VMM_VMWARE, VMM_KVM
 
-VMM_NONE = 0
-VMM_XEN = 0x1
-VMM_HYPER_V = 0x2
-VMM_VMWARE = 0x3
-VMM_KVM = 0x4
 
 
 ########################################################################################################

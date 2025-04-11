@@ -111,8 +111,8 @@ class TestHalCpu(unittest.TestCase):
         self.assertEqual(result, expected_value)
 
     def test_hal_cpu_check_vmm_vmm_hyper_v(self):
+        from chipsec.library.cpu import VMM_HYPER_V
         mock_self = Mock()
-        VMM_HYPER_V = 0x2
         expected_value = VMM_HYPER_V
         mock_self.cpuid.side_effect = [(0, 0x3100800, 0x80000000, 0xBFEBFBFF),
                                        (0, 0x7263694D, 0x666F736F, 0x76482074)]

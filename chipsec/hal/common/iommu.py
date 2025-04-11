@@ -127,8 +127,8 @@ class IOMMU(hal_base.HALBase):
         self.logger.log(f'  High Memory Limit       : {phmlimit}')
         self.logger.log("------------------------------------------------------------------")
         self.logger.log("Capabilities:\n")
-        self.cs.register.get_list_from_name(f'{vtd}_CAP').read_and_print()
-        self.cs.register.get_list_from_name(f'{vtd}_ECAP').read_and_print()
+        self.cs.register.get_list_by_name(f'{vtd}_CAP').read_and_print()
+        self.cs.register.get_list_by_name(f'{vtd}_ECAP').read_and_print()
         self.logger.log('')
 
     def dump_IOMMU_page_tables(self, iommu_engine: str) -> None:
@@ -140,13 +140,13 @@ class IOMMU(hal_base.HALBase):
             return
         te = self.is_IOMMU_Translation_Enabled(iommu_engine)
         self.logger.log(f'[iommu] Translation enabled    : {te:d}')
-        rtaddr_reg = self.cs.register.get_list_from_name(f'{vtd}_RTADDR')
+        rtaddr_reg = self.cs.register.get_list_by_name(f'{vtd}_RTADDR')
         rtaddr_rta = rtaddr_reg.read_field('RTA', True)
         rtaddr_rtt = rtaddr_reg.get_field('RTT')
         for rta, rtt in rtaddr_rta, rtaddr_rtt:
             self.logger.log(f'[iommu] Root Table Address/Type: 0x{rta:016X}/{rtt:X}')
 
-        ecap_reg = self.cs.register.get_list_from_name(f'{vtd}_ECAP')
+        ecap_reg = self.cs.register.get_list_by_name(f'{vtd}_ECAP')
         ecap_ecs = ecap_reg.read_field('ECS')
         ecap_pasid = ecap_reg.get_field('PASID')
         for ecs, pasid in ecap_ecs, ecap_pasid:
@@ -175,11 +175,11 @@ class IOMMU(hal_base.HALBase):
         if vtd_obj.is_all_value(0):
             self.logger.log(f'[iommu] {vtd} value is zero')
             return None
-        self.cs.register.get_list_from_name(f'{vtd}_GSTS').read_and_print()
-        self.cs.register.get_list_from_name(f'{vtd}_FSTS').read_and_print()
-        self.cs.register.get_list_from_name(f'{vtd}_FRCDL').read_and_print()
-        self.cs.register.get_list_from_name(f'{vtd}_FRCDH').read_and_print()
-        self.cs.register.get_list_from_name(f'{vtd}_ICS').read_and_print()
+        self.cs.register.get_list_by_name(f'{vtd}_GSTS').read_and_print()
+        self.cs.register.get_list_by_name(f'{vtd}_FSTS').read_and_print()
+        self.cs.register.get_list_by_name(f'{vtd}_FRCDL').read_and_print()
+        self.cs.register.get_list_by_name(f'{vtd}_FRCDH').read_and_print()
+        self.cs.register.get_list_by_name(f'{vtd}_ICS').read_and_print()
         return None
 
 
