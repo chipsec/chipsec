@@ -384,7 +384,6 @@ class ACPI(HALBase):
             logger().log_hal("[acpi] Trying to enumerate ACPI tables from physical memory...")
             # find RSDT/XSDT table
             (is_xsdt, sdt_pa, sdt, sdt_header) = self.get_SDT()
-
             # cache RSDT/XSDT in the list of ACPI tables
             if (sdt_pa is not None) and (sdt_header is not None):
                 self.tableList[bytestostring(sdt_header.Signature)].append(sdt_pa)

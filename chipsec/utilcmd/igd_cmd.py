@@ -62,6 +62,9 @@ class IgdCommand(BaseCommand):
         parser_write.add_argument('file_value', type=str, help='Data to write [Value|<file_name>]')
         parser_write.set_defaults(func=self.write_dma)
 
+        parser_info = subparsers.add_parser('info')
+        parser_info.set_defaults(func=self.print_igd_pci_info)
+
         parser.parse_args(self.argv, namespace=self)
         
 
@@ -94,6 +97,9 @@ class IgdCommand(BaseCommand):
 
         self.logger.log(f'[CHIPSEC] Writing buffer to memory: PA = 0x{self.address:016X}, len = 0x{self.size:X}..')
         self.cs.hals.IGD.gfx_aperture_dma_read_write(self.address, self.size, buffer)
+
+    def print_igd_pci_info(self) -> None:
+        self.cs.hals.IGD.display_igd_pci_info()
 
     def run(self) -> None:
 

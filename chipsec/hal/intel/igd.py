@@ -222,6 +222,15 @@ class IGD(hal_base.HALBase):
         self.write_GGTT_PTE(pte_num, pte_orig)
 
         return buffer
+    
+    def display_igd_pci_info(self) -> None:
+        igd_list = self.cs.device.get_list_by_name('8086.IGD')
+        for vid, did, rid, instance in self.cs.hals.Pci.get_viddidrid_from_device_list(igd_list):
+            self.logger.log(f'[*] IGD ({instance.bus:X}:{instance.dev:X}.{instance.fun:X}):')
+            self.logger.log(f'[*]   VID: {vid:04X}')
+            self.logger.log(f'[*]   DID: {did:04X}')
+            self.logger.log(f'[*]   RID: {rid:02X}')
+            self.logger.log('')
 
 
 haldata = {"arch":[hal_base.HALBase.MfgIds.Intel], 'name': ['IGD']}

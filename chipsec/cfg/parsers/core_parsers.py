@@ -133,6 +133,9 @@ class DevConfig(BaseConfigParser):
         return Stage.DEVICE_CFG
 
     def _process_pci_dev(self, vid_str, dev_name, dev_attr):
+        
+        if dev_name in self.cfg.CONFIG_PCI[vid_str] and 'config' in dev_attr:
+            self.cfg.CONFIG_PCI[vid_str][dev_name].add_config(dev_attr['config'])
         if 'did' in dev_attr:
             for did in dev_attr['did']:
                 did_str = make_hex_key_str(did)
@@ -140,7 +143,7 @@ class DevConfig(BaseConfigParser):
                     cfg_data = self.cfg.CONFIG_PCI_RAW[vid_str][did_str]
                     self._add_dev(vid_str, dev_name, cfg_data, dev_attr)
                     break
-        else:
+        elif set (['bus', 'dev', 'fun']).issubset(dev_attr.keys()):
             if vid_str in self.cfg.CONFIG_PCI_RAW:
                 for did_str in self.cfg.CONFIG_PCI_RAW[vid_str]:
                     for pci_data in self.cfg.CONFIG_PCI_RAW[vid_str][did_str].instances.values():
