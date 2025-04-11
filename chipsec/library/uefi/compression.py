@@ -82,7 +82,7 @@ COMPRESSION_TYPES: List[int] = [COMPRESSION_TYPE_NONE,
                                 COMPRESSION_TYPE_LZMAF86, ]
 
 
-class UEFICompression: #TODO: Check to see where this should live...
+class UEFICompression:
     decompression_oder_type1: List[int] = [COMPRESSION_TYPE_TIANO, COMPRESSION_TYPE_UEFI]
     decompression_oder_type2: List[int] = [COMPRESSION_TYPE_TIANO,
                                            COMPRESSION_TYPE_UEFI,
@@ -95,6 +95,20 @@ class UEFICompression: #TODO: Check to see where this should live...
     def rotate_list(self, rot_list: List[Any], n: int) -> List[Any]:
         return rot_list[n:] + rot_list[:n]
 
+    @staticmethod
+    def is_efi_compressed(efi_data: bytes) -> bool:
+        """ Check if data is EFI compressed """
+
+        size_compressed: int = int.from_bytes(efi_data[0:4], byteorder='little')
+
+        size_decompressed: int = int.from_bytes(efi_data[4:8], byteorder='little')
+
+        check_size: bool = 0 < size_compressed < size_decompressed
+
+        check_data: bool = size_compressed + 8 == len(efi_data)
+
+        return check_size and check_data
+
     def decompress_EFI_binary(self, compressed_data: bytes, compression_type: int) -> bytes:
         if compression_type in COMPRESSION_TYPES:
             if compression_type == COMPRESSION_TYPE_UNKNOWN:
@@ -105,12 +119,18 @@ class UEFICompression: #TODO: Check to see where this should live...
                 data = compressed_data
             elif compression_type == COMPRESSION_TYPE_TIANO and has_eficomp:
                 try:
-                    data = EfiCompressor.TianoDecompress(compressed_data)
+                    if self.is_efi_compressed(efi_data=compressed_data):
+                        data = EfiCompressor.TianoDecompress(compressed_data)
+                    else:
+                        data = b''
                 except Exception:
                     data = b''
             elif compression_type == COMPRESSION_TYPE_UEFI and has_eficomp:
                 try:
-                    data = EfiCompressor.UefiDecompress(compressed_data)
+                    if self.is_efi_compressed(efi_data=compressed_data):
+                        data = EfiCompressor.UefiDecompress(compressed_data)
+                    else:
+                        data = b''
                 except Exception:
                     data = b''
             elif compression_type in [COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_LZMAF86] and has_lzma:
