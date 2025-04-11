@@ -323,19 +323,25 @@ class ObjList(list):
                 logger().log_debug(f"Error reading instance: {err}")
         return ret
     
-    def read_and_print(self):
-        self.read()
+    def read_and_print(self) -> List[int]:
+        ret_list = self.read()
         self.print()
+        return ret_list
     
-    def read_and_verbose_print(self):
+    def read_and_verbose_print(self) -> List[int]:
+        ret_list = self.read()
         self.read()
         if logger().VERBOSE:
             self.print()
+        return ret_list
 
-    def read_and_hal_print(self):
-        self.read()
+
+    def read_and_hal_print(self) -> List[int]:
+        ret_list = self.read()
         if logger().HAL:
             self.print()
+        return ret_list
+
 
     def read_field(self, field: str, preserve_field_position: Optional[bool] = False) -> List[int]:
         ret = []

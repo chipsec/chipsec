@@ -71,4 +71,4 @@ class MSRRegisters(BaseConfigRegisterHelper):
         _cs = cs()
         eax = value & 0xFFFFFFFF
         edx = (value >> 32) & 0xFFFFFFFF
-        _cs.hals.CPU.write_msr(self.thread, self.msr, eax, edx)
+        _cs.hals.Msr.write(self.thread, self.msr, eax, edx)

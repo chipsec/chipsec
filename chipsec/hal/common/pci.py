@@ -357,5 +357,16 @@ class Pci(HALBase):
         if (is_all_ones(vid, 2)) or (is_all_ones(did, 2)):
             return False
         return True
+    
+    def get_viddidrid_from_device_list(self, device_list: 'ObjList') -> List[Tuple[int, int, int, 'PCIObj']]:
+        """
+        Returns a list of tuples containing the vendor ID, device ID, revision ID and PCIObj instance for each device in the device ObjList.
+        """
+        vendor_info = []
+        for device in device_list:
+            for instance in device.instances.values():
+                did, vid = self.get_DIDVID(instance.bus, instance.dev, instance.fun)
+                vendor_info.append((vid, did, instance.rid, instance))
+        return vendor_info
 
 haldata = {"arch":[HALBase.MfgIds.Any, HALBase.MfgIds.Intel], 'name': ['Pci']}
