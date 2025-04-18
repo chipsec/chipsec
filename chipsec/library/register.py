@@ -373,11 +373,11 @@ class ObjList(list):
             return any(inst.value == value for inst in self)
         return any((inst.value & mask) == value for inst in self)
 
-    def is_all_field_value(self, value: int, field: str) -> bool:
-        return all(inst.get_field(field) == value for inst in self)
+    def is_all_field_value(self, value: int, field: str, preserve_field_position: bool = False) -> bool:
+        return all(inst.get_field(field, preserve_field_position) == value for inst in self)
 
-    def is_any_field_value(self, value: int, field: str) -> bool:
-        return any(inst.get_field(field) == value for inst in self)
+    def is_any_field_value(self, value: int, field: str, preserve_field_position: bool = False) -> bool:
+        return any(inst.get_field(field, preserve_field_position) == value for inst in self)
     
     def filter_by_instance(self, instance: Any) -> 'ObjList':
         if instance is None:
