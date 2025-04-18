@@ -340,21 +340,23 @@ def build_efi_tree(data: bytes, fwtype: Optional[str]) -> List['EFI_MODULE']:
 
 
 #
-# Attempts to find EFI modules by calling build_efi_tree (FV), build_efi_file_tree (FILE),
-# and build_efi_modules_tree (SECTION), in succession, stopping on first successful call.
+# Attempt to find EFI modules by calling build_efi_tree (FV), build_efi_file_tree (FILE),
+# and build_efi_modules_tree (SECTION), in succession. Stop on first successful call,
+# unless the environment variable CHIPSEC_HAL_FIND_EFI_MODULES_BRUTE_FORCE is defined.
 #
 def find_efi_modules(data: bytes, fwtype: Optional[str], polarity: bool, data_size: Optional[int] = None,
                      data_start: Optional[int] = None) -> List['EFI_MODULE']:
     data_len: int = len(data) if data_size is None else data_size
     data_off: int = 0 if data_start is None else data_start
+    brute_force: str = os.environ.get('CHIPSEC_HAL_FIND_EFI_MODULES_BRUTE_FORCE', '')
 
     efi_tree: List['EFI_MODULE'] = build_efi_tree(data=data[data_off:data_len], fwtype=fwtype)
 
-    if not efi_tree:
-        efi_tree = build_efi_file_tree(fv_img=data[data_off:data_len], fwtype=fwtype)
+    if not efi_tree or brute_force:
+        efi_tree += build_efi_file_tree(fv_img=data[data_off:data_len], fwtype=fwtype)
 
-    if not efi_tree:
-        efi_tree = build_efi_modules_tree(fwtype=fwtype, data=data, Size=data_len, offset=data_off, polarity=polarity)
+    if not efi_tree or brute_force:
+        efi_tree += build_efi_modules_tree(fwtype=fwtype, data=data, Size=data_len, offset=data_off, polarity=polarity)
 
     return efi_tree
 
