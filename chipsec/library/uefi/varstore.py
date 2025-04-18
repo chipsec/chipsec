@@ -18,6 +18,16 @@
 # chipsec@intel.com
 #
 
+
+#chipsec/library/uefi/varstore.py 
+#   716    575    20%   
+#   62-71, 88, 92, 96, 100, 104, 108, 112, 116, 120, 124, 128, 132, 
+#   136, 140, 162-218, 258-293, 300-319, 328-341, 388, 417-432, 436, 
+#   440, 444, 448, 526, 543-561, 565, 569-644, 655, 659-688, 706-707, 
+#   729, 750, 772, 796, 811-828, 832, 836, 840, 844, 848, 856-906, 
+#   910-976, 980, 984, 988, 992, 996, 1011-1026, 1030-1099, 1192-1209, 
+#   1213-1219, 1223-1244, 1248-1279, 1293, 1297-1342, 1346-1351
+
 import codecs
 import os
 import struct
@@ -60,15 +70,23 @@ MAX_NVRAM_SIZE = 1024 * 1024
 
 def get_nvar_name(nvram: bytes, name_offset: int, isAscii: bool):
     if isAscii:
-        nend = nvram.find(b'\x00', name_offset)
-        name = nvram[name_offset:nend].decode('latin1')
-        name_size = len(name) + 1
-        return (name, name_size)
+        return get_nvar_name_ascii(nvram, name_offset)
     else:
-        nend = nvram.find(b'\x00\x00', name_offset)
-        name = nvram[name_offset:nend].decode('utf-16le')
-        name_size = len(name) + 2
-        return (name, name_size)
+        return get_nvar_name_utf(nvram, name_offset)
+
+def get_nvar_name_utf(nvram: bytes, name_offset: int):
+    nend = nvram.find(b'\x00\x00', name_offset)
+    if nend % 2 == 1:
+        nend += 1
+    name = nvram[name_offset:nend].decode('utf-16le')
+    name_size = len(name) + 2
+    return (name, name_size)
+    
+def get_nvar_name_ascii(nvram: bytes, name_offset: int):
+    nend = nvram.find(b'\x00', name_offset)
+    name = nvram[name_offset:nend].decode('latin1')
+    name_size = len(name) + 1
+    return (name, name_size)
 
 
 VARIABLE_SIGNATURE_VSS = VARIABLE_DATA_SIGNATURE
