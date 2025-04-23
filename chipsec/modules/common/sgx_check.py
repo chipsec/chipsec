@@ -42,12 +42,12 @@ Registers used:
     - IA32_DEBUG_INTERFACE.LOCK
     - MTRRCAP.PRMRR
     - PRMRR_VALID_CONFIG
-    - PRMRR_PHYBASE.PRMRR_base_address_fields
+    - PRMRR_PHYBASE.PRMRR_BASE_ADDRESS_FIELDS
     - PRMRR_PHYBASE.PRMRR_MEMTYPE
     - PRMRR_MASK.PRMRR_mask_bits
     - PRMRR_MASK.PRMRR_VLD
     - PRMRR_MASK.PRMRR_LOCK
-    - PRMRR_UNCORE_PHYBASE.PRMRR_base_address_fields
+    - PRMRR_UNCORE_PHYBASE.PRMRR_BASE_ADDRESS_FIELDS
     - PRMRR_UNCORE_MASK.PRMRR_mask_bits
     - PRMRR_UNCORE_MASK.PRMRR_VLD
     - PRMRR_UNCORE_MASK.PRMRR_LOCK
@@ -388,19 +388,19 @@ class sgx_check(BaseModule):
                 if self.valid_config_obj:
                     self.valid_config_new = self.valid_config_obj.read()
                     self.base_obj = self.cs.register.get_instance_by_name('PRMRR_PHYBASE', tid)
-                    self.base_new = self.base_obj.read_field('PRMRR_base_address_fields')
+                    self.base_new = self.base_obj.read_field('PRMRR_BASE_ADDRESS_FIELDS')
                     self.base_memtype_obj = self.cs.register.get_instance_by_name('PRMRR_PHYBASE', tid)
                     self.base_memtype_new = self.base_memtype_obj.read_field('PRMRR_MEMTYPE')
                     self.mask_obj = self.cs.register.get_instance_by_name('PRMRR_MASK', tid)
                     self.mask_obj.read()
-                    self.mask_new = self.mask_obj.get_field('PRMRR_mask_bits')
+                    self.mask_new = self.mask_obj.get_field('PRMRR_MASK_BITS')
                     self.mask_vld_new = self.mask_obj.get_field('PRMRR_VLD')
                     self.mask_lock_new = self.mask_obj.get_field('PRMRR_LOCK')
                     if self.check_uncore_vals:
                         self.uncore_base_obj = self.cs.register.get_instance_by_name('PRMRR_UNCORE_PHYBASE', tid)
-                        self.uncore_base_new = self.uncore_base_obj.read_field('PRMRR_base_address_fields', False)
+                        self.uncore_base_new = self.uncore_base_obj.read_field('PRMRR_BASE_ADDRESS_FIELDS', False)
                         self.uncore_mask_obj = self.cs.register.get_instance_by_name('PRMRR_UNCORE_MASK', tid)
-                        self.uncore_mask_new = self.uncore_mask_obj.read_field('PRMRR_mask_bits', False)
+                        self.uncore_mask_new = self.uncore_mask_obj.read_field('PRMRR_MASK_BITS', False)
                         self.uncore_mask_vld_new = self.uncore_mask_obj.read_field('PRMRR_VLD', False)
                         self.uncore_mask_lock_new = self.uncore_mask_obj.read_field('PRMRR_LOCK', False)
                     if self.logger.VERBOSE:
