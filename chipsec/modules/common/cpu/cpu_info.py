@@ -51,6 +51,7 @@ from typing import List
 TAGS = [CPU]
 METADATA_TAGS = ['OPENSOURCE', 'IA', 'COMMON', 'CPU', 'CPU_INFO']
 
+
 class cpu_info(BaseModule):
     def __init__(self):
         super(cpu_info, self).__init__()

@@ -34,6 +34,7 @@ from chipsec.hal.smbios import SMBIOS
 from chipsec.library.logger import print_buffer_bytes
 from chipsec.library.options import Options
 
+
 class smbios_cmd(BaseCommand):
 
     def requirements(self) -> toLoad:

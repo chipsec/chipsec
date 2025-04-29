@@ -107,10 +107,12 @@ class ReturnCode:
         self.resetReturnCodeValues()
         return ret_value
 
+
 def get_module_ids_dictionary() -> Dict[str, str]:
     with open(os.path.join(get_main_dir(), 'chipsec', 'library', 'module_ids.json'), 'r') as module_ids_file:
         module_ids = json.loads(module_ids_file.read())
     return module_ids
+
 
 def generate_hash_id(className: str) -> int:
     generated_id = sha256(className.encode("utf-8")).hexdigest()[:7]

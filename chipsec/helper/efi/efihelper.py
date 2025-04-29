@@ -47,6 +47,7 @@ from chipsec.library.exceptions import UnimplementedAPIError
 _tools = {
 }
 
+
 class EfiHelper(Helper):
 
     def __init__(self):
@@ -382,6 +383,7 @@ class EfiHelper(Helper):
 
     def retpoline_enabled(self) -> bool:
         return False
+
 
 def get_helper() -> EfiHelper:
     return EfiHelper()

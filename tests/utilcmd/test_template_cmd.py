@@ -29,6 +29,7 @@ from chipsec.library.file import get_main_dir
 from tests.utilcmd.run_chipsec_util import setup_run_destroy_util
 from chipsec.testcase import ExitCode
 
+
 class TestTemplateUtilcmd(unittest.TestCase):
     @unittest.skip("Template, not an actual test")
     def test_command(self) -> None:

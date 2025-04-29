@@ -29,6 +29,7 @@ from chipsec.library.file import get_main_dir
 from chipsec.testcase import ExitCode
 from tests.utilcmd.run_chipsec_util import setup_run_destroy_util
 
+
 class TestTpmUtilcmd(unittest.TestCase):
     def test_parse_log(self) -> None:
         pass

@@ -27,6 +27,7 @@ from chipsec.library.file import get_main_dir
 from chipsec.testcase import ExitCode
 from tests.modules.run_chipsec_module import setup_run_destroy_module_with_mock_logger
 
+
 class TestTglModules(unittest.TestCase):
     def setUp(self) -> None:
         self.folder_path = os.path.join(get_main_dir(), "tests", "modules", "tgl")

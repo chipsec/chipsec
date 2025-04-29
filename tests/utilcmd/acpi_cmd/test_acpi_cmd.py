@@ -31,6 +31,7 @@ from tests.utilcmd.run_chipsec_util import setup_run_destroy_util
 from chipsec.testcase import ExitCode
 from tests.software import mock_helper, util
 
+
 class TestAcpiUtilcmd(unittest.TestCase):
     def test_list(self) -> None:
         init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate.json")

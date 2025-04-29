@@ -182,6 +182,7 @@ class TestHelper(Helper):
     def retpoline_enabled(self) -> bool:
         return False
 
+
 class ACPIHelper(TestHelper):
     """Generic ACPI emulation
 
@@ -430,6 +431,7 @@ class InvalidChipsetHelper(TestHelper):
 
     def cpuid(self, eax, ecx):
         return 0xfffff, 0, 0, 0
+
 
 class InvalidPchHelper(TestHelper):
     def read_pci_reg(self, bus, device, function, address, size):
