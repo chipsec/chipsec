@@ -29,6 +29,7 @@ from chipsec.library.file import get_main_dir
 from tests.utilcmd.run_chipsec_util import setup_run_destroy_util
 from chipsec.testcase import ExitCode
 
+
 class TestMsrUtilcmd(unittest.TestCase):
     def test_read(self) -> None:
         init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate.json")

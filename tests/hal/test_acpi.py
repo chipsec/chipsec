@@ -21,6 +21,7 @@ from unittest.mock import MagicMock
 from chipsec.hal.acpi_tables import RSDP
 from chipsec.hal.acpi import ACPI
 
+
 class TestACPI(unittest.TestCase):
     def test_apci_read_rsdp(self):
         mock_cs = MagicMock()

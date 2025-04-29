@@ -42,6 +42,7 @@ from setuptools.command.build_ext import build_ext as _build_ext
 
 NO_DRIVER_MARKER_FILE = 'README.NO_KERNEL_DRIVER'
 
+
 def long_description():
     return open('README').read()
 

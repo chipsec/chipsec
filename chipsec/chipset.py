@@ -247,6 +247,7 @@ class Chipset:
 
 _chipset = None
 
+
 def cs():
     global _chipset
 

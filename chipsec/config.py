@@ -33,6 +33,7 @@ LOAD_COMMON = True
 
 PROC_FAMILY = {}
 
+
 class Cfg:
     def __init__(self):
         self.logger = logger()

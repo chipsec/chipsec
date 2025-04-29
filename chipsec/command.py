@@ -24,6 +24,7 @@ from chipsec.library.logger import logger
 from chipsec.library.defines import CHIPSET_CODE_UNKNOWN
 from chipsec.testcase import ExitCode
 
+
 class BaseCommand:
 
     def __init__(self, argv, cs=None):
@@ -58,6 +59,7 @@ class BaseCommand:
 
     def requirements(self) -> 'toLoad':
         raise NotImplementedError('sub class should overwrite the requirements() method')
+
 
 class toLoad(Enum):
     Nil = 0
