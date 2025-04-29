@@ -179,7 +179,7 @@ class UefiCompression:
 
         return data
 
-    def _decompress_unknown(self, compressed_data: bytes, compression_types: list[int]) -> bytes:
+    def _decompress_unknown(self, compressed_data: bytes, compression_types: List[int]) -> bytes:
         """ Attempt to decompress unknown EFI data """
 
         data: bytes = b''
