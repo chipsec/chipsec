@@ -58,7 +58,7 @@ https://cdrdv2.intel.com/v1/dl/getContent/636174
     <device name="SPI"     bus="0x00" dev="0x1F" fun="5" config="SPI.spi0.xml" >
       <subcomponent type="mmiobar" name="SPIBAR" register="SPIBAR0" base_field="MEMBAR" size="0x1000" desc="SPI mmio Range" config="SPI.spibar0.xml" />
     </device>
-    <device name="SPI"     bus="0x00" dev="0x1F" fun="5" config="SPI.descriptor0.xml" />
+    <!-- <device name="SPI"     bus="0x00" dev="0x1F" fun="5" config="SPI.descriptor0.xml" /> -->
 
     <device name="MEI1"  bus="0x0" dev="0x16" fun="0" did="0x51E0" config="ME.mei0.xml" />
     <device name="I2C0" bus="0x0" dev="0x15" fun="0" did="0x51E8" config="I2C.i2c.xml"/>

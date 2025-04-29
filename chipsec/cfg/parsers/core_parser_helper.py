@@ -100,7 +100,6 @@ class CoreParserHelper():
         bar_name = bus_attr['name']
         dev_name = bus_attr['device'] = bus_attr['device'] if 'device' in bus_attr else bus_attr['component'] if 'component' in bus_attr else stage_data.dev_name
         self.process_bar(stage_data.vid_str, bar_name, bus_attr, dest, cfg_obj)
-        # ret_val = (self._process_config(stage_data, dev_name, bus_attr))
         ret_val.extend(self.process_config_complex(stage_data, bar_name, dest[stage_data.vid_str][dev_name][bar_name], dev_name))
         hex_dict = make_dict_hex(bus_attr)
         self.logger.log_debug(f"    + {bus_attr['name']:16}: {hex_dict}")
@@ -126,6 +125,7 @@ class CoreParserHelper():
             bar_attr['ids'] = self.cfg.CONFIG_PCI[vid_str][bar_attr['device']].instances.values()
             bar_obj = cfg_obj(bar_attr)
             dest[vid_str][bar_attr['device']][bar_name] = bar_obj
+            self.cfg.platform.get_vendor(vid_str).get_ip(bar_attr['device']).add_bar(bar_name, bar_obj) # bar_list[bar_name] = bar_obj
 
     def make_reg_name(self, vid_str, device_name, reg_name):
         return '.'.join([vid_str, device_name, reg_name])

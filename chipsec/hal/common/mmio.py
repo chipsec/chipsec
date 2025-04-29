@@ -284,6 +284,8 @@ class MMIO(hal_base.HALBase):
         if bar.fixed_address and (base == reg_mask or base == 0):
             base = bar.fixed_address
             self.logger.log_hal('[mmio] Using fixed address for {}: 0x{:016X}'.format(bar_name, base))
+        if bar.offset:
+            base += bar.offset
         if bar.size:
             size = bar.size
         elif limit:

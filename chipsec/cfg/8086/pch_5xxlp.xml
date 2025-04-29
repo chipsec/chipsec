@@ -50,7 +50,7 @@ chipsec@intel.com
     <device name="SPI"    bus="0" dev="0x1F" fun="5" config="SPI.spi0.xml" >
       <subcomponent type="mmiobar" name="SPIBAR" register="SPIBAR0" base_field="MEMBAR" size="0x1000" desc="SPI mmio Range" config="SPI.spibar0.xml" />
     </device>
-    <device name="SPI"    bus="0" dev="0x1F" fun="5" config="SPI.descriptor0.xml" />
+    <!-- <device name="SPI"    bus="0" dev="0x1F" fun="5" config="SPI.descriptor0.xml" /> -->
   </pci>
 
   <io>

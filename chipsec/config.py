@@ -34,6 +34,7 @@ from chipsec.library.register import ObjList
 from chipsec.library.strings import make_hex_key_str
 from chipsec.parsers import Stage
 from chipsec.parsers import stage_info, config_data
+from chipsec.cfg.parsers.ip.platform import Platform, Vendor
 from chipsec.cfg.parsers.ip.pci_device import PCIConfig
 
 
@@ -51,7 +52,7 @@ class Cfg:
         for key in self.parent_keys + self.child_keys:
             setattr(self, key, {})
         self.XML_CONFIG_LOADED = False
-
+        self.platform = Platform()
         self.proc_dictionary = {}
         self.proc_codes = set()
         self.pch_dictionary = {}
@@ -99,6 +100,9 @@ class Cfg:
                     continue
                 mdict = getattr(self, key)
                 mdict[vid_str] = {}
+
+        if vid_str not in self.platform.vendor_list:
+            self.platform.add_vendor(Vendor(vid_str))
 
     ###
     # PCI device tree enumeration
@@ -320,7 +324,7 @@ class Cfg:
                 return parser.parser_name()
 
     def _load_sec_configs(self, load_list, stage):
-        stage_str = 'core' if stage == Stage.CORE_SUPPORT else 'custom'
+        stage_str = 'core' if stage in [Stage.CORE_SUPPORT, Stage.REGISTER] else 'custom'
         cfg_handlers = self._get_stage_parsers(stage)
         if not load_list or not cfg_handlers:
             return
@@ -485,6 +489,7 @@ class Cfg:
                     for node in config_root.iter(tag):
                         sec_load_list.extend(tag_handlers[tag](node, fxml))
         self._load_sec_configs(sec_load_list, Stage.CORE_SUPPORT)
+        self._load_sec_configs(sec_load_list, Stage.REGISTER)
         self._load_sec_configs(sec_load_list, Stage.CUST_SUPPORT)
         if self.load_extra:
             self._load_sec_configs(self.load_extra, Stage.EXTRA)
@@ -547,6 +552,10 @@ class Cfg:
                             self.__add_obj_to_regdef(reg_def, objdict[dict_vid][dict_parent])
 
         return reg_def
+    
+    def get_scopelist_from_full_name(self, full_name):
+        return full_name.split('.')
+    
 
     # TODO: Review for correctness compared to chipsec/library/control.py:get_list_by_name()
     # def get_control_obj(self, control_name, instance=None):
