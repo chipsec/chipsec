@@ -43,6 +43,7 @@ Registers used:
 
 """
 
+from chipsec.library.register import ObjList
 from chipsec.module_common import BaseModule, HWCONFIG, SMM
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.defines import BIT32, ALIGNED_1MB
@@ -61,12 +62,12 @@ class remap(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.cs.set_scope({
-            None: "8086.HOSTCTL",
+            None: "8086.HOSTCTL*",
             'MSR_BIOS_DONE': "8086.MSR",
             'IA_UNTRUSTED': "8086.MSR",
-            'IBECC_ACTIVATE': "8086.HOSTCTL",
-            'REMAPBASE': "8086.HOSTCTL",
-            'REMAPLIMIT': "8086.HOSTCTL"
+            'IBECC_ACTIVATE': "8086.HOSTCTL*",
+            'REMAPBASE': "8086.HOSTCTL*",
+            'REMAPLIMIT': "8086.HOSTCTL*"
         })
 
     def is_supported(self) -> bool:
@@ -98,7 +99,11 @@ class remap(BaseModule):
 
     def check_remap_config(self) -> int:
         is_warning = False
-
+        # breakpoint() # Testing code for the new Cfg.platform object structure.
+        # tmp = self.cs.Cfg.platform.get_matches_from_scope('8086.HOSTCTL.MCHBAR*')
+        # tmp2 = ObjList(tmp[0].REMAPBASE + tmp[1].REMAPBASE)
+        # tmp3 = self.cs.Cfg.platform.get_matches_from_scope('8086.HOSTCTL.MCHBAR*.REMAPBASE')
+        # tmp4 = self.cs.Cfg.platform.get_register_matches_from_scope('8086.HOSTCTL.MCHBAR*.REMAPBASE')
         remapbase_reg = self.cs.register.get_list_by_name('REMAPBASE')[0]
         remapbase = remapbase_reg.read()
         remaplimit_reg = self.cs.register.get_list_by_name('REMAPLIMIT')[0]

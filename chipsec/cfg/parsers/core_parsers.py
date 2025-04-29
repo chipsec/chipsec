@@ -19,6 +19,7 @@
 
 import copy
 import os
+from chipsec.cfg.parsers.ip.platform import Platform, IP, Vendor
 from chipsec.cfg.parsers.ip.iobar import IOBarConfig
 from chipsec.cfg.parsers.ip.io import IOConfig
 from chipsec.cfg.parsers.ip.memory import MemoryConfig
@@ -39,6 +40,7 @@ from chipsec.cfg.parsers.registers.msgbus import MSGBUSRegisters #
 from chipsec.cfg.parsers.registers.msr import MSRRegisters #
 from chipsec.cfg.parsers.registers.pci import PCIRegisters #pcicfg
 from chipsec.cfg.parsers.core_parser_helper import config_convert_data as _config_convert_data, CoreParserHelper
+from chipsec.library.exceptions import CSConfigError
 from chipsec.parsers import BaseConfigParser
 from chipsec.parsers import Stage
 from chipsec.parsers import info_data, config_data
@@ -46,11 +48,6 @@ from chipsec.library.display import make_dict_hex
 from chipsec.library.strings import make_hex_key_str
 
 CONFIG_TAG = 'configuration'
-
-
-
-
-
 
 
 class PlatformInfo(BaseConfigParser):
@@ -133,7 +130,7 @@ class DevConfig(BaseConfigParser):
         return Stage.DEVICE_CFG
 
     def _process_pci_dev(self, vid_str, dev_name, dev_attr):
-        
+        obj = None
         if dev_name in self.cfg.CONFIG_PCI[vid_str] and 'config' in dev_attr:
             self.cfg.CONFIG_PCI[vid_str][dev_name].add_config(dev_attr['config'])
         if 'did' in dev_attr:
@@ -141,7 +138,7 @@ class DevConfig(BaseConfigParser):
                 did_str = make_hex_key_str(did)
                 if vid_str in self.cfg.CONFIG_PCI_RAW and did_str in self.cfg.CONFIG_PCI_RAW[vid_str]:
                     cfg_data = self.cfg.CONFIG_PCI_RAW[vid_str][did_str]
-                    self._add_dev(vid_str, dev_name, cfg_data, dev_attr)
+                    obj = self._add_dev(vid_str, dev_name, cfg_data, dev_attr)
                     break
         elif set (['bus', 'dev', 'fun']).issubset(dev_attr.keys()):
             if vid_str in self.cfg.CONFIG_PCI_RAW:
@@ -150,10 +147,13 @@ class DevConfig(BaseConfigParser):
                         if any(b == pci_data.bus for b in dev_attr['bus']) and dev_attr['dev'] == pci_data.dev and \
                         dev_attr['fun'] == pci_data.fun:
                             cfg_data = self.cfg.CONFIG_PCI_RAW[vid_str][did_str]
-                            self._add_dev(vid_str, dev_name, cfg_data, dev_attr)
+                            obj = self._add_dev(vid_str, dev_name, cfg_data, dev_attr)
                             break
         if dev_name not in self.cfg.CONFIG_PCI[vid_str]:
-            self._add_dev(vid_str, dev_name, None, dev_attr)
+            obj = self._add_dev(vid_str, dev_name, None, dev_attr)
+
+        if dev_name not in self.cfg.platform.get_vendor(vid_str).ip_list:
+            self.cfg.platform.get_vendor(vid_str).add_ip(dev_name, obj)
 
     def _add_dev(self, vid_str, name, pci_info, dev_attr):
         if name not in self.cfg.CONFIG_PCI[vid_str]:
@@ -175,15 +175,18 @@ class DevConfig(BaseConfigParser):
             if 'config' in dev_attr:
                 pci_obj.add_config(dev_attr['config'])
             self.cfg.CONFIG_PCI[vid_str][name] = pci_obj
+        return self.cfg.CONFIG_PCI[vid_str][name]
 
 
     
-
+    def _add_ip(self, vid_str, ip_name, ip_obj = None):
+        if ip_name not in self.cfg.platform.get_vendor(vid_str).ip_list:
+            self.cfg.platform.get_vendor(vid_str).add_ip(ip_name, ip_obj)
 
     def _process_def(self, dest, et_node, tag, stage_data, cfg_obj):
         ret_val = []
         vid_str = stage_data.vid_str
-
+        
         for node in et_node.iter(tag):
             node_attr = _config_convert_data(node)
             if 'name' not in node_attr or 'config' not in node_attr:
@@ -193,6 +196,7 @@ class DevConfig(BaseConfigParser):
                 print(dest, cfg_obj)
                 new_obj = cfg_obj(copy.deepcopy(node_attr))
                 dest[vid_str][dev_name] = new_obj
+                self._add_ip(vid_str, dev_name, new_obj)
             else: # Q: This else doesn't seem right to me.
                 mobj = dest[vid_str][dev_name]
                 mobj.add_config(node_attr['config'])
@@ -255,14 +259,10 @@ class DevConfig(BaseConfigParser):
     
 
     def handle_mmio_subcomponent(self, et_node, stage_data):
-        dest = self.cfg.MMIO_BARS
-        return self.parser_helper.handle_bar(et_node, stage_data, dest, MMIOBarConfig)
-        # return self._process_config_complex(stage_data, bar_name, dest[stage_data.vid_str][dev_name][bar_name], dev_name)
+        return self.parser_helper.handle_bar(et_node, stage_data, self.cfg.MMIO_BARS, MMIOBarConfig)
     
     def handle_io_subcomponent(self, et_node, stage_data):
-        dest = self.cfg.IO_BARS
-        return self.parser_helper.handle_bar(et_node, stage_data, dest, IOBarConfig)
-        # return self._process_config_complex(stage_data, bar_name, dest[stage_data.vid_str][dev_name][bar_name], dev_name)
+        return self.parser_helper.handle_bar(et_node, stage_data, self.cfg.IO_BARS, IOBarConfig)
 
     def handle_mmiobar(self, et_node, stage_data):
         return self.parser_helper.handle_bars(et_node, stage_data, self.cfg.MMIO_BARS, MMIOBarConfig)
@@ -272,7 +272,7 @@ class DevConfig(BaseConfigParser):
 
 
 
-class CoreConfig(BaseConfigParser):
+class CoreConfigRegisters(BaseConfigParser):
     def __init__(self, cfg_obj):
         super().__init__(cfg_obj)
         self.parser_helper = CoreParserHelper(cfg_obj)
@@ -281,17 +281,17 @@ class CoreConfig(BaseConfigParser):
         return {'ima': self.handle_ima,
                 'registers': self.handle_registers,
                 'controls': self.handle_controls,
-                'locks': self.handle_locks,
-                'mmio': self.handle_mmio,
-                'io': self.handle_io}
+                'locks': self.handle_locks}
 
     def get_stage(self):
-        return Stage.CORE_SUPPORT
+        return Stage.REGISTER
 
     def _make_reg_name(self, stage_data, reg_name, override=False):
-        if hasattr(stage_data, "component") and stage_data.component is not None and override:
-            return '.'.join([stage_data.vid_str, stage_data.component, reg_name])
-        return '.'.join([stage_data.vid_str, stage_data.dev_name, reg_name])
+        devicename = self._get_parent_name(stage_data)
+        return '.'.join([stage_data.vid_str, devicename, reg_name])
+    
+    def _make_ip_name(self, stage_data):
+        return '.'.join([stage_data.vid_str, stage_data.dev_name])
 
     def _get_parent_name(self, stage_data):
         if hasattr(stage_data, "component") and stage_data.component is not None:
@@ -348,7 +348,12 @@ class CoreConfig(BaseConfigParser):
             elif reg_attr['type'] in ['memory']:
                 reg_attr['range'] = stage_data.dev_name
             elif reg_attr['type'] in ['mmio', 'iobar']:
-                reg_attr['bar'] = self._make_reg_name(stage_data, reg_attr['bar'], True)
+                try:
+                    barname = self._make_reg_name(stage_data, stage_data.dev_name, True)
+                    self.cfg.platform.get_obj_from_scope(barname)
+                except CSConfigError:
+                    barname = self._make_reg_name(stage_data, reg_attr['bar'], True)
+                reg_attr['bar'] = barname
             if 'size' not in reg_attr:
                 self.logger.log_hal(f'Error missing size within {reg_attr}')
 
@@ -386,14 +391,19 @@ class CoreConfig(BaseConfigParser):
             # Store all register data
             reg_attr['FIELDS'] = reg_fields
             reg_attr.update(stage_data.attrs)
+            parentobj = None
             if reg_attr['type'] == 'pcicfg':
                 reg_obj = self.create_register_object_with_pointer(PCIRegisters, reg_attr)
+                parentobj = self.cfg.platform.get_obj_from_scope(self._make_ip_name(stage_data))
             elif reg_attr['type'] == 'mmcfg':
                 reg_obj = self.create_register_object_with_pointer(MMCFGRegisters, reg_attr)
+                parentobj = self.cfg.platform.get_obj_from_scope(self._make_ip_name(stage_data))
             elif reg_attr['type'] == 'mmio':
                 reg_obj = self.create_register_object_bar(MMIORegisters, reg_attr)
+                parentobj = self.cfg.platform.get_obj_from_scope(reg_attr['bar'])
             elif reg_attr['type'] == 'iobar':
                 reg_obj = self.create_register_object_bar(IOBARRegisters, reg_attr)
+                parentobj = self.cfg.platform.get_obj_from_scope(reg_attr['bar'])
             elif reg_attr['type'] == 'msr':
                 threads_to_use = None
                 if 'scope' in reg_attr.keys():
@@ -406,18 +416,27 @@ class CoreConfig(BaseConfigParser):
                 if threads_to_use is None:
                     threads_to_use = range(self.cfg.CPU['threads'])
                 reg_obj = self.create_register_object(MSRRegisters, reg_attr, threads_to_use)
+                parentobj = self.cfg.platform.get_obj_from_scope(self._make_ip_name(stage_data))
             elif reg_attr['type'] == 'io':
                 reg_obj = self.create_register_object(IORegisters, reg_attr, [None])
+                parentobj = self.cfg.platform.get_obj_from_scope(self._make_ip_name(stage_data))
             elif reg_attr['type'] == 'msgbus':
                 reg_obj = self.create_register_object(MSGBUSRegisters, reg_attr, [None])
+                parentobj = self.cfg.platform.get_obj_from_scope(self._make_ip_name(stage_data))
             elif reg_attr['type'] == 'mm_msgbus':
                 reg_obj = self.create_register_object(MM_MSGBUSRegisters, reg_attr, [None])
+                parentobj = self.cfg.platform.get_obj_from_scope(self._make_ip_name(stage_data))
             elif reg_attr['type'] == 'memory':
                 reg_obj = self.create_register_object_with_pointer(MEMORYRegisters, reg_attr)
+                parentobj = self.cfg.platform.get_obj_from_scope(self._make_ip_name(stage_data))
             else:
                 self.logger.log("Did not create register object for:")
                 self.logger.log(reg_attr)
                 continue
+            if parentobj:
+                parentobj.add_register(reg_name, reg_obj)
+            else:
+                self.logger.log_debug(f"[*] No parent object found for {reg_name}")
             self.cfg.REGISTERS[stage_data.vid_str][parent_name][reg_name] = reg_obj
             hex_dict = make_dict_hex(reg_attr)
             fullname = '.'.join([stage_data.vid_str, parent_name, reg_name])
@@ -447,8 +466,6 @@ class CoreConfig(BaseConfigParser):
             attrs = _config_convert_data(node)
             regs = []
             name = attrs['name']
-            # if name == "FlashLockDown":
-            #     breakpoint()
             parent = self._get_parent_name(stage_data)
             if attrs['register'] in self.cfg.REGISTERS[stage_data.vid_str][parent]:
                 regs.extend(self.cfg.REGISTERS[stage_data.vid_str][parent][attrs['register']])
@@ -483,12 +500,25 @@ class CoreConfig(BaseConfigParser):
                 retval.append(None)
         return retval
     
+
+class CoreConfigBars(BaseConfigParser):
+    def __init__(self, cfg_obj):
+        super().__init__(cfg_obj)
+        self.parser_helper = CoreParserHelper(cfg_obj)
+
+    def get_metadata(self):
+        return {'mmio': self.handle_mmio,
+                'io': self.handle_io}
+
+    def get_stage(self):
+        return Stage.CORE_SUPPORT
+
+    
     def handle_mmio(self, et_node, stage_data):
         return self.parser_helper.handle_bars(et_node, stage_data, self.cfg.MMIO_BARS, MMIOBarConfig)
 
     def handle_io(self, et_node, stage_data):
         return self.parser_helper.handle_bars(et_node, stage_data, self.cfg.IO_BARS, IOBarConfig)
-    
 
 
-parsers = [PlatformInfo, DevConfig, CoreConfig]
+parsers = [PlatformInfo, DevConfig,CoreConfigRegisters, CoreConfigBars]

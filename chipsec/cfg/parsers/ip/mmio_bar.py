@@ -18,6 +18,7 @@
 # chipsec@intel.com
 
 from chipsec.cfg.parsers.ip.generic import GenericConfig
+from chipsec.cfg.parsers.ip.platform import RegisterList
 
 
 class MMIOObj:
@@ -31,9 +32,10 @@ class MMIOObj:
         return f'instance: {self.instance}, base: {basestr}'
 
 
-class MMIOBarConfig(GenericConfig):
+class MMIOBarConfig(GenericConfig, RegisterList):
     def __init__(self, cfg_obj):
-        super(MMIOBarConfig, self).__init__(cfg_obj)
+        GenericConfig.__init__(self, cfg_obj)
+        RegisterList.__init__(self)
         self.device = cfg_obj['device'] if 'device' in cfg_obj else cfg_obj['component'] if 'component' in cfg_obj else None
         self.register = cfg_obj['register']
         self.base_field = cfg_obj['base_field']
@@ -44,6 +46,7 @@ class MMIOBarConfig(GenericConfig):
         self.reg_alignh = cfg_obj['reg_alignh'] if 'reg_alignh' in cfg_obj else None
         self.baseh_field = cfg_obj['baseh_field'] if 'baseh_field' in cfg_obj else None
         self.registertype = cfg_obj['registertype'] if 'registertype' in cfg_obj else None
+        self.offset = cfg_obj['offset'] if 'offset' in cfg_obj else 0
         self.mmio_base = cfg_obj['mmio_base'] if 'mmio_base' in cfg_obj else None
         self.mmio_align = cfg_obj['mmio_align'] if 'mmio_align' in cfg_obj else None
         self.limit_field = cfg_obj['limit_field'] if 'limit_field' in cfg_obj else None

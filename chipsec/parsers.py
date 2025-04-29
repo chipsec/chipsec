@@ -26,6 +26,7 @@ class Stage(Enum):
     NONE = 0
     GET_INFO = 10
     DEVICE_CFG = 20
+    REGISTER = 21
     CORE_SUPPORT = 30
     CUST_SUPPORT = 40
     EXTRA = 50

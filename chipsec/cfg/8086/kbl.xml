@@ -34,7 +34,7 @@ chipsec@intel.com
     <device name="P2SBC"   bus="0x00" dev="0x1F" fun="1" config="P2SB.p2sbc0.xml" />
     <device name="SMBUS"   bus="0x00" dev="0x1F" fun="4" config="SMBUS.smbus0.xml" />
     <device name="SPI"     bus="0x00" dev="0x1F" fun="5" config="SPI.spi0.xml" />
-    <device name="SPI"     bus="0x00" dev="0x1F" fun="5" config="SPI.descriptor0.xml" />
+    <!-- <device name="SPI"     bus="0x00" dev="0x1F" fun="5" config="SPI.descriptor0.xml" /> -->
   </pci>
 
   <msr>
