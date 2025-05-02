@@ -29,6 +29,7 @@ from tests.helpers.helper_utils import packer
 
 # assuming 64 bit system. Will break on 32bit system. (would need to swap Q > I in pack())
 
+
 @patch('chipsec.helper.linux.linuxhelper.fcntl.ioctl')
 @patch('chipsec.helper.linux.linuxhelper.fcntl')
 class LinuxHelperTest(unittest.TestCase):

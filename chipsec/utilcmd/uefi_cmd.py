@@ -296,9 +296,9 @@ class UEFICommand(BaseCommand):
             return
 
         _orig_logname = self.logger.LOG_FILE_NAME
-        self.logger.set_log_file( (self.romfilename + '.nv.lst'), False)
-        parse_EFI_variables( self.romfilename, rom, authvars, self.fwtype )
-        self.logger.set_log_file( _orig_logname )
+        self.logger.set_log_file((self.romfilename + '.nv.lst'), False)
+        parse_EFI_variables(self.romfilename, rom, authvars, self.fwtype )
+        self.logger.set_log_file(_orig_logname )
 
     def nvram_auth(self):
         authvars = 1
@@ -313,9 +313,9 @@ class UEFICommand(BaseCommand):
             return
 
         _orig_logname = self.logger.LOG_FILE_NAME
-        self.logger.set_log_file( (self.romfilename + '.nv.lst'), False)
-        parse_EFI_variables( self.romfilename, rom, authvars, self.fwtype )
-        self.logger.set_log_file( _orig_logname )
+        self.logger.set_log_file((self.romfilename + '.nv.lst'), False)
+        parse_EFI_variables(self.romfilename, rom, authvars, self.fwtype )
+        self.logger.set_log_file(_orig_logname )
 
     def decode(self):
         if not os.path.exists(self.filename):
@@ -335,7 +335,7 @@ class UEFICommand(BaseCommand):
                         ftypes.append(inv_filetypes[mtype])
                     break
         decode_uefi_region(cur_dir, self.filename, self.fwtype, ftypes)
-        self.logger.set_log_file( _orig_logname )
+        self.logger.set_log_file(_orig_logname )
 
     def keys(self):
         if not os.path.exists(self.filename):

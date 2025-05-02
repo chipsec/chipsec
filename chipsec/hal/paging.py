@@ -41,6 +41,7 @@ ADDR_1GB = 0xFFFFFFFFC0000000 & MAXPHYADDR
 
 TranslationType = Dict[int, Dict[str, Any]]  # TODO: TypedDict (PEP589)
 
+
 class c_translation:
 
     def __init__(self):

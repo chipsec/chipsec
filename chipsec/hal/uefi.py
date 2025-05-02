@@ -47,6 +47,7 @@ from chipsec.helper.oshelper import OsHelperError
 #
 ########################################################################################################
 
+
 def parse_script(script: bytes, log_script: bool = False) -> List['S3BOOTSCRIPT_ENTRY']:
     off = 0
     entry_type = 0
@@ -162,6 +163,7 @@ def get_attr_string(attr: int) -> str:
     if IS_VARIABLE_ATTRIBUTE(attr, EFI_VARIABLE_APPEND_WRITE):
         attr_str = f'{attr_str}AW+'
     return attr_str[:-1].lstrip()
+
 
 def print_efi_variable(offset: int, var_buf: bytes, var_header: 'EfiTableType', var_name: str, var_data: bytes, var_guid: str, var_attrib: int) -> None:
     logger().log('\n--------------------------------')

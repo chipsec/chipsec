@@ -29,6 +29,7 @@ from unittest.mock import patch
 from tests.utilcmd.run_chipsec_util import setup_run_destroy_util_get_log_output
 from chipsec.testcase import ExitCode
 
+
 class TestVmemUtilCmd(unittest.TestCase):
     def test_readval(self) -> None:
         init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate.json")

@@ -17,6 +17,8 @@
 #
 
 from struct import pack
+
+
 class packer():
     def __init__(self, default_size_char = 'Q') -> None:
         self.size_char = default_size_char

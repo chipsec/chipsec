@@ -27,6 +27,7 @@ from chipsec.library.returncode import ModuleResult
 from chipsec.library.file import get_main_dir
 from tests.modules.run_chipsec_module import setup_run_destroy_module
 
+
 class TestSgxCheck(unittest.TestCase):
     def test_sgx_check_warning(self) -> None:
         init_replay_file = os.path.join(get_main_dir(), "tests", "modules", "adlenumerate.json")

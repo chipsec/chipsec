@@ -24,6 +24,7 @@ JEDED ID : Manufacturers and Device IDs
 
 from typing import Dict
 
+
 class JEDEC_ID:
 
     MANUFACTURER: Dict[int, str] = {0xEF: 'Winbond',

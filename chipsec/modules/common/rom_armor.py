@@ -43,6 +43,7 @@ METADATA_TAGS = ['OPENSOURCE', 'IA', 'COMMON', 'ROM_ARMOR']
 SMU_PSP_SMN_BASE = 0x3800000
 SMU_PSP_MBOX_CMD_STATUS = 0x00010970
 
+
 class rom_armor(BaseModule):
 
     def __init__(self):

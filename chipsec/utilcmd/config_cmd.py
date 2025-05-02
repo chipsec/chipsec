@@ -33,6 +33,7 @@ from argparse import ArgumentParser
 from chipsec.command import BaseCommand, toLoad
 from typing import Any, Dict
 
+
 class CONFIGCommand(BaseCommand):
 
     def requirements(self) -> toLoad:

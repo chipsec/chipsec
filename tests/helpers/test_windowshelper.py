@@ -27,6 +27,8 @@ from tests.helpers.helper_utils import packer
 
 DEBUG = False  # Set to True to print the args passed to the driver
 DRIVER_HANDLE = '12345'
+
+
 class pcibdf_sideeffect():
     def __init__(self, b, d, f, o) -> None:
         self.BUS = b
@@ -34,12 +36,14 @@ class pcibdf_sideeffect():
         self.FUNC = f
         self.OFF = o
 
+
 def print_args(args):
     for i in args:
         if type(i) is int:
             print(hex(i))
         else:
             print(i)
+
 
 @patch('chipsec.helper.windows.windowshelper.win32file.CreateFile')
 @patch('chipsec.helper.windows.windowshelper.win32file.DeviceIoControl')

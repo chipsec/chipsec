@@ -254,5 +254,6 @@ class ReplayHelper(Helper):
     def retpoline_enabled(self) -> bool:
         return self._get_element_eval("retpoline_enabled", ())
 
+
 def get_helper():
     return ReplayHelper()

@@ -33,6 +33,7 @@ from chipsec.library.logger import logger
 
 EventType = TypeVar('EventType', bound='TcgPcrEvent')
 
+
 class TcgPcrEvent:
     """An Event (TPM 1.2 format) as recorded in the SML."""
 

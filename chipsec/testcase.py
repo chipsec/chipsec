@@ -55,6 +55,7 @@ class ExitCode:
 
 """
 
+
 class TestCase:
     def __init__(self, name: str) -> None:
         self.name = name
@@ -229,6 +230,7 @@ class ChipsecResults:
             ret_string += ''.join(destination[result])
         return ret_string
 
+
 class LegacyResults(ChipsecResults):
     def print_summary(self, runtime: Optional[float] = None) -> None:
         summary = self.order_summary()
@@ -305,6 +307,7 @@ class LegacyResults(ChipsecResults):
             if len(summary[result]) != 0:
                 return destination[result]
         return ExitCode.OK
+
 
 class ReturnCodeResults(ChipsecResults):
     def print_summary(self, runtime: Optional[float] = None) -> None:

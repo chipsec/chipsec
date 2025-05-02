@@ -36,6 +36,7 @@ from chipsec.command import BaseCommand, toLoad
 import chipsec.library.result_deltas
 from chipsec.library.options import Options
 
+
 class DeltasCommand(BaseCommand):
 
     def requirements(self) -> toLoad:

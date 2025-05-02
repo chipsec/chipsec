@@ -24,6 +24,7 @@ from unittest.mock import MagicMock, patch
 from chipsec.hal.smbus import SMBus, SMBUS_POLL_COUNT
 from chipsec.library.exceptions import IOBARNotFoundError, RegisterNotFoundError
 
+
 class TestSMBUS(unittest.TestCase):
     @patch("chipsec.hal.smbus.iobar")
     def test_get_SMBus_Base_Address_valid_base(self, mock_iobar):

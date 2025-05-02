@@ -110,6 +110,7 @@ VAR_IN_DELETED_TRANSITION = 0xfe  # Variable is in obsolete transition
 VAR_DELETED = 0xfd  # Variable is obsolete
 VAR_ADDED = 0x7f  # Variable has been completely added
 
+
 def IS_VARIABLE_STATE(_c: int, _Mask: int) -> bool:
     return ((((~_c) & 0xFF) & ((~_Mask) & 0xFF)) != 0)
 
@@ -165,6 +166,7 @@ VARIABLE_STORE_FORMATTED = 0x5a
 VARIABLE_STORE_HEALTHY = 0xfe
 
 NvStore = Tuple[int, int, None]
+
 
 def _getNVstore_EFI(nvram_buf: bytes, efi_type: str) -> NvStore:
     l = (-1, -1, None)
@@ -565,6 +567,7 @@ DataSize   : 0x{self.DataSize:08X}
 Unknown    : 0x{self.unknown:08X}
 """
 
+
 def _getNVstore_VSS(nvram_buf: bytes, vss_type) -> Tuple[int, int, Union[VARIABLE_STORE_HEADER_VSS, VARIABLE_STORE_HEADER_VSS2, None]]:
     if vss_type == FWType.EFI_FW_TYPE_VSS2:
         sign = VARIABLE_STORE_SIGNATURE_VSS2
@@ -782,6 +785,7 @@ def getNVstore_EVSA(nvram_buf: bytes) -> NvStore:
                 l = (fv.Offset + nvram_start, fv.Size - nvram_start, None)
         fv = NextFwVolume(nvram_buf, fv.Offset, fv.Size)
     return l
+
 
 def EFIvar_EVSA(nvram_buf: bytes) -> Dict[str, List[EfiVariableType]]:
     image_size = len(nvram_buf)

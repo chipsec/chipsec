@@ -24,6 +24,7 @@
 import time
 from chipsec.library.logger import logger
 
+
 class PSP:
     SMN_INDEX_ADDR = 0xb8
     SMN_DATA_ADDR = 0xbc

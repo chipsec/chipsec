@@ -29,6 +29,7 @@ from chipsec.library.file import get_main_dir
 from tests.utilcmd.run_chipsec_util import setup_run_destroy_util
 from chipsec.testcase import ExitCode
 
+
 class TestConfigUtilcmd(unittest.TestCase):
     def test_show_all(self) -> None:
         init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate.json")

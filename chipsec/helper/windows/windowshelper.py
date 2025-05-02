@@ -882,7 +882,7 @@ class WindowsHelper(Helper):
     def msgbus_send_read_message(self, mcr, mcrx):
         raise UnimplementedAPIError("msgbus_send_read_message")
 
-    def msgbus_send_write_message( self, mcr, mcrx, mdr):
+    def msgbus_send_write_message(self, mcr, mcrx, mdr):
         raise UnimplementedAPIError("msgbus_send_write_message")
 
     def msgbus_send_message(self, mcr, mcrx, mdr):

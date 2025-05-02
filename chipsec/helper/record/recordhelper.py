@@ -269,6 +269,7 @@ class RecordHelper(Helper):
     def retpoline_enabled(self) -> bool:
         return self._call_subhelper()
 
+
 def get_helper():
     return RecordHelper()
 
