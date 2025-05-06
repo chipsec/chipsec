@@ -42,7 +42,7 @@ class TestTxtUtilcmd(unittest.TestCase):
         # init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate.json")
         init_replay_file = os.path.join(get_main_dir(), "tests", "modules", "tgl", "tglenumeration.json")
 
-        txt_state_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "txt_cmd", "txt_cmd_state_2.json")
+        txt_state_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "txt_cmd", "txt_cmd_state_1.json")
         retval,log = setup_run_destroy_util_get_log_output(init_replay_file, "txt", "state", util_replay_file=txt_state_replay_file)
         if retval != ExitCode.OK:
             print(log)
