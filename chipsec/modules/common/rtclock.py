@@ -59,7 +59,7 @@ class rtclock(BaseModule):
         self.test_offset = 0x38
         self.test_value = 0xAA
         self.cs.set_scope({
-            "RC": "8086.RTC.RC",
+            "RC": "8086.RTC",
         })
 
     def is_supported(self) -> bool:

@@ -56,8 +56,8 @@ class debugenabled(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.cs.set_scope({
-            "ECTRL": "8086.DCI.ECTRL",
-            "IA32_DEBUG_INTERFACE": "8086.MSR.IA32_DEBUG_INTERFACE"
+            "ECTRL": "8086.DCI",
+            "IA32_DEBUG_INTERFACE": "8086.MSR"
         })
         self.is_enable_set = False
         self.is_debug_set = False
