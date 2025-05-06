@@ -19,10 +19,8 @@
 #
 
 
-# from chipsec.library.logger import logger
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 from chipsec.cfg.parsers.ip.pci_device import PCIConfig
-from chipsec.library.exceptions import CSFirstNotFoundError, CSBusNotFoundError, DeviceNotFoundError
 
 
 class Device:
@@ -40,53 +38,9 @@ class Device:
         devices = self.cs.Cfg.get_objlist(device_name)
         return [ip.obj for ip in devices]
 
-    # def get_first_bus(self, device: dict) -> int:
-    #     """Retrieves first value in bus list for PCI device"""
-    #     if 'bus' in device:
-    #         return self.get_first(device['bus'])
-    #     raise CSBusNotFoundError()
-
-    # def get_first(self, a_list: Union[list, int]) -> int:
-    #     """Returns received integer or first item from received list"""
-    #     if type(a_list) is int:
-    #         return a_list
-    #     if type(a_list) is list:
-    #         return a_list[0]
-    #     raise CSFirstNotFoundError()
-
-    # def get_BDF(self, device_name: str) -> Tuple[int, int, int]:
-    #     """Retrieves bus, device, and function values from PCI device"""
-    #     scope = self.cs.Cfg.get_scope(device_name)
-    #     vid, device, _, _ = self.cs.Cfg.convert_internal_scope(scope, device_name)
-    #     try:
-    #         device = self.cs.Cfg.CONFIG_PCI[vid][device]
-    #     except KeyError:
-    #         device = None
-    #     if device is None or device == {}:
-    #         raise DeviceNotFoundError(f'DeviceNotFound: {device_name}')
-    #     b = device['bus']
-    #     d = device['dev']
-    #     f = device['fun']
-    #     return (b, d, f)
-
-    # def get_VendorID(self, device_name: str) -> Tuple[int, int]:
-    #     """Retrieves device ID and vendor ID from the PCI device"""
-    #     (b, d, f) = self.get_BDF(device_name)
-    #     return self.cs.hals.Pci.get_DIDVID(b, d, f)
-
-    # def is_enabled(self, device_name: str) -> bool:
-    #     """Checks if PCI device is enabled"""
-    #     if self.is_defined(device_name):
-    #         (b, d, f) = self.get_BDF(device_name)
-    #         return self.cs.hals.Pci.is_enabled(b, d, f)
-    #     return False
-
     def is_defined(self, device_name: str) -> bool:
         """Checks if device is defined in the XML config"""
         return self.get_list_by_name(device_name) is not None
-        # scope = self.cs.Cfg.get_scope(device_name)
-        # vid, device, _, _ = self.cs.Cfg.convert_internal_scope(scope, device_name)
-        # return self.cs.Cfg.CONFIG_PCI[vid].get(device, None) is not None
 
     def get_bus(self, device_name: str) -> List[int]:
         """Retrieves bus value(s) from PCI device"""
@@ -96,39 +50,6 @@ class Device:
             for instance_key in dev.instances.keys():
                 buses.append(dev.instances[instance_key].bus)
         return buses
-
-        # scope = self.cs.Cfg.get_scope(device_name)
-        # vid, device, _, _ = self.cs.Cfg.convert_internal_scope(scope, device_name)
-        # if vid in self.cs.Cfg.CONFIG_PCI and device in self.cs.Cfg.CONFIG_PCI[vid]:
-        #     return self.cs.Cfg.CONFIG_PCI[vid][device].bus
-        # else:
-        #     return []
-
-        # buses = self.cs.Cfg.BUS.get(device_name, [])
-        # if buses:
-        #     if logger().DEBUG:
-        #         logger().log_important(f"Using discovered bus values for device '{device_name}'")
-        #     return buses
-        # if device_name in self.cs.Cfg.CONFIG_PCI and 'bus' in self.cs.Cfg.CONFIG_PCI[device_name]:
-        #     (bus, dev, fun) = self.get_BDF(device_name)
-        #     if self.cs.hals.Pci.is_enabled(bus, dev, fun):
-        #         if logger().DEBUG:
-        #             logger().log_important(f"Using pre-defined bus values for device '{device_name}'")
-        #         buses = [bus]
-        #     else:
-        #         if logger().DEBUG:
-        #             logger().log_important(f"Device '{device_name}' not enabled")
-        # else:
-        #     if logger().DEBUG:
-        #         logger().log_important(f"No bus value defined for device '{device_name}'")
-        # return buses
-
-    # def switch_def(self, target_device: str, source_device: str) -> None:
-    #     """Changes bus, device, and function values of PCI device"""
-    #     (b, d, f) = self.get_BDF(source_device)
-    #     self.cs.Cfg.CONFIG_PCI[target_device]['bus'] = b
-    #     self.cs.Cfg.CONFIG_PCI[target_device]['dev'] = d
-    #     self.cs.Cfg.CONFIG_PCI[target_device]['fun'] = f
 
     def get_IO_space(self, io_name: str) -> Tuple[Optional[int], Optional[int]]:
         """Retrieves BAR values for given IO range"""
