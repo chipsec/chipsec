@@ -277,6 +277,7 @@ class ChipsecMain:
             run_it, is_archived = self.verify_module_tags(modx)
             if run_it:
                 result = modx.run(module_argv)
+                self._cs.clear_scope()
             else:
                 modx.get_module_object()
                 if is_archived:
@@ -285,6 +286,7 @@ class ChipsecMain:
                 else:
                     modx.mod_obj.result.setStatusBit(modx.mod_obj.result.status.NOT_APPLICABLE)
                     res = ModuleResult.NOTAPPLICABLE
+                self._cs.clear_scope()
                 return modx.mod_obj.result.getReturnCode(res, False)
         except BaseException as msg:
             if self.logger.DEBUG:
