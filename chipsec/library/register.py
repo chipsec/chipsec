@@ -27,7 +27,7 @@ from typing import Any, Dict, List, Optional
 from chipsec.parsers import BaseConfigHelper
 from chipsec.library.logger import logger
 from chipsec.library.bits import set_bits, get_bits, make_mask
-from chipsec.library.exceptions import CSReadError, UninitializedRegisterError
+from chipsec.library.exceptions import CSReadError, RegisterNotFoundError, UninitializedRegisterError
 from chipsec.library.registers.io import IO
 from chipsec.library.registers.iobar import IOBar
 from chipsec.library.registers.memory import Memory
@@ -131,9 +131,12 @@ class Register:
         return self.cs.Cfg.get_reglist('*.*.' + reg_name)
 
     def get_instance_by_name(self, reg_name: str, instance: 'PCIObj'):
-        for reg_obj in self.cs.Cfg.get_reglist(reg_name):
-            if reg_obj.get_instance() == instance:
-                return reg_obj
+        try:
+            for reg_obj in self.cs.Cfg.get_reglist(reg_name):
+                if reg_obj.get_instance() == instance:
+                    return reg_obj
+        except RegisterNotFoundError:
+            logger().log_error(f'Register {reg_name} not found')
         return None  # TODO Change to null register object
 
     def has_field(self, reg_name: str, field_name: str) -> bool:
