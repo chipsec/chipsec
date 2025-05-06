@@ -54,7 +54,7 @@ class spi_desc(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.cs.set_scope({
-            "FRAP": "8086.SPI",
+            "FRAP": "8086.SPI.SPIBAR",
         })
 
     def is_supported(self) -> bool:
