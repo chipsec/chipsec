@@ -32,17 +32,18 @@ Example:
     >>> chipsec_main.py -m common.remap
 
 Registers used:
-    - PCI0.0.0_REMAPBASE
-    - PCI0.0.0_REMAPLIMIT
-    - PCI0.0.0_TOUUD
-    - PCI0.0.0_TOLUD
-    - PCI0.0.0_TSEGMB
+    - 8086.HOSTCTL.MCHBAR*.REMAPBASE
+    - 8086.HOSTCTL.MCHBAR*.REMAPLIMIT
+    - 8086.HOSTCTL.TOUUD
+    - 8086.HOSTCTL.TOLUD
+    - 8086.HOSTCTL.TSEGMB
 
 .. note::
     - This module will only run on Core platforms.
 
 """
 
+from typing import Tuple
 from chipsec.library.register import ObjList
 from chipsec.module_common import BaseModule, HWCONFIG, SMM
 from chipsec.library.returncode import ModuleResult
@@ -89,7 +90,7 @@ class remap(BaseModule):
         if self.cs.register.is_defined('IBECC_ACTIVATE'):
             ibecc = self.cs.register.get_list_by_name('IBECC_ACTIVATE')
             ibecc.read() # TODO: Stopped here.
-            if ibecc.get_field('IBECC_EN') == 1:
+            if ibecc.is_all_field_value(1, 'IBECC_EN'):
                 return True
             else:
                 self.logger.log_verbose('IBECC is not enabled!')
@@ -99,78 +100,33 @@ class remap(BaseModule):
 
     def check_remap_config(self) -> int:
         is_warning = False
-        # breakpoint() # Testing code for the new Cfg.platform object structure.
-        # tmp = self.cs.Cfg.platform.get_matches_from_scope('8086.HOSTCTL.MCHBAR*')
-        # tmp2 = ObjList(tmp[0].REMAPBASE + tmp[1].REMAPBASE)
-        # tmp3 = self.cs.Cfg.platform.get_matches_from_scope('8086.HOSTCTL.MCHBAR*.REMAPBASE')
-        # tmp4 = self.cs.Cfg.get_objlist('8086.HOSTCTL.MCHBAR*.REMAPBASE')
-        # tmp5 = self.cs.Cfg.get_reglist('8086.HOSTCTL.MCHBAR*.REMAPBASE')
-        remapbase_reg = self.cs.register.get_list_by_name('REMAPBASE')[0]
-        remapbase = remapbase_reg.read()
-        remaplimit_reg = self.cs.register.get_list_by_name('REMAPLIMIT')[0]
-        remaplimit = remaplimit_reg.read()
-        touud = self.cs.register.get_list_by_name('TOUUD')[0].read()
-        tolud = self.cs.register.get_list_by_name('TOLUD')[0].read()
-        tsegmb = self.cs.register.get_list_by_name('TSEGMB')[0].read()
         self.logger.log('[*] Registers:')
-        self.logger.log(f'[*]   TOUUD     : 0x{touud:016X}')
-        self.logger.log(f'[*]   REMAPLIMIT: 0x{remaplimit:016X}')
-        self.logger.log(f'[*]   REMAPBASE : 0x{remapbase:016X}')
-        self.logger.log(f'[*]   TOLUD     : 0x{tolud:08X}')
-        self.logger.log(f'[*]   TSEGMB    : 0x{tsegmb:08X}')
-        self.logger.log('')
-
-        ia_untrusted = 0
-        remapbase_lock = 0
-        remaplimit_lock = 0
-        if self.cs.register.has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
-            ia_untrusted = self.cs.register.get_list_by_name('MSR_BIOS_DONE').read_field('IA_UNTRUSTED')
-        if remapbase_reg.has_field('LOCK'):
-            remapbase_lock = remapbase_reg.read_field('LOCK')
-        if remaplimit_reg.has_field('LOCK'):
-            remaplimit_lock = remaplimit_reg.read_field('LOCK')
-        touud_lock = touud & 0x1
-        tolud_lock = tolud & 0x1
-        remapbase &= _REMAP_ADDR_MASK
-        remaplimit &= _REMAP_ADDR_MASK
-        touud &= _REMAP_ADDR_MASK
-        tolud &= _TOLUD_MASK
-        tsegmb &= _TOLUD_MASK
-        self.logger.log('[*] Memory Map:')
-        self.logger.log(f'[*]   Top Of Upper Memory: 0x{touud:016X}')
-        self.logger.log(f'[*]   Remap Limit Address: 0x{(remaplimit | 0xFFFFF):016X}')
-        self.logger.log(f'[*]   Remap Base Address : 0x{remapbase:016X}')
         self.logger.log(f'[*]   4GB                : 0x{BIT32:016X}')
-        self.logger.log(f'[*]   Top Of Low Memory  : 0x{tolud:016X}')
-        self.logger.log(f'[*]   TSEG (SMRAM) Base  : 0x{tsegmb:016X}')
+        remapbase_reg = self.cs.register.get_list_by_name('REMAPBASE')
+        remaplimit_reg = self.cs.register.get_list_by_name('REMAPLIMIT')
+        touud_reg = self.cs.register.get_list_by_name('TOUUD')
+        tolud_reg = self.cs.register.get_list_by_name('TOLUD')
+        tsegmb_reg = self.cs.register.get_list_by_name('TSEGMB')
+        remapbase_reg.read_and_print()
+        remaplimit_reg.read_and_print()
+        touud_reg.read_and_print()
+        tolud_reg.read_and_print()
+        tsegmb_reg.read_and_print()
+
+        if self.cs.register.has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
+            ia_untrusted_reg = self.cs.register.get_list_by_name('MSR_BIOS_DONE')
+
+        touud = touud_reg.get_field('TOUUD', preserve_field_position=True)[0]
+        tolud = tolud_reg.get_field('TOLUD', preserve_field_position=True)[0]
         self.logger.log('')
 
         remap_ok = True
 
         self.logger.log('[*] Checking memory remap configuration..')
 
-        if remapbase == remaplimit:
-            self.logger.log('[!]   Memory Remap status is Unknown')
-            is_warning = True
-        elif remapbase > remaplimit:
-            self.logger.log('[*]   Memory Remap is disabled')
-        else:
-            self.logger.log('[*]   Memory Remap is enabled')
-            remaplimit_addr = (remaplimit | 0xFFFFF)
-            if self.is_ibecc_enabled():
-                ok = (remaplimit_addr > touud) and (remapbase < touud)
-            else:
-                ok = ((remaplimit_addr + 1) == touud)
-            remap_ok = remap_ok and ok
-            if ok:
-                self.logger.log_good('  Remap window configuration is correct: REMAPBASE <= REMAPLIMIT < TOUUD')
-            else:
-                self.logger.log_bad('  Remap window configuration is not correct')
-
+        is_warning, remap_ok = self.check_remap_base_and_limit(remapbase_reg, remaplimit_reg, touud, is_warning, remap_ok)
         ok = (0 == tolud & ALIGNED_1MB) and \
-             (0 == touud & ALIGNED_1MB) and \
-             (0 == remapbase & ALIGNED_1MB) and \
-             (0 == remaplimit & ALIGNED_1MB)
+             (0 == touud & ALIGNED_1MB)
         remap_ok = remap_ok and ok
         if ok:
             self.logger.log_good('  All addresses are 1MB aligned')
@@ -179,29 +135,29 @@ class remap(BaseModule):
 
         self.logger.log('[*] Checking if memory remap configuration is locked..')
         
-        ok = (0 != ia_untrusted)
-        remap_ok = remap_ok and ok
-        if ok:
+        is_ia_untrusted_set = (ia_untrusted_reg.is_all_field_value(1, 'IA_UNTRUSTED'))
+        remap_ok = remap_ok and is_ia_untrusted_set
+        if is_ia_untrusted_set:
             self.logger.log_good('  IA_Untrusted is set')
         else:
             self.logger.log_bad('  IA_Untrusted is not set')
 
-        ok = (0 != touud_lock) or (0 != ia_untrusted)
+        ok = touud_reg.is_all_field_value(1, 'LOCK') or is_ia_untrusted_set
         remap_ok = remap_ok and ok
         if ok:
             self.logger.log_good('  TOUUD is locked')
         else:
             self.logger.log_bad('  TOUUD is not locked')
 
-        ok = (0 != tolud_lock) or (0 != ia_untrusted)
+        ok = tolud_reg.is_all_field_value(1, 'LOCK') or is_ia_untrusted_set
         remap_ok = remap_ok and ok
         if ok:
             self.logger.log_good('  TOLUD is locked')
         else:
             self.logger.log_bad('  TOLUD is not locked')
 
-        if remapbase_reg.has_field('LOCK') and remaplimit.has_field('LOCK'):
-            ok = ((0 != remapbase_lock) and (0 != remaplimit_lock)) or (0 != ia_untrusted)
+        if remapbase_reg.all_has_field('LOCK') and remaplimit_reg.all_has_field('LOCK'):
+            ok = (remapbase_reg.is_all_field_value(1, 'LOCK')) and (remaplimit_reg.is_all_field_value(1,'LOCK')) or is_ia_untrusted_set
             remap_ok = remap_ok and ok
             if ok:
                 self.logger.log_good('  REMAPBASE and REMAPLIMIT are locked')
@@ -225,6 +181,39 @@ class remap(BaseModule):
             self.logger.log_failed('Memory Remap is not properly configured/locked. Remap attack may be possible')
 
         return self.result.getReturnCode(res)
+
+    def check_remap_base_and_limit(self, remapbase_regs: list, remaplimit_regs: list, touud: int, is_warning: bool, remap_ok: bool) -> Tuple[bool, bool]:
+        bars = set([reg.bar for reg in remapbase_regs])
+        
+        for bar in bars:
+            remapbase_reg = [reg for reg in remapbase_regs if reg.bar == bar]
+            remaplimit_reg = [reg for reg in remaplimit_regs if reg.bar == bar]
+        
+            if len(remapbase_reg) == len(remaplimit_reg) == 1:
+                remapbase_reg = remapbase_reg[0]
+                remaplimit_reg = remaplimit_reg[0]
+            
+            remapbase = remapbase_reg.get_field('REMAPBASE')
+            remaplimit = remaplimit_reg.get_field('REMAPLMT')
+            
+            if remapbase == remaplimit:
+                self.logger.log('[!]   Memory Remap status is Unknown')
+                is_warning = True
+            elif remapbase > remaplimit:
+                self.logger.log('[*]   Memory Remap is disabled')
+            else:
+                self.logger.log('[*]   Memory Remap is enabled')
+                remaplimit_addr = (remaplimit | 0xFFFFF)
+                if self.is_ibecc_enabled():
+                    ok = (remaplimit_addr > touud) and (remapbase < touud)
+                else:
+                    ok = ((remaplimit_addr + 1) == touud)
+                remap_ok = remap_ok and ok
+                if ok:
+                    self.logger.log_good('  Remap window configuration is correct: REMAPBASE <= REMAPLIMIT < TOUUD')
+                else:
+                    self.logger.log_bad('  Remap window configuration is not correct')
+        return is_warning, remap_ok
 
     def run(self, _) -> int:
         self.logger.start_test('Memory Remapping Configuration')
