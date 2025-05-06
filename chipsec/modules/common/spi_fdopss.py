@@ -47,7 +47,7 @@ class spi_fdopss(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.cs.set_scope({
-            "HSFS": "8086.SPI",
+            "HSFS": "8086.SPI.SPIBAR",
         })
 
     def is_supported(self) -> bool:
