@@ -64,9 +64,9 @@ class smrr(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.cs.set_scope({
-            'MTRRCAP': '8086.MSR.MTRRCAP',
-            'IA32_SMRR_PHYSBASE': '8086.MSR.IA32_SMRR_PHYSBASE',
-            'IA32_SMRR_PHYSMASK': '8086.MSR.IA32_SMRR_PHYSMASK',
+            'MTRRCAP': '8086.MSR',
+            'IA32_SMRR_PHYSBASE': '8086.MSR',
+            'IA32_SMRR_PHYSMASK': '8086.MSR',
         })
 
     def is_supported(self) -> bool:

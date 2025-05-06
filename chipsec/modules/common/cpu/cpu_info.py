@@ -55,7 +55,7 @@ class cpu_info(BaseModule):
     def __init__(self):
         super(cpu_info, self).__init__()
         self.cs.set_scope({
-            "IA32_BIOS_SIGN_ID": "8086.MSR.IA32_BIOS_SIGN_ID",
+            "IA32_BIOS_SIGN_ID": "8086.MSR",
         })
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.cpu.cpu_info.html'
 
