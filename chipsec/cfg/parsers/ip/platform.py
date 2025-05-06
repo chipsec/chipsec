@@ -55,6 +55,17 @@ class RegisterList:
             return ObjList(self.__getattribute__(register_name))
         else:
             raise RegisterNotFoundError(f'Invalid register name: {register_name}')
+    
+    def get_register_matches(self, register_name):
+        registers = ObjList()
+        reg_name = register_name.replace('*', '.*')
+        for reg in self.register_list:
+            if match(reg_name, reg):
+                registers.extend(self.get_register(reg))
+        if registers:
+            return registers
+        else:
+            raise RegisterNotFoundError(f'Invalid register name: {register_name}')
 
 
 class Platform(Recursable):
@@ -87,12 +98,14 @@ class Platform(Recursable):
     def _get_next_level(self, name): 
         return self.get_vendor(name)
     
-    def get_obj_from_scope(self, scope: str):
+    def get_obj_from_fullname(self, full_name: str):
+        return self.get_obj_from_scope(full_name.split('.'))
+
+    def get_obj_from_scope(self, scope: list):
         logger().log_debug(f'Getting obj from scope: {scope}')
-        if '*' in scope:
+        if any('*' in s for s in scope):
             raise Exception(f'Invalid scope: {scope}. No wildcards allowed for this function.')
-        split_scope = scope.split('.')
-        return Platform._get_obj_from_split_scope(self, split_scope)
+        return Platform._get_obj_from_split_scope(self, scope)
 
     @staticmethod
     def _get_obj_from_split_scope(obj, scope: list):
@@ -105,10 +118,12 @@ class Platform(Recursable):
             return next_level
         return Platform._get_obj_from_split_scope(next_level, scope)
 
-    def get_matches_from_scope(self, scope: str):
+    def get_matches_from_fullname(self, full_name: str):
+        return self.get_matches_from_scope(full_name.split('.'))
+
+    def get_matches_from_scope(self, scope: list):
         logger().log_debug(f'Getting matches from scope: {scope}')
-        split_scope = scope.split('.')
-        return Platform._get_matches_from_split_scope([self], split_scope)
+        return Platform._get_matches_from_split_scope([self], scope)
 
     @staticmethod
     def _get_matches_from_split_scope(objs: list, scope: list):
@@ -123,12 +138,14 @@ class Platform(Recursable):
             return next_level_list
         return Platform._get_matches_from_split_scope(next_level_list, scope)
     
+    def get_regsiter_from_fullname(self, full_name: str):
+        return self.get_register_from_scope(full_name.split('.'))
+
     def get_register_from_scope(self, scope: str):
         logger().log_debug(f'Getting register from scope: {scope}')
-        if '*' in scope:
+        if any('*' in s for s in scope):
             raise Exception(f'Invalid scope: {scope}. No wildcards allowed for this function.')
-        split_scope = scope.split('.')
-        return Platform._get_register_from_split_scope(self, split_scope)
+        return Platform._get_register_from_split_scope(self, scope)
     
     @staticmethod
     def _get_register_from_split_scope(obj, scope: list):
@@ -141,6 +158,9 @@ class Platform(Recursable):
             next_level = obj._get_next_level(root_scope)
 
         return Platform._get_register_from_split_scope(next_level, scope)
+
+    def get_register_matches_from_fullname(self, full_name: str):
+        return self.get_register_matches_from_scope(full_name.split('.'))
 
     def get_register_matches_from_scope(self, scope: list):
         logger().log_debug(f'Getting registers from matchscope: {scope}')
@@ -155,7 +175,7 @@ class Platform(Recursable):
         next_level_list = []
         if len(scope) == 0:
             for obj in objs:
-                next_level_list.extend(obj.get_register(root_scope))
+                next_level_list.extend(obj.get_register_matches(root_scope))
             return next_level_list
         else:
             for obj in objs:

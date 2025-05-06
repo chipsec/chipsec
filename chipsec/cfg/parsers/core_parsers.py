@@ -350,7 +350,7 @@ class CoreConfigRegisters(BaseConfigParser):
             elif reg_attr['type'] in ['mmio', 'iobar']:
                 try:
                     barname = self._make_reg_name(stage_data, stage_data.dev_name, True)
-                    self.cfg.platform.get_obj_from_scope(barname)
+                    self.cfg.platform.get_obj_from_fullname(barname)
                 except CSConfigError:
                     barname = self._make_reg_name(stage_data, reg_attr['bar'], True)
                 reg_attr['bar'] = barname
@@ -399,11 +399,11 @@ class CoreConfigRegisters(BaseConfigParser):
             elif reg_attr['type'] == 'mmcfg':
                 reg_obj = self.create_register_object_with_pointer(MMCFGRegisters, reg_attr)
             elif reg_attr['type'] == 'mmio':
-                parentobj = self.cfg.platform.get_obj_from_scope(reg_attr['bar'])
+                parentobj = self.cfg.platform.get_obj_from_fullname(reg_attr['bar'])
                 reg_attr['full_name'] = '.'.join([reg_attr['bar'], reg_name])
                 reg_obj = self.create_register_object_bar(MMIORegisters, reg_attr)
             elif reg_attr['type'] == 'iobar':
-                parentobj = self.cfg.platform.get_obj_from_scope(reg_attr['bar'])
+                parentobj = self.cfg.platform.get_obj_from_fullname(reg_attr['bar'])
                 reg_attr['full_name'] = '.'.join([reg_attr['bar'], reg_name])
                 reg_obj = self.create_register_object_bar(IOBARRegisters, reg_attr)
             elif reg_attr['type'] == 'msr':
@@ -431,7 +431,7 @@ class CoreConfigRegisters(BaseConfigParser):
                 self.logger.log(reg_attr)
                 continue
             if parentobj is None:
-                parentobj = self.cfg.platform.get_obj_from_scope(full_parent_name)
+                parentobj = self.cfg.platform.get_obj_from_fullname(full_parent_name)
             if parentobj:
                 parentobj.add_register(reg_name, reg_obj)
             else:

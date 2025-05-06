@@ -67,7 +67,11 @@ class Register:
 
     def is_defined(self, reg_name: str) -> bool:
         """Checks if register is defined in the XML config"""
-        return len(self.cs.Cfg.get_reglist(reg_name)) > 0
+        try:
+            reglist = self.cs.Cfg.get_reglist(reg_name)
+        except RegisterNotFoundError:
+            return False
+        return len(reglist) > 0
 
     def _get_pci_def(
         self, reg_def: Dict[str, Any], vid: str, dev_name: str
@@ -110,9 +114,11 @@ class Register:
         """Return complete register definition"""
         # breakpoint() # Not working right. RegisterTypes need to be changed to register objects.
         scope = self.cs.Cfg.get_scope(reg_name)
-        vid, dev_name, register, _ = self.cs.Cfg.convert_internal_scope(scope, reg_name)
-        reg_def = self.cs.Cfg.REGISTERS[vid][dev_name][register]
-        if type(reg_def) is list:
+        fullscope = self.cs.Cfg.convert_platform_scope(scope, reg_name)
+        vid = fullscope[0]
+        dev_name = fullscope[1]
+        reg_def = self.cs.Cfg.platform.get_register_from_scope(fullscope) #REGISTERS[vid][dev_name][register]
+        if isinstance(reg_def, list):
             reg_def = reg_def[0]
         def_type_map = {
             RegisterType.PCICFG: self._get_pci_def,
@@ -121,7 +127,10 @@ class Register:
             RegisterType.MM_MSGBUS: self._get_mmmsgbus_def,
             RegisterType.IMA: self._get_indirect_def,
         }
-        return def_type_map[type(reg_def)](reg_def, vid, dev_name)
+        if type(reg_def) in def_type_map:
+            return def_type_map[type(reg_def)](reg_def, vid, dev_name)
+        else:
+            return reg_def
 
     # rework any call to this function
     def get_list_by_name(self, reg_name: str) -> 'ObjList':
@@ -141,7 +150,10 @@ class Register:
 
     def has_field(self, reg_name: str, field_name: str) -> bool:
         """Checks if the register has specific field"""
-        reg_defs = self.cs.Cfg.get_reglist(reg_name)
+        try:
+            reg_defs = self.cs.Cfg.get_reglist(reg_name)
+        except RegisterNotFoundError:
+            return False
         for reg_def in reg_defs:
             try:
                 return field_name in reg_def.fields

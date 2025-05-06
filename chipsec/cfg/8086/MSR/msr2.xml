@@ -109,6 +109,30 @@
       <field name="SoC_BIOS_DONE" bit="1" size="1" desc="SoC init done"/>
       <field name="IA_UNTRUSTED" bit="0" size="1" desc="Untrusted mode enable bit"/>
     </register>
+     <register name="IA32_U_CET" type="msr" msr="0x6A0" desc="CET User configuration">
+      <field name="SH_STK_EN" bit="0" size="1" desc="Enable shadow stacks at CPL3" />
+      <field name="WR_SHSTK_EN" bit="1" size="1" desc="Enables the WRSSD/WRSSQ instructions" />
+      <field name="ENDBR_EN" bit="2" size="1" desc="Enable indirect branch tracking" />
+      <field name="LEG_IW_EN" bit="3" size="1" desc="Enable legacy compatibility treatment for indirect branch tracking" />
+      <field name="NO_TRACK_EN" bit="4" size="1" desc="Enables use of no track prefix for indirect branch tracking" />
+      <field name="SUPPRESS_DIS" bit="5" size="1" desc="Disables suppression of CET indirect branch tracking on legacy compatibility" />
+      <field name="RESERVED" bit="6" size="4" desc="RESERVED" />
+      <field name="SUPPRESS" bit="10" size="1" desc="Indirect branch tracking is suppressed" />
+      <field name="TRACKER" bit="11" size="1" desc="Value of the indirect branch tracking state machine" />
+      <field name="EB_LEG_BITMAP_BASE" bit="12" size="52" desc="Linear address bits of legacy code page bitmap" />
+  </register>
+  <register name="IA32_S_CET" type="msr" msr="0x6A2" desc="CET supervisor configuration">
+      <field name="SH_STK_EN" bit="0" size="1" desc="Enable shadow stacks at CPL3" />
+      <field name="WR_SHSTK_EN" bit="1" size="1" desc="Enables the WRSSD/WRSSQ instructions" />
+      <field name="ENDBR_EN" bit="2" size="1" desc="Enable indirect branch tracking" />
+      <field name="LEG_IW_EN" bit="3" size="1" desc="Enable legacy compatibility treatment for indirect branch tracking" />
+      <field name="NO_TRACK_EN" bit="4" size="1" desc="Enables use of no track prefix for indirect branch tracking" />
+      <field name="SUPPRESS_DIS" bit="5" size="1" desc="Disables suppression of CET indirect branch tracking on legacy compatibility" />
+      <field name="RESERVED" bit="6" size="4" desc="RESERVED" />
+      <field name="SUPPRESS" bit="10" size="1" desc="Indirect branch tracking is suppressed" />
+      <field name="TRACKER" bit="11" size="1" desc="Value of the indirect branch tracking state machine" />
+      <field name="EB_LEG_BITMAP_BASE" bit="12" size="52" desc="Linear address bits of legacy code page bitmap" />
+  </register>
 
   </registers>
 
