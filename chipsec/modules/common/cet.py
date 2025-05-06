@@ -47,6 +47,9 @@ class cet(BaseModule):
     def __init__(self):
         super(cet, self).__init__()
         self.cpuid_7_0__ecx_val = None
+        self.cs.set_scope({
+            None: "8086.MSR"
+        })
 
     def is_supported(self) -> bool:
         supported = self.support_shadow()
@@ -91,7 +94,7 @@ class cet(BaseModule):
             reg_def = self.cs.register.get_def(cet_msr)
             self.logger.log(f'{cet_msr} Settings:')
             for key in fields:
-                desc = reg_def['FIELDS'][key]['desc']
+                desc = reg_def.fields[key]['desc']
                 self.setting_enabled(msr_objs, key, desc)
         except HWAccessViolationError:
             self.logger.log(f'Unable to read {cet_msr}')
