@@ -66,8 +66,8 @@ class remap(BaseModule):
             'MSR_BIOS_DONE': "8086.MSR",
             'IA_UNTRUSTED': "8086.MSR",
             'IBECC_ACTIVATE': "8086.HOSTCTL*",
-            'REMAPBASE': "8086.HOSTCTL*",
-            'REMAPLIMIT': "8086.HOSTCTL*"
+            'REMAPBASE': "8086.HOSTCTL.MCHBAR*",
+            'REMAPLIMIT': "8086.HOSTCTL.MCHBAR*"
         })
 
     def is_supported(self) -> bool:
@@ -103,7 +103,8 @@ class remap(BaseModule):
         # tmp = self.cs.Cfg.platform.get_matches_from_scope('8086.HOSTCTL.MCHBAR*')
         # tmp2 = ObjList(tmp[0].REMAPBASE + tmp[1].REMAPBASE)
         # tmp3 = self.cs.Cfg.platform.get_matches_from_scope('8086.HOSTCTL.MCHBAR*.REMAPBASE')
-        # tmp4 = self.cs.Cfg.platform.get_register_matches_from_scope('8086.HOSTCTL.MCHBAR*.REMAPBASE')
+        # tmp4 = self.cs.Cfg.get_objlist('8086.HOSTCTL.MCHBAR*.REMAPBASE')
+        # tmp5 = self.cs.Cfg.get_reglist('8086.HOSTCTL.MCHBAR*.REMAPBASE')
         remapbase_reg = self.cs.register.get_list_by_name('REMAPBASE')[0]
         remapbase = remapbase_reg.read()
         remaplimit_reg = self.cs.register.get_list_by_name('REMAPLIMIT')[0]

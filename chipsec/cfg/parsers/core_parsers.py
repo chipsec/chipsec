@@ -391,19 +391,21 @@ class CoreConfigRegisters(BaseConfigParser):
             # Store all register data
             reg_attr['FIELDS'] = reg_fields
             reg_attr.update(stage_data.attrs)
+            full_parent_name = self._make_ip_name(stage_data)
             parentobj = None
+            reg_attr['full_name'] = '.'.join([full_parent_name, reg_name])
             if reg_attr['type'] == 'pcicfg':
                 reg_obj = self.create_register_object_with_pointer(PCIRegisters, reg_attr)
-                parentobj = self.cfg.platform.get_obj_from_scope(self._make_ip_name(stage_data))
             elif reg_attr['type'] == 'mmcfg':
                 reg_obj = self.create_register_object_with_pointer(MMCFGRegisters, reg_attr)
-                parentobj = self.cfg.platform.get_obj_from_scope(self._make_ip_name(stage_data))
             elif reg_attr['type'] == 'mmio':
+                parentobj = self.cfg.platform.get_obj_from_scope(reg_attr['bar'])
+                reg_attr['full_name'] = '.'.join([reg_attr['bar'], reg_name])
                 reg_obj = self.create_register_object_bar(MMIORegisters, reg_attr)
-                parentobj = self.cfg.platform.get_obj_from_scope(reg_attr['bar'])
             elif reg_attr['type'] == 'iobar':
-                reg_obj = self.create_register_object_bar(IOBARRegisters, reg_attr)
                 parentobj = self.cfg.platform.get_obj_from_scope(reg_attr['bar'])
+                reg_attr['full_name'] = '.'.join([reg_attr['bar'], reg_name])
+                reg_obj = self.create_register_object_bar(IOBARRegisters, reg_attr)
             elif reg_attr['type'] == 'msr':
                 threads_to_use = None
                 if 'scope' in reg_attr.keys():
@@ -416,23 +418,20 @@ class CoreConfigRegisters(BaseConfigParser):
                 if threads_to_use is None:
                     threads_to_use = range(self.cfg.CPU['threads'])
                 reg_obj = self.create_register_object(MSRRegisters, reg_attr, threads_to_use)
-                parentobj = self.cfg.platform.get_obj_from_scope(self._make_ip_name(stage_data))
             elif reg_attr['type'] == 'io':
                 reg_obj = self.create_register_object(IORegisters, reg_attr, [None])
-                parentobj = self.cfg.platform.get_obj_from_scope(self._make_ip_name(stage_data))
             elif reg_attr['type'] == 'msgbus':
                 reg_obj = self.create_register_object(MSGBUSRegisters, reg_attr, [None])
-                parentobj = self.cfg.platform.get_obj_from_scope(self._make_ip_name(stage_data))
             elif reg_attr['type'] == 'mm_msgbus':
                 reg_obj = self.create_register_object(MM_MSGBUSRegisters, reg_attr, [None])
-                parentobj = self.cfg.platform.get_obj_from_scope(self._make_ip_name(stage_data))
             elif reg_attr['type'] == 'memory':
                 reg_obj = self.create_register_object_with_pointer(MEMORYRegisters, reg_attr)
-                parentobj = self.cfg.platform.get_obj_from_scope(self._make_ip_name(stage_data))
             else:
                 self.logger.log("Did not create register object for:")
                 self.logger.log(reg_attr)
                 continue
+            if parentobj is None:
+                parentobj = self.cfg.platform.get_obj_from_scope(full_parent_name)
             if parentobj:
                 parentobj.add_register(reg_name, reg_obj)
             else:

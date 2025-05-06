@@ -172,7 +172,7 @@ class Memory(HALBase):
     
     def get_def(self, range_name: str) -> Dict[str, Any]:
         '''Return address access of a MEM register'''
-        ranges = self.cs.Cfg.get_objlist(self.cs.Cfg.MEMORY_RANGES, range_name)
+        ranges = self.cs.Cfg.get_objlist(range_name)
         if ranges:
             return ranges[0]
         return None

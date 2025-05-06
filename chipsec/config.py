@@ -518,10 +518,23 @@ class Cfg:
             sname = name
         return scope_name(*(sname.split('.', 3)))
     
-    def get_objlist(self, objdict:dict, name:str):
+    def convert_platform_scope(self, scope, name):
+        if scope:
+            sname = scope + '.' + name
+        else:
+            sname = name
+        return sname.split('.')
+
+    
+    def get_objlist(self, name:str):
         scope = self.get_scope(name)
-        fullscope = self.convert_internal_scope(scope, name)
-        return self.get_objlist_from_scope(objdict, fullscope)
+        fullscope = self.convert_platform_scope(scope, name)
+        return self.platform.get_matches_from_scope(fullscope)
+    
+    def get_reglist(self, name:str):
+        scope = self.get_scope(name)
+        fullscope = self.convert_platform_scope(scope, name)
+        return self.platform.get_register_matches_from_scope(fullscope)
 
     def __add_obj_to_regdef(self, reg_def, obj):
         if isinstance(obj, Iterable):

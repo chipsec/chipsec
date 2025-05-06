@@ -116,11 +116,12 @@ class PortIORuntimeError (RuntimeError):
 class IOBARRuntimeError (RuntimeError):
     pass
 
-
-class IOBARNotFoundError (RuntimeError):
+class BARNotFoundError (RuntimeError):
+    pass
+class IOBARNotFoundError (BARNotFoundError):
     pass
 
-class MMIOBARNotFoundError (RuntimeError):
+class MMIOBARNotFoundError (BARNotFoundError):
     pass
 
 class IOMMUError (RuntimeError):
