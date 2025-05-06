@@ -227,14 +227,11 @@ class IP(Recursable, RegisterList):
             raise BARNotFoundError(f'Bar: {bar_name} not found in IP: {self.name}')
         
     def _get_next_level_list(self):
-        return self.bar_list + list(self.register_list.keys())
+        return self.bar_list
     
     def _get_next_level(self, id):
         if id in self._get_next_level_list():
-            try:
-                return self.get_bar(id)
-            except BARNotFoundError:
-                return self.get_register(id)
+            return self.get_bar(id)
         else:
             raise CSConfigError(f'Next Level: {id} not found in in IP: {self.name}')
         
