@@ -6,11 +6,11 @@
     <!-- <bar name="MCHBAR"   register="MCHBAR" base_field="MCHBAR" size="0x8000" enable_bit="0" desc="Host Memory Mapped Register Range"/> -->
     <bar name="MMCFG"    register="PCIEXBAR" base_field="PXPEPBAR" size="0x1000" enable_bit="0" desc="PCI Express Register Range"/>
     <bar name="DMIBAR"   register="DMIBAR" base_field="DMIBAR" size="0x1000" enable_bit="0" desc="Root Complex Register Range"/>
-    <bar name="VTBAR"    register="VTBAR"    base_field="Base" size="0x1000" enable_field="Enable" desc="Intel VT-d Register Register Range"/>
-    <bar name="GFXVTBAR" register="GFXVTBAR" base_field="Base" size="0x1000" enable_field="Enable" desc="Intel Processor Graphics VT-d Register Range"/>
+    <!-- <bar name="VTBAR"    register="VTBAR"    base_field="Base" size="0x1000" enable_field="Enable" desc="Intel VT-d Register Register Range"/> -->
+    <!-- <bar name="GFXVTBAR" register="GFXVTBAR" base_field="Base" size="0x1000" enable_field="Enable" desc="Intel Processor Graphics VT-d Register Range"/> -->
     <!-- VT-d BARs -->
-    <bar name="VTBAR"    register="VTBAR"    base_field="Base" size="0x1000" enable_field="Enable" desc="Intel VT-d Register Register Range"/>
-    <bar name="GFXVTBAR" register="GFXVTBAR" base_field="Base" size="0x1000" enable_field="Enable" desc="Intel Processor Graphics VT-d Register Range"/>
+    <!-- <bar name="VTBAR"    register="VTBAR"    base_field="Base" size="0x1000" enable_field="Enable" desc="Intel VT-d Register Register Range"/> -->
+    <!-- <bar name="GFXVTBAR" register="GFXVTBAR" base_field="Base" size="0x1000" enable_field="Enable" desc="Intel Processor Graphics VT-d Register Range"/> -->
 
   </mmio>
 

@@ -138,7 +138,7 @@ class Platform(Recursable):
             return next_level_list
         return Platform._get_matches_from_split_scope(next_level_list, scope)
     
-    def get_regsiter_from_fullname(self, full_name: str):
+    def get_register_from_fullname(self, full_name: str):
         return self.get_register_from_scope(full_name.split('.'))
 
     def get_register_from_scope(self, scope: str):

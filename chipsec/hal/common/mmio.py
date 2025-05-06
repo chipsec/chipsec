@@ -191,6 +191,8 @@ class MMIO(hal_base.HALBase):
     # Get base address of MMIO range by MMIO BAR name
     #
     def get_MMIO_BAR_base_address(self, bar_name: str, instance: Optional['PCIObj'] = None) -> Tuple[int, int]:
+        # if bar_name == "8086.HOSTCTL.VTBAR":
+        #     breakpoint()
         if self.cache_bar_addresses_resolution and (bar_name, instance) in self.cached_bar_addresses:
             return self.cached_bar_addresses[(bar_name, instance)]
         try:
