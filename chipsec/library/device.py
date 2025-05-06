@@ -37,7 +37,7 @@ class Device:
         return None
         
     def get_list_by_name(self, device_name: str):
-        return self.cs.Cfg.platform.get_matches_from_scope(device_name)
+        return [ip.obj for ip in self.cs.Cfg.platform.get_matches_from_scope(device_name)]
 
     # def get_first_bus(self, device: dict) -> int:
     #     """Retrieves first value in bus list for PCI device"""
@@ -122,12 +122,12 @@ class Device:
         #         logger().log_important(f"No bus value defined for device '{device_name}'")
         # return buses
 
-    def switch_def(self, target_device: str, source_device: str) -> None:
-        """Changes bus, device, and function values of PCI device"""
-        (b, d, f) = self.get_BDF(source_device)
-        self.cs.Cfg.CONFIG_PCI[target_device]['bus'] = b
-        self.cs.Cfg.CONFIG_PCI[target_device]['dev'] = d
-        self.cs.Cfg.CONFIG_PCI[target_device]['fun'] = f
+    # def switch_def(self, target_device: str, source_device: str) -> None:
+    #     """Changes bus, device, and function values of PCI device"""
+    #     (b, d, f) = self.get_BDF(source_device)
+    #     self.cs.Cfg.CONFIG_PCI[target_device]['bus'] = b
+    #     self.cs.Cfg.CONFIG_PCI[target_device]['dev'] = d
+    #     self.cs.Cfg.CONFIG_PCI[target_device]['fun'] = f
 
     def get_IO_space(self, io_name: str) -> Tuple[Optional[int], Optional[int]]:
         """Retrieves BAR values for given IO range"""
