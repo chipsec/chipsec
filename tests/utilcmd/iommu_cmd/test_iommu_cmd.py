@@ -24,44 +24,63 @@ To execute: python[3] -m unittest tests.utilcmd.iommu_cmd.test_iommu_cmd
 
 import unittest
 import os
+from unittest.mock import patch
 
+from chipsec.library.acpi_tables import RSDP
 from chipsec.library.file import get_main_dir
-from tests.utilcmd.run_chipsec_util import setup_run_destroy_util
 from chipsec.testcase import ExitCode
+from tests.utilcmd.run_chipsec_util import setup_run_destroy_util
 
 class TestIommuUtilcmd(unittest.TestCase):
     def test_list(self) -> None:
-        init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate.json")
+        init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate2.json")
         iommu_dump_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "iommu_cmd", "iommu_cmd_list_1.json")
         retval = setup_run_destroy_util(init_replay_file, "iommu", "list", util_replay_file=iommu_dump_replay_file)
         self.assertEqual(retval, ExitCode.OK)
 
-    def test_config(self) -> None:
-        init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate.json")
+    def mock_find_rsdp(self) -> None:
+        # Mock the return value of _find_RSDP_in_EFI_config_table
+        rsdp_pa = 0x56fa3014
+        rsdp_buf = b'RSD PTR \x93INTEL\x00\x02\x94\xf3\xf3V$\x00\x00\x00(\xf7\xf3V\x00\x00\x00\x00t\x00\x00\x00'
+        rsdp = RSDP()
+        rsdp.parse(rsdp_buf)
+        return rsdp, rsdp_pa
+
+    @patch('chipsec.hal.common.acpi.ACPI._find_RSDP_in_EFI_config_table')
+    @patch('chipsec.hal.common.acpi.ACPI._find_RSDP_in_legacy_BIOS_segments')
+    def test_config(self, mock_find_legacy, mock_find_rsdp) -> None:
+        mock_find_rsdp.side_effect = self.mock_find_rsdp
+        mock_find_legacy.return_value = None, None
+        init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate2.json")
         iommu_dump_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "iommu_cmd", "iommu_cmd_config_1.json")
         retval = setup_run_destroy_util(init_replay_file, "iommu", "config", util_replay_file=iommu_dump_replay_file)
         self.assertEqual(retval, ExitCode.OK)
 
-    def test_config_vtd(self) -> None:
-        init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate.json")
+    @patch('chipsec.hal.common.acpi.ACPI._find_RSDP_in_EFI_config_table')
+    @patch('chipsec.hal.common.acpi.ACPI._find_RSDP_in_legacy_BIOS_segments')
+    def test_config_vtd(self, mock_find_legacy, mock_find_rsdp) -> None:
+        mock_find_rsdp.side_effect = self.mock_find_rsdp
+        mock_find_legacy.return_value = None, None
+        init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate2.json")
         iommu_dump_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "iommu_cmd", "iommu_cmd_config_vtd_1.json")
         retval = setup_run_destroy_util(init_replay_file, "iommu", "config VTD", util_replay_file=iommu_dump_replay_file)
         self.assertEqual(retval, ExitCode.OK)
 
-    def test_pt(self) -> None:
-        init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate.json")
+    @patch('chipsec.library.paging.open')
+    def test_pt(self, mock_open) -> None:
+        init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate2.json")
         iommu_dump_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "iommu_cmd", "iommu_cmd_pt_1.json")
         retval = setup_run_destroy_util(init_replay_file, "iommu", "pt", util_replay_file=iommu_dump_replay_file)
         self.assertEqual(retval, ExitCode.OK)
 
     def test_status(self) -> None:
-        init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate.json")
+        init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate2.json")
         iommu_dump_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "iommu_cmd", "iommu_cmd_status_1.json")
         retval = setup_run_destroy_util(init_replay_file, "iommu", "status", util_replay_file=iommu_dump_replay_file)
         self.assertEqual(retval, ExitCode.OK)
 
     def test_status_gfxvtd(self) -> None:
-        init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate.json")
+        init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate2.json")
         iommu_dump_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "iommu_cmd", "iommu_cmd_status_gfxvtd_1.json")
         retval = setup_run_destroy_util(init_replay_file, "iommu", "status GFXVTD", util_replay_file=iommu_dump_replay_file)
         self.assertEqual(retval, ExitCode.OK)

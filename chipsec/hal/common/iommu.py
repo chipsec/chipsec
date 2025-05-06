@@ -56,6 +56,10 @@ class IOMMU(hal_base.HALBase):
         else:
             raise IOMMUError(f'IOMMUError: IOMMU BAR {vtd_base_name} is not defined in the config')
         return base
+    
+    def get_BAR_RegList(self, bar_fullname: str):
+        bar_obj = self.cs.Cfg.platform.get_obj_from_fullname(bar_fullname)
+        return self.cs.Cfg.platform.get_register_from_fullname(bar_obj.obj.register)
 
     def is_IOMMU_Engine_Enabled(self, iommu_engine: str) -> bool:
         if iommu_engine in IOMMU_ENGINES:
@@ -82,8 +86,7 @@ class IOMMU(hal_base.HALBase):
         self.logger.log(f'[iommu] {iommu_engine} IOMMU Engine Configuration')
         self.logger.log("==================================================================")
         self.logger.log(f'Base register (BAR)       : {vtd}')
-        bar_obj = self.cs.Cfg.platform.get_obj_from_fullname(vtd)
-        bar_address = self.cs.Cfg.platform.get_register_from_fullname(bar_obj.obj.register)
+        bar_address = self.get_BAR_RegList(vtd)
         bar = join_hex_values(bar_address.read(), "")
         self.logger.log(f'BAR register value        : {bar}')
         if bar_address.is_all_value(0):
@@ -134,7 +137,7 @@ class IOMMU(hal_base.HALBase):
 
     def dump_IOMMU_page_tables(self, iommu_engine: str) -> None:
         vtd = IOMMU_ENGINES[iommu_engine]
-        vtd_obj = self.cs.register.get_list_by_name(vtd)
+        vtd_obj = self.get_BAR_RegList(vtd)
         vtd_obj.read()
         if vtd_obj.is_all_value(0):
             self.logger.log(f'[iommu] {vtd} value is zero')
@@ -144,20 +147,20 @@ class IOMMU(hal_base.HALBase):
         rtaddr_reg = self.cs.register.get_list_by_name(f'{vtd}.RTADDR')
         rtaddr_rta = rtaddr_reg.read_field('RTA', True)
         rtaddr_rtt = rtaddr_reg.get_field('RTT')
-        for rta, rtt in rtaddr_rta, rtaddr_rtt:
+        for rta, rtt in zip(rtaddr_rta, rtaddr_rtt):
             self.logger.log(f'[iommu] Root Table Address/Type: 0x{rta:016X}/{rtt:X}')
 
         ecap_reg = self.cs.register.get_list_by_name(f'{vtd}.ECAP')
         ecap_ecs = ecap_reg.read_field('ECS')
         ecap_pasid = ecap_reg.get_field('PASID')
-        for ecs, pasid in ecap_ecs, ecap_pasid:
+        for ecs, pasid in zip(ecap_ecs, ecap_pasid):
             self.logger.log(f'[iommu] PASID / ECS            : {pasid:X} / {ecs:X}')
 
         if not rtaddr_reg.is_any_value(0xFFFFFFFFFFFFFFFF):
             if te:
                 self.logger.log(f'[iommu] Dumping VT-d page table hierarchy at 0x{rtaddr_rta[0]:016X} (vtd_context_{rtaddr_rta[0]:08X})')
                 paging_vtd = paging.c_vtd_page_tables(self.cs) # TODO
-                paging_vtd.read_vtd_context(f'vtd_context_{rtaddr_rta:08X}', rtaddr_rta)
+                paging_vtd.read_vtd_context(f'vtd_context_{rtaddr_rta[0]:08X}', rtaddr_rta[0])
                 self.logger.log(f'[iommu] Total VTd domains: {len(paging_vtd.domains):d}')
                 for domain in paging_vtd.domains:
                     paging_vtd.read_pt_and_show_status(f'vtd_{domain:08X}', 'VTd', domain)
@@ -171,7 +174,7 @@ class IOMMU(hal_base.HALBase):
         self.logger.log('==================================================================')
         self.logger.log(f'[iommu] {iommu_engine} IOMMU Engine Status:')
         self.logger.log('==================================================================')
-        vtd_obj = self.cs.register.get_list_by_name(vtd)
+        vtd_obj = self.get_BAR_RegList(vtd)
         vtd_obj.read()
         if vtd_obj.is_all_value(0):
             self.logger.log(f'[iommu] {vtd} value is zero')
