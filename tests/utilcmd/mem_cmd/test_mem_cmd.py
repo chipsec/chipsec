@@ -64,6 +64,7 @@ class TestMemUtilCmd(unittest.TestCase):
 
     @patch('chipsec.utilcmd.mem_cmd.open')
     def test_pagedump(self, mock_open) -> None:
+        mock_open().return_value = True
         init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate.json")
         mem_dump_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "mem_cmd", "mem_cmd_allocate_1.json")
         retval = setup_run_destroy_util(init_replay_file, "mem", "pagedump 0xFED00000 0x10", util_replay_file=mem_dump_replay_file)
