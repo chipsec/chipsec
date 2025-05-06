@@ -47,7 +47,7 @@ from typing import List, Optional, Tuple
 from chipsec.hal import hal_base
 from chipsec.library.exceptions import CSConfigError, CSReadError, MMIOBARNotFoundError
 from chipsec.library.logger import logger
-from chipsec.library.defines import get_bits, is_all_ones
+from chipsec.library.defines import get_bits
 
 DEFAULT_MMIO_BAR_SIZE = 0x1000
 
@@ -164,8 +164,6 @@ class MMIO(hal_base.HALBase):
                     is_bar_defined = self.cs.register.is_defined(_bar.register)
                 if not is_bar_defined and _bar.fixed_address:
                     is_bar_defined = True
-                # elif ('bus' in _bar) and ('dev' in _bar) and ('fun' in _bar) and ('reg' in _bar):
-                    # old definition
         except KeyError:
             pass
 
@@ -191,8 +189,6 @@ class MMIO(hal_base.HALBase):
     # Get base address of MMIO range by MMIO BAR name
     #
     def get_MMIO_BAR_base_address(self, bar_name: str, instance: Optional['PCIObj'] = None) -> Tuple[int, int]:
-        # if bar_name == "8086.HOSTCTL.VTBAR":
-        #     breakpoint()
         if self.cache_bar_addresses_resolution and (bar_name, instance) in self.cached_bar_addresses:
             return self.cached_bar_addresses[(bar_name, instance)]
         try:
@@ -227,12 +223,10 @@ class MMIO(hal_base.HALBase):
                         base = bar_reg.read_field(base_field, preserve)
                     except CSReadError:
                         continue
-                        # self.logger.log_hal('[mmio] Unable to determine MMIO Base register.  Using Base = 0x0')
                     try:
                         reg_mask = bar_reg.get_field_mask(base_field, preserve)
                     except CSReadError:
                         continue
-                        # self.logger.log_hal('[mmio] Unable to determine MMIO Mask register.  Using Mask = 0xFFFF')
                     break
             if not preserve:
                 base <<= bar.reg_align
@@ -313,7 +307,6 @@ class MMIO(hal_base.HALBase):
     def is_MMIO_BAR_enabled(self, bar_name: str, instance: Optional['PCIObj'] = None) -> bool:
         if not self.is_MMIO_BAR_defined(bar_name):
             return False
-        # reg = self.cs.register.get_def(bar_name)
         bar = self.cs.register.mmio.get_def(bar_name)
         is_enabled = True
         if bar.register:
@@ -413,45 +406,6 @@ class MMIO(hal_base.HALBase):
                 bar_reg = self.cs.Cfg.register.get_list_by_name(bar.register).filter_by_instance(instance)
                 is_valid = bar_reg.is_all_field_value(1, bar_en_field)
         return is_valid
-        
-        # self.logger.log('')
-        # self.logger.log('--------------------------------------------------------------------------------------')
-        # self.logger.log(' MMIO Range   | BUS | BAR Register   | Base             | Size     | En? | Description')
-        # self.logger.log('--------------------------------------------------------------------------------------')
-        # for _bar_name in self.cs.Cfg.MMIO_BARS:
-        #     if not self.is_MMIO_BAR_defined(_bar_name):
-        #         continue
-        #     _bar = self.cs.Cfg.MMIO_BARS[_bar_name]
-        #     bus_data = []
-        #     if 'register' in _bar:
-        #         bus_data = self.cs.register.get_bus(_bar['register'])
-        #         if not bus_data:
-        #             if 'bus' in self.cs.register.get_def(_bar['register']):
-        #                 bus_data = [self.cs.register.get_def(_bar['register'])['bus']]
-        #     elif 'bus' in _bar:
-        #         bus_data.extend(_bar['bus'])
-        #     else:
-        #         continue
-        #     for bus in bus_data:
-        #         bus = self.cs.device.get_first(bus)
-        #         try:
-        #             (_base, _size) = self.get_MMIO_BAR_base_address(_bar_name, bus)
-        #         except:
-        #             self.logger.log_hal(f'Unable to find MMIO BAR {_bar}')
-        #             continue
-        #         _en = self.is_MMIO_BAR_enabled(_bar_name)
-
-        #         if 'register' in _bar:
-        #             _s = _bar['register']
-        #             if 'offset' in _bar:
-        #                 _s += (f' + 0x{_bar["offset"]:X}')
-        #         else:
-        #             bus_value = self.cs.device.get_first(_bar["bus"])
-        #             dev_value = _bar["dev"]
-        #             fun_value = _bar["fun"]
-        #             _s = f'{bus_value:02X}:{dev_value:02X}.{fun_value:01X} + {_bar["reg"]}'
-
-        #         self.logger.log(f' {_bar_name:12} |  {bus or 0:02X} | {_s:14} | {_base:016X} | {_size:08X} | {_en:d}   | {_bar["desc"]}')
 
     ##################################################################################
     # Access to Memory Mapped PCIe Configuration Space

@@ -123,9 +123,9 @@ class Register:
         def_type_map = {
             RegisterType.PCICFG: self._get_pci_def,
             RegisterType.MMCFG: self._get_pci_def,
-            # RegisterType.MEMORY: self._get_memory_def,
             RegisterType.MM_MSGBUS: self._get_mmmsgbus_def,
             RegisterType.IMA: self._get_indirect_def,
+            # RegisterType.MEMORY: self._get_memory_def,
         }
         if type(reg_def) in def_type_map:
             return def_type_map[type(reg_def)](reg_def, vid, dev_name)
@@ -204,41 +204,11 @@ class Register:
                 break
         return ret
 
-    # def is_msr(self, reg_name: str) -> bool:
-    #     """Returns True if register is type `msr`"""
-    #     if self.is_defined(reg_name):
-    #         if self.cs.Cfg.REGISTERS[reg_name]['type'].lower() == 'msr':
-    #             return True
-    #     return False
-
-    # def is_pci(self, reg_name: str) -> bool:
-    #     """Returns True if register is type `pcicfg` or `mmcfg`"""
-    #     if self.is_defined(reg_name):
-    #         reg_def = self.cs.Cfg.REGISTERS[reg_name]
-    #         if (reg_def['type'].lower() == 'pcicfg') or (reg_def['type'].lower() == 'mmcfg'):
-    #             return True
-    #     return False
-
-    # def is_all_ffs(self, reg_name: str, value: int) -> bool:
-    #     """Returns True if register value is all 0xFFs"""
-    #     if self.is_msr(reg_name):
-    #         size = 8
-    #     else:
-    #         size = self.get_def(reg_name)['size']
-    #     return is_all_ones(value, size)
-
-    # def is_field_all_ones(self, reg_name: str, field_name: str, value: int) -> bool:
-    #     """Returns True if field value is all ones"""
-    #     reg_def = self.get_def(reg_name)
-    #     size = reg_def['FIELDS'][field_name]['size']
-    #     return is_all_ones(value, size, 1)
-
 
 class BaseConfigRegisterHelper(BaseConfigHelper):
     def __init__(self, cfg_obj):
         super(BaseConfigRegisterHelper, self).__init__(cfg_obj)
         self.name = cfg_obj['name']
-        # self.full_name = cfg_obj['full_name']
         self.instance = cfg_obj['instance'] if 'instance' in cfg_obj else None
         self.value = None
         self.desc = cfg_obj['desc']
