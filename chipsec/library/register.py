@@ -67,7 +67,7 @@ class Register:
 
     def is_defined(self, reg_name: str) -> bool:
         """Checks if register is defined in the XML config"""
-        return len(self.cs.Cfg.get_objlist(self.cs.Cfg.REGISTERS, reg_name)) > 0
+        return len(self.cs.Cfg.get_reglist(reg_name)) > 0
 
     def _get_pci_def(
         self, reg_def: Dict[str, Any], vid: str, dev_name: str
@@ -125,20 +125,20 @@ class Register:
 
     # rework any call to this function
     def get_list_by_name(self, reg_name: str) -> 'ObjList':
-        return self.cs.Cfg.get_objlist(self.cs.Cfg.REGISTERS, reg_name)
+        return self.cs.Cfg.get_reglist(reg_name)
 
-    def get_list_by_name_without_scope(self, reg_name: str) -> 'ObjList':
-        return self.cs.Cfg.get_objlist(self.cs.Cfg.REGISTERS, '*.*.' + reg_name)
+    def get_list_by_name_without_scope(self, reg_name: str) -> 'ObjList': # TODO: rewrite so that it looks at all registers in platform structure. Should use a new function in platform. 
+        return self.cs.Cfg.get_reglist('*.*.' + reg_name)
 
     def get_instance_by_name(self, reg_name: str, instance: 'PCIObj'):
-        for reg_obj in self.cs.Cfg.get_objlist(self.cs.Cfg.REGISTERS, reg_name):
+        for reg_obj in self.cs.Cfg.get_reglist(reg_name):
             if reg_obj.get_instance() == instance:
                 return reg_obj
         return None  # TODO Change to null register object
 
     def has_field(self, reg_name: str, field_name: str) -> bool:
         """Checks if the register has specific field"""
-        reg_defs = self.cs.Cfg.get_objlist(self.cs.Cfg.REGISTERS, reg_name)
+        reg_defs = self.cs.Cfg.get_reglist(reg_name)
         for reg_def in reg_defs:
             try:
                 return field_name in reg_def.fields
@@ -223,6 +223,7 @@ class BaseConfigRegisterHelper(BaseConfigHelper):
     def __init__(self, cfg_obj):
         super(BaseConfigRegisterHelper, self).__init__(cfg_obj)
         self.name = cfg_obj['name']
+        # self.full_name = cfg_obj['full_name']
         self.instance = cfg_obj['instance'] if 'instance' in cfg_obj else None
         self.value = None
         self.desc = cfg_obj['desc']

@@ -37,7 +37,7 @@ class Device:
         return None
         
     def get_list_by_name(self, device_name: str):
-        return self.cs.Cfg.get_objlist(self.cs.Cfg.CONFIG_PCI, device_name)
+        return self.cs.Cfg.platform.get_matches_from_scope(device_name)
 
     # def get_first_bus(self, device: dict) -> int:
     #     """Retrieves first value in bus list for PCI device"""

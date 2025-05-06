@@ -17,7 +17,7 @@
 # Contact information:
 # chipsec@intel.com
 
-from chipsec.library.exceptions import CSConfigError, RegisterNotFoundError, ScopeNotFoundError, NonRegisterInScopeError
+from chipsec.library.exceptions import CSConfigError, RegisterNotFoundError, ScopeNotFoundError, NonRegisterInScopeError, BARNotFoundError
 from chipsec.library.register import BaseConfigRegisterHelper, ObjList
 from chipsec.library.logger import logger
 from re import match
@@ -92,10 +92,10 @@ class Platform(Recursable):
         if '*' in scope:
             raise Exception(f'Invalid scope: {scope}. No wildcards allowed for this function.')
         split_scope = scope.split('.')
-        return Platform.get_obj_from_split_scope(self, split_scope)
+        return Platform._get_obj_from_split_scope(self, split_scope)
 
     @staticmethod
-    def get_obj_from_split_scope(obj, scope: list):
+    def _get_obj_from_split_scope(obj, scope: list):
         if not scope:
             raise ScopeNotFoundError(f'Scope {scope} on obj {obj} was not found')
         root_scope = scope.pop(0)
@@ -103,15 +103,15 @@ class Platform(Recursable):
 
         if len(scope) == 0:
             return next_level
-        return Platform.get_obj_from_split_scope(next_level, scope)
+        return Platform._get_obj_from_split_scope(next_level, scope)
 
     def get_matches_from_scope(self, scope: str):
         logger().log_debug(f'Getting matches from scope: {scope}')
         split_scope = scope.split('.')
-        return Platform.get_matches_from_split_scope([self], split_scope)
+        return Platform._get_matches_from_split_scope([self], split_scope)
 
     @staticmethod
-    def get_matches_from_split_scope(objs: list, scope: list):
+    def _get_matches_from_split_scope(objs: list, scope: list):
         if not scope:
             raise ScopeNotFoundError(f'Scope {scope} on objs: {objs} was not found')
         root_scope = scope.pop(0)
@@ -121,16 +121,47 @@ class Platform(Recursable):
 
         if len(scope) == 0:
             return next_level_list
-        return Platform.get_matches_from_split_scope(next_level_list, scope)
+        return Platform._get_matches_from_split_scope(next_level_list, scope)
     
-    def get_register_matches_from_scope(self, scope: str):
-        logger().log_debug(f'Getting registers from matchscope: {scope}')
+    def get_register_from_scope(self, scope: str):
+        logger().log_debug(f'Getting register from scope: {scope}')
+        if '*' in scope:
+            raise Exception(f'Invalid scope: {scope}. No wildcards allowed for this function.')
         split_scope = scope.split('.')
-        objects = Platform.get_matches_from_split_scope([self], split_scope)
-        if all(isinstance(obj, BaseConfigRegisterHelper) for obj in objects):
-            return ObjList(objects)
+        return Platform._get_register_from_split_scope(self, split_scope)
+    
+    @staticmethod
+    def _get_register_from_split_scope(obj, scope: list):
+        if not scope:
+            raise ScopeNotFoundError(f'Scope {scope} on obj {obj} was not found')
+        root_scope = scope.pop(0)
+        if len(scope) == 0:
+            return obj.get_register(root_scope)
         else:
-            raise NonRegisterInScopeError(f'Invalid scope: {scope}. Not all objects are registers.')
+            next_level = obj._get_next_level(root_scope)
+
+        return Platform._get_register_from_split_scope(next_level, scope)
+
+    def get_register_matches_from_scope(self, scope: list):
+        logger().log_debug(f'Getting registers from matchscope: {scope}')
+        objects = Platform._get_register_matches_from_split_scope([self], scope)
+        return ObjList(objects)
+        
+    @staticmethod
+    def _get_register_matches_from_split_scope(objs: list, scope: list):
+        if not scope:
+            raise ScopeNotFoundError(f'Scope {scope} on objs: {objs} was not found')
+        root_scope = scope.pop(0)
+        next_level_list = []
+        if len(scope) == 0:
+            for obj in objs:
+                next_level_list.extend(obj.get_register(root_scope))
+            return next_level_list
+        else:
+            for obj in objs:
+                next_level_list.extend(obj.get_next_levels(root_scope))
+
+        return Platform._get_register_matches_from_split_scope(next_level_list, scope)
 
 
 
@@ -173,18 +204,19 @@ class IP(Recursable, RegisterList):
         if bar_name in self.bar_list:
             return self.__getattribute__(f'{bar_name}_')
         else:
-            raise CSConfigError(f'Bar: {bar_name} not found in IP: {self.name}')
+            raise BARNotFoundError(f'Bar: {bar_name} not found in IP: {self.name}')
         
     def _get_next_level_list(self):
-        return self.bar_list
+        return self.bar_list + list(self.register_list.keys())
     
     def _get_next_level(self, id):
         if id in self._get_next_level_list():
-            return self.get_bar(id)
-        elif id in self.register_list.keys():
-            return self.get_register(id)
+            try:
+                return self.get_bar(id)
+            except BARNotFoundError:
+                return self.get_register(id)
         else:
-            raise CSConfigError(f'Bar: {id} not found in in IP: {self.name}')
+            raise CSConfigError(f'Next Level: {id} not found in in IP: {self.name}')
         
 
 class Bar(Recursable, RegisterList):
