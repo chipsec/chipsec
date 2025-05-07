@@ -37,7 +37,6 @@ usage:
 """
 
 import struct
-from collections import namedtuple
 import itertools
 from typing import List, Tuple, Optional
 from chipsec.library.logger import pretty_print_hex_buffer
@@ -47,13 +46,13 @@ from chipsec.hal.hal_base import HALBase
 from chipsec.library.exceptions import CSReadError, OsHelperError
 from chipsec.library.defines import is_all_ones, MASK_16b, MASK_32b, MASK_64b, BOUNDARY_4KB
 
+
 class Pci(HALBase):
 
     def __init__(self, cs):
         super(Pci, self).__init__(cs)
         self.helper = cs.helper
         self.hal_log_every_read = True
-
 
     #
     # Access to PCI configuration registers
@@ -91,19 +90,44 @@ class Pci(HALBase):
         return byte_value
 
     def write_byte(self, bus: int, device: int, function: int, address: int, byte_value: int) -> None:
-        self.helper.write_pci_reg(bus, device, function, address, byte_value, 1)
+        self.write(bus, device, function, address, 1, byte_value)
         self.logger.log_hal(f'[pci] writing B/D/F: {bus:d}/{device:d}/{function:d}, offset: 0x{address:02X}, value: 0x{byte_value:02X}')
         return None
 
     def write_word(self, bus: int, device: int, function: int, address: int, word_value: int) -> None:
-        self.helper.write_pci_reg(bus, device, function, address, word_value, 2)
+        self.write(bus, device, function, address, 2, word_value)
         self.logger.log_hal(f'[pci] writing B/D/F: {bus:d}/{device:d}/{function:d}, offset: 0x{address:02X}, value: 0x{word_value:04X}')
         return None
 
     def write_dword(self, bus: int, device: int, function: int, address: int, dword_value: int) -> None:
-        self.helper.write_pci_reg(bus, device, function, address, dword_value, 4)
+        self.write(bus, device, function, address, 4, dword_value)
         self.logger.log_hal(f'[pci] writing B/D/F: {bus:d}/{device:d}/{function:d}, offset: 0x{address:02X}, value: 0x{dword_value:08X}')
         return None
+
+    def write(self, bus: int, device: int, function: int, address: int, size: int, value: int) -> None:
+        remaining_size = size
+        remaining_value = value
+        while remaining_size > 0:
+            if remaining_size / 4:
+                dword_value = remaining_value & 0xFFFFFFFF
+                self.helper.write_pci_reg(bus, device, function, address, dword_value, 4)
+                remaining_size -= 4
+                address += 4
+                remaining_value >>= 32
+            elif remaining_size / 2:
+                word_value = remaining_value & 0xFFFF
+                self.helper.write_pci_reg(bus, device, function, address, word_value, 2)
+                remaining_size -= 2
+                address += 2
+                remaining_value >>= 16
+            elif remaining_size / 1:
+                byte_value = remaining_value & 0xFF
+                self.helper.write_pci_reg(bus, device, function, address, byte_value, 1)
+                remaining_size -= 1
+                address += 1
+                remaining_value >>= 8
+            else:
+                raise CSReadError('Logic error with PCI write')
 
     #
     # Enumerating PCI devices and dumping configuration space
@@ -357,7 +381,7 @@ class Pci(HALBase):
         if (is_all_ones(vid, 2)) or (is_all_ones(did, 2)):
             return False
         return True
-    
+
     def get_viddidrid_from_device_list(self, device_list: 'ObjList') -> List[Tuple[int, int, int, 'PCIObj']]:
         """
         Returns a list of tuples containing the vendor ID, device ID, revision ID and PCIObj instance for each device in the device ObjList.
@@ -369,4 +393,5 @@ class Pci(HALBase):
                 vendor_info.append((vid, did, instance.rid, instance))
         return vendor_info
 
-haldata = {"arch":[HALBase.MfgIds.Any, HALBase.MfgIds.Intel], 'name': ['Pci']}
+
+haldata = {"arch": [HALBase.MfgIds.Any, HALBase.MfgIds.Intel], 'name': ['Pci']}
