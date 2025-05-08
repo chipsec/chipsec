@@ -271,7 +271,15 @@ jobs:
       run: python -m unittest
 
     - name: Get coverage requirement
-      run: echo "CODE_COVERAGE_REQ=$(curl https://raw.githubusercontent.com/chipsec/chipsec/refs/heads/main-cfg/codeCoverageRequirement.cfg)" >> $GITHUB_ENV
+      run: |
+        CODE_COVERAGE_REQ=$(curl https://raw.githubusercontent.com/chipsec/chipsec/refs/heads/main-cfg/codeCoverageRequirement.cfg)
+        #if var is not a number, set it to 100
+        if ! [[ "$CODE_COVERAGE_REQ" =~ ^[0-9]{1,3}\.?[0-9]{0,2}$ ]]; then
+          CODE_COVERAGE_REQ=100
+          echo "Retrieved CODE_COVERAGE_REQ is not a number, setting to 100." 
+        fi
+        echo "CODE_COVERAGE_REQ=${CODE_COVERAGE_REQ}"
+        echo "CODE_COVERAGE_REQ=$CODE_COVERAGE_REQ" >> $GITHUB_ENV
 
     - name: Run Python pytest
       run: |
