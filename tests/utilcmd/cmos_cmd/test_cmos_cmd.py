@@ -61,5 +61,6 @@ class TestCmosUtilcmd(unittest.TestCase):
         retval = setup_run_destroy_util(init_replay_file, "cmos", "writeh 0x0 0xCC", util_replay_file=cmos_writeh_replay_file)
         self.assertEqual(retval, ExitCode.OK)
 
+
 if __name__ == '__main__':
     unittest.main()

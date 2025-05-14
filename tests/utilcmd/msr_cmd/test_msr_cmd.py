@@ -49,5 +49,6 @@ class TestMsrUtilcmd(unittest.TestCase):
         retval = setup_run_destroy_util(init_replay_file, "msr", "0x8B 0x0 0x0 0x0", util_replay_file=msr_write_replay_file)
         self.assertEqual(retval, ExitCode.OK)
 
+
 if __name__ == '__main__':
     unittest.main()

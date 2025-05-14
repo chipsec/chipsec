@@ -174,4 +174,5 @@ class SPICommand(BaseCommand):
             else:
                 self.logger.log(' JEDEC ID command is not supported')
 
+
 commands = {'spi': SPICommand}

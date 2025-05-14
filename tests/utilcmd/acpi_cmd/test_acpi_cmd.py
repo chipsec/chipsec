@@ -250,5 +250,6 @@ class TestACPIChipsecUtil(util.TestChipsecUtil):
         self.assertIn(b"OEMSS2", self.log)
         self.assertIn(b"OEMSS3", self.log)
 
+
 if __name__ == '__main__':
     unittest.main()

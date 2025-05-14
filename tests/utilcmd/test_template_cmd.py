@@ -38,5 +38,6 @@ class TestTemplateUtilcmd(unittest.TestCase):
         retval = setup_run_destroy_util(init_replay_file, "template", "command", util_replay_file=template_dump_replay_file)
         self.assertEqual(retval, ExitCode.OK)
 
+
 if __name__ == '__main__':
     unittest.main()

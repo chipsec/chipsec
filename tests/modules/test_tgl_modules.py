@@ -121,5 +121,6 @@ class TestTglModules(unittest.TestCase):
     def test_tgl_module_uefi_s3bootscript(self):
         self.run_and_test_module("common.uefi.s3bootscript", ExitCode.WARNING)
 
+
 if __name__ == '__main__':
     unittest.main()

@@ -55,5 +55,6 @@ class TestInterruptsUtilcmd(unittest.TestCase):
         retval = setup_run_destroy_util(init_replay_file, "nmi", "", util_replay_file=interrupts_dump_replay_file)
         self.assertEqual(retval, ExitCode.OK)
 
+
 if __name__ == '__main__':
     unittest.main()

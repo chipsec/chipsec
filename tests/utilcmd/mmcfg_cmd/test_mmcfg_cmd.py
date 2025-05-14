@@ -55,5 +55,6 @@ class TestMmcfgUtilcmd(unittest.TestCase):
         retval = setup_run_destroy_util(init_replay_file, "mmcfg", "write 0 0 0 0x200 1 0x1A", util_replay_file=mmcfg_write_replay_file)
         self.assertEqual(retval, ExitCode.OK)
 
+
 if __name__ == '__main__':
     unittest.main()

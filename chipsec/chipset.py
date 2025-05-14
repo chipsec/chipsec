@@ -245,6 +245,7 @@ class Chipset:
         old_log_state = (logger().HAL, logger().DEBUG, logger().VERBOSE)
         return old_log_state
 
+
 _chipset = None
 
 
