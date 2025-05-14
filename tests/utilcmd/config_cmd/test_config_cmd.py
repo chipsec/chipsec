@@ -43,5 +43,6 @@ class TestConfigUtilcmd(unittest.TestCase):
         retval = setup_run_destroy_util(init_replay_file, "config", "show MMIO_BARS", util_replay_file=config_cmd_show_all_replay_file)
         self.assertEqual(retval, ExitCode.OK)
 
+
 if __name__ == '__main__':
     unittest.main()

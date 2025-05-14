@@ -71,4 +71,5 @@ class ModuleIdCommand(BaseCommand):
         except IndexError:
             self.logger.log(f'Could not find {self.module_id}\n')
 
+
 commands = {'id': ModuleIdCommand}

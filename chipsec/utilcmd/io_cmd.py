@@ -101,4 +101,5 @@ class PortIOCommand(BaseCommand):
             f'[CHIPSEC] OUT 0x{self._port:04X} <- 0x{self._value:08X} (size = 0x{self._width:02X})')
         return
 
+
 commands = {'io': PortIOCommand}

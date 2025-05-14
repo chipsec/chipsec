@@ -208,4 +208,5 @@ class MemCommand(BaseCommand):
         elif 0x4 == width:
             self.cs.mem.write_physical_mem_dword(self.phys_address, self.write_data)
 
+
 commands = {'mem': MemCommand}

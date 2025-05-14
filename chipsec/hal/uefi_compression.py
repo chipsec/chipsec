@@ -29,6 +29,7 @@ def show_import_error(import_name: str) -> None:
     if platform.system().lower() in ('windows', 'linux', 'darwin'):
         logger().log_error(f'Failed to import compression module "{import_name}"')
 
+
 try:
     import brotli
 

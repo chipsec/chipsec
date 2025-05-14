@@ -43,5 +43,6 @@ class TestIgdUtilcmd(unittest.TestCase):
         retval = setup_run_destroy_util(init_replay_file, "igd", "dmawrite 0x2217F1000 0x4 deadbeef", util_replay_file=igd_dump_replay_file)
         self.assertEqual(retval, ExitCode.OK)
 
+
 if __name__ == '__main__':
     unittest.main()

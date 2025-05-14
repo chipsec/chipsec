@@ -43,5 +43,6 @@ class TestTxtUtilcmd(unittest.TestCase):
         retval = setup_run_destroy_util(init_replay_file, "txt", "state", util_replay_file=txt_state_replay_file)
         self.assertEqual(retval, ExitCode.OK)
 
+
 if __name__ == '__main__':
     unittest.main()
