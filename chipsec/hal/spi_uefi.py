@@ -51,13 +51,17 @@ from chipsec.hal.uefi import identify_EFI_NVRAM, parse_EFI_variables
 from chipsec.hal.uefi_fv import EFI_SECTION_PE32, EFI_SECTION_TE, EFI_SECTION_PIC, EFI_SECTION_COMPATIBILITY16, EFI_FIRMWARE_FILE_SYSTEM2_GUID
 from chipsec.hal.uefi_fv import EFI_FIRMWARE_FILE_SYSTEM_GUID, EFI_SECTIONS_EXE, EFI_SECTION_USER_INTERFACE, EFI_SECTION_GUID_DEFINED
 from chipsec.hal.uefi_fv import EFI_GUID_DEFINED_SECTION, EFI_GUID_DEFINED_SECTION_size, NextFwFile, NextFwFileSection, NextFwVolume, GetFvHeader
-from chipsec.hal.uefi_fv import EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID, LZMA_CUSTOM_DECOMPRESS_GUID, TIANO_DECOMPRESSED_GUID, LZMAF86_DECOMPRESS_GUID
+from chipsec.hal.uefi_fv import EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID
 from chipsec.hal.uefi_fv import EFI_CERT_TYPE_RSA_2048_SHA256_GUID, EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size, EFI_SECTION, EFI_FV, EFI_FILE
 from chipsec.hal.uefi_fv import EFI_FIRMWARE_CONTENTS_SIGNED_GUID, WIN_CERT_TYPE_EFI_GUID, WIN_CERTIFICATE_size, WIN_CERTIFICATE
 from chipsec.hal.uefi_fv import EFI_SECTION_COMPRESSION, EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_SECTION_RAW, SECTION_NAMES, DEF_INDENT
 from chipsec.hal.uefi_fv import FILE_TYPE_NAMES, EFI_FS_GUIDS, EFI_FILE_HEADER_INVALID, EFI_FILE_HEADER_VALID, EFI_FILE_HEADER_CONSTRUCTION
 from chipsec.hal.uefi_fv import EFI_COMPRESSION_SECTION_size, EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_FFS_PAD, EFI_FVB2_ERASE_POLARITY, EFI_FV_FILETYPE_RAW
-from chipsec.hal.uefi_compression import UEFICompression
+from chipsec.hal.uefi_fv import EFI_GUIDED_SECTION_TIANO, EFI_GUIDED_SECTION_BROTLI, EFI_GUIDED_SECTION_LZMAF86
+from chipsec.hal.uefi_fv import EFI_GUIDED_SECTION_LZMA, EFI_GUIDED_SECTION_LZMA_HP, EFI_GUIDED_SECTION_LZMA_MS
+from chipsec.hal.uefi_fv import EFI_GUIDED_SECTION_GZIP, EFI_GUIDED_SECTION_ZLIB_AMD1, EFI_GUIDED_SECTION_ZLIB_AMD2
+from chipsec.hal.uefi_compression import COMPRESSION_TYPE_BROTLI, COMPRESSION_TYPE_GZIP, COMPRESSION_TYPE_ZLIB_AMD
+from chipsec.hal.uefi_compression import UefiCompression
 
 CMD_UEFI_FILE_REMOVE = 0
 CMD_UEFI_FILE_INSERT_BEFORE = 1
@@ -74,17 +78,17 @@ WRITE_ALL_HASHES = False
 
 
 def decompress_section_data(section_dir_path: str, sec_fs_name: str, compressed_data: bytes, compression_type: int) -> bytes:
-    uefi_uc = UEFICompression()
+    uefi_uc = UefiCompression()
     uncompressed_name = os.path.join(section_dir_path, sec_fs_name)
     logger().log_hal(f'[uefi] Decompressing EFI binary (type = 0x{compression_type:X})\n       {uncompressed_name} ->\n')
-    uncompressed_image = uefi_uc.decompress_EFI_binary(compressed_data, compression_type)
+    uncompressed_image = uefi_uc.decompress_efi_binary(compressed_data, compression_type)
     return uncompressed_image
 
 
 def compress_image(image: bytes, compression_type: int) -> bytes:
-    uefi_uc = UEFICompression()
+    uefi_uc = UefiCompression()
     logger().log_hal(f'[uefi] Compressing EFI binary (type = 0x{compression_type:X})\n')
-    compressed_image = uefi_uc.compress_EFI_binary(image, compression_type)
+    compressed_image = uefi_uc.compress_efi_binary(image, compression_type)
     return compressed_image
 
 
@@ -184,16 +188,29 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
 
             if sec.Guid == EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID:
                 sec.children = build_efi_modules_tree(fwtype, sec.Image[sec.DataOffset:], Size - sec.DataOffset, 0, polarity)
-            elif sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID or sec.Guid == TIANO_DECOMPRESSED_GUID or sec.Guid == LZMAF86_DECOMPRESS_GUID:
-                if sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID:
+            elif sec.Guid in [EFI_GUIDED_SECTION_LZMA, EFI_GUIDED_SECTION_LZMA_HP, EFI_GUIDED_SECTION_LZMA_MS,
+                              EFI_GUIDED_SECTION_LZMAF86, EFI_GUIDED_SECTION_BROTLI, EFI_GUIDED_SECTION_GZIP,
+                              EFI_GUIDED_SECTION_ZLIB_AMD1, EFI_GUIDED_SECTION_ZLIB_AMD2, EFI_GUIDED_SECTION_TIANO]:
+                if sec.Guid in [EFI_GUIDED_SECTION_LZMA, EFI_GUIDED_SECTION_LZMA_HP, EFI_GUIDED_SECTION_LZMA_MS]:
                     d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_LZMA)
-                elif sec.Guid == LZMAF86_DECOMPRESS_GUID:
+                elif sec.Guid == EFI_GUIDED_SECTION_LZMAF86:
                     d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_LZMAF86)
-                else:
+                elif sec.Guid == EFI_GUIDED_SECTION_BROTLI:
+                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_BROTLI)
+                elif sec.Guid == EFI_GUIDED_SECTION_GZIP:
+                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_GZIP)
+                elif sec.Guid in [EFI_GUIDED_SECTION_ZLIB_AMD1, EFI_GUIDED_SECTION_ZLIB_AMD2]:
+                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_ZLIB_AMD)
+                elif sec.Guid == EFI_GUIDED_SECTION_TIANO:
                     d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_EFI_STANDARD)
-                if d is None:
+                else:
+                    d = b''
+
+                if not d:
                     sec.Comments = "Unable to decompress image"
+
                     d = decompress_section_data("", sec_fs_name, sec.Image[sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN)
+
                 if d:
                     sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
             elif sec.Guid == EFI_CERT_TYPE_RSA_2048_SHA256_GUID:
