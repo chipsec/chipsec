@@ -72,11 +72,11 @@ class DALHelper(Helper):
 # Driver/service management functions
 ###############################################################################################
 
-    def create(self, start_driver: bool) -> bool:
+    def create(self) -> bool:
         logger().log_debug('[helper] DAL Helper created')
         return True
 
-    def start(self, start_driver: bool, driver_exhists: bool = False) -> bool:
+    def start(self) -> bool:
         self.driver_loaded = True
         if self.base.threads[self.find_thread()].cv.isrunning:
             self.base.halt()
@@ -108,7 +108,7 @@ class DALHelper(Helper):
     # return first enabled thread
     def find_thread(self) -> int:
         for en_thread in range(len(self.base.threads)):
-            if self.base.threads[en_thread].isenabled:
+            if self.base.threads[en_thread].device.isenabled:
                 return en_thread
         logger().log_debug('[WARNING] No enabled threads found.')
         return 0
@@ -225,7 +225,7 @@ class DALHelper(Helper):
     #
 
     def read_msr(self, thread: int, msr_addr: int) -> Tuple[int, int]:
-        if not self.base.threads[thread].isenabled:
+        if not self.base.threads[thread].device.isenabled:
             en_thread = self.find_thread()
             logger().log_debug(f'[WARNING] Selected thread [{thread:d}] was disabled, using [{en_thread:d}].')
             thread = en_thread
@@ -235,7 +235,7 @@ class DALHelper(Helper):
         return (eax, edx)
 
     def write_msr(self, thread: int, msr_addr: int, eax: int, edx: int) -> int:
-        if not self.base.threads[thread].isenabled:
+        if not self.base.threads[thread].device.isenabled:
             en_thread = self.find_thread()
             logger().log_debug(f'[WARNING] Selected thread [{thread:d}] was disabled, using [{en_thread:d}].')
             thread = en_thread
@@ -244,7 +244,7 @@ class DALHelper(Helper):
         return True
 
     def read_cr(self, cpu_thread_id: int, cr_number: int) -> int:
-        if not self.base.threads[cpu_thread_id].isenabled:
+        if not self.base.threads[cpu_thread_id].device.isenabled:
             en_thread = self.find_thread()
             logger().log_debug(f'[WARNING] Selected thread [{cpu_thread_id:d}] was disabled, using [{en_thread:d}].')
             cpu_thread_id = en_thread
@@ -264,7 +264,7 @@ class DALHelper(Helper):
         return val
 
     def write_cr(self, cpu_thread_id: int, cr_number: int, value: int) -> int:
-        if not self.base.threads[cpu_thread_id].isenabled:
+        if not self.base.threads[cpu_thread_id].device.isenabled:
             en_thread = self.find_thread()
             logger().log_debug(f'[WARNING] Selected thread [{cpu_thread_id:d}] was disabled, using [{en_thread:d}].')
             cpu_thread_id = en_thread
