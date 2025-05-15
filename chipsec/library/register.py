@@ -396,6 +396,13 @@ class ObjList(list):
             return any(inst.value == value for inst in self)
         return any((inst.value & mask) == value for inst in self)
 
+    def get_field_value_if_equivalent(self, field: str, preserve_field_position: bool = False) -> Optional[int]:
+        """Get field value if all instances have the same value for that field"""
+        field_value = self[0].get_field(field, preserve_field_position)
+        if any(inst.get_field(field, preserve_field_position) != field_value for inst in self[1:]):
+            return None
+        return field_value
+    
     def is_all_field_value(
         self, value: int, field: str, preserve_field_position: bool = False
     ) -> bool:
