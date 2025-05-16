@@ -92,7 +92,7 @@ class PlatformInfo(BaseConfigParser):
             if 'detection_value' in cfg_info:
                 detect_vals = cfg_info['detection_value']
             for sku in info.iter('sku'):
-                sku_info = _config_convert_data(sku)
+                sku_info = _config_convert_data(sku, True)
                 if 'code' not in sku_info:
                     if platform:
                         sku_info['code'] = platform.upper()
