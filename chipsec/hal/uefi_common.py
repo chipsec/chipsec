@@ -71,7 +71,7 @@ def IS_VARIABLE_ATTRIBUTE(_c: int, _Mask: int) -> bool:
 
 
 def IS_EFI_VARIABLE_AUTHENTICATED(attr: int) -> bool:
-    return (IS_VARIABLE_ATTRIBUTE(attr, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS) or 
+    return (IS_VARIABLE_ATTRIBUTE(attr, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS) or
             IS_VARIABLE_ATTRIBUTE(attr, EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS) or
             IS_VARIABLE_ATTRIBUTE(attr, EFI_VARIABLE_ENHANCED_AUTHENTICATED_ACCESS))
 
@@ -676,7 +676,7 @@ class S3BootScriptSmbusOperation:
 
 
 class op_io_pci_mem:
-    def __init__(self, opcode: int, size: int, width: int, address: int, unknown: Optional[int], count: Optional[int], 
+    def __init__(self, opcode: int, size: int, width: int, address: int, unknown: Optional[int], count: Optional[int],
                  buffer: Optional[bytes], value: Optional[int] = None, mask: Optional[int] = None):
         self.opcode = opcode
         self.size = size
@@ -897,16 +897,16 @@ EFI_1_10_SYSTEM_TABLE_REVISION = ((1 << 16) | (10))
 EFI_1_02_SYSTEM_TABLE_REVISION = ((1 << 16) | (0o2))
 EFI_REVISIONS: List[int] = [
     EFI_2_80_SYSTEM_TABLE_REVISION,
-    EFI_2_70_SYSTEM_TABLE_REVISION, 
-    EFI_2_60_SYSTEM_TABLE_REVISION, 
-    EFI_2_50_SYSTEM_TABLE_REVISION, 
-    EFI_2_40_SYSTEM_TABLE_REVISION, 
+    EFI_2_70_SYSTEM_TABLE_REVISION,
+    EFI_2_60_SYSTEM_TABLE_REVISION,
+    EFI_2_50_SYSTEM_TABLE_REVISION,
+    EFI_2_40_SYSTEM_TABLE_REVISION,
     EFI_2_31_SYSTEM_TABLE_REVISION,
-    EFI_2_30_SYSTEM_TABLE_REVISION, 
-    EFI_2_20_SYSTEM_TABLE_REVISION, 
-    EFI_2_10_SYSTEM_TABLE_REVISION, 
-    EFI_2_00_SYSTEM_TABLE_REVISION, 
-    EFI_1_10_SYSTEM_TABLE_REVISION, 
+    EFI_2_30_SYSTEM_TABLE_REVISION,
+    EFI_2_20_SYSTEM_TABLE_REVISION,
+    EFI_2_10_SYSTEM_TABLE_REVISION,
+    EFI_2_00_SYSTEM_TABLE_REVISION,
+    EFI_1_10_SYSTEM_TABLE_REVISION,
     EFI_1_02_SYSTEM_TABLE_REVISION
     ]
 
