@@ -24,7 +24,7 @@
 """
 PCI Vendor & Device ID data.
 
-.. note:: 
+.. note::
     THIS FILE WAS GENERATED
 
     Auto generated from:
