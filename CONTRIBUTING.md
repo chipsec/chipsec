@@ -4,7 +4,7 @@ Refer to the *Contribution Guide* section of [CHIPSEC Documentation](https://chi
 
 ### Sign your work
 
-Please use the sign-off line at the end of the patch. Your signature 
+Signed commits will be required starting Q3 2025. Please use the sign-off line at the end of the patch. Your signature 
 certifies that you wrote the patch or otherwise have the right to pass 
 it on as an open-source patch. The rules are pretty simple: if you can 
 certify the below 
