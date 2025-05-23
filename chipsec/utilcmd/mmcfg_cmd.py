@@ -77,28 +77,28 @@ class MMCfgCommand(BaseCommand):
         parser.parse_args(self.argv, namespace=self)
 
     def base(self):
-        pciexbar, pciexbar_sz = self.cs.hals.MMIO.get_MMCFG_base_address()
+        pciexbar, pciexbar_sz = self.cs.hals.MMCFG.get_MMCFG_base_address()
         self.logger.log(f'[CHIPSEC] Memory Mapped Config Base: 0x{pciexbar:016X}')
         self.logger.log(f'[CHIPSEC] Memory Mapped Config Size: 0x{pciexbar_sz:016X}')
 
     def read(self):
-        data = self.cs.hals.MMIO.read_mmcfg_reg(self.bus, self.device, self.function, self.offset, self.width)
+        data = self.cs.hals.MMCFG.read_mmcfg_reg(self.bus, self.device, self.function, self.offset, self.width)
         self.logger.log(f'[CHIPSEC] Reading MMCFG register ({self.bus:02d}:{self.device:02d}.{self.function:d} + 0x{self.offset:02X}): 0x{data:X}')
 
     def write(self):
-        self.cs.hals.MMIO.write_mmcfg_reg(self.bus, self.device, self.function, self.offset, self.width, self.value)
+        self.cs.hals.MMCFG.write_mmcfg_reg(self.bus, self.device, self.function, self.offset, self.width, self.value)
         self.logger.log(f'[CHIPSEC] Writing MMCFG register ({self.bus:02d}:{self.device:02d}.{self.function:d} + 0x{self.offset:02X}): 0x{self.value:X}')
 
     def ec(self):
         devs = self.cs.hals.Pci.enumerate_devices()
         for (b, d, f, _, _, _) in devs:
-            capabilities = self.cs.hals.MMIO.get_extended_capabilities(b, d, f)
+            capabilities = self.cs.hals.MMCFG.get_extended_capabilities(b, d, f)
             if capabilities:
                 self.logger.log(f'Extended Capabilities for {b:02X}:{d:02X}.{f:X}:')
                 for cap in capabilities:
                     self.logger.log(f'{cap}')
                     if cap.id == 0xB:
-                        vsec = self.cs.hals.MMIO.get_vsec(b, d, f, cap.off)
+                        vsec = self.cs.hals.MMCFG.get_vsec(b, d, f, cap.off)
                         self.logger.log(f'\t{vsec}')
 
 

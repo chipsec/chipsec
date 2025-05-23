@@ -37,28 +37,12 @@ usage:
     >>> dump_MMIO_BAR('8086.HOSTCTL.MCHBAR')
     >>> list_MMIO_BARs()
 
-    Access Memory Mapped Config Space:
-
-    >>> get_MMCFG_base_address()
-    >>> read_mmcfg_reg(0, 0, 0, 0x10, 4)
-    >>> read_mmcfg_reg(0, 0, 0, 0x10, 4, 0xFFFFFFFF)
 """
 from typing import List, Optional, Tuple
 from chipsec.hal import hal_base
 from chipsec.library.exceptions import CSConfigError, CSReadError, MMIOBARNotFoundError
-from chipsec.library.logger import logger
-from chipsec.library.defines import get_bits
 
 DEFAULT_MMIO_BAR_SIZE = 0x1000
-
-PCI_PCIEXBAR_REG_LENGTH_256MB = 0x0
-PCI_PCIEXBAR_REG_LENGTH_128MB = 0x1
-PCI_PCIEXBAR_REG_LENGTH_64MB = 0x2
-PCI_PCIEXBAR_REG_LENGTH_512MB = 0x3
-PCI_PCIEXBAR_REG_LENGTH_1024MB = 0x4
-PCI_PCIEXBAR_REG_LENGTH_2048MB = 0x5
-PCI_PCIEXBAR_REG_LENGTH_4096MB = 0x6
-PCI_PCIEBAR_REG_MASK = 0x7FFC000000
 
 
 class MMIO(hal_base.HALBase):
@@ -192,7 +176,7 @@ class MMIO(hal_base.HALBase):
         if self.cache_bar_addresses_resolution and (bar_name, instance) in self.cached_bar_addresses:
             return self.cached_bar_addresses[(bar_name, instance)]
         try:
-            bar = self.cs.register.mmio.get_def(bar_name)  #self.cs.Cfg.MMIO_BARS[bar_name]
+            bar = self.cs.register.mmio.get_def(bar_name)   # self.cs.Cfg.MMIO_BARS[bar_name]
         except KeyError:
             raise MMIOBARNotFoundError(f'MMIOBARNotFound: {bar_name} is not defined. Check scoping and configuration')
         if not bar:
@@ -394,7 +378,7 @@ class MMIO(hal_base.HALBase):
                         else:
                             bdf = 'fixed'
                         self.logger.log(f' {_bar_name:35} | {bdf:7} | {_base:016X} | {_size:08X} |  {_en:d}  |  {_valid:d}  | {_bar.desc}')
-        
+
     def is_MMIO_BAR_valid(self, bar_name, instance=None):
         if not self.is_MMIO_BAR_defined(bar_name):
             return False
@@ -407,174 +391,4 @@ class MMIO(hal_base.HALBase):
                 is_valid = bar_reg.is_all_field_value(1, bar_en_field)
         return is_valid
 
-    ##################################################################################
-    # Access to Memory Mapped PCIe Configuration Space
-    ##################################################################################
-    def get_MMCFG_base_addresses(self) -> List[Tuple[int, int]]:
-        mmcfg_base_address_list = []
-        for bus in self.cs.Cfg.CONFIG_PCI['MemMap_VTd']['bus']:
-            mmcfg_base_address_list.append(self.get_MMCFG_base_address(bus))
-        return mmcfg_base_address_list
-
-    def get_MMCFG_base_address(self, bus: Optional[int] = None) -> Tuple[int, int]:
-        (bar_base, bar_size) = self.get_MMIO_BAR_base_address('MMCFG', bus)
-        if self.cs.register.has_field("*.HOSTCTL.PCIEXBAR", "LENGTH") and not self.cs.is_server():
-            pciexbar_reg = self.cs.register.get_list_by_name("*.HOSTCTL.PCIEXBAR")[0]
-            len = pciexbar_reg.read_field("LENGTH")
-            if len == PCI_PCIEXBAR_REG_LENGTH_256MB:
-                bar_base &= (PCI_PCIEBAR_REG_MASK << 2)
-            elif len == PCI_PCIEXBAR_REG_LENGTH_128MB:
-                bar_base &= (PCI_PCIEBAR_REG_MASK << 1)
-            if len == PCI_PCIEXBAR_REG_LENGTH_64MB:
-                bar_base &= (PCI_PCIEBAR_REG_MASK << 0)
-            if len == PCI_PCIEXBAR_REG_LENGTH_512MB:
-                bar_base &= (PCI_PCIEBAR_REG_MASK << 3)
-            if len == PCI_PCIEXBAR_REG_LENGTH_1024MB:
-                bar_base &= (PCI_PCIEBAR_REG_MASK << 4)
-            if len == PCI_PCIEXBAR_REG_LENGTH_2048MB:
-                bar_base &= (PCI_PCIEBAR_REG_MASK << 5)
-            if len == PCI_PCIEXBAR_REG_LENGTH_4096MB:
-                bar_base &= (PCI_PCIEBAR_REG_MASK << 6)
-        if self.cs.register.has_field("*.HOSTCTL.MmioCfgBaseAddr", "BusRange"):
-            mmiocfgbase_reg = self.cs.register.get_list_by_name("*.HOSTCTL.MmioCfgBaseAddr")
-            num_buses = mmiocfgbase_reg.read_field("BusRange")[0]
-            if num_buses <= 8:
-                bar_size = 2**20 * 2**num_buses
-            else:
-                self.logger.log_hal(f'[mmcfg] Unexpected MmioCfgBaseAddr bus range: 0x{num_buses:01X}')
-        self.logger.log_hal(f'[mmcfg] Memory Mapped CFG Base: 0x{bar_base:016X}')
-        return bar_base, bar_size
-
-    def read_mmcfg_reg(self, bus: int, dev: int, fun: int, off: int, size: int) -> int:
-        pciexbar, _ = self.get_MMCFG_base_address()
-        pciexbar_off = (bus * 32 * 8 + dev * 8 + fun) * 0x1000 + off
-        value = self.read_MMIO_reg(pciexbar, pciexbar_off, size)
-        self.logger.log_hal(f'[mmcfg] reading {bus:02d}:{dev:02d}.{fun:d} + 0x{off:02X} (MMCFG + 0x{pciexbar_off:08X}): 0x{value:08X}')
-        if 1 == size:
-            return (value & 0xFF)
-        elif 2 == size:
-            return (value & 0xFFFF)
-        return value
-
-    def write_mmcfg_reg(self, bus: int, dev: int, fun: int, off: int, size: int, value: int) -> bool:
-        pciexbar, _ = self.get_MMCFG_base_address()
-        pciexbar_off = (bus * 32 * 8 + dev * 8 + fun) * 0x1000 + off
-        if size == 1:
-            mask = 0xFF
-        elif size == 2:
-            mask = 0xFFFF
-        else:
-            mask = 0xFFFFFFFF
-        self.write_MMIO_reg(pciexbar, pciexbar_off, (value & mask), size)
-        self.logger.log_hal(f'[mmcfg] writing {bus:02d}:{dev:02d}.{fun:d} + 0x{off:02X} (MMCFG + 0x{pciexbar_off:08X}): 0x{value:08X}')
-        return True
-
-    def get_extended_capabilities(self, bus: int, dev: int, fun: int) -> List['ECEntry']:
-        retcap = []
-        off = 0x100
-        while off and off != 0xFFF:
-            cap = self.read_mmcfg_reg(bus, dev, fun, off, 4)
-            retcap.append(ECEntry(bus, dev, fun, off, cap))
-            off = get_bits(cap, 20, 12)
-        return retcap
-
-    def get_vsec(self, bus: int, dev: int, fun: int, ecoff: int) -> 'VSECEntry':
-        off = ecoff + 4
-        vsec = self.read_mmcfg_reg(bus, dev, fun, off, 4)
-        return VSECEntry(vsec)
-
-
-class ECEntry:
-    def __init__(self, bus: int, dev: int, fun: int, off: int, value: int):
-        self.bus = bus
-        self.dev = dev
-        self.fun = fun
-        self.off = off
-        self.next = get_bits(value, 20, 12)
-        self.ver = get_bits(value, 16, 4)
-        self.id = get_bits(value, 0, 16)
-
-    def __str__(self) -> str:
-        ret = f'\tNext Capability Offset: {self.next:03X}'
-        ret += f'\tCapability Version: {self.ver:01X}'
-        ret += f'\tCapability ID: {self.id:04X} - {ecIDs.get(self.id, "Reserved")}'
-        return ret
-
-
-class VSECEntry:
-    def __init__(self, value: int):
-        self.size = get_bits(value, 20, 12)
-        self.rev = get_bits(value, 16, 4)
-        self.id = get_bits(value, 0, 16)
-
-    def __str__(self) -> str:
-        ret = f'\tVSEC Size: {self.size:03X}'
-        ret += f'\tVSEC Revision: {self.rev:01X}'
-        ret += f'\tVSEC ID: {self.id:04X}'
-        return ret
-
-
-def print_pci_extended_capability(ecentries: List[ECEntry]) -> None:
-    currentbdf = (None, None, None)
-    for ecentry in ecentries:
-        if currentbdf != (ecentry.bus, ecentry.dev, ecentry.fun):
-            currentbdf = (ecentry.bus, ecentry.dev, ecentry.fun)
-            logger().log(f'Extended Capbilities for 0x{ecentry.bus:02X}:{ecentry.dev:02X}.{ecentry.fun:X}:')
-        logger().log(f'\tNext Capability Offset: {ecentry.next:03X}')
-        logger().log(f'\tCapability Version: {ecentry.ver:01X}')
-        logger().log(f'\tCapability ID: {ecentry.id:04X} - {ecIDs.get(ecentry.id, "Reserved")}')
-
-
-# pci extended capability IDs
-ecIDs = {
-    0x0: 'Null Capability',
-    0x1: 'Advanced Error Reporting (AER)',
-    0x2: 'Virtual Channel (VC)',
-    0x3: 'Device Serial Number',
-    0x4: 'Power Budgeting',
-    0x5: 'Root Complex Link Declaration',
-    0x6: 'Root Complex Internal Link Control',
-    0x7: 'Root Complex Event Collector Endpoint Association',
-    0x8: 'Multi-Function Virtual Channel (MFVC)',
-    0x9: 'Virtual Channel (VC)',
-    0xA: 'Root Complex Register Block (RCRB) Header',
-    0xB: 'Vendor-Specific Extended Capability (VSEC)',
-    0xC: 'Configuration Access Correlation (CAC)',
-    0xD: 'Access Control Services (ACS)',
-    0xE: 'Alternative Routing-ID Interpretation (ARI)',
-    0xF: 'Address Translation Services (ATS)',
-    0x10: 'Single Root I/O Virtualizaiton (SR-IOV)',
-    0x11: 'Multi-Root I/O Virtualization (MR-IOV)',
-    0x12: 'Multicast',
-    0x13: 'Page Request Interface (PRI)',
-    0x14: 'Reserved for AMD',
-    0x15: 'Resizable BAR',
-    0x16: 'Dynamic Power Allocation (DPA)',
-    0x17: 'TPH Requester',
-    0x18: 'Latency Tolerance Reporting (LTR)',
-    0x19: 'Secondary PCI Express',
-    0x1A: 'Protocol Multiplexing (PMUX)',
-    0x1B: 'Process Address Space ID (PASID)',
-    0x1C: 'LN Requester (LNR)',
-    0x1D: 'Downstream Port Containment (DPC)',
-    0x1E: 'L1 PM Substates',
-    0x1F: 'Precision Time Measurement (PTM)',
-    0x20: 'PCI Express over M-PHY (M-PCIe)',
-    0x21: 'FRS Queueing',
-    0x22: 'Readiness Time Reporting',
-    0x23: 'Designanated Vendor-Specific Extended Capability',
-    0x24: 'VF Resizable BAR',
-    0x25: 'Data Link Feature',
-    0x26: 'Physical Layer 16.0 GT/s',
-    0x27: 'Lane Margining at the Receiver',
-    0x28: 'Hiearchy ID',
-    0x29: 'Native PCIe Enclosure Management (NPEM)',
-    0x2A: 'Physical Layer 32.0 GT/s',
-    0x2B: 'Alternative Protocol',
-    0x2C: 'System Firmware Intermediary (SFI)',
-    0x2D: 'Shadow Functions',
-    0x2E: 'Data Object Exchange'
-}
-
-
-haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': ['MMIO']}
+haldata = {"arch": [hal_base.HALBase.MfgIds.Any], 'name': ['MMIO']}
