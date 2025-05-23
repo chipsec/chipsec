@@ -1,3 +1,22 @@
+# Upcoming Requirement: Signed Commits Starting Q3 2025
+
+Dear contributors,
+To enhance the security and integrity of our codebase, we will begin requiring signed commits for all contributions starting in Quarter 3 of 2025.
+
+What This Means for You
+Beginning in Q3 2025, all commits to this repository must be GPG, SSH, or S/MIME-signed and verified. Unsigned or unverified commits will be rejected during the review or merge process.
+
+Why Signed Commits?
+Signed commits help ensure that contributions are verifiably made by trusted individuals and have not been tampered with, aligning with best practices in secure software development.
+
+How to Prepare
+If you haven’t already, please set up commit signing in your Git configuration. Here's how:
+[GitHub: Signing commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits)
+We encourage you to start signing your commits now so you're fully prepared by the time the policy takes effect.
+Thank you for helping us maintain a secure and trustworthy development environment!
+
+— Chipsec Team
+
 CHIPSEC: Platform Security Assessment Framework
 ===============================================
 
