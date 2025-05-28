@@ -92,4 +92,5 @@ class CMOSCommand(BaseCommand):
         self.logger.log(f'[CHIPSEC] Writing CMOS high byte 0x{self.offset:X} <- 0x{self.value:X}')
         self._cmos.write_cmos_high(self.offset, self.value)
 
+
 commands = {'cmos': CMOSCommand}

@@ -171,4 +171,5 @@ class TXTCommand(BaseCommand):
         except Exception:
             self.ExitCode = ExitCode.ERROR
 
+
 commands = {'txt': TXTCommand}

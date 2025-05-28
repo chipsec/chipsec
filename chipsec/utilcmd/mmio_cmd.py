@@ -169,4 +169,5 @@ class MMIOCommand(BaseCommand):
             self._mmio.write_MMIO_reg_dword(self.base, self.offset, self.value & 0xFFFFFFFF)
             self._mmio.write_MMIO_reg_dword(self.base, self.offset + 4, (self.value >> 32) & 0xFFFFFFFF)
 
+
 commands = {'mmio': MMIOCommand}

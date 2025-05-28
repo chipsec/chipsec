@@ -232,14 +232,14 @@ class smi_stats:
     # Combines the statistics of the two data sets using parallel variance computation
     #
     def combine(self, partial):
-         self.outliers += partial.outliers
-         total_count = self.count + partial.count
-         difference = partial.mean - self.mean
-         self.mean = (self.mean * self.count + partial.mean * partial.count) / total_count
-         self.m2 += partial.m2 + difference**2 * self.count * partial.count / total_count
-         self.count = total_count
-         variance = self.m2 / self.count
-         self.stdev = math.sqrt(variance)
+        self.outliers += partial.outliers
+        total_count = self.count + partial.count
+        difference = partial.mean - self.mean
+        self.mean = (self.mean * self.count + partial.mean * partial.count) / total_count
+        self.m2 += partial.m2 + difference**2 * self.count * partial.count / total_count
+        self.count = total_count
+        variance = self.m2 / self.count
+        self.stdev = math.sqrt(variance)
 
 
 class scan_track:

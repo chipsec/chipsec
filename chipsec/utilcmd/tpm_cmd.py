@@ -103,4 +103,5 @@ class TPMCommand(BaseCommand):
         except Exception:
             self.ExitCode = ExitCode.ERROR
 
+
 commands = {'tpm': TPMCommand}

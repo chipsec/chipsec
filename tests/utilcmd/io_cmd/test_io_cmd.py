@@ -49,5 +49,6 @@ class TestIoUtilcmd(unittest.TestCase):
         retval = setup_run_destroy_util(init_replay_file, "io", "write 0x430 1 0x0", util_replay_file=io_dump_replay_file)
         self.assertEqual(retval, ExitCode.OK)
 
+
 if __name__ == '__main__':
     unittest.main()

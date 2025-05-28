@@ -43,5 +43,6 @@ class TestDescUtilcmd(unittest.TestCase):
         retval = setup_run_destroy_util(init_replay_file, "idt", "0", util_replay_file=desc_idt_replay_file)
         self.assertEqual(retval, ExitCode.OK)
 
+
 if __name__ == '__main__':
     unittest.main()

@@ -44,5 +44,6 @@ class TestCpuUtilcmd(unittest.TestCase):
         retval = setup_run_destroy_util(init_replay_file, "cpu", "info", util_replay_file=cpu_info_replay_file)
         self.assertEqual(retval, ExitCode.OK)
 
+
 if __name__ == '__main__':
     unittest.main()
