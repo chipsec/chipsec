@@ -20,7 +20,7 @@ from struct import pack
 
 
 class packer():
-    def __init__(self, default_size_char = 'Q') -> None:
+    def __init__(self, default_size_char='Q') -> None:
         self.size_char = default_size_char
 
     def custom_pack(self, num_of_chunks: int, expected_value: int, expected_value_index: int = 0) -> bytes:

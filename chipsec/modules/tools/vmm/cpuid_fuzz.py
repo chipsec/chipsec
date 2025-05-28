@@ -88,7 +88,7 @@ class cpuid_fuzz (BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
 
-    def fuzz_CPUID(self, eax_start, random_order = False):
+    def fuzz_CPUID(self, eax_start, random_order=False):
         eax_range = _NO_EAX_TO_FUZZ
         eax_end = eax_start + eax_range
         self.logger.log(f'[*] Fuzzing CPUID with EAX in range 0x{eax_start:08X}:0x{eax_end:08X}..')

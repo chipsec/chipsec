@@ -109,7 +109,7 @@ class Chipset:
         return _cpuid.get_proc_info()
 
     @classmethod
-    def basic_init_with_helper(cls, helper = None):
+    def basic_init_with_helper(cls, helper=None):
         _cs = cls()
         _cs.load_helper(helper)
         _cs.start_helper()
