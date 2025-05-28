@@ -208,7 +208,7 @@ class MMIO(hal_base.HALBase):
             if 'base_field' in bar:
                 base_field = bar['base_field']
                 try:
-                    bar_value = self.cs.register.read(bar_reg, bus = _bus)
+                    bar_value = self.cs.register.read(bar_reg, bus=_bus)
                     base = self.cs.register.get_field(bar_reg, bar_value, base_field, preserve)
                 except CSReadError:
                     base = 0
