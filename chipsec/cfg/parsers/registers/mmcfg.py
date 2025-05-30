@@ -87,6 +87,6 @@ class MMCFGRegisters(BaseConfigRegisterHelper):
         """Write the object"""
         _cs = cs()
         if self.pci.bus is not None:
-            _cs.mmcfg.write_mmcfg_reg(self.pci.bus, self.pci.dev, self.pci.fun, self.offset, self.size, value)
+            _cs.hals.MMCFG.write_mmcfg_reg(self.pci.bus, self.pci.dev, self.pci.fun, self.offset, self.size, value)
         else:
             raise CSReadError(f'PCI Device is not available ({self.pci.bus}:{self.pci.dev}.{self.pci.fun})')

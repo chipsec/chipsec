@@ -180,7 +180,7 @@ class MMCFG(hal_base.HALBase):
             mask = 0xFFFF
         else:
             mask = 0xFFFFFFFF
-        self.cs.mmio.write_MMIO_reg(pciexbar, pciexbar_off, (value & mask), size, pciexbar_sz)
+        self.cs.hals.MMIO.write_MMIO_reg(pciexbar, pciexbar_off, (value & mask), size)
         self.logger.log_hal(f"[mmcfg] Writing value 0x{value:X} to MMCFG register at bus {bus}, device {dev}, function {fun}, offset 0x{off:X}")
         self.logger.log_hal("[mmcfg] writing {:02d}:{:02d}.{:d} + 0x{:02X} (MMCFG + 0x{:08X}): 0x{:08X}".format(
             bus, dev, fun, off, pciexbar_off, value))
