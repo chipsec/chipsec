@@ -19,7 +19,6 @@
 
 import copy
 import os
-from chipsec.cfg.parsers.ip.platform import Platform, IP, Vendor
 from chipsec.cfg.parsers.ip.iobar import IOBarConfig
 from chipsec.cfg.parsers.ip.io import IOConfig
 from chipsec.cfg.parsers.ip.memory import MemoryConfig
@@ -30,15 +29,15 @@ from chipsec.cfg.parsers.ip.msr import MSRConfig
 from chipsec.cfg.parsers.ip.pci_device import PCIConfig
 from chipsec.cfg.parsers.controls import CONTROLHelper
 from chipsec.cfg.parsers.locks import LOCKSHelper
-from chipsec.cfg.parsers.registers.io import IORegisters #
-from chipsec.cfg.parsers.registers.iobar import IOBARRegisters #
-from chipsec.cfg.parsers.registers.memory import MEMORYRegisters #
-from chipsec.cfg.parsers.registers.mm_msgbus import MM_MSGBUSRegisters #
-from chipsec.cfg.parsers.registers.mmcfg import MMCFGRegisters #
-from chipsec.cfg.parsers.registers.mmio import MMIORegisters #
-from chipsec.cfg.parsers.registers.msgbus import MSGBUSRegisters #
-from chipsec.cfg.parsers.registers.msr import MSRRegisters #
-from chipsec.cfg.parsers.registers.pci import PCIRegisters #pcicfg
+from chipsec.cfg.parsers.registers.io import IORegisters  #
+from chipsec.cfg.parsers.registers.iobar import IOBARRegisters  #
+from chipsec.cfg.parsers.registers.memory import MEMORYRegisters  #
+from chipsec.cfg.parsers.registers.mm_msgbus import MM_MSGBUSRegisters  #
+from chipsec.cfg.parsers.registers.mmcfg import MMCFGRegisters  #
+from chipsec.cfg.parsers.registers.mmio import MMIORegisters  #
+from chipsec.cfg.parsers.registers.msgbus import MSGBUSRegisters  #
+from chipsec.cfg.parsers.registers.msr import MSRRegisters  #
+from chipsec.cfg.parsers.registers.pci import PCIRegisters  # pcicfg
 from chipsec.cfg.parsers.core_parser_helper import config_convert_data as _config_convert_data, CoreParserHelper
 from chipsec.library.exceptions import CSConfigError
 from chipsec.parsers import BaseConfigParser
@@ -105,12 +104,10 @@ class PlatformInfo(BaseConfigParser):
         return info_data(family, proc_code, pch_code, dev_code, detect_vals, req_pch, stage_data.vid_str, sku_data)
 
 
-
 class DevConfig(BaseConfigParser):
     def __init__(self, cfg_obj):
         super().__init__(cfg_obj)
         self.parser_helper = CoreParserHelper(cfg_obj)
-
 
     def get_metadata(self):
         return {'pci': self.handle_pci,
@@ -121,7 +118,7 @@ class DevConfig(BaseConfigParser):
                 'msr': self.handle_msr,
                 'mmiobar': self.handle_mmiobar,
                 'iobar': self.handle_iobar}
-    
+
     def get_subcomponent_handlers(self):
         return {'mmiobar': self.handle_mmio_subcomponent,
                 'iobar': self.handle_io_subcomponent}
@@ -140,7 +137,7 @@ class DevConfig(BaseConfigParser):
                     cfg_data = self.cfg.CONFIG_PCI_RAW[vid_str][did_str]
                     obj = self._add_dev(vid_str, dev_name, cfg_data, dev_attr)
                     break
-        elif set (['bus', 'dev', 'fun']).issubset(dev_attr.keys()):
+        elif set(['bus', 'dev', 'fun']).issubset(dev_attr.keys()):
             if vid_str in self.cfg.CONFIG_PCI_RAW:
                 for did_str in self.cfg.CONFIG_PCI_RAW[vid_str]:
                     for pci_data in self.cfg.CONFIG_PCI_RAW[vid_str][did_str].instances.values():
@@ -177,16 +174,14 @@ class DevConfig(BaseConfigParser):
             self.cfg.CONFIG_PCI[vid_str][name] = pci_obj
         return self.cfg.CONFIG_PCI[vid_str][name]
 
-
-    
-    def _add_ip(self, vid_str, ip_name, ip_obj = None):
+    def _add_ip(self, vid_str, ip_name, ip_obj=None):
         if ip_name not in self.cfg.platform.get_vendor(vid_str).ip_list:
             self.cfg.platform.get_vendor(vid_str).add_ip(ip_name, ip_obj)
 
     def _process_def(self, dest, et_node, tag, stage_data, cfg_obj):
         ret_val = []
         vid_str = stage_data.vid_str
-        
+
         for node in et_node.iter(tag):
             node_attr = _config_convert_data(node)
             if 'name' not in node_attr or 'config' not in node_attr:
@@ -197,7 +192,7 @@ class DevConfig(BaseConfigParser):
                 new_obj = cfg_obj(copy.deepcopy(node_attr))
                 dest[vid_str][dev_name] = new_obj
                 self._add_ip(vid_str, dev_name, new_obj)
-            else: # Q: This else doesn't seem right to me.
+            else:  # Q: This else doesn't seem right to me.
                 mobj = dest[vid_str][dev_name]
                 mobj.add_config(node_attr['config'])
             ret_val.extend(self._process_config(stage_data, dev_name, node_attr))
@@ -221,8 +216,6 @@ class DevConfig(BaseConfigParser):
                 ret_val.append(config_data(stage_data.vid_str, dev_name, cfg_path, component, attrs))
 
         return ret_val
-
-    
 
     def handle_pci(self, et_node, stage_data):
         ret_val = []
@@ -253,14 +246,12 @@ class DevConfig(BaseConfigParser):
     def handle_io(self, et_node, stage_data):
         return self._process_def(self.cfg.IO, et_node, 'definition', stage_data, IOConfig)
 
-    def handle_msr(self, et_node, stage_data): ## TODO
+    def handle_msr(self, et_node, stage_data):  # # TODO
         return self._process_def(self.cfg.MSR, et_node, 'definition', stage_data, MSRConfig)
-
-    
 
     def handle_mmio_subcomponent(self, et_node, stage_data):
         return self.parser_helper.handle_bar(et_node, stage_data, self.cfg.MMIO_BARS, MMIOBarConfig)
-    
+
     def handle_io_subcomponent(self, et_node, stage_data):
         return self.parser_helper.handle_bar(et_node, stage_data, self.cfg.IO_BARS, IOBarConfig)
 
@@ -269,7 +260,6 @@ class DevConfig(BaseConfigParser):
 
     def handle_iobar(self, et_node, stage_data):
         return self.parser_helper.handle_bars(et_node, stage_data, self.cfg.IO_BARS, IOBarConfig)
-
 
 
 class CoreConfigRegisters(BaseConfigParser):
@@ -289,7 +279,7 @@ class CoreConfigRegisters(BaseConfigParser):
     def _make_reg_name(self, stage_data, reg_name, override=False):
         devicename = self._get_parent_name(stage_data)
         return '.'.join([stage_data.vid_str, devicename, reg_name])
-    
+
     def _make_ip_name(self, stage_data):
         return '.'.join([stage_data.vid_str, stage_data.dev_name])
 
@@ -379,9 +369,9 @@ class CoreConfigRegisters(BaseConfigParser):
                     if lockedby:
                         lreg = self._make_reg_name(stage_data, reg_name, False)
                         if lockedby in self.cfg.LOCKEDBY[stage_data.vid_str]:
-                            self.cfg.LOCKEDBY[stage_data.vid_str][lockedby].append({lreg, field_name})
+                            self.cfg.LOCKEDBY[stage_data.vid_str][lockedby].append((lreg, field_name))
                         else:
-                            self.cfg.LOCKEDBY[stage_data.vid_str][lockedby] = [{lreg, field_name}]
+                            self.cfg.LOCKEDBY[stage_data.vid_str][lockedby] = [(lreg, field_name)]
 
                 # Handle rest of field data here
                 if 'desc' not in field_attr:
@@ -498,7 +488,7 @@ class CoreConfigRegisters(BaseConfigParser):
             else:
                 retval.append(None)
         return retval
-    
+
 
 class CoreConfigBars(BaseConfigParser):
     def __init__(self, cfg_obj):
@@ -512,7 +502,6 @@ class CoreConfigBars(BaseConfigParser):
     def get_stage(self):
         return Stage.CORE_SUPPORT
 
-    
     def handle_mmio(self, et_node, stage_data):
         return self.parser_helper.handle_bars(et_node, stage_data, self.cfg.MMIO_BARS, MMIOBarConfig)
 
@@ -520,4 +509,4 @@ class CoreConfigBars(BaseConfigParser):
         return self.parser_helper.handle_bars(et_node, stage_data, self.cfg.IO_BARS, IOBarConfig)
 
 
-parsers = [PlatformInfo, DevConfig,CoreConfigRegisters, CoreConfigBars]
+parsers = [PlatformInfo, DevConfig, CoreConfigRegisters, CoreConfigBars]
