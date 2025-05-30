@@ -31,3 +31,9 @@ class LOCKSHelper(namedtuple('LocksHelper', 'register field attributes lock_valu
 
     def __str__(self) -> str:
         return super().__str__()
+
+    def get_field(self) -> str:
+        return self.field if self.field else "N/A"
+
+    def get_register(self) -> str:
+        return self.register if self.register else "N/A"

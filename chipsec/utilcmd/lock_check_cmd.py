@@ -33,7 +33,7 @@ Examples:
 KEY:
     Lock Name - Name of Lock within configuration file
     State     - Lock Configuration
-    
+
         Undefined - Lock is not defined within configuration
         Undoc     - Lock is missing configuration information
         Hidden    - Lock is in a disabled or hidden state (unable to read the lock)
@@ -46,13 +46,13 @@ KEY:
 from argparse import ArgumentParser
 
 from chipsec.command import BaseCommand, toLoad
-from chipsec.hal.common.locks import locks, LockResult
+from chipsec.hal.common.locks import LockResult
 from chipsec.library.defines import is_set
 
 
 class LOCKCHECKCommand(BaseCommand):
 
-    version = "0.5"
+    version = "0.8"
 
     def requirements(self) -> toLoad:
         return toLoad.All
@@ -79,19 +79,6 @@ class LOCKCHECKCommand(BaseCommand):
 
         parser.parse_args(self.argv, namespace=self)
 
-    def set_up(self) -> None:
-        self.flip_consistency_checking = False
-        if not self.cs.consistency_checking:
-            self.flip_consistency_checking = True
-            self.cs.consistency_checking = True
-        self.logger.set_always_flush(True)
-        self._locks = locks(self.cs)
-    
-    def tear_down(self) -> None:
-        self.logger.set_always_flush(False)
-        if self.flip_consistency_checking:
-            self.cs.consistency_checking = False
-
     def log_key(self) -> None:
         self.logger.log("""
 KEY:
@@ -112,13 +99,13 @@ KEY:
 
     def list_locks(self) -> None:
         self.logger.log('Locks identified within the configuration:')
-        for lock in self._locks.get_locks():
+        for lock in self.cs.hals.Locks.get_locks():
             self.logger.log(lock)
         self.logger.log('')
         return
 
     def checkall_locks(self) -> None:
-        locks = self._locks.get_locks()
+        locks = self.cs.hals.Locks.get_locks()
         if not locks:
             self.logger.log('Did not find any locks')
             return
@@ -126,7 +113,7 @@ KEY:
             self.log_key()
         res = self.log_header()
         for lock in locks:
-            is_locked = self._locks.is_locked(lock)
+            is_locked = self.cs.hals.Locks.is_locked(lock)
             is_locked_str = self.check_log(lock, is_locked)
             res = f"{res}\n{is_locked_str}"
         if self.logger.HAL:
@@ -138,7 +125,7 @@ KEY:
             self.log_key()
         res = self.log_header()
         for lock in self.lockname:
-            is_locked = self._locks.is_locked(lock)
+            is_locked = self.cs.hals.Locks.is_locked(lock)
             is_locked_str = self.check_log(lock, is_locked)
             res = f"{res}\n{is_locked_str}"
         if self.logger.HAL:
@@ -153,7 +140,7 @@ KEY:
             res_str = 'Undoc'
         elif not is_set(is_locked, LockResult.CAN_READ):
             res_str = 'Hidden'
-        elif self.cs.lock.get_type(lock) == "RW/O":
+        elif self.cs.lock.get(lock).is_access_type("RW/O"):
             res_str = 'RW/O'
         elif is_set(is_locked, LockResult.LOCKED):
             res_str = 'Locked'
