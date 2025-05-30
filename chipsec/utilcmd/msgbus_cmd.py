@@ -21,8 +21,6 @@
 """
 >>> chipsec_util msgbus read     <port> <register>
 >>> chipsec_util msgbus write    <port> <register> <value>
->>> chipsec_util msgbus mm_read  <port> <register>
->>> chipsec_util msgbus mm_write <port> <register> <value>
 >>> chipsec_util msgbus message  <port> <register> <opcode> [value]
 >>>
 >>> <port>    : message bus port of the target unit
@@ -33,7 +31,6 @@
 Examples:
 
 >>> chipsec_util msgbus read     0x3 0x2E
->>> chipsec_util msgbus mm_write 0x3 0x27 0xE0000001
 >>> chipsec_util msgbus message  0x3 0x2E 0x10
 >>> chipsec_util msgbus message  0x3 0x2E 0x11 0x0
 """
@@ -63,17 +60,6 @@ class MsgBusCommand(BaseCommand):
         parser_write.add_argument('val', type=lambda x: int(x, 16), help='Value (hex)')
         parser_write.set_defaults(func=self.msgbus_write)
 
-        parser_mmread = subparsers.add_parser('mm_read')
-        parser_mmread.add_argument('port', type=lambda x: int(x, 16), help='Port (hex)')
-        parser_mmread.add_argument('reg', type=lambda x: int(x, 16), help='Register (hex)')
-        parser_mmread.set_defaults(func=self.msgbus_mm_read)
-
-        parser_mmwrite = subparsers.add_parser('mm_write')
-        parser_mmwrite.add_argument('port', type=lambda x: int(x, 16), help='Port (hex)')
-        parser_mmwrite.add_argument('reg', type=lambda x: int(x, 16), help='Register (hex)')
-        parser_mmwrite.add_argument('val', type=lambda x: int(x, 16), help='Value (hex)')
-        parser_mmwrite.set_defaults(func=self.msgbus_mm_write)
-
         parser_message = subparsers.add_parser('message')
         parser_message.add_argument('port', type=lambda x: int(x, 16), help='Port (hex)')
         parser_message.add_argument('reg', type=lambda x: int(x, 16), help='Register (hex)')
@@ -90,14 +76,6 @@ class MsgBusCommand(BaseCommand):
     def msgbus_write(self):
         self.logger.log(f'[CHIPSEC] msgbus write: port 0x{self.port:02X} + 0x{self.reg:08X} < 0x{self.val:08X}')
         return self._msgbus.msgbus_reg_write(self.port, self.reg, self.val)
-
-    def msgbus_mm_read(self):
-        self.logger.log(f'[CHIPSEC] MMIO msgbus read: port 0x{self.port:02X} + 0x{self.reg:08X}')
-        return self._msgbus.mm_msgbus_reg_read(self.port, self.reg)
-
-    def msgbus_mm_write(self):
-        self.logger.log(f'[CHIPSEC] MMIO msgbus write: port 0x{self.port:02X} + 0x{self.reg:08X} < 0x{self.val:08X}')
-        return self._msgbus.mm_msgbus_reg_write(self.port, self.reg, self.val)
 
     def msgbus_message(self):
         self.logger.log(f'[CHIPSEC] msgbus message: port 0x{self.port:02X} + 0x{self.reg:08X}, opcode: 0x{self.opcode:02X}')
