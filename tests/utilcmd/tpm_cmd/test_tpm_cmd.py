@@ -23,6 +23,7 @@ To execute: python[3] -m unittest tests.utilcmd.tpm_cmd.test_tpm_cmd
 """
 
 import unittest
+from unittest.mock import MagicMock, patch
 import os
 
 from chipsec.library.file import get_main_dir
@@ -40,9 +41,11 @@ class TestTpmUtilcmd(unittest.TestCase):
     def test_command_nvread(self) -> None:
         pass
 
-    def test_command_startup(self) -> None:
+    @patch("chipsec.hal.acpi.ACPI")
+    def test_command_startup(self, mock_acpi) -> None:
         init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate.json")
         tpm_command_startup_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "tpm_cmd", "tpm_cmd_startup_1.json")
+        mock_acpi().is_ACPI_table_present.side_effect = [True, False]
         retval = setup_run_destroy_util(init_replay_file, "tpm", "command startup 1", util_replay_file=tpm_command_startup_replay_file)
         self.assertEqual(retval, ExitCode.OK)
 
@@ -55,9 +58,11 @@ class TestTpmUtilcmd(unittest.TestCase):
     def test_command_forceclear(self) -> None:
         pass
 
-    def test_state(self) -> None:
+    @patch("chipsec.hal.acpi.ACPI")
+    def test_state(self, mock_acpi) -> None:
         init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate.json")
         tpm_command_state_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "tpm_cmd", "tpm_cmd_state_1.json")
+        mock_acpi().is_ACPI_table_present.side_effect = [True, False]
         retval = setup_run_destroy_util(init_replay_file, "tpm", "state 0", util_replay_file=tpm_command_state_replay_file)
         self.assertEqual(retval, ExitCode.OK)
 
