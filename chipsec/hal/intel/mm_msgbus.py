@@ -28,11 +28,9 @@ References:
   http://www.intel.com/content/dam/doc/datasheet/atom-d2000-n2000-vol-2-datasheet.pdf (section 1.10.2)
 
 usage:
-    >>> msgbus_reg_read( port, register )
-    >>> msgbus_reg_write( port, register, data )
-    >>> msgbus_read_message( port, register, opcode )
-    >>> msgbus_write_message( port, register, opcode, data )
-    >>> msgbus_send_message( port, register, opcode, data )
+    >>> get_sbreg_base_address( )
+    >>> read( port, register )
+    >>> write( port, register, data )
 """
 
 from typing import Optional
@@ -46,11 +44,27 @@ class MMMsgBus(hal_base.HALBase):
         super(MMMsgBus, self).__init__(cs)
         self.p2sbHide = None
 
-    def __hide_p2sb(self, hide: bool) -> bool:
+    def __hide_p2sb(self) -> bool:
+        """
+        Hide the P2SB device by writing to the HIDE field in the P2SBC register.
+        Returns:
+            bool: True if the P2SB device was hidden, False if it was not.
+        """
+        return self.__write_to_p2sb(1)
+    
+    def __unhide_p2sb(self) -> bool:
+        """
+        Unhide the P2SB device by writing to the HIDE field in the P2SBC register.
+        Returns:
+            bool: True if the P2SB device was unhidden, False if it was not.
+        """
+        return self.__write_to_p2sb(0)
+    
+    def __write_to_p2sb(self, value: int) -> bool:
         """
         Hide or unhide the P2SB device by writing to the HIDE field in the P2SBC register.
         Arguments:
-            hide (bool): If True, hide the P2SB device; if False, unhide it.
+            value (int): If 1, hide the P2SB device; if 0, unhide it.
         Returns:
             bool: True if the P2SB device was hidden, False if it was not.
         """
@@ -66,12 +80,9 @@ class MMMsgBus(hal_base.HALBase):
 
         p2sbc_reg = self.cs.register.get_list_by_name(self.p2sbHide['reg'])
 
-        if hide:
-            p2sbc_reg.write_field(self.p2sbHide['field'], 1)
-        else:
-            p2sbc_reg.write_field(self.p2sbHide['field'], 0)
+        p2sbc_reg.write_field(self.p2sbHide['field'], value)
         return hidden
-
+    
     def get_sbreg_base_address(self) -> int:
         """
         Get the base address of the SBREG MMIO BAR.
@@ -84,9 +95,9 @@ class MMMsgBus(hal_base.HALBase):
         except CSReadError:
             self.logger.log_hal('Failed to read MMIO BAR base address for 8086.P2SBC.SBREGBAR')
         self.logger.log_hal('Attempting to unhide and read MMIO BAR base address for 8086.P2SBC.SBREGBAR')
-        self.__hide_p2sb(False)
+        self.__unhide_p2sb()
         mmio_addr = self.cs.hals.MMIO.get_MMIO_BAR_base_address('8086.P2SBC.SBREGBAR')[0]
-        self.__hide_p2sb(True)
+        self.__hide_p2sb()
         return mmio_addr
 
     def read(self, port: int, register: int) -> int:
