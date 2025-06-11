@@ -139,7 +139,6 @@ class s3bootscript(BaseModule):
 
     def check_s3_bootscripts(self, bsaddress=None) -> int:
         res = 0
-        scriptInsideSMRAM = False
 
         if bsaddress:
             bootscript_PAs = [bsaddress]
