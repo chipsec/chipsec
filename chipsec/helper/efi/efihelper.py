@@ -279,7 +279,7 @@ class EfiHelper(Helper):
             if logger().VERBOSE:
                 logger().log_important(f'Setting attributes to: {attrs:04X}')
         elif isinstance(attrs, bytes):
-            attrs =  struct.unpack("L", attrs)[0]
+            attrs = struct.unpack("L", attrs)[0]
 
         (Status, buffer_size, guidstr) = edk2.SetVariable(name, guidstr, int(attrs), buffer, buffer_size)
 

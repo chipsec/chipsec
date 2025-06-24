@@ -183,7 +183,7 @@ def print_efi_variable(offset: int, var_buf: bytes, var_header: 'EfiTableType', 
             if uefi_platform.IS_VARIABLE_STATE(state, uefi_platform.VAR_IN_DELETED_TRANSITION):
                 state_str = f'{state_str} IN_DELETED_TRANSITION +'
             if uefi_platform.IS_VARIABLE_STATE(state, uefi_platform.VAR_DELETED):
-                state_str =  f'{state_str} DELETED +'
+                state_str = f'{state_str} DELETED +'
             if uefi_platform.IS_VARIABLE_STATE(state, uefi_platform.VAR_ADDED):
                 state_str = f'{state_str} ADDED +'
             logger().log(state_str)
