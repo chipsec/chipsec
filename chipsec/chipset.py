@@ -114,6 +114,7 @@ class Chipset:
         _cs.load_helper(helper)
         _cs.start_helper()
         return _cs
+
     def init(self, platform_code, req_pch_code, helper_name=None, start_helper=True, load_config=True, ignore_platform=False):
         self.load_config = load_config
         _unknown_proc = True

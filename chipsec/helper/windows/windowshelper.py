@@ -325,7 +325,6 @@ class WindowsHelper(Helper):
             win32api.CloseHandle(self.driver_handle)
             self.driver_handle = None
 
-
 ###############################################################################################
 # Driver/service management functions
 ###############################################################################################

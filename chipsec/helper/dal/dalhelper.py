@@ -67,7 +67,6 @@ class DALHelper(Helper):
             self.base.go()
             logger().log('[helper] Threads are running')
 
-
 ###############################################################################################
 # Driver/service management functions
 ###############################################################################################
@@ -93,7 +92,6 @@ class DALHelper(Helper):
     def delete(self) -> bool:
         logger().log_debug('[helper] DAL Helper deleted')
         return True
-
 
 ###############################################################################################
 # Functions to get information about the remote target
