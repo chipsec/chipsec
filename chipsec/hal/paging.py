@@ -136,7 +136,7 @@ class c_reverse_translation:
                 self.reverse_translation[phys] = []
             self.reverse_translation[phys].append({'addr': virt, 'size': size, 'attr': attr})
 
-    def get_reverse_translation(self, addr: int) ->  List[Dict[str, Any]]:
+    def get_reverse_translation(self, addr: int) -> List[Dict[str, Any]]:
         ADDR_4KB = 0xFFFFFFFFFFFFF000
         addr &= ADDR_4KB
         return self.reverse_translation[addr] if addr in self.reverse_translation else []
@@ -492,7 +492,7 @@ class c_extended_page_tables(c_4level_page_tables):
         self.BIGPAGE = {'mask': 0x1, 'offset': 7}
         self.canonical_msb = 63
 
-    def is_present(self, entry: int) ->  bool:
+    def is_present(self, entry: int) -> bool:
         return self.get_field(entry, self.XWR) != 0
 
     def is_bigpage(self, entry: int) -> bool:

@@ -809,7 +809,7 @@ class smm_ptr(BaseModule):
             elif test_mode in ['fuzz', 'fuzzmore']:
                 bad_ptr_cnt, _ = self.test_fuzz(thread_id, smic_start, smic_end, _addr, _addr1)
             elif test_mode in ['scan']:
-                scan_mode =  True
+                scan_mode = True
                 scan = None
                 bad_ptr_cnt, scan = self.test_fuzz(thread_id, smic_start, smic_end, _addr, _addr1, True)
         except BadSMIDetected:

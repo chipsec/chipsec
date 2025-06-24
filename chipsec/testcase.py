@@ -70,9 +70,9 @@ class TestCase:
 
     def get_fields(self) -> Dict[str, str]:
         try:
-            result_code =  f'0x{self.result_code:016X}'
+            result_code = f'0x{self.result_code:016X}'
         except ValueError:
-            result_code =  f'0x{self.result_code.value:016X}'
+            result_code = f'0x{self.result_code.value:016X}'
         return {'name': self.name, 'output': self.output, 'result': self.result, 'code': result_code}
 
     def start_module(self) -> None:
