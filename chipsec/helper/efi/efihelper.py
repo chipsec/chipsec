@@ -95,7 +95,6 @@ class EfiHelper(Helper):
         logger().log_debug('[helper] UEFI Helper deleted')
         return True
 
-
 ###############################################################################################
 # Actual API functions to access HW resources
 ###############################################################################################
@@ -103,7 +102,6 @@ class EfiHelper(Helper):
     #
     # Physical memory access
     #
-
     def split_address(self, pa: int) -> Tuple[int, int]:
         return (pa & 0xFFFFFFFF, (pa >> 32) & 0xFFFFFFFF)
 

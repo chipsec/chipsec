@@ -321,6 +321,7 @@ class ACPI(HALBase):
         return (rsdp_pa, rsdp)
 
     RsdtXsdt = Union[acpi_tables.RSDT, acpi_tables.XSDT]
+
     #
     # Retrieves System Description Table (RSDT or XSDT) either from RSDP or using OS API
     #

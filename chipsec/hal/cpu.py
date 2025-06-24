@@ -234,6 +234,7 @@ class CPU(hal_base.HALBase):
             avalid = self.cs.register.get_field('SMMMASK', smmmask_msr_reg, 'AVALID')
             tvalid = self.cs.register.get_field('SMMMASK', smmmask_msr_reg, 'TVALID')
             return (1 == avalid and 1 == tvalid)
+
     #
     # Dump CPU page tables at specified physical base of paging-directory hierarchy (CR3)
     #

@@ -78,7 +78,6 @@ class Msr:
         core_count = self.cs.register.read_field("IA32_MSR_CORE_THREAD_COUNT", "Core_Count")
         return core_count
 
-
 ##########################################################################################################
 #
 # Read/Write CPU MSRs
@@ -122,7 +121,6 @@ class Msr:
         (limit, base, pa) = self.get_Desc_Table_Register(cpu_thread_id, DESCRIPTOR_TABLE_CODE_LDTR)
         logger().log_hal(f'[cpu{cpu_thread_id:d}] LDTR Limit = 0x{limit:04X}, Base = 0x{base:016X}, Physical Address = 0x{pa:016X}')
         return (limit, base, pa)
-
 
 ##########################################################################################################
 #
