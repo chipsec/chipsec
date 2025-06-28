@@ -27,6 +27,10 @@ class MM_MSGBUSRegisters(BaseConfigRegisterHelper):
         self.offset = cfg_obj['offset']
         self.bar_size = None
         self.port = cfg_obj['port']
+        if 'size' in cfg_obj:
+            self.size = cfg_obj['size']
+        else:
+            self.size = 4
 
     def __repr__(self) -> str:
         reg_str = ''

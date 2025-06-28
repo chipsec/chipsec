@@ -172,8 +172,8 @@ class CPU(hal_base.HALBase):
     def get_TSEG(self) -> Tuple[int, int, int]:
         if self.cs.is_server():
             # tseg register has base and limit
-            tseg_base = self.cs.register.get_list_by_name('8086.MEMMAP_VTD.TSEG_BASE').read_field('base', True)[0]
-            tseg_limit = self.cs.register.get_list_by_name('8086.MEMMAP_VTD.TSEG_LIMIT').read_field('limit', True)[0]
+            tseg_base = self.cs.register.get_list_by_name('8086.MEMMAP_VTD.TSEG').read_field('base', True)[0]
+            tseg_limit = self.cs.register.get_list_by_name('8086.MEMMAP_VTD.TSEG').read_field('limit', True)[0]
             tseg_limit += 0xFFFFF
         else:
             # TSEG base is in TSEGMB, TSEG limit is BGSM - 1
