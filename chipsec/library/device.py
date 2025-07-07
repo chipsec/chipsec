@@ -18,32 +18,87 @@
 # chipsec@intel.com
 #
 
+"""
+Device interface module.
 
-from typing import List, Optional, Tuple
+This module provides functionality to access and manage device configurations
+in the CHIPSEC framework, including PCI devices and I/O spaces.
+"""
+
+from typing import Any, List, Optional, Tuple
 from chipsec.cfg.parsers.ip.pci_device import PCIConfig
 
 
 class Device:
-    def __init__(self, cs) -> None:
+    """
+    Device interface for platform device definitions.
+
+    Provides methods to access and query device configurations,
+    particularly PCI devices and I/O space configurations.
+    """
+
+    def __init__(self, cs: Any) -> None:
+        """
+        Initialize the Device interface.
+
+        Args:
+            cs: Chipset interface object
+        """
         self.cs = cs
 
-    def get_instance_by_name(self, device_name: str, instance) -> PCIConfig:
+    def get_instance_by_name(self, device_name: str,
+                             instance: Any) -> Optional[PCIConfig]:
+        """
+        Get a specific device instance by name and instance identifier.
+
+        Args:
+            device_name: Name of the device
+            instance: Instance identifier to retrieve
+
+        Returns:
+            Device instance if found, None otherwise
+        """
         devlist = self.get_list_by_name(device_name)
         for dev in devlist:
             if instance in dev.instances:
                 return dev.instances[instance]
         return None
-        
-    def get_list_by_name(self, device_name: str):
+
+    def get_list_by_name(self, device_name: str) -> List[Any]:
+        """
+        Get list of device objects by name.
+
+        Args:
+            device_name: Name of the device to retrieve objects for
+
+        Returns:
+            List of device objects matching the name
+        """
         devices = self.cs.Cfg.get_objlist(device_name)
         return [ip.obj for ip in devices]
 
     def is_defined(self, device_name: str) -> bool:
-        """Checks if device is defined in the XML config"""
-        return self.get_list_by_name(device_name) is not None
+        """
+        Check if a device is defined in the configuration.
+
+        Args:
+            device_name: Name of the device to check
+
+        Returns:
+            True if device is defined, False otherwise
+        """
+        return len(self.get_list_by_name(device_name)) > 0
 
     def get_bus(self, device_name: str) -> List[int]:
-        """Retrieves bus value(s) from PCI device"""
+        """
+        Retrieve bus value(s) from PCI device instances.
+
+        Args:
+            device_name: Name of the PCI device
+
+        Returns:
+            List of bus numbers for all instances of the device
+        """
         dev_list = self.get_list_by_name(device_name)
         buses = []
         for dev in dev_list:
@@ -51,11 +106,21 @@ class Device:
                 buses.append(dev.instances[instance_key].bus)
         return buses
 
-    def get_IO_space(self, io_name: str) -> Tuple[Optional[int], Optional[int]]:
-        """Retrieves BAR values for given IO range"""
-        if io_name in self.cs.Cfg.IO_BARS.keys():
-            reg = self.cs.Cfg.IO_BARS[io_name]['register']
-            bf = self.cs.Cfg.IO_BARS[io_name]['base_field']
+    def get_IO_space(self, io_name: str) -> Tuple[Optional[str],
+                                                  Optional[str]]:
+        """
+        Retrieve BAR values for given I/O range.
+
+        Args:
+            io_name: Name of the I/O space
+
+        Returns:
+            Tuple of (register_name, base_field_name) if found,
+            (None, None) otherwise
+        """
+        if io_name in self.cs.Cfg.IO_BARS:
+            reg = self.cs.Cfg.IO_BARS[io_name].get('register')
+            bf = self.cs.Cfg.IO_BARS[io_name].get('base_field')
             return (reg, bf)
         else:
-            return None, None
+            return (None, None)

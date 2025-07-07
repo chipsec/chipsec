@@ -19,89 +19,74 @@
 #
 
 
+"""
+Lock interface module.
+
+This module provides functionality to access and manage platform lock
+definitions in the CHIPSEC framework.
+"""
+
+from typing import Any, List, Optional, Set
 from chipsec.library.logger import logger
-from typing import List, Optional, Set, Union
 
 
 class Lock:
-    def __init__(self, cs):
+    """
+    Lock interface for platform lock definitions.
+
+    Provides methods to access and query lock objects that define
+    platform-specific security lock mechanisms.
+    """
+
+    def __init__(self, cs: Any) -> None:
+        """
+        Initialize the Lock interface.
+
+        Args:
+            cs: Chipset interface object
+        """
         self.cs = cs
 
-    # TODO: Rename? Not sure what is actually stored in the LOCKS list.
-    def get_obj(self, lock_name: str):
-        return self.cs.Cfg.LOCKS.get(lock_name, None)
+    def get(self, lock_name: str) -> Optional[Any]:
+        """
+        Retrieve the lock object associated with the lock_name.
 
-    def get(self, lock_name: str, cpu_thread: int = 0, with_print: bool = False, bus: Optional[int] = None) -> Union[int, List[int]]:
-        """Retrieves information for the lock associated with the register/field by lock_name."""
-        lock = self.cs.Cfg.LOCKS[lock_name]
-        reg = lock['register']
-        field = lock['field']
-        if bus is None:
-            reg_data = self.cs.register.read_all(reg, cpu_thread)
+        Args:
+            lock_name: Name of the lock to retrieve
+
+        Returns:
+            Lock object if found, None otherwise
+        """
+        if lock_name in self.cs.Cfg.LOCKS:
+            return self.cs.Cfg.LOCKS[lock_name]
         else:
-            reg_data = self.cs.register.read(reg, cpu_thread, bus)
-            reg_data = [reg_data]
-        if logger().VERBOSE or with_print:
-            if reg_data:
-                for rd in reg_data:
-                    self.cs.register.print(reg, rd)
-            else:
-                logger().log('Register has no data')
-        if reg_data:
-            return self.cs.register.get_field_all(reg, reg_data, field)
-        return reg_data
-
-    def set(self, lock_name: str, lock_value: int, cpu_thread: int = 0, bus: Optional[int] = None) -> bool:
-        """Sets the value of a lock associated with the given lock_name."""
-        lock = self.cs.Cfg.LOCKS[lock_name]
-        reg = lock['register']
-        field = lock['field']
-        if bus is None:
-            reg_data = self.cs.register.read_all(reg, cpu_thread)
-            reg_data = self.cs.register.set_field_all(reg, reg_data, field, lock_value)
-            return self.cs.register.write_all(reg, reg_data, cpu_thread)
-        else:
-            reg_data = self.cs.register.read(reg, cpu_thread, bus)
-            reg_data = self.cs.register.set_field(reg, reg_data, field, lock_value)
-            return self.cs.register.write(reg, reg_data, cpu_thread, bus)
-
-    def is_defined(self, lock_name: str) -> bool:
-        """Checks if lock is defined in the XML config"""
-        return lock_name in self.cs.Cfg.LOCKS.keys()
-
-    def get_value(self, lock_name: str) -> int:
-        """Retrieves the expected value of a lock associated with the lock_name."""
-        if logger().DEBUG:
-            logger().log(f'Retrieve value for lock {lock_name}')
-        return self.cs.Cfg.LOCKS[lock_name]['value']
-
-    def get_desc(self, lock_name: str) -> str:
-        """Retrieves the description of a lock assoicated with the lock_name."""
-        return self.cs.Cfg.LOCKS[lock_name]['desc']
-
-    def get_type(self, lock_name: str) -> str:
-        """Fetcheth the type of a register associated with the lock_name."""
-        if 'type' in self.cs.Cfg.LOCKS[lock_name].keys():
-            mtype = self.cs.Cfg.LOCKS[lock_name]['type']
-        else:
-            mtype = 'RW/L'
-        return mtype
+            logger().log(f'Lock {lock_name} is not defined in the '
+                         'configuration file')
+            return None
 
     def get_list(self) -> List[str]:
-        """Retrieve a list of locks that are currently loaded from config files."""
+        """
+        Retrieve a list of locks that are currently loaded from config files.
+
+        Returns:
+            List of lock names currently defined
+        """
         return list(self.cs.Cfg.LOCKS.keys())
 
-    def get_mask(self, lock_name: str) -> int:
-        """Retrieve the field mask of a register associated with the lock_name."""
-        lock = self.cs.Cfg.LOCKS[lock_name]
-        reg = lock['register']
-        field = lock['field']
-        return self.cs.register.get_field_mask(reg, field)
-
     def get_lockedby(self, lock_name: str) -> Optional[List[Set[str]]]:
-        """Retrieve a list of registers locked by lock_name."""
+        """
+        Retrieve a list of registers locked by lock_name.
+
+        Args:
+            lock_name: Name of the lock
+
+        Returns:
+            List of register sets locked by the specified lock,
+            None if lock is not found
+        """
         vid, _, _, _ = self.cs.Cfg.convert_internal_scope("", lock_name)
-        if lock_name in self.cs.Cfg.LOCKEDBY[vid]:
+        if (vid in self.cs.Cfg.LOCKEDBY and
+                lock_name in self.cs.Cfg.LOCKEDBY[vid]):
             return self.cs.Cfg.LOCKEDBY[vid][lock_name]
         else:
             return None

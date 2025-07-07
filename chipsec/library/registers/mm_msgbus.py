@@ -18,20 +18,50 @@
 # chipsec@intel.com
 #
 
-'''
-Main functionality to get the definition of IO registers
-'''
+"""
+Memory-Mapped Message Bus register interface.
 
+This module provides functionality to access and manage Memory-Mapped
+Message Bus registers in the CHIPSEC framework.
+"""
+
+from typing import Any, Optional
 from chipsec.library.registers.baseregister import BaseRegister
 
+
 class MMMsgBus(BaseRegister):
-    def __init__(self, cs):
+    """
+    Memory-Mapped Message Bus register interface.
+
+    Provides methods to access and query MM Message Bus register definitions.
+    """
+
+    def __init__(self, cs: Any) -> None:
+        """
+        Initialize the MM Message Bus register interface.
+
+        Args:
+            cs: Chipset interface object
+        """
         super(MMMsgBus, self).__init__(cs)
 
-    def get_def(self, bar_name):
-        scope = self.cs.Cfg.get_scope(bar_name)
-        vid, device, bar, _ = self.cs.Cfg.convert_internal_scope(scope, bar_name)
-        if bar in self.cs.Cfg.IO_BARS[vid][device]:
-            return self.cs.Cfg.IO_BARS[vid][device][bar]
-        else:
-            return None
+    def get_def(self, mmsgbus_name: str) -> Optional[Any]:
+        """
+        Get the definition of a MM Message Bus by name.
+
+        Args:
+            mmsgbus_name: Name of the MM Message Bus to retrieve
+
+        Returns:
+            MM Message Bus definition if found, None otherwise
+        """
+        scope = self.cs.Cfg.get_scope(mmsgbus_name)
+        vid, device, mmbus, _ = self.cs.Cfg.convert_internal_scope(
+            scope, mmsgbus_name)
+
+        if (vid in self.cs.Cfg.MM_MSGBUS and
+            device in self.cs.Cfg.MM_MSGBUS[vid] and
+            mmbus in self.cs.Cfg.MM_MSGBUS[vid][device]):
+            return self.cs.Cfg.MM_MSGBUS[vid][device][mmbus]
+
+        return None
