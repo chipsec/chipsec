@@ -34,7 +34,7 @@ import platform
 import time
 import traceback
 from collections import OrderedDict
-from typing import Dict, Any, Optional, Sequence
+from typing import Dict, Any, Optional, Sequence, Tuple
 
 import chipsec.library.file
 import chipsec.module
@@ -89,7 +89,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     adv_options.add_argument('-k', '--markdown', dest='_markdown_out', help='Specify filename for markdown output')
     adv_options.add_argument('-t', '--moduletype', dest='USER_MODULE_TAGS', type=str.upper, default=[], help='Run tests of a specific type (tag)')
     adv_options.add_argument('--list_tags', dest='_list_tags', action='store_true', help='List all the available options for -t,--moduletype')
-    adv_options.add_argument('-lm','--list_modules', dest='_list_modules', action='store_true', help='List all the available options for -m,--module/-mx,--module_exclude')
+    adv_options.add_argument('-lm', '--list_modules', dest='_list_modules', action='store_true', help='List all the available options for -m,--module/-mx,--module_exclude')
     adv_options.add_argument('-I', '--include', dest='IMPORT_PATHS', default=[], help='Specify additional path to load modules from')
     adv_options.add_argument('--failfast', help="Fail on any exception and exit (don't mask exceptions)", action='store_true')
     adv_options.add_argument('--no_time', help="Don't log timestamps", action='store_true')
@@ -115,7 +115,14 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
 
 class ChipsecMain:
 
-    def __init__(self, switches, argv):
+    def __init__(self, switches: Dict[str, Any], argv: Sequence[str]) -> None:
+        """
+        Initialize ChipsecMain with the provided command-line switches and arguments.
+
+        Args:
+            switches: Dictionary of command-line switches/options
+            argv: Raw command-line arguments
+        """
         self.logger = logger()
         self.CHIPSEC_FOLDER = chipsec.library.file.get_main_dir()
         self.PYTHON_64_BITS = True if (sys.maxsize > 2**32) else False
@@ -135,7 +142,16 @@ class ChipsecMain:
     # Module API
     ##################################################################################
 
-    def import_module(self, module_path):
+    def import_module(self, module_path: str) -> Optional[Any]:
+        """
+        Import a module by its path.
+
+        Args:
+            module_path: The module path to import
+
+        Returns:
+            The imported module or None if import failed
+        """
         module = None
         if not self.MODPATH_RE.match(module_path):
             self.logger.log_error(f'Invalid module path: {module_path}')
@@ -143,14 +159,25 @@ class ChipsecMain:
             try:
                 module = importlib.import_module(module_path)
             except BaseException as msg:
-                self.logger.log_error(f'Exception occurred during import of {module_path}: "{str(msg)}"')
+                error_msg = (f'Exception occurred during import of {module_path}: '
+                             f'"{str(msg)}"')
+                self.logger.log_error(error_msg)
                 if self.logger.DEBUG:
                     self.logger.log_bad(traceback.format_exc())
                 if self.failfast:
                     raise msg
         return module
 
-    def verify_module_tags(self, module):
+    def verify_module_tags(self, module: 'chipsec.module.Module') -> Tuple[bool, bool]:
+        """
+        Verify if a module should be run based on its tags.
+
+        Args:
+            module: The module to verify
+
+        Returns:
+            A tuple containing (run_it, is_archived)
+        """
         run_it = True
         is_archived = False
         module_tags, metadata_tags = module.get_tags()
@@ -294,7 +321,7 @@ class ChipsecMain:
             self.logger.log_error(f'Exception occurred during {modx.get_name()}.run(): \'{str(msg)}\'')
             raise msg
         return result
-    
+
     def run_loaded_modules(self):
         results = ReturnCodeResults() if self._return_codes else LegacyResults()
         results.add_properties(self.properties())
@@ -384,7 +411,6 @@ class ChipsecMain:
             self.logger.log_warning("Most results cannot be trusted.")
             self.logger.log_warning("Unless a platform independent module is being run, do not file issues against this run.")
 
-
     def properties(self):
         ret = OrderedDict()
         ret["OS"] = f'{self._cs.helper.os_system} {self._cs.helper.os_release} {self._cs.helper.os_version} {self._cs.helper.os_machine}'
@@ -455,11 +481,13 @@ class ChipsecMain:
         self.logger.disable()
         return self.main_return
 
+
 def run(cli_cmd: str = '') -> int:
     cli_cmds = []
     if cli_cmd:
         cli_cmds = cli_cmd.strip().split(' ')
     return main(cli_cmds)
+
 
 def main(argv: Sequence[str] = sys.argv[1:]) -> int:
     par = parse_args(argv)
