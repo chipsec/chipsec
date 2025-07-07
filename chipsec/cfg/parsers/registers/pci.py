@@ -17,17 +17,164 @@
 # Contact information:
 # chipsec@intel.com
 
+"""
+PCI Register Configuration Helper
+
+Provides PCI configuration space register-specific functionality.
+"""
+
+from typing import Dict, Any, Union
+
 from chipsec.chipset import cs
 from chipsec.library.register import BaseConfigRegisterHelper
-from chipsec.library.exceptions import CSReadError
+from chipsec.library.exceptions import CSReadError, CSConfigError
+
+
+class PCIRegisterError(CSConfigError):
+    """Custom exception for PCI register configuration errors."""
+    pass
 
 
 class PCIRegisters(BaseConfigRegisterHelper):
-    def __init__(self, cfg_obj, pci_obj):
-        super(PCIRegisters, self).__init__(cfg_obj)
-        self.size = cfg_obj['size']
-        self.offset = cfg_obj['offset']
-        self.pci = pci_obj
+    """
+    PCI register configuration helper for PCI configuration space registers.
+
+    Manages PCI configuration space register access including bus, device,
+    function addressing and register offset handling.
+    """
+
+    def __init__(self, cfg_obj: Dict[str, Any], pci_obj):
+        """
+        Initialize PCI register configuration helper.
+
+        Args:
+            cfg_obj: Configuration object containing PCI register fields
+            pci_obj: PCI object containing bus/device/function information
+
+        Raises:
+            PCIRegisterError: If PCI register configuration is invalid
+        """
+        try:
+            super().__init__(cfg_obj)
+
+            # Required fields for PCI registers
+            required_fields = ['size', 'offset']
+            missing_fields = [field for field in required_fields
+                              if field not in cfg_obj]
+            if missing_fields:
+                raise PCIRegisterError(
+                    f"Missing required PCI register fields: {missing_fields}")
+
+            self.size: int = cfg_obj['size']
+            self.offset: Union[int, str] = cfg_obj['offset']
+            self.pci = pci_obj
+
+            # Validate configuration
+            if not self.validate_pci_register_config():
+                raise PCIRegisterError("Invalid PCI register configuration")
+
+        except Exception as e:
+            if isinstance(e, (PCIRegisterError, CSConfigError)):
+                raise
+            raise PCIRegisterError(
+                f"Error initializing PCI register: {str(e)}") from e
+
+    def validate_pci_register_config(self) -> bool:
+        """
+        Validate PCI register-specific configuration.
+
+        Returns:
+            True if PCI register configuration is valid, False otherwise
+        """
+        try:
+            # Validate size
+            if not isinstance(self.size, int) or self.size <= 0:
+                return False
+
+            # Validate offset
+            if isinstance(self.offset, str):
+                try:
+                    int(self.offset, 16 if self.offset.startswith('0x') else 10)
+                except ValueError:
+                    return False
+            elif not isinstance(self.offset, int):
+                return False
+
+            # Validate PCI object
+            if self.pci is None:
+                return False
+
+            return True
+        except Exception:
+            return False
+
+    def get_offset_int(self) -> int:
+        """
+        Get register offset as integer value.
+
+        Returns:
+            Offset as integer
+
+        Raises:
+            PCIRegisterError: If offset cannot be converted to integer
+        """
+        try:
+            if isinstance(self.offset, int):
+                return self.offset
+            elif isinstance(self.offset, str):
+                return int(self.offset,
+                          16 if self.offset.startswith('0x') else 10)
+            else:
+                raise PCIRegisterError(
+                    f"Invalid offset type: {type(self.offset)}")
+        except ValueError as e:
+            raise PCIRegisterError(
+                f"Cannot convert offset to integer: {self.offset}") from e
+
+    def get_bdf_string(self) -> str:
+        """
+        Get Bus:Device:Function as formatted string.
+
+        Returns:
+            BDF string or 'Unknown' if PCI object is invalid
+        """
+        try:
+            if self.pci and hasattr(self.pci, 'bus') and self.pci.bus is not None:
+                bus = f'{self.pci.bus:02d}'
+                dev = f'{self.pci.dev:02d}' if self.pci.dev is not None else 'XX'
+                fun = f'{self.pci.fun:01d}' if self.pci.fun is not None else 'X'
+                return f'{bus}:{dev}.{fun}'
+            return 'Unknown'
+        except Exception:
+            return 'Unknown'
+
+    def get_register_summary(self) -> Dict[str, Any]:
+        """
+        Get summary of PCI register configuration.
+
+        Returns:
+            Dictionary with PCI register configuration summary
+        """
+        try:
+            return {
+                'name': self.name,
+                'bdf': self.get_bdf_string(),
+                'offset': self.get_offset_int(),
+                'size': self.size,
+                'desc': getattr(self, 'desc', None),
+                'is_valid': self.validate_pci_register_config(),
+                'has_value': self.value is not None
+            }
+        except Exception:
+            return {
+                'name': getattr(self, 'name', 'Unknown'),
+                'bdf': 'Unknown',
+                'offset': 0,
+                'size': 0,
+                'desc': None,
+                'is_valid': False,
+                'has_value': False
+            }
 
     def __repr__(self) -> str:
         reg_str = ''
