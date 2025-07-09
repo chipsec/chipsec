@@ -46,17 +46,30 @@ if TYPE_CHECKING:
 from chipsec.library.logger import logger
 from chipsec.library.file import write_file, read_file, validate_file_exists, validate_file_size, validate_directory_path
 from chipsec.library.uefi.compression import COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_EFI_STANDARD, COMPRESSION_TYPES_ALGORITHMS, COMPRESSION_TYPE_UNKNOWN, COMPRESSION_TYPE_LZMAF86
+from chipsec.library.uefi.compression import COMPRESSION_TYPE_BROTLI, COMPRESSION_TYPE_GZIP, COMPRESSION_TYPE_ZLIB, COMPRESSION_TYPE_ZSTD
+from chipsec.library.uefi.compression import COMPRESSION_TYPE_LZ4
 from chipsec.library.uefi.common import bit_set, EFI_GUID_SIZE, EFI_GUID_FMT
 from chipsec.library.uefi.platform import FWType, fw_types, EFI_NVRAM_GUIDS, EFI_PLATFORM_FS_GUIDS, NVAR_NVRAM_FS_FILE
 from chipsec.library.uefi.varstore import identify_EFI_NVRAM, parse_EFI_variables
 from chipsec.library.uefi.fv import EFI_SECTION_PE32, EFI_SECTION_TE, EFI_SECTION_PIC, EFI_SECTION_COMPATIBILITY16, EFI_FIRMWARE_FILE_SYSTEM2_GUID
 from chipsec.library.uefi.fv import EFI_FIRMWARE_FILE_SYSTEM_GUID, EFI_SECTIONS_EXE, EFI_SECTION_USER_INTERFACE, EFI_SECTION_GUID_DEFINED
+from chipsec.library.uefi.fv import EFI_SECTION_VERSION, EFI_SECTION_DXE_DEPEX, EFI_SECTION_PEI_DEPEX, EFI_SECTION_SMM_DEPEX
+from chipsec.library.uefi.fv import EFI_SECTION_FREEFORM_SUBTYPE_GUID, EFI_SECTION_DISPOSABLE, EFI_SECTION_PE32_PLUS, EFI_SECTION_EXTENDED_SIZE
 from chipsec.library.uefi.fv import EFI_GUID_DEFINED_SECTION, EFI_GUID_DEFINED_SECTION_size, NextFwFile, NextFwFileSection, NextFwVolume, GetFvHeader
 from chipsec.library.uefi.fv import EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID, LZMA_CUSTOM_DECOMPRESS_GUID, TIANO_DECOMPRESSED_GUID, LZMAF86_DECOMPRESS_GUID
+from chipsec.library.uefi.fv import BROTLI_CUSTOM_DECOMPRESS_GUID, GZIP_CUSTOM_DECOMPRESS_GUID, ZLIB_CUSTOM_DECOMPRESS_GUID, ZSTD_CUSTOM_DECOMPRESS_GUID
+from chipsec.library.uefi.fv import LZ4_CUSTOM_DECOMPRESS_GUID
 from chipsec.library.uefi.fv import EFI_CERT_TYPE_RSA_2048_SHA256_GUID, EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size, EFI_SECTION, EFI_FV, EFI_FILE
+from chipsec.library.uefi.fv import EFI_CERT_TYPE_PKCS7_GUID, EFI_CERT_TYPE_X509_GUID, EFI_CERT_TYPE_SHA256_GUID
+from chipsec.library.uefi.fv import EFI_CERT_TYPE_SHA384_GUID, EFI_CERT_TYPE_SHA512_GUID
+from chipsec.library.uefi.fv import EFI_CERT_TYPE_RSA_2048_SHA1_GUID, EFI_CERT_TYPE_SHA1_GUID, EFI_CERT_TYPE_SHA224_GUID
+from chipsec.library.uefi.fv import EFI_CERT_TYPE_X509_SHA256_GUID, EFI_CERT_TYPE_X509_SHA384_GUID, EFI_CERT_TYPE_X509_SHA512_GUID
+from chipsec.library.uefi.fv import EFI_CERT_TYPE_EXTERNAL_MANAGEMENT_GUID
 from chipsec.library.uefi.fv import EFI_FIRMWARE_CONTENTS_SIGNED_GUID, WIN_CERT_TYPE_EFI_GUID, WIN_CERTIFICATE_size, WIN_CERTIFICATE, WIN_CERT_TYPE_PKCS_SIGNED_DATA
 from chipsec.library.uefi.fv import EFI_SECTION_COMPRESSION, EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_SECTION_RAW, SECTION_NAMES, DEF_INDENT, WIN_CERT_TYPE_EFI_PKCS115
 from chipsec.library.uefi.fv import FILE_TYPE_NAMES, EFI_FS_GUIDS, EFI_FILE_HEADER_INVALID, EFI_FILE_HEADER_VALID, EFI_FILE_HEADER_CONSTRUCTION
+from chipsec.library.uefi.fv import EFI_FV_FILETYPE_MICROCODE, EFI_FV_FILETYPE_DIAGNOSTIC, EFI_FV_FILETYPE_RAMBACK
+from chipsec.library.uefi.fv import EFI_FV_FILETYPE_STANDALONE_MM_DRIVER, EFI_FV_FILETYPE_MM_DEPENDENCY, EFI_FV_FILETYPE_OPAL_ATTESTATION, EFI_FV_FILETYPE_OTHER
 from chipsec.library.uefi.fv import EFI_COMPRESSION_SECTION_size, EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_FFS_PAD, EFI_FVB2_ERASE_POLARITY, EFI_FV_FILETYPE_RAW
 from chipsec.library.uefi.compression import UEFICompression
 from chipsec.library.uefi.config import UEFIConfig
@@ -190,7 +203,7 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
 
             if sec.Guid == EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID:
                 sec.children = build_efi_modules_tree(fwtype, sec.Image[sec.DataOffset:], Size - sec.DataOffset, 0, polarity)
-            elif sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID or sec.Guid == TIANO_DECOMPRESS_GUID or sec.Guid == LZMAF86_DECOMPRESS_GUID:
+            elif sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID or sec.Guid == TIANO_DECOMPRESSED_GUID or sec.Guid == LZMAF86_DECOMPRESS_GUID:
                 if sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID:
                     d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_LZMA)
                 elif sec.Guid == LZMAF86_DECOMPRESS_GUID:
@@ -202,11 +215,94 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
                     d = decompress_section_data("", sec_fs_name, sec.Image[sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN)
                 if d:
                     sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
+            elif sec.Guid == BROTLI_CUSTOM_DECOMPRESS_GUID:
+                d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_BROTLI)
+                if d is None:
+                    sec.Comments = "Unable to decompress Brotli compressed section"
+                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN)
+                if d:
+                    sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
+            elif sec.Guid == GZIP_CUSTOM_DECOMPRESS_GUID:
+                d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_GZIP)
+                if d is None:
+                    sec.Comments = "Unable to decompress GZIP compressed section"
+                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN)
+                if d:
+                    sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
+            elif sec.Guid == ZLIB_CUSTOM_DECOMPRESS_GUID:
+                d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_ZLIB)
+                if d is None:
+                    sec.Comments = "Unable to decompress ZLIB compressed section"
+                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN)
+                if d:
+                    sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
+            elif sec.Guid == ZSTD_CUSTOM_DECOMPRESS_GUID:
+                d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_ZSTD)
+                if d is None:
+                    sec.Comments = "Unable to decompress Zstandard compressed section"
+                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN)
+                if d:
+                    sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
+            elif sec.Guid == LZ4_CUSTOM_DECOMPRESS_GUID:
+                d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_LZ4)
+                if d is None:
+                    sec.Comments = "Unable to decompress LZ4 compressed section"
+                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN)
+                if d:
+                    sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
             elif sec.Guid == EFI_CERT_TYPE_RSA_2048_SHA256_GUID:
                 offset = sec.DataOffset + EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size
                 sec.Comments = "Certificate Type RSA2048/SHA256"
                 if len(sec.Image) > offset:
                     sec.children = build_efi_modules_tree(fwtype, sec.Image[offset:], len(sec.Image[offset:]), 0, polarity)
+            elif sec.Guid == EFI_CERT_TYPE_PKCS7_GUID:
+                sec.Comments = "Certificate Type PKCS#7"
+                if len(sec.Image) > sec.DataOffset:
+                    sec.children = build_efi_modules_tree(fwtype, sec.Image[sec.DataOffset:], len(sec.Image[sec.DataOffset:]), 0, polarity)
+            elif sec.Guid == EFI_CERT_TYPE_X509_GUID:
+                sec.Comments = "Certificate Type X.509"
+                if len(sec.Image) > sec.DataOffset:
+                    sec.children = build_efi_modules_tree(fwtype, sec.Image[sec.DataOffset:], len(sec.Image[sec.DataOffset:]), 0, polarity)
+            elif sec.Guid == EFI_CERT_TYPE_SHA256_GUID:
+                sec.Comments = "Certificate Type SHA256 Hash"
+                if len(sec.Image) > sec.DataOffset:
+                    sec.children = build_efi_modules_tree(fwtype, sec.Image[sec.DataOffset:], len(sec.Image[sec.DataOffset:]), 0, polarity)
+            elif sec.Guid == EFI_CERT_TYPE_SHA384_GUID:
+                sec.Comments = "Certificate Type SHA384 Hash"
+                if len(sec.Image) > sec.DataOffset:
+                    sec.children = build_efi_modules_tree(fwtype, sec.Image[sec.DataOffset:], len(sec.Image[sec.DataOffset:]), 0, polarity)
+            elif sec.Guid == EFI_CERT_TYPE_SHA512_GUID:
+                sec.Comments = "Certificate Type SHA512 Hash"
+                if len(sec.Image) > sec.DataOffset:
+                    sec.children = build_efi_modules_tree(fwtype, sec.Image[sec.DataOffset:], len(sec.Image[sec.DataOffset:]), 0, polarity)
+            elif sec.Guid == EFI_CERT_TYPE_RSA_2048_SHA1_GUID:
+                sec.Comments = "Certificate Type RSA2048/SHA1"
+                if len(sec.Image) > sec.DataOffset:
+                    sec.children = build_efi_modules_tree(fwtype, sec.Image[sec.DataOffset:], len(sec.Image[sec.DataOffset:]), 0, polarity)
+            elif sec.Guid == EFI_CERT_TYPE_SHA1_GUID:
+                sec.Comments = "Certificate Type SHA1 Hash"
+                if len(sec.Image) > sec.DataOffset:
+                    sec.children = build_efi_modules_tree(fwtype, sec.Image[sec.DataOffset:], len(sec.Image[sec.DataOffset:]), 0, polarity)
+            elif sec.Guid == EFI_CERT_TYPE_SHA224_GUID:
+                sec.Comments = "Certificate Type SHA224 Hash"
+                if len(sec.Image) > sec.DataOffset:
+                    sec.children = build_efi_modules_tree(fwtype, sec.Image[sec.DataOffset:], len(sec.Image[sec.DataOffset:]), 0, polarity)
+            elif sec.Guid == EFI_CERT_TYPE_X509_SHA256_GUID:
+                sec.Comments = "Certificate Type X.509 with SHA256"
+                if len(sec.Image) > sec.DataOffset:
+                    sec.children = build_efi_modules_tree(fwtype, sec.Image[sec.DataOffset:], len(sec.Image[sec.DataOffset:]), 0, polarity)
+            elif sec.Guid == EFI_CERT_TYPE_X509_SHA384_GUID:
+                sec.Comments = "Certificate Type X.509 with SHA384"
+                if len(sec.Image) > sec.DataOffset:
+                    sec.children = build_efi_modules_tree(fwtype, sec.Image[sec.DataOffset:], len(sec.Image[sec.DataOffset:]), 0, polarity)
+            elif sec.Guid == EFI_CERT_TYPE_X509_SHA512_GUID:
+                sec.Comments = "Certificate Type X.509 with SHA512"
+                if len(sec.Image) > sec.DataOffset:
+                    sec.children = build_efi_modules_tree(fwtype, sec.Image[sec.DataOffset:], len(sec.Image[sec.DataOffset:]), 0, polarity)
+            elif sec.Guid == EFI_CERT_TYPE_EXTERNAL_MANAGEMENT_GUID:
+                sec.Comments = "Certificate Type External Management"
+                if len(sec.Image) > sec.DataOffset:
+                    sec.children = build_efi_modules_tree(fwtype, sec.Image[sec.DataOffset:], len(sec.Image[sec.DataOffset:]), 0, polarity)
             elif sec.Guid == EFI_FIRMWARE_CONTENTS_SIGNED_GUID:
                 start = sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size
                 stop = start + WIN_CERTIFICATE_size
@@ -245,6 +341,75 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
 
         elif sec.Type == EFI_SECTION_RAW:
             sec.children = build_efi_model(sec.Image[sec.HeaderSize:], fwtype)
+            
+        elif sec.Type == EFI_SECTION_VERSION:
+            # Parse version information section
+            try:
+                if len(sec.Image) > sec.HeaderSize + 2:
+                    # Version string is typically null-terminated Unicode
+                    version_data = sec.Image[sec.HeaderSize:]
+                    # Try to decode as UTF-16 (little-endian)
+                    if len(version_data) >= 2:
+                        try:
+                            sec.ui_string = version_data.decode('utf-16le').rstrip('\x00')
+                            sec.Comments = f"Version: {sec.ui_string}"
+                        except UnicodeDecodeError:
+                            # Fall back to raw hex if not valid UTF-16
+                            sec.Comments = f"Version (hex): {version_data[:min(32, len(version_data))].hex()}"
+                    else:
+                        sec.Comments = "Version section (empty)"
+            except Exception as e:
+                sec.Comments = f"Version section parsing error: {str(e)}"
+                
+        elif sec.Type in [EFI_SECTION_DXE_DEPEX, EFI_SECTION_PEI_DEPEX, EFI_SECTION_SMM_DEPEX]:
+            # Parse dependency expression sections
+            try:
+                if len(sec.Image) > sec.HeaderSize:
+                    dep_data = sec.Image[sec.HeaderSize:]
+                    sec.Comments = f"Dependency Expression ({SECTION_NAMES.get(sec.Type, 'UNKNOWN')})"
+                    # Parse dependency opcodes (basic implementation)
+                    # For full implementation, would need opcode parsing
+                    if len(dep_data) >= 16:  # At least one GUID
+                        try:
+                            first_guid = UUID(bytes_le=dep_data[:16])
+                            sec.Comments += f" - First dependency: {first_guid}"
+                        except Exception:
+                            pass
+            except Exception as e:
+                sec.Comments = f"Dependency expression parsing error: {str(e)}"
+                
+        elif sec.Type == EFI_SECTION_FREEFORM_SUBTYPE_GUID:
+            # Parse freeform GUID section
+            try:
+                if len(sec.Image) >= sec.HeaderSize + 16:
+                    subtype_guid_data = sec.Image[sec.HeaderSize:sec.HeaderSize + 16]
+                    sec.Guid = UUID(bytes_le=subtype_guid_data)
+                    sec.Comments = f"Freeform subtype GUID: {sec.Guid}"
+                    # Process remaining data
+                    if len(sec.Image) > sec.HeaderSize + 16:
+                        sec.children = build_efi_model(sec.Image[sec.HeaderSize + 16:], fwtype)
+            except Exception as e:
+                sec.Comments = f"Freeform GUID section parsing error: {str(e)}"
+                
+        elif sec.Type == EFI_SECTION_DISPOSABLE:
+            # Disposable section - process contents normally
+            sec.Comments = "Disposable section"
+            sec.children = build_efi_model(sec.Image[sec.HeaderSize:], fwtype)
+
+        elif sec.Type == EFI_SECTION_EXTENDED_SIZE:
+            # Extended size section - for sections >16MB
+            try:
+                if len(sec.Image) >= sec.HeaderSize + 4:
+                    # Extended size sections have a 4-byte extended size field after normal header
+                    extended_size = struct.unpack('<I', sec.Image[sec.HeaderSize:sec.HeaderSize + 4])[0]
+                    sec.Comments = f"Extended size section: {extended_size} bytes"
+                    # Process remaining data after extended size field
+                    if len(sec.Image) > sec.HeaderSize + 4:
+                        sec.children = build_efi_model(sec.Image[sec.HeaderSize + 4:], fwtype)
+                else:
+                    sec.Comments = "Extended size section (malformed - insufficient data)"
+            except Exception as e:
+                sec.Comments = f"Extended size section parsing error: {str(e)}"
 
         elif sec.Type not in SECTION_NAMES.keys():
             sec.children = build_efi_model(sec.Image[sec.HeaderSize:], fwtype)
@@ -782,6 +947,75 @@ def process_firmware_file_with_error_handling(fwbin, fv_img, fw_offset, fwtype, 
     """Helper function to process firmware files with error handling."""
     try:
         if fwbin.Type not in (EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_RAW, EFI_FV_FILETYPE_FFS_PAD):
+            fwbin.children = find_efi_modules(data=fwbin.Image, fwtype=fwtype, polarity=polarity,
+                                              data_start=fwbin.HeaderSize)
+            fv.append(fwbin)
+        elif fwbin.Type == EFI_FV_FILETYPE_MICROCODE:
+            # Handle microcode files specially
+            fwbin.Comments = "CPU Microcode file"
+            # Microcode files typically don't have sections, just raw microcode data
+            # Parse the microcode header if present
+            try:
+                if len(fwbin.Image) >= fwbin.HeaderSize + 48:  # Basic microcode header is 48 bytes
+                    microcode_data = fwbin.Image[fwbin.HeaderSize:]
+                    # Basic microcode header validation (Intel format)
+                    if len(microcode_data) >= 48:
+                        header_version, update_revision, date, processor_signature = struct.unpack('<IIII', microcode_data[0:16])
+                        checksum, loader_revision, processor_flags, data_size = struct.unpack('<IIII', microcode_data[16:32])
+                        total_size, reserved1, reserved2, reserved3 = struct.unpack('<IIII', microcode_data[32:48])
+                        
+                        fwbin.Comments += f" - Update Rev: 0x{update_revision:08X}, Date: 0x{date:08X}, CPU Sig: 0x{processor_signature:08X}"
+                        if total_size > 0 and total_size <= len(microcode_data):
+                            fwbin.Comments += f", Size: {total_size} bytes"
+                        
+                        # Validate basic microcode structure
+                        if header_version == 1 and total_size >= 2048 and (total_size % 4 == 0):
+                            fwbin.Comments += " (Valid microcode structure)"
+                        else:
+                            fwbin.Comments += " (Potential microcode structure)"
+            except Exception as e:
+                fwbin.Comments += f" (Error parsing microcode header: {str(e)})"
+                
+            fv.append(fwbin)
+        elif fwbin.Type == EFI_FV_FILETYPE_DIAGNOSTIC:
+            # Handle diagnostic files
+            fwbin.Comments = "Diagnostic file"
+            fwbin.children = find_efi_modules(data=fwbin.Image, fwtype=fwtype, polarity=polarity,
+                                              data_start=fwbin.HeaderSize)
+            fv.append(fwbin)
+        elif fwbin.Type == EFI_FV_FILETYPE_RAMBACK:
+            # Handle RAM recovery files
+            fwbin.Comments = "RAM recovery file"
+            fwbin.children = find_efi_modules(data=fwbin.Image, fwtype=fwtype, polarity=polarity,
+                                              data_start=fwbin.HeaderSize)
+            fv.append(fwbin)
+        elif fwbin.Type == EFI_FV_FILETYPE_STANDALONE_MM_DRIVER:
+            # Handle standalone MM drivers
+            fwbin.Comments = "Standalone MM driver"
+            fwbin.children = find_efi_modules(data=fwbin.Image, fwtype=fwtype, polarity=polarity,
+                                              data_start=fwbin.HeaderSize)
+            fv.append(fwbin)
+        elif fwbin.Type == EFI_FV_FILETYPE_MM_DEPENDENCY:
+            # Handle MM dependency expressions
+            fwbin.Comments = "MM dependency expression file"
+            # Parse MM dependency expression
+            try:
+                if len(fwbin.Image) >= fwbin.HeaderSize + 16:
+                    dep_data = fwbin.Image[fwbin.HeaderSize:]
+                    # Parse first dependency GUID if available
+                    if len(dep_data) >= 16:
+                        first_guid = UUID(bytes_le=dep_data[:16])
+                        fwbin.Comments += f" - First dependency: {first_guid}"
+            except Exception as e:
+                fwbin.Comments += f" (Error parsing: {str(e)})"
+            fv.append(fwbin)
+        elif fwbin.Type == EFI_FV_FILETYPE_OPAL_ATTESTATION:
+            # Handle OPAL attestation data
+            fwbin.Comments = "OPAL attestation data file"
+            fv.append(fwbin)
+        elif fwbin.Type == EFI_FV_FILETYPE_OTHER:
+            # Handle vendor-specific/other file types
+            fwbin.Comments = "Vendor-specific/other file type"
             fwbin.children = find_efi_modules(data=fwbin.Image, fwtype=fwtype, polarity=polarity,
                                               data_start=fwbin.HeaderSize)
             fv.append(fwbin)
