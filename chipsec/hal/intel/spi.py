@@ -715,7 +715,7 @@ class SPI(hal_base.HALBase):
 
     def get_SPI_JEDEC_ID(self) -> int:
 
-        if self.cs.register.has_field('HSFS', 'FCYCLE'):
+        if self.hsfs.has_field('FCYCLE'):
             self.check_hardware_sequencing()
 
             if not self._send_spi_cycle(HSFCTL_JEDEC_CYCLE, 4, 0):
