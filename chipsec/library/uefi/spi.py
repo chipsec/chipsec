@@ -45,20 +45,22 @@ if TYPE_CHECKING:
     from chipsec.library.uefi.fv import EFI_MODULE
 from chipsec.library.logger import logger
 from chipsec.library.file import write_file, read_file, validate_file_exists, validate_file_size, validate_directory_path
-from chipsec.library.uefi.compression import COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_EFI_STANDARD, COMPRESSION_TYPES_ALGORITHMS, COMPRESSION_TYPE_UNKNOWN, COMPRESSION_TYPE_LZMAF86
-from chipsec.library.uefi.compression import COMPRESSION_TYPE_BROTLI, COMPRESSION_TYPE_GZIP, COMPRESSION_TYPE_ZLIB, COMPRESSION_TYPE_ZSTD
-from chipsec.library.uefi.compression import COMPRESSION_TYPE_LZ4
+from chipsec.library.uefi.compression import COMPRESSION_TYPES_ALGORITHMS, COMPRESSION_TYPE_UNKNOWN, COMPRESSION_TYPE_LZMA
+from chipsec.library.uefi.compression import COMPRESSION_TYPE_LZMAF86, COMPRESSION_TYPE_EFI_STANDARD, COMPRESSION_TYPE_BROTLI
+from chipsec.library.uefi.compression import COMPRESSION_TYPE_GZIP, COMPRESSION_TYPE_ZLIB, COMPRESSION_TYPE_ZSTD, COMPRESSION_TYPE_LZ4
 from chipsec.library.uefi.common import bit_set, EFI_GUID_SIZE, EFI_GUID_FMT
 from chipsec.library.uefi.platform import FWType, fw_types, EFI_NVRAM_GUIDS, EFI_PLATFORM_FS_GUIDS, NVAR_NVRAM_FS_FILE
 from chipsec.library.uefi.varstore import identify_EFI_NVRAM, parse_EFI_variables
 from chipsec.library.uefi.fv import EFI_SECTION_PE32, EFI_SECTION_TE, EFI_SECTION_PIC, EFI_SECTION_COMPATIBILITY16, EFI_FIRMWARE_FILE_SYSTEM2_GUID
 from chipsec.library.uefi.fv import EFI_FIRMWARE_FILE_SYSTEM_GUID, EFI_SECTIONS_EXE, EFI_SECTION_USER_INTERFACE, EFI_SECTION_GUID_DEFINED
 from chipsec.library.uefi.fv import EFI_SECTION_VERSION, EFI_SECTION_DXE_DEPEX, EFI_SECTION_PEI_DEPEX, EFI_SECTION_SMM_DEPEX
-from chipsec.library.uefi.fv import EFI_SECTION_FREEFORM_SUBTYPE_GUID, EFI_SECTION_DISPOSABLE, EFI_SECTION_PE32_PLUS, EFI_SECTION_EXTENDED_SIZE
+from chipsec.library.uefi.fv import EFI_SECTION_FREEFORM_SUBTYPE_GUID, EFI_SECTION_DISPOSABLE, EFI_SECTION_EXTENDED_SIZE
 from chipsec.library.uefi.fv import EFI_GUID_DEFINED_SECTION, EFI_GUID_DEFINED_SECTION_size, NextFwFile, NextFwFileSection, NextFwVolume, GetFvHeader
 from chipsec.library.uefi.fv import EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID, LZMA_CUSTOM_DECOMPRESS_GUID, TIANO_DECOMPRESSED_GUID, LZMAF86_DECOMPRESS_GUID
 from chipsec.library.uefi.fv import BROTLI_CUSTOM_DECOMPRESS_GUID, GZIP_CUSTOM_DECOMPRESS_GUID, ZLIB_CUSTOM_DECOMPRESS_GUID, ZSTD_CUSTOM_DECOMPRESS_GUID
 from chipsec.library.uefi.fv import LZ4_CUSTOM_DECOMPRESS_GUID
+from chipsec.library.uefi.fv import EFI_GUIDED_SECTION_GZIP, EFI_GUIDED_SECTION_LZMA_HP, EFI_GUIDED_SECTION_LZMA_MS
+from chipsec.library.uefi.fv import EFI_GUIDED_SECTION_ZLIB_AMD1, EFI_GUIDED_SECTION_ZLIB_AMD2
 from chipsec.library.uefi.fv import EFI_CERT_TYPE_RSA_2048_SHA256_GUID, EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size, EFI_SECTION, EFI_FV, EFI_FILE
 from chipsec.library.uefi.fv import EFI_CERT_TYPE_PKCS7_GUID, EFI_CERT_TYPE_X509_GUID, EFI_CERT_TYPE_SHA256_GUID
 from chipsec.library.uefi.fv import EFI_CERT_TYPE_SHA384_GUID, EFI_CERT_TYPE_SHA512_GUID
@@ -287,53 +289,10 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
 
             if sec.Guid == EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID:
                 sec.children = build_efi_modules_tree(fwtype, sec.Image[sec.DataOffset:], Size - sec.DataOffset, 0, polarity)
-            elif sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID or sec.Guid == TIANO_DECOMPRESSED_GUID or sec.Guid == LZMAF86_DECOMPRESS_GUID:
-                if sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID:
-                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_LZMA)
-                elif sec.Guid == LZMAF86_DECOMPRESS_GUID:
-                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_LZMAF86)
-                else:
-                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_EFI_STANDARD)
-                if d is None:
-                    sec.Comments = "Unable to decompress image"
-                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN)
-                if d:
-                    sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
-            elif sec.Guid == BROTLI_CUSTOM_DECOMPRESS_GUID:
-                d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_BROTLI)
-                if d is None:
-                    sec.Comments = "Unable to decompress Brotli compressed section"
-                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN)
-                if d:
-                    sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
-            elif sec.Guid == GZIP_CUSTOM_DECOMPRESS_GUID:
-                d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_GZIP)
-                if d is None:
-                    sec.Comments = "Unable to decompress GZIP compressed section"
-                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN)
-                if d:
-                    sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
-            elif sec.Guid == ZLIB_CUSTOM_DECOMPRESS_GUID:
-                d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_ZLIB)
-                if d is None:
-                    sec.Comments = "Unable to decompress ZLIB compressed section"
-                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN)
-                if d:
-                    sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
-            elif sec.Guid == ZSTD_CUSTOM_DECOMPRESS_GUID:
-                d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_ZSTD)
-                if d is None:
-                    sec.Comments = "Unable to decompress Zstandard compressed section"
-                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN)
-                if d:
-                    sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
-            elif sec.Guid == LZ4_CUSTOM_DECOMPRESS_GUID:
-                d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_LZ4)
-                if d is None:
-                    sec.Comments = "Unable to decompress LZ4 compressed section"
-                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN)
-                if d:
-                    sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
+            elif decompress_guid_section(sec, fwtype, sec_fs_name, polarity):
+                # Section decompressed and parsed by decompress_guid_section helper
+                # sec.Comments and sec.children have been updated
+                pass
             elif sec.Guid == EFI_CERT_TYPE_RSA_2048_SHA256_GUID:
                 offset = sec.DataOffset + EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size
                 sec.Comments = "Certificate Type RSA2048/SHA256"
@@ -1338,4 +1297,99 @@ def process_firmware_file_with_error_handling(fwbin, fv_img, fw_offset, fwtype, 
     except Exception as e:
         logger().log_warning(f"Error in firmware file processing: {e}")
         raise
+
+
+def decompress_guid_section(sec, fwtype, sec_fs_name, polarity):
+    """
+    Helper function to decompress a section based on its GUID.
+    Returns True if successful, False otherwise.
+    """
+    from chipsec.library.uefi.compression import UEFICompression
+    
+    # Handle all compression GUIDs
+    if (sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID or sec.Guid == TIANO_DECOMPRESSED_GUID or
+            sec.Guid == LZMAF86_DECOMPRESS_GUID or sec.Guid == EFI_GUIDED_SECTION_LZMA_HP or
+            sec.Guid == EFI_GUIDED_SECTION_LZMA_MS):
+        if sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID:
+            d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_LZMA)
+        elif sec.Guid == LZMAF86_DECOMPRESS_GUID:
+            d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_LZMAF86)
+        elif sec.Guid == EFI_GUIDED_SECTION_LZMA_HP:
+            d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_LZMA)
+            sec.Comments = "HP LZMA variant"
+        elif sec.Guid == EFI_GUIDED_SECTION_LZMA_MS:
+            d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_LZMA)
+            sec.Comments = "Microsoft LZMA variant"
+        else:
+            d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_EFI_STANDARD)
+        if d is None:
+            sec.Comments = "Unable to decompress image"
+            d = decompress_section_data("", sec_fs_name, sec.Image[sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN)
+        if d:
+            sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
+        return True
+    elif sec.Guid == BROTLI_CUSTOM_DECOMPRESS_GUID:
+        d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_BROTLI)
+        if d is None:
+            sec.Comments = "Unable to decompress Brotli compressed section"
+            d = decompress_section_data("", sec_fs_name, sec.Image[sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN)
+        if d:
+            sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
+        return True
+    elif sec.Guid == GZIP_CUSTOM_DECOMPRESS_GUID or sec.Guid == EFI_GUIDED_SECTION_GZIP:
+        d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_GZIP)
+        if sec.Guid == EFI_GUIDED_SECTION_GZIP:
+            sec.Comments = "Standard GZIP variant"
+        if d is None:
+            sec.Comments = "Unable to decompress GZIP compressed section"
+            d = decompress_section_data("", sec_fs_name, sec.Image[sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN)
+        if d:
+            sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
+        return True
+    elif (sec.Guid == ZLIB_CUSTOM_DECOMPRESS_GUID or sec.Guid == EFI_GUIDED_SECTION_ZLIB_AMD1 or
+            sec.Guid == EFI_GUIDED_SECTION_ZLIB_AMD2):
+        d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_ZLIB)
+        if sec.Guid == EFI_GUIDED_SECTION_ZLIB_AMD1:
+            sec.Comments = "AMD ZLIB variant 1"
+        elif sec.Guid == EFI_GUIDED_SECTION_ZLIB_AMD2:
+            sec.Comments = "AMD ZLIB variant 2"
+        if d is None:
+            sec.Comments = "Unable to decompress ZLIB compressed section"
+            d = decompress_section_data("", sec_fs_name, sec.Image[sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN)
+        if d:
+            sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
+        return True
+    elif sec.Guid == ZSTD_CUSTOM_DECOMPRESS_GUID:
+        d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_ZSTD)
+        if d is None:
+            sec.Comments = "Unable to decompress Zstandard compressed section"
+            d = decompress_section_data("", sec_fs_name, sec.Image[sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN)
+        if d:
+            sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
+        return True
+    elif sec.Guid == LZ4_CUSTOM_DECOMPRESS_GUID:
+        d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_LZ4)
+        if d is None:
+            sec.Comments = "Unable to decompress LZ4 compressed section"
+            d = decompress_section_data("", sec_fs_name, sec.Image[sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN)
+        if d:
+            sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
+        return True
+    
+    # Try using the generic compression type mapping
+    compression_type = UEFICompression.get_compression_type_from_guid(str(sec.Guid))
+    if compression_type != COMPRESSION_TYPE_UNKNOWN:
+        # Add vendor-specific comments for any other compression GUIDs
+        comp_name = UEFICompression.get_compression_type_name(compression_type)
+        
+        # Attempt decompression
+        d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], compression_type)
+        if d is None:
+            sec.Comments = f"Unable to decompress {comp_name} compressed section"
+            d = decompress_section_data("", sec_fs_name, sec.Image[sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN)
+        if d:
+            sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
+        return True
+    
+    return False
 
