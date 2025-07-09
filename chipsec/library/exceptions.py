@@ -24,20 +24,23 @@
 # ================================================
 
 
-
 # Register
-class UninitializedRegisterError (RuntimeError):
+class UninitializedRegisterError(RuntimeError):
     pass
+
 
 class ScopeNotFoundError(RuntimeError):
-    pass 
+    pass
+
 
 class NonRegisterInScopeError(RuntimeError):
-    pass 
+    pass
+
 
 # Register/Device/Lock/Control Objs
-class ObjectInstanceNotFoundError (RuntimeError):
+class ObjectInstanceNotFoundError(RuntimeError):
     pass
+
 
 # Chipset
 class UnknownChipsetError(RuntimeError):
@@ -220,4 +223,39 @@ class LoggerError (RuntimeWarning):
 
 
 class BadSMIDetected (RuntimeError):
+    pass
+
+
+# ================================================
+# File and Validation
+# ================================================
+
+
+class FileValidationError(RuntimeError):
+    """Base class for file validation errors."""
+    pass
+
+
+class FileNotFoundValidationError(FileValidationError):
+    """File not found during validation."""
+    pass
+
+
+class FileSizeValidationError(FileValidationError):
+    """File size exceeds validation limits."""
+    pass
+
+
+class DirectoryValidationError(FileValidationError):
+    """Directory validation or creation error."""
+    pass
+
+
+class InvalidFileExtensionError(FileValidationError):
+    """Invalid file extension error."""
+    pass
+
+
+class InvalidGuidError(FileValidationError):
+    """Invalid GUID format error."""
     pass

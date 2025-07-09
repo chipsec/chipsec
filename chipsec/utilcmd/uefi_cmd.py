@@ -200,7 +200,7 @@ class UEFICommand(BaseCommand):
 
     def var_read(self):
         self.logger.log("[CHIPSEC] Reading EFI variable Name='{}' GUID={{{}}} to '{}' via Variable API..".format(self.name, self.guid, self.filename))
-        var = self._uefi.get_EFI_variable(self.name, self.guid, self.filename)
+        _ = self._uefi.get_EFI_variable(self.name, self.guid, self.filename)
 
     def var_write(self):
         self.logger.log("[CHIPSEC] writing EFI variable Name='{}' GUID={{{}}} from '{}' via Variable API..".format(self.name, self.guid, self.filename))
@@ -320,28 +320,19 @@ class UEFICommand(BaseCommand):
         self.logger.set_log_file(_orig_logname)
 
     def decode(self):
-        if not os.path.exists(self.filename):
-            self.logger.log_error("Could not find file '{}'".format(self.filename))
+        if not self._validate_file_exists(self.filename, "UEFI firmware file"):
             return
 
         self.logger.log("[CHIPSEC] Parsing EFI volumes from '{}'..".format(self.filename))
         _orig_logname = self.logger.LOG_FILE_NAME
         self.logger.set_log_file(self.filename + '.UEFI.lst', False)
         cur_dir = self.cs.os_helper.getcwd()
-        ftypes = []
-        inv_filetypes = {v: k for k, v in FILE_TYPE_NAMES.items()}
-        if self.filetypes:
-            for mtype in self.filetypes:
-                if mtype in inv_filetypes.keys():
-                    if inv_filetypes[mtype] not in ftypes:
-                        ftypes.append(inv_filetypes[mtype])
-                    break
+        ftypes = self._process_filetypes()
         decode_uefi_region(cur_dir, self.filename, self.fwtype, ftypes)
         self.logger.set_log_file(_orig_logname)
 
     def keys(self):
-        if not os.path.exists(self.filename):
-            self.logger.log_error("Could not find file '{}'".format(self.filename))
+        if not self._validate_file_exists(self.filename, "keyvar file"):
             return
         self.logger.log("<keyvar_file> should contain one of the following EFI variables\n[ %s ]" % (" | ".join(["%s" % var for var in SECURE_BOOT_KEY_VARIABLES])))
         self.logger.log("[CHIPSEC] Parsing EFI variable from '{}'..".format(self.filename))
@@ -357,7 +348,7 @@ class UEFICommand(BaseCommand):
             self.logger.log('[*] Reading S3 boot-script from memory at 0x{:016X}..'.format(self.bootscript_pa))
             script_all = self.cs.hals.Memory.read_physical_mem(self.bootscript_pa, 0x100000)
             self.logger.log('[*] Decoding S3 boot-script opcodes..')
-            script_entries = parse_script(script_all, True)
+            _ = parse_script(script_all, True)
         else:
             (bootscript_PAs, parsed_scripts) = self._uefi.get_s3_bootscript(True)
 
@@ -458,6 +449,48 @@ class UEFICommand(BaseCommand):
             return
 
         self.logger.log("[CHIPSEC]  UEFI file was successfully assembled! Binary file size: {:d}, compressed UEFI file size: {:d}".format(len(raw_image), len(uefi_image)))
+
+    def _process_filetypes(self):
+        """
+        Process and validate all requested file types.
+        
+        Returns:
+            List of validated filetype codes
+        """
+        ftypes = []
+        if not self.filetypes:
+            return ftypes
+        
+        inv_filetypes = {v: k for k, v in FILE_TYPE_NAMES.items()}
+        
+        for mtype in self.filetypes:
+            if mtype in inv_filetypes:
+                filetype_code = inv_filetypes[mtype]
+                if filetype_code not in ftypes:
+                    ftypes.append(filetype_code)
+                    self.logger.log_hal("Processing filetype: {} (code: {})".format(mtype, filetype_code))
+            else:
+                self.logger.log_warning("Unknown file type '{}'. Valid types: {}".format(
+                    mtype, list(FILE_TYPE_NAMES.values())
+                ))
+        
+        return ftypes
+
+    def _validate_file_exists(self, filepath, file_type="file"):
+        """
+        Validate file exists and log appropriate error if not.
+        
+        Args:
+            filepath: Path to the file to validate
+            file_type: Description of the file type for error messages
+            
+        Returns:
+            True if file exists, False otherwise
+        """
+        if not os.path.exists(filepath):
+            self.logger.log_error("Could not find {} '{}'".format(file_type, filepath))
+            return False
+        return True
 
 
 commands = {'uefi': UEFICommand}

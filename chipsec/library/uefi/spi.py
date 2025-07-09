@@ -37,13 +37,14 @@ import struct
 import random
 import json
 import string
+import platform
 from collections.abc import Callable
 from uuid import UUID
 from typing import Dict, List, Optional, Union, Any, TYPE_CHECKING
 if TYPE_CHECKING:
     from chipsec.library.uefi.fv import EFI_MODULE
 from chipsec.library.logger import logger
-from chipsec.library.file import write_file, read_file
+from chipsec.library.file import write_file, read_file, validate_file_exists, validate_file_size, validate_directory_path
 from chipsec.library.uefi.compression import COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_EFI_STANDARD, COMPRESSION_TYPES_ALGORITHMS, COMPRESSION_TYPE_UNKNOWN, COMPRESSION_TYPE_LZMAF86
 from chipsec.library.uefi.common import bit_set, EFI_GUID_SIZE, EFI_GUID_FMT
 from chipsec.library.uefi.platform import FWType, fw_types, EFI_NVRAM_GUIDS, EFI_PLATFORM_FS_GUIDS, NVAR_NVRAM_FS_FILE
@@ -58,6 +59,7 @@ from chipsec.library.uefi.fv import EFI_SECTION_COMPRESSION, EFI_SECTION_FIRMWAR
 from chipsec.library.uefi.fv import FILE_TYPE_NAMES, EFI_FS_GUIDS, EFI_FILE_HEADER_INVALID, EFI_FILE_HEADER_VALID, EFI_FILE_HEADER_CONSTRUCTION
 from chipsec.library.uefi.fv import EFI_COMPRESSION_SECTION_size, EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_FFS_PAD, EFI_FVB2_ERASE_POLARITY, EFI_FV_FILETYPE_RAW
 from chipsec.library.uefi.compression import UEFICompression
+from chipsec.library.uefi.config import UEFIConfig
 
 CMD_UEFI_FILE_REMOVE = 0
 CMD_UEFI_FILE_INSERT_BEFORE = 1
@@ -116,7 +118,11 @@ def modify_uefi_region(data: bytes, command: int, guid: UUID, uefi_file: bytes =
                         data = data[:NxtFileOffset] + uefi_file.ljust(uefi_file_size, b'\xFF') + data[NxtFileOffset:]
                     elif command == CMD_UEFI_FILE_REPLACE:
                         FvLengthChange += uefi_file_size - (next_offset - fwbin.Offset)
-                        logger().log(f'Replacing UEFI file with GUID={fwbin.Guid} at offset={CurFileOffset:08X}, new size: {len(uefi_file):d}, old size: {fwbin.Size:d}, size change: {FvLengthChange:d} bytes')
+                        logger().log(
+                            f'Replacing UEFI file with GUID={fwbin.Guid} at offset={CurFileOffset:08X}, '
+                            f'new size: {len(uefi_file):d}, old size: {fwbin.Size:d}, '
+                            f'size change: {FvLengthChange:d} bytes'
+                        )
                         data = data[:CurFileOffset] + uefi_file.ljust(uefi_file_size, b'\xFF') + data[NxtFileOffset:]
                     else:
                         raise Exception('Invalid command')
@@ -184,7 +190,7 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
 
             if sec.Guid == EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID:
                 sec.children = build_efi_modules_tree(fwtype, sec.Image[sec.DataOffset:], Size - sec.DataOffset, 0, polarity)
-            elif sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID or sec.Guid == TIANO_DECOMPRESSED_GUID or sec.Guid == LZMAF86_DECOMPRESS_GUID:
+            elif sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID or sec.Guid == TIANO_DECOMPRESS_GUID or sec.Guid == LZMAF86_DECOMPRESS_GUID:
                 if sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID:
                     d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_LZMA)
                 elif sec.Guid == LZMAF86_DECOMPRESS_GUID:
@@ -258,53 +264,82 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
 # fv_image - fv_image containing files
 # fwtype - platform specific firmware type used to detect NVRAM format (VSS, EVSA, NVAR...)
 def build_efi_file_tree(fv_img: bytes, fwtype: Optional[str]) -> List[EFI_FILE]:
-    fv_size, HeaderSize, Attributes = GetFvHeader(fv_img)
-    polarity = bool(Attributes & EFI_FVB2_ERASE_POLARITY)
-    fwbin = NextFwFile(fv_img, fv_size, HeaderSize, polarity)
-    fv = []
-    padding = 0
-    while fwbin is not None:
-        fw_offset = fwbin.Size + fwbin.Offset
-        fwbin.calc_hashes()
-        if padding < fwbin.Offset:
-            non_UEFI = EFI_SECTION(padding, 'Non-UEFI_Padding', EFI_FV_FILETYPE_FFS_PAD,
-                                   fv_img[padding:fw_offset - 1], 0, fwbin.Offset - padding)
-            non_UEFI.Comments = 'Attempting to identify modules in non-UEFI Padding Section'
-            non_UEFI.children = find_efi_modules(data=fv_img[padding:fwbin.Offset - 1], fwtype=fwtype, polarity=polarity)
-            if non_UEFI.children:
-                fv.append(non_UEFI)
-        padding = fw_offset
-        if fwbin.Type not in (EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_RAW, EFI_FV_FILETYPE_FFS_PAD):
-            fwbin.children = find_efi_modules(data=fwbin.Image, fwtype=fwtype, polarity=polarity,
-                                              data_start=fwbin.HeaderSize)
-            fv.append(fwbin)
-        elif fwbin.Type == EFI_FV_FILETYPE_RAW:
-            if fwbin.Name != NVAR_NVRAM_FS_FILE:
-                fwbin.children = find_efi_modules(data=fwbin.Image, fwtype=fwtype, polarity=polarity,
-                                                  data_size=fwbin.Size, data_start=fwbin.HeaderSize)
-                fv.append(fwbin)
-            else:
-                fwbin.isNVRAM = True
-                fwbin.NVRAMType = FWType.EFI_FW_TYPE_NVAR
-                fv.append(fwbin)
-        elif fwbin.Type == EFI_FV_FILETYPE_FFS_PAD:
-            non_UEFI = EFI_SECTION(fwbin.Offset, 'Padding', fwbin.Type, fv_img[fw_offset:], 0, fwbin.Size)
-            non_UEFI.Comments = 'Attempting to identify modules in Padding Section'
-            non_UEFI.children = find_efi_modules(data=fwbin.Image, fwtype=fwtype, polarity=polarity)
-            if non_UEFI.children:
-                fv.append(non_UEFI)
-        elif fwbin.State not in (EFI_FILE_HEADER_CONSTRUCTION, EFI_FILE_HEADER_INVALID, EFI_FILE_HEADER_VALID):
-            fwbin.children = find_efi_modules(data=fwbin.Image, fwtype=fwtype, polarity=polarity,
-                                              data_size=fwbin.Size, data_start=fwbin.HeaderSize)
-            fv.append(fwbin)
-        fwbin = NextFwFile(fv_img, fv_size, fw_offset, polarity)
-        if fwbin is None and fv_size > fw_offset:
-            non_UEFI = EFI_SECTION(fw_offset, 'Non-UEFI_Data', 0xFF, fv_img[fw_offset:], 0, fv_size - fw_offset)
-            non_UEFI.Comments = 'Attempting to identify modules in non-UEFI Data Section'
-            non_UEFI.children = find_efi_modules(data=fv_img[fw_offset:], fwtype=fwtype, polarity=polarity)
-            if non_UEFI.children:
-                fv.append(non_UEFI)
-    return fv
+    """
+    Extract EFI FV file from EFI image and build an object tree with enhanced error handling.
+    
+    Input arguments:
+    fv_image - fv_image containing files
+    fwtype - platform specific firmware type used to detect NVRAM format (VSS, EVSA, NVAR...)
+    """
+    try:
+        fv_size, HeaderSize, Attributes = GetFvHeader(fv_img)
+        polarity = bool(Attributes & EFI_FVB2_ERASE_POLARITY)
+        
+        fv = []
+        padding = 0
+        
+        # Use a more robust iteration approach
+        current_offset = HeaderSize
+        
+        while True:
+            try:
+                fwbin = NextFwFile(fv_img, fv_size, current_offset, polarity)
+                if fwbin is None:
+                    break
+                
+                fw_offset = fwbin.Size + fwbin.Offset
+                
+                # Calculate hashes with error handling
+                try:
+                    fwbin.calc_hashes()
+                except Exception as e:
+                    logger().log_warning(f"Failed to calculate hashes for file: {e}")
+                
+                # Handle padding before this file
+                if padding < fwbin.Offset:
+                    try:
+                        non_UEFI = EFI_SECTION(padding, 'Non-UEFI_Padding', EFI_FV_FILETYPE_FFS_PAD,
+                                               fv_img[padding:fwbin.Offset - 1], 0, fwbin.Offset - padding)
+                        non_UEFI.Comments = 'Attempting to identify modules in non-UEFI Padding Section'
+                        non_UEFI.children = find_efi_modules(data=fv_img[padding:fwbin.Offset - 1],
+                                                             fwtype=fwtype, polarity=polarity)
+                        if non_UEFI.children:
+                            fv.append(non_UEFI)
+                    except Exception as e:
+                        logger().log_warning(f"Failed to process padding section: {e}")
+                
+                padding = fw_offset
+                
+                # Process the firmware file with error handling
+                try:
+                    process_firmware_file_with_error_handling(fwbin, fv_img, fw_offset, fwtype, polarity, fv)
+                except Exception as e:
+                    logger().log_warning(f"Failed to process firmware file: {e}")
+                    # Still add the file even if processing failed
+                    fv.append(fwbin)
+                
+                current_offset = fw_offset
+                
+            except Exception as e:
+                logger().log_warning(f"Error processing file at offset {current_offset}: {e}")
+                break
+        
+        # Handle remaining data
+        if fv_size > padding:
+            try:
+                non_UEFI = EFI_SECTION(padding, 'Non-UEFI_Data', 0xFF, fv_img[padding:], 0, fv_size - padding)
+                non_UEFI.Comments = 'Attempting to identify modules in non-UEFI Data Section'
+                non_UEFI.children = find_efi_modules(data=fv_img[padding:], fwtype=fwtype, polarity=polarity)
+                if non_UEFI.children:
+                    fv.append(non_UEFI)
+            except Exception as e:
+                logger().log_warning(f"Failed to process remaining data: {e}")
+        
+        return fv
+        
+    except Exception as e:
+        logger().log_error(f"Failed to build EFI file tree: {e}")
+        return []
 
 
 #
@@ -490,32 +525,48 @@ def save_efi_tree(modules: List['EFI_MODULE'],
         md["class"] = type(m).__name__
         # remove extra attributes
         for f in ["Image", "indent"]:
-            del md[f]
-
-        # save EFI module image, make sub-directory for children
+            del md[f]        # save EFI module image, make sub-directory for children
         if save_modules:
-            mod_path = dump_efi_module(m, parent, modn, path)
             try:
-                md["file_path"] = os.path.relpath(mod_path[4:] if mod_path.startswith("\\\\?\\") else mod_path)
-            except Exception:
-                md["file_path"] = mod_path.split(os.sep)[-1]
-            if m.isNVRAM or len(m.children) > 0:
-                mod_dir_path = f'{mod_path}.dir'
-                if not os.path.exists(mod_dir_path):
-                    os.makedirs(mod_dir_path)
-                if m.isNVRAM:
-                    try:
-                        if m.NVRAMType and (parent is not None):
-                            # @TODO: technically, NVRAM image should be m.Image but
-                            # getNVstore_xxx functions expect FV than a FW file within FV
-                            # so for EFI_FILE type of module using parent's Image as NVRAM
-                            nvram = parent.Image if (type(m) is EFI_FILE and type(parent) is EFI_FV) else m.Image
-                            file_path = os.path.join(mod_dir_path, 'NVRAM')
-                            parse_EFI_variables(file_path, nvram, False, m.NVRAMType)
-                        else:
-                            raise Exception("NVRAM type cannot be None")
-                    except Exception:
-                        logger().log_warning(f"Couldn't extract NVRAM in {{{m.Guid}}} using type '{m.NVRAMType}'")
+                mod_path = dump_efi_module(m, parent, modn, path)
+                try:
+                    md["file_path"] = os.path.relpath(mod_path[4:] if mod_path.startswith("\\\\?\\") else mod_path)
+                except Exception:
+                    md["file_path"] = mod_path.split(os.sep)[-1]
+                
+                if m.isNVRAM or len(m.children) > 0:
+                    mod_dir_path = f'{mod_path}.dir'
+                    
+                    # Check path length and truncate if necessary
+                    if len(mod_dir_path) > 240:  # Leave some buffer for Windows MAX_PATH
+                        # Truncate the directory name but keep it functional
+                        base_path = os.path.dirname(mod_dir_path)
+                        dir_name = os.path.basename(mod_dir_path)
+                        truncated_name = truncate_path_component(dir_name, 30)
+                        mod_dir_path = os.path.join(base_path, truncated_name)
+                    
+                    if not safe_makedirs(mod_dir_path):
+                        logger().log_warning(f"Skipping directory creation for module due to path length: {m.Name if hasattr(m, 'Name') else 'Unknown'}")
+                        # Continue without creating subdirectory - still process the module
+                        mod_dir_path = path  # Use parent directory instead
+                    
+                    if m.isNVRAM:
+                        try:
+                            if m.NVRAMType and (parent is not None):
+                                # @TODO: technically, NVRAM image should be m.Image but
+                                # getNVstore_xxx functions expect FV than a FW file within FV
+                                # so for EFI_FILE type of module using parent's Image as NVRAM
+                                nvram = parent.Image if (type(m) is EFI_FILE and type(parent) is EFI_FV) else m.Image
+                                file_path = os.path.join(mod_dir_path, 'NVRAM')
+                                parse_EFI_variables(file_path, nvram, False, m.NVRAMType)
+                            else:
+                                raise Exception("NVRAM type cannot be None")
+                        except Exception:
+                            logger().log_warning(f"Couldn't extract NVRAM in {{{m.Guid}}} using type '{m.NVRAMType}'")
+            except Exception as e:
+                logger().log_warning(f"Error processing module {modn}: {e}")
+                # Continue processing other modules
+                mod_dir_path = path
 
         # save children modules
         if len(m.children) > 0:
@@ -537,56 +588,146 @@ class UUIDEncoder(json.JSONEncoder):
 
 
 def parse_uefi_region_from_file(filename: str, fwtype: Optional[str], outpath: Optional[str] = None, filetype: List[int] = []) -> None:
-    # Create an output folder to dump EFI module tree
-    if outpath is None:
-        outpath = f'{filename}.dir'
-    if not os.path.exists(outpath):
-        os.makedirs(outpath)
+    """
+    Parse UEFI region from file with enhanced error handling and validation.
+    """
+    config = UEFIConfig()
+    
+    try:
+        # Create an output folder to dump EFI module tree
+        if outpath is None:
+            outpath = f'{filename}{config.DIRECTORY_EXT}'
+        
+        if not validate_directory_path(outpath, create_if_missing=True):
+            logger().log_warning("Failed to create output directory, using current directory")
+            outpath = "."  # Fallback to current directory
 
-    # Read UEFI image binary to parse
-    rom = read_file(filename)
+        # Create FV subdirectory for EFI modules
+        fv_path = os.path.join(outpath, config.FV_DIR_NAME)
+        if not validate_directory_path(fv_path, create_if_missing=True):
+            logger().log_error("Failed to create FV output directory")
+            return
 
-    # Parse UEFI image binary and build a tree hierarchy of EFI modules
-    tree = build_efi_model(rom, fwtype)
+        # Read UEFI image binary to parse
+        if not validate_file_exists(filename, "firmware image"):
+            return
+        
+        rom = read_file(filename)
+        if not rom:
+            logger().log_error(f"Failed to read firmware image: {filename}")
+            return
 
-    # Save entire EFI module hierarchy on a file-system and export into JSON
-    if filetype:
-        tree_json = save_efi_tree_filetype(tree, path=outpath, filetype=filetype)
-    else:
-        tree_json = save_efi_tree(tree, path=outpath)
-    write_file(f'{filename}.UEFI.json', json.dumps(tree_json, indent=2, separators=(',', ': '), cls=UUIDEncoder))
+        # Parse UEFI image binary and build a tree hierarchy of EFI modules
+        logger().log_hal(f"Building EFI model from {len(rom)} bytes of data...")
+        tree = build_efi_model(rom, fwtype)
+        
+        # Generate JSON even if tree is empty
+        if tree is None:
+            logger().log_warning("build_efi_model returned None")
+            tree = []  # Use empty list instead of None
+        
+        if len(tree) == 0:
+            logger().log_hal("No EFI modules found in firmware image, generating empty JSON")
+        else:
+            logger().log_hal(f"Successfully built EFI tree with {len(tree)} top-level modules")
+
+        # Save entire EFI module hierarchy on a file-system and export into JSON
+        # Use fv_path for the EFI module files, but generate JSON based on the main filename
+        logger().log_hal("Saving EFI module tree and generating JSON...")
+        try:
+            if filetype:
+                tree_json = save_efi_tree_filetype(tree, path=fv_path, filetype=filetype)
+            else:
+                tree_json = save_efi_tree(tree, path=fv_path)
+        except Exception as e:
+            logger().log_warning(f"Error saving EFI tree (continuing with JSON generation): {e}")
+            # Generate JSON with just the tree structure, even if file saving failed
+            tree_json = []
+            for module in tree:
+                try:
+                    module_dict = {}
+                    attrs = [a for a in dir(module) if not callable(getattr(module, a)) and not a.startswith("__") and (getattr(module, a) is not None)]
+                    for a in attrs:
+                        if a not in ["Image", "indent"]:  # Skip binary data
+                            module_dict[a] = getattr(module, a)
+                    module_dict["class"] = type(module).__name__
+                    tree_json.append(module_dict)
+                except Exception as mod_e:
+                    logger().log_warning(f"Error processing module for JSON: {mod_e}")
+        
+        # Write JSON with error handling - ALWAYS attempt this
+        # Use just the base filename and write to current working directory
+        base_filename = os.path.basename(filename)
+        json_filename = f'{base_filename}{config.JSON_EXT}'
+        logger().log_hal(f"Writing JSON output to: {json_filename}")
+        try:
+            json_content = json.dumps(tree_json, indent=2, separators=(',', ': '), cls=UUIDEncoder)
+            write_file(json_filename, json_content)
+            logger().log_hal(f"Successfully wrote JSON file: {json_filename}")
+        except Exception as e:
+            logger().log_error(f"Failed to write JSON output: {e}")
+            # Don't fail the entire operation for JSON write failure
+        
+    except Exception as e:
+        logger().log_error(f"Error parsing UEFI region from file: {e}")
 
 
 def decode_uefi_region(pth: str, fname: str, fwtype: Optional[str], filetype: List[int] = []) -> None:
-
-    bios_pth = os.path.join(pth, f'{fname}.dir')
-    if not os.path.exists(bios_pth):
-        os.makedirs(bios_pth)
-    fv_pth = os.path.join(bios_pth, 'FV')
-    if not os.path.exists(fv_pth):
-        os.makedirs(fv_pth)
-
-    # Decoding UEFI Firmware Volumes
-    logger().log_hal("[spi_uefi] Decoding UEFI firmware volumes...")
-    parse_uefi_region_from_file(fname, fwtype, fv_pth, filetype)
-    # If a specific filetype is wanted, there is no need to check for EFI Variables
-    if filetype:
+    """
+    Decode UEFI region with enhanced validation and error handling.
+    """
+    config = UEFIConfig()
+    
+    # Validate input file
+    if not validate_file_exists(fname, "UEFI firmware file"):
         return
-
-    # Decoding EFI Variables NVRAM
-    logger().log_hal("[spi_uefi] Decoding UEFI NVRAM...")
-    region_data = read_file(fname)
-    if fwtype is None:
-        fwtype = identify_EFI_NVRAM(region_data)
-        if fwtype is None:
+    
+    if not validate_file_size(fname):
+        return
+    
+    try:
+        # Create directory structure with validation
+        bios_pth = os.path.join(pth, f'{fname}{config.DIRECTORY_EXT}')
+        if not validate_directory_path(bios_pth, create_if_missing=True):
             return
-    elif fwtype not in fw_types:
-        if logger().HAL:
-            logger().log_error(f'Unrecognized NVRAM type {fwtype}')
-        return
-    nvram_fname = os.path.join(bios_pth, (f'nvram_{fwtype}'))
-    logger().set_log_file(f'{nvram_fname}.nvram.lst', False)
-    parse_EFI_variables(nvram_fname, region_data, False, fwtype)
+        
+        fv_pth = os.path.join(bios_pth, config.FV_DIR_NAME)
+        if not validate_directory_path(fv_pth, create_if_missing=True):
+            return
+
+        # Decoding UEFI Firmware Volumes
+        logger().log_hal(config.LOG_MESSAGES['parsing_volumes'])
+        parse_uefi_region_from_file(fname, fwtype, bios_pth, filetype)
+        
+        # If a specific filetype is wanted, there is no need to check for EFI Variables
+        if filetype:
+            return
+
+        # Decoding EFI Variables NVRAM
+        logger().log_hal(config.LOG_MESSAGES['parsing_nvram'])
+        region_data = read_file(fname)
+        
+        if fwtype is None:
+            fwtype = identify_EFI_NVRAM(region_data)
+            if fwtype is None:
+                logger().log_warning(config.LOG_MESSAGES['nvram_identification_failed'])
+                return
+        elif fwtype not in fw_types:
+            logger().log_error(config.LOG_MESSAGES['unrecognized_nvram_type'].format(fwtype=fwtype))
+            return
+        
+        nvram_fname = os.path.join(bios_pth, config.NVRAM_FILE_PATTERN.format(fwtype=fwtype))
+        
+        # Use context manager for log file handling
+        orig_logname = logger().LOG_FILE_NAME
+        logger().set_log_file(f'{nvram_fname}{config.NVRAM_EXT}', False)
+        try:
+            parse_EFI_variables(nvram_fname, region_data, False, fwtype)
+        finally:
+            logger().set_log_file(orig_logname)
+        
+    except Exception as e:
+        logger().log_error(f"Error processing UEFI region: {e}")
 
 
 def save_efi_tree_filetype(modules: List['EFI_MODULE'],
@@ -635,3 +776,93 @@ def save_efi_tree_filetype(modules: List['EFI_MODULE'],
         modn += 1
 
     return modules_arr
+
+
+def process_firmware_file_with_error_handling(fwbin, fv_img, fw_offset, fwtype, polarity, fv):
+    """Helper function to process firmware files with error handling."""
+    try:
+        if fwbin.Type not in (EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_RAW, EFI_FV_FILETYPE_FFS_PAD):
+            fwbin.children = find_efi_modules(data=fwbin.Image, fwtype=fwtype, polarity=polarity,
+                                              data_start=fwbin.HeaderSize)
+            fv.append(fwbin)
+        elif fwbin.Type == EFI_FV_FILETYPE_RAW:
+            if fwbin.Name != NVAR_NVRAM_FS_FILE:
+                fwbin.children = find_efi_modules(data=fwbin.Image, fwtype=fwtype, polarity=polarity,
+                                                  data_size=fwbin.Size, data_start=fwbin.HeaderSize)
+                fv.append(fwbin)
+            else:
+                fwbin.isNVRAM = True
+                fwbin.NVRAMType = FWType.EFI_FW_TYPE_NVAR
+                fv.append(fwbin)
+        elif fwbin.Type == EFI_FV_FILETYPE_FFS_PAD:
+            non_UEFI = EFI_SECTION(fwbin.Offset, 'Padding', fwbin.Type, fv_img[fw_offset:], 0, fwbin.Size)
+            non_UEFI.Comments = 'Attempting to identify modules in Padding Section'
+            non_UEFI.children = find_efi_modules(data=fwbin.Image, fwtype=fwtype, polarity=polarity)
+            if non_UEFI.children:
+                fv.append(non_UEFI)
+        elif fwbin.State not in (EFI_FILE_HEADER_CONSTRUCTION, EFI_FILE_HEADER_INVALID, EFI_FILE_HEADER_VALID):
+            fwbin.children = find_efi_modules(data=fwbin.Image, fwtype=fwtype, polarity=polarity,
+                                              data_size=fwbin.Size, data_start=fwbin.HeaderSize)
+            fv.append(fwbin)
+    except Exception as e:
+        logger().log_warning(f"Error in firmware file processing: {e}")
+        raise
+
+
+def safe_makedirs(path: str, exist_ok: bool = True) -> bool:
+    """
+    Create directories safely, handling Windows long path limitations.
+    
+    Args:
+        path: Directory path to create
+        exist_ok: Whether to ignore existing directory errors
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        # On Windows, use \\?\ prefix for long paths
+        if platform.system() == 'Windows' and len(path) > 200:
+            if not path.startswith('\\\\?\\'):
+                path = '\\\\?\\' + os.path.abspath(path)
+        
+        os.makedirs(path, exist_ok=exist_ok)
+        return True
+    except OSError as e:
+        if e.winerror == 206:  # Path too long error on Windows
+            logger().log_warning(f"Path too long, skipping directory creation: {path}")
+            return False
+        elif e.winerror == 183 and exist_ok:  # Directory already exists
+            return True
+        else:
+            logger().log_warning(f"Failed to create directory {path}: {e}")
+            return False
+    except Exception as e:
+        logger().log_warning(f"Unexpected error creating directory {path}: {e}")
+        return False
+
+
+def truncate_path_component(component: str, max_length: int = 50) -> str:
+    """
+    Truncate a path component to avoid long path issues.
+    
+    Args:
+        component: Path component to truncate
+        max_length: Maximum length for the component
+        
+    Returns:
+        Truncated component
+    """
+    if len(component) <= max_length:
+        return component
+    
+    # Keep important parts - beginning and end
+    if '.' in component:
+        name, ext = component.rsplit('.', 1)
+        if len(ext) < 10:  # Keep reasonable extensions
+            truncated_name = name[:max_length - len(ext) - 1]
+            return f"{truncated_name}.{ext}"
+    
+    # Just truncate and add indicator
+    return component[:max_length - 3] + "..."
+
