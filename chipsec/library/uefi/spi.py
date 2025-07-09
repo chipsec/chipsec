@@ -74,6 +74,90 @@ from chipsec.library.uefi.fv import EFI_COMPRESSION_SECTION_size, EFI_FV_FILETYP
 from chipsec.library.uefi.compression import UEFICompression
 from chipsec.library.uefi.config import UEFIConfig
 
+# New validation and vendor extension imports
+try:
+    from chipsec.library.uefi.certificate_validation import UEFICertificateValidator
+    CERT_VALIDATION_AVAILABLE = True
+except ImportError:
+    CERT_VALIDATION_AVAILABLE = False
+    
+try:
+    from chipsec.library.uefi.microcode_validation import MicrocodeValidator
+    MICROCODE_VALIDATION_AVAILABLE = True
+except ImportError:
+    MICROCODE_VALIDATION_AVAILABLE = False
+    
+try:
+    from chipsec.library.uefi.intel_boot_guard import IntelBootGuardValidator
+    BOOT_GUARD_AVAILABLE = True
+except ImportError:
+    BOOT_GUARD_AVAILABLE = False
+
+try:
+    from chipsec.library.uefi.structure_validation import UEFIStructureValidator
+    STRUCTURE_VALIDATION_AVAILABLE = True
+except ImportError:
+    STRUCTURE_VALIDATION_AVAILABLE = False
+
+# Utility functions
+def safe_makedirs(path: str, exist_ok: bool = True) -> bool:
+    """
+    Create directories safely, handling Windows long path limitations.
+    
+    Args:
+        path: Directory path to create
+        exist_ok: Whether to ignore existing directory errors
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        # On Windows, use \\?\ prefix for long paths
+        if platform.system() == 'Windows' and len(path) > 200:
+            if not path.startswith('\\\\?\\'):
+                path = '\\\\?\\' + os.path.abspath(path)
+        
+        os.makedirs(path, exist_ok=exist_ok)
+        return True
+    except OSError as e:
+        if hasattr(e, 'winerror') and e.winerror == 206:  # Path too long error on Windows
+            logger().log_warning(f"Path too long, skipping directory creation: {path}")
+            return False
+        elif hasattr(e, 'winerror') and e.winerror == 183 and exist_ok:  # Directory already exists
+            return True
+        else:
+            logger().log_warning(f"Failed to create directory {path}: {e}")
+            return False
+    except Exception as e:
+        logger().log_warning(f"Unexpected error creating directory {path}: {e}")
+        return False
+
+
+def truncate_path_component(component: str, max_length: int = 50) -> str:
+    """
+    Truncate a path component to avoid long path issues.
+    
+    Args:
+        component: Path component to truncate
+        max_length: Maximum length for the component
+        
+    Returns:
+        Truncated component
+    """
+    if len(component) <= max_length:
+        return component
+    
+    # Keep important parts - beginning and end
+    if '.' in component:
+        name, ext = component.rsplit('.', 1)
+        if len(ext) < 10:  # Keep reasonable extensions
+            truncated_name = name[:max_length - len(ext) - 1]
+            return f"{truncated_name}.{ext}"
+    
+    # Just truncate and add indicator
+    return component[:max_length - 3] + "..."
+
+
 CMD_UEFI_FILE_REMOVE = 0
 CMD_UEFI_FILE_INSERT_BEFORE = 1
 CMD_UEFI_FILE_INSERT_AFTER = 2
@@ -752,6 +836,219 @@ class UUIDEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
+# Enhanced validation functions for UEFI 2.10 compliance
+def validate_certificate_with_chain(cert_data: bytes, cert_type_guid: str) -> Dict[str, Any]:
+    """
+    Validate certificate with enhanced chain validation
+    
+    Args:
+        cert_data: Raw certificate data
+        cert_type_guid: Certificate type GUID
+        
+    Returns:
+        Dictionary with validation results
+    """
+    result = {
+        'validation_performed': False,
+        'cert_validation_available': CERT_VALIDATION_AVAILABLE,
+        'valid': False,
+        'details': {}
+    }
+    
+    if CERT_VALIDATION_AVAILABLE:
+        try:
+            validator = UEFICertificateValidator()
+            validation_result = validator.validate_x509_certificate(cert_data)
+            result.update({
+                'validation_performed': True,
+                'valid': validation_result.is_valid,
+                'details': validation_result.to_dict()
+            })
+        except Exception as e:
+            result['details']['error'] = f"Certificate validation failed: {str(e)}"
+    else:
+        result['details']['warning'] = "Certificate validation not available (cryptography library required)"
+        
+    return result
+
+
+def validate_microcode_enhanced(microcode_data: bytes, vendor_hint: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Enhanced microcode validation with multi-vendor support
+    
+    Args:
+        microcode_data: Raw microcode data
+        vendor_hint: Optional vendor hint
+        
+    Returns:
+        Dictionary with validation results
+    """
+    result = {
+        'validation_performed': False,
+        'microcode_validation_available': MICROCODE_VALIDATION_AVAILABLE,
+        'valid': False,
+        'details': {}
+    }
+    
+    if MICROCODE_VALIDATION_AVAILABLE:
+        try:
+            validator = MicrocodeValidator()
+            validation_result = validator.validate_microcode(microcode_data, vendor_hint)
+            result.update({
+                'validation_performed': True,
+                'valid': validation_result['valid'],
+                'details': validation_result
+            })
+        except Exception as e:
+            result['details']['error'] = f"Microcode validation failed: {str(e)}"
+    else:
+        result['details']['warning'] = "Enhanced microcode validation not available"
+        
+    return result
+
+
+def analyze_boot_guard_support(firmware_data: bytes) -> Dict[str, Any]:
+    """
+    Analyze Intel Boot Guard support in firmware
+    
+    Args:
+        firmware_data: Raw firmware data
+        
+    Returns:
+        Dictionary with Boot Guard analysis
+    """
+    result = {
+        'analysis_performed': False,
+        'boot_guard_available': BOOT_GUARD_AVAILABLE,
+        'boot_guard_present': False,
+        'details': {}
+    }
+    
+    if BOOT_GUARD_AVAILABLE:
+        try:
+            validator = IntelBootGuardValidator()
+            bg_info = validator.extract_boot_guard_info(firmware_data)
+            bg_config = validator.check_boot_guard_configuration(firmware_data)
+            result.update({
+                'analysis_performed': True,
+                'boot_guard_present': bg_info['boot_guard_present'],
+                'details': {
+                    'info': bg_info,
+                    'config': bg_config
+                }
+            })
+        except Exception as e:
+            result['details']['error'] = f"Boot Guard analysis failed: {str(e)}"
+    else:
+        result['details']['warning'] = "Boot Guard analysis not available"
+        
+    return result
+
+
+def validate_structure_integrity(fv_data: bytes, structure_type: str) -> Dict[str, Any]:
+    """
+    Enhanced structure validation with CRC and integrity checks
+    
+    Args:
+        fv_data: Raw firmware volume data
+        structure_type: Type of structure to validate
+        
+    Returns:
+        Dictionary with validation results
+    """
+    result = {
+        'validation_performed': False,
+        'structure_validation_available': STRUCTURE_VALIDATION_AVAILABLE,
+        'valid': False,
+        'details': {}
+    }
+    
+    if STRUCTURE_VALIDATION_AVAILABLE:
+        try:
+            validator = UEFIStructureValidator()
+            if structure_type == 'firmware_volume':
+                validation_result = validator.validate_firmware_volume(fv_data)
+            elif structure_type == 'file_header':
+                validation_result = validator.validate_file_header(fv_data)
+            elif structure_type == 'section_header':
+                validation_result = validator.validate_section_header(fv_data)
+            else:
+                validation_result = {'valid': False, 'error': f'Unknown structure type: {structure_type}'}
+                
+            result.update({
+                'validation_performed': True,
+                'valid': validation_result.get('valid', False),
+                'details': validation_result
+            })
+        except Exception as e:
+            result['details']['error'] = f"Structure validation failed: {str(e)}"
+    else:
+        result['details']['warning'] = "Enhanced structure validation not available"
+        
+    return result
+
+
+def generate_comprehensive_validation_report(filename: str, outpath: str) -> Dict[str, Any]:
+    """
+    Generate comprehensive validation report with all new features
+    
+    Args:
+        filename: Input firmware file
+        outpath: Output directory
+        
+    Returns:
+        Dictionary with comprehensive validation report
+    """
+    report = {
+        'filename': filename,
+        'outpath': outpath,
+        'validation_capabilities': {
+            'certificate_validation': CERT_VALIDATION_AVAILABLE,
+            'microcode_validation': MICROCODE_VALIDATION_AVAILABLE,
+            'boot_guard_analysis': BOOT_GUARD_AVAILABLE,
+            'structure_validation': STRUCTURE_VALIDATION_AVAILABLE
+        },
+        'validation_results': {},
+        'recommendations': [],
+        'warnings': []
+    }
+    
+    try:
+        # Read firmware file for analysis
+        firmware_data = read_file(filename)
+        if not firmware_data:
+            report['validation_results']['error'] = "Failed to read firmware file"
+            return report
+            
+        # Analyze Boot Guard support
+        boot_guard_analysis = analyze_boot_guard_support(firmware_data)
+        report['validation_results']['boot_guard'] = boot_guard_analysis
+        
+        # Add recommendations based on capabilities
+        if not CERT_VALIDATION_AVAILABLE:
+            report['recommendations'].append("Install cryptography library for certificate validation")
+        if not MICROCODE_VALIDATION_AVAILABLE:
+            report['recommendations'].append("Microcode validation module available for enhanced analysis")
+        if not BOOT_GUARD_AVAILABLE:
+            report['recommendations'].append("Boot Guard analysis module available for security assessment")
+        if not STRUCTURE_VALIDATION_AVAILABLE:
+            report['recommendations'].append("Structure validation module available for integrity checks")
+            
+        # Security recommendations based on Boot Guard
+        if boot_guard_analysis.get('boot_guard_present', False):
+            config = boot_guard_analysis.get('details', {}).get('config', {})
+            if config.get('security_level') == 'Low':
+                report['recommendations'].append("Consider enabling additional Boot Guard security features")
+            report['recommendations'].extend(config.get('recommendations', []))
+        else:
+            report['recommendations'].append("Consider enabling Intel Boot Guard for enhanced security")
+            
+    except Exception as e:
+        report['validation_results']['error'] = f"Validation report generation failed: {str(e)}"
+        
+    return report
+
+
 def parse_uefi_region_from_file(filename: str, fwtype: Optional[str], outpath: Optional[str] = None, filetype: List[int] = []) -> None:
     """
     Parse UEFI region from file with enhanced error handling and validation.
@@ -1041,62 +1338,4 @@ def process_firmware_file_with_error_handling(fwbin, fv_img, fw_offset, fwtype, 
     except Exception as e:
         logger().log_warning(f"Error in firmware file processing: {e}")
         raise
-
-
-def safe_makedirs(path: str, exist_ok: bool = True) -> bool:
-    """
-    Create directories safely, handling Windows long path limitations.
-    
-    Args:
-        path: Directory path to create
-        exist_ok: Whether to ignore existing directory errors
-        
-    Returns:
-        True if successful, False otherwise
-    """
-    try:
-        # On Windows, use \\?\ prefix for long paths
-        if platform.system() == 'Windows' and len(path) > 200:
-            if not path.startswith('\\\\?\\'):
-                path = '\\\\?\\' + os.path.abspath(path)
-        
-        os.makedirs(path, exist_ok=exist_ok)
-        return True
-    except OSError as e:
-        if e.winerror == 206:  # Path too long error on Windows
-            logger().log_warning(f"Path too long, skipping directory creation: {path}")
-            return False
-        elif e.winerror == 183 and exist_ok:  # Directory already exists
-            return True
-        else:
-            logger().log_warning(f"Failed to create directory {path}: {e}")
-            return False
-    except Exception as e:
-        logger().log_warning(f"Unexpected error creating directory {path}: {e}")
-        return False
-
-
-def truncate_path_component(component: str, max_length: int = 50) -> str:
-    """
-    Truncate a path component to avoid long path issues.
-    
-    Args:
-        component: Path component to truncate
-        max_length: Maximum length for the component
-        
-    Returns:
-        Truncated component
-    """
-    if len(component) <= max_length:
-        return component
-    
-    # Keep important parts - beginning and end
-    if '.' in component:
-        name, ext = component.rsplit('.', 1)
-        if len(ext) < 10:  # Keep reasonable extensions
-            truncated_name = name[:max_length - len(ext) - 1]
-            return f"{truncated_name}.{ext}"
-    
-    # Just truncate and add indicator
-    return component[:max_length - 3] + "..."
 
