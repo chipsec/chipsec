@@ -43,7 +43,7 @@ Examples:
 
 from chipsec.command import BaseCommand, toLoad
 from chipsec.hal import tpm_eventlog
-from chipsec.hal import tpm
+from chipsec.hal.tpm import TPM
 from chipsec.library.exceptions import TpmRuntimeError
 from chipsec.testcase import ExitCode
 from argparse import ArgumentParser
@@ -82,17 +82,12 @@ class TPMCommand(BaseCommand):
         self._tpm.command(self.command_name, self.locality, self.command_parameters)
 
     def tpm_state(self):
-        self._tpm.dump_access(self.locality)
-        self._tpm.dump_status(self.locality)
-        self._tpm.dump_didvid(self.locality)
-        self._tpm.dump_rid(self.locality)
-        self._tpm.dump_intcap(self.locality)
-        self._tpm.dump_intenable(self.locality)
+        self._tpm.dump_all(self.locality)
 
     def set_up(self):
         if self.func != self.tpm_parse:
             try:
-                self._tpm = tpm.TPM(self.cs)
+                self._tpm = TPM(self.cs)
             except TpmRuntimeError as msg:
                 self.logger.log(msg)
                 return
