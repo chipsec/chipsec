@@ -621,7 +621,7 @@ class SPI(hal_base.HALBase):
                         self.logger.log(f'[spi] FDATA00 + 0x{fdata_idx * 4:x}: 0x{dword_value:x}')
                     buf += struct.pack("I", dword_value)
         if self.logger.UTIL_TRACE:
-                self.logger.log('\nSPI read complete')
+            self.logger.log('\nSPI read complete')
 
         if (0 != r):
             self.logger.log_hal(f'[spi] Reading remaining 0x{r:x} bytes from 0x{spi_fla + n * dbc:x}')
