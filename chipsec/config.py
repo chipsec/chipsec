@@ -230,7 +230,7 @@ class Cfg:
 
     def _find_sku_data(self, dict_ref, code, detect_val=None):
         try:
-            self.vid_set = set(dict_ref.keys()).intersection(set(self.CONFIG_PCI_RAW.keys()))
+            self.vid_set = dict_ref.keys()
         except KeyError:
             return self.create_unknown_sku()
 
