@@ -57,7 +57,7 @@ from chipsec.library.uefi import platform as uefi_platform
 class DecodeCommand(BaseCommand):
 
     def requirements(self) -> toLoad:
-        return toLoad.Nil
+        return toLoad.Config
 
     def parse_arguments(self) -> None:
         parser = ArgumentParser(usage=__doc__)
