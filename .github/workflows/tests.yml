@@ -21,9 +21,9 @@ jobs:
           - {name: "archlinux", tag: "latest", variant: "-zen", image_prefix: "docker.io/library/"}
           - {name: "archlinux", tag: "base", image_prefix: "docker.io/library/"}
           - {name: "centos", tag: "stream9", image_prefix: "quay.io/centos/"}
-          - {name: "debian", tag: "bookworm-slim", image_prefix: "docker.io/library/"}
+          - {name: "debian", tag: "12", image_prefix: "docker.io/library/"}
+          - {name: "debian", tag: "12-slim", image_prefix: "docker.io/library/"}
           - {name: "debian", tag: "11", image_prefix: "docker.io/library/"}
-          - {name: "debian", tag: "10", image_prefix: "docker.io/library/"}
           - {name: "ubuntu", tag: "24.04", image_prefix: "docker.io/library/"}
           - {name: "ubuntu", tag: "22.04", image_prefix: "docker.io/library/"}
 
@@ -121,6 +121,17 @@ jobs:
 
     - name: Show dkms status
       run: dkms status
+    
+    - name: Print log if failure
+      if: failure()
+      run: |
+        KERNEL_VER="$(uname -r)"
+        CHIPSEC_MODULE_VER="$(cat chipsec/VERSION)"
+        echo "Printing log for chipsec ${CHIPSEC_MODULE_VER} on Linux kernel ${KERNEL_VER}"
+        cat "/var/lib/dkms/chipsec/${CHIPSEC_MODULE_VER}/build/make.log"
+        dkms status
+        dkms status -m chipsec -v "${CHIPSEC_MODULE_VER}" -k "${KERNEL_VER}"
+        sudo dkms status -m chipsec -v "${CHIPSEC_MODULE_VER}" -k "${KERNEL_VER}" --logfile
 
     - name: Show modinfo on the kernel module
       id: modinfo
