@@ -49,10 +49,26 @@ class Register:
     def is_defined(self, reg_name: str) -> bool:
         """Checks if register is defined in the XML config"""
         try:
-            return (self.cs.Cfg.REGISTERS[reg_name] is not None)
+            register = self.cs.Cfg.REGISTERS[reg_name]
         except KeyError:
             return False
+        if register is not None:
+            if 'type' in register and register['type'] in [RegisterType.MMIO, RegisterType.IOBAR]:
+                return self._check_bar(register)
+            return True
+        else:
+            return False
 
+    def _check_bar(self, register: Dict[str, Any]) -> bool:
+        try:
+            if register['type'] == RegisterType.IOBAR:
+                return self.cs.iobar.get_IO_BAR_base_address(register['bar'])[0] != 0
+            else:
+                return self.cs.mmio.get_MMIO_BAR_base_address(register['bar'])[0] != 0
+        except CSReadError:
+            logger().log_error(f'BAR {register["bar"]} not found/invalid')
+            return False
+        
     def is_device_enabled(self, reg_name: str, bus: Optional[int]=None) -> bool:
         """Checks if device is defined in the XML config"""
         if reg_name in self.cs.Cfg.REGISTERS:
