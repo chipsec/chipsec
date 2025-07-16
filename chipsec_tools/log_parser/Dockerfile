@@ -1,4 +1,4 @@
-FROM ubuntu:latest@sha256:440dcf6a5640b2ae5c77724e68787a906afb8ddee98bf86db94eea8528c2c076
+FROM ubuntu:latest@sha256:a328b84b92f71a85f459722a1c73c0363f9f8e3f66bf74a204bb35c605cf670c
 
 RUN apt-get update -y && \
     apt-get install -y python3.8-dev python3.8 python3.8-distutils curl
