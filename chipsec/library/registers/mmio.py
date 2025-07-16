@@ -18,45 +18,114 @@
 # chipsec@intel.com
 #
 
-'''
-Main functionality to get the definition of IO registers
-'''
+"""
+MMIO register interface.
 
+This module provides functionality to access and manage Memory-Mapped I/O
+registers in the CHIPSEC framework.
+"""
+
+from typing import Any, Optional, List
 from chipsec.library.registers.baseregister import BaseRegister
 
 
 class MMIO(BaseRegister):
-    def __init__(self, cs):
+    """
+    MMIO register interface for Memory-Mapped I/O registers.
+
+    Provides methods to access and query MMIO register definitions.
+    """
+
+    def __init__(self, cs: Any) -> None:
+        """
+        Initialize the MMIO register interface.
+
+        Args:
+            cs: Chipset interface object
+        """
         super(MMIO, self).__init__(cs)
 
-    def get_def(self, bar_name):
+    def get_def(self, bar_name: str) -> Optional[Any]:
+        """
+        Get the definition of an MMIO BAR by name.
+
+        Args:
+            bar_name: Name of the MMIO BAR to retrieve
+
+        Returns:
+            MMIO BAR definition if found, None otherwise
+        """
         ret = None
         scope = self.cs.Cfg.get_scope(bar_name)
         vid, device, bar, _ = self.cs.Cfg.convert_internal_scope(scope, bar_name)
+
         if vid in self.cs.Cfg.MMIO_BARS and device in self.cs.Cfg.MMIO_BARS[vid]:
             if bar in self.cs.Cfg.MMIO_BARS[vid][device]:
                 ret = self.cs.Cfg.MMIO_BARS[vid][device][bar]
         return ret
 
-    def get_match(self, name: str):
+    def get_match(self, name: str) -> List[str]:
+        """
+        Get MMIO BARs matching a specific pattern.
+
+        Args:
+            name: Pattern to match against MMIO BAR names
+
+        Returns:
+            List of matching MMIO BAR identifiers
+        """
         vid, device, inbar, _ = self.cs.Cfg.convert_internal_scope("", name)
         ret = []
+
         if vid is None or vid == '*':
             vid = self.cs.Cfg.REGISTERS.keys()
         else:
             vid = [vid]
+
         for v in vid:
             if v in self.cs.Cfg.MMIO_BARS:
                 if device is None or device == '*':
                     dev = self.cs.Cfg.MMIO_BARS[v].keys()
                 else:
                     dev = [device]
+
                 for d in dev:
                     if d in self.cs.Cfg.MMIO_BARS[v]:
                         if inbar is None or inbar == '*':
                             bar = self.cs.Cfg.MMIO_BARS[v][d]
                         else:
                             bar = [inbar]
+
                         for b in bar:
                             if b in self.cs.Cfg.MMIO_BARS[v][d]:
                                 ret.append(f'{v}.{d}.{b}')
+
+        return ret
+
+    def get_MMIO_BAR_base_address(self, bar_name: str,
+                                 instance: Any = None) -> tuple:
+        """
+        Get the base address and size of an MMIO BAR.
+
+        Args:
+            bar_name: Name of the MMIO BAR
+            instance: Optional instance identifier
+
+        Returns:
+            Tuple of (base_address, size)
+
+        Raises:
+            Exception: If the BAR cannot be found or accessed
+        """
+        mmio_bar = self.get_def(bar_name)
+
+        if mmio_bar is None:
+            raise Exception(f"Couldn't find MMIO BAR {bar_name}")
+
+        if instance is not None:
+            mmio_bar.set_instance(instance)
+
+        base = mmio_bar.get_base_address(instance)
+        size = mmio_bar.get_size()
+
+        return base, size

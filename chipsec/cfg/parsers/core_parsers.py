@@ -17,8 +17,17 @@
 # Contact information:
 # chipsec@intel.com
 
+"""
+Core configuration parsers for CHIPSEC.
+
+This module contains the main configuration parsers responsible for processing
+platform configuration files and populating the CHIPSEC configuration objects.
+"""
+
 import copy
 import os
+from typing import Dict, List, Any, Optional, Set, TYPE_CHECKING
+
 from chipsec.cfg.parsers.ip.iobar import IOBarConfig
 from chipsec.cfg.parsers.ip.io import IOConfig
 from chipsec.cfg.parsers.ip.memory import MemoryConfig

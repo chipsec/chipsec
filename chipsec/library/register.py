@@ -19,7 +19,12 @@
 #
 
 """
-Main functionality to read/write configuration registers based on their XML configuration
+Main functionality to read/write configuration registers.
+
+This module provides the primary register interface for CHIPSEC, allowing
+access to various types of hardware registers including PCI configuration,
+MMIO, MSR, and others. It serves as the main entry point for register
+operations and coordinates with the specialized register interface classes.
 """
 
 from typing import Any, Dict, List, Optional
@@ -27,7 +32,7 @@ from typing import Any, Dict, List, Optional
 from chipsec.parsers import BaseConfigHelper
 from chipsec.library.logger import logger
 from chipsec.library.bits import set_bits, get_bits, make_mask
-from chipsec.library.exceptions import CSReadError, RegisterNotFoundError, UninitializedRegisterError
+from chipsec.library.exceptions import (CSReadError, RegisterNotFoundError)
 from chipsec.library.registers.io import IO
 from chipsec.library.registers.iobar import IOBar
 from chipsec.library.registers.memory import Memory
@@ -40,6 +45,12 @@ from chipsec.library.registers.pcicfg import PCICfg
 
 
 class RegisterType:
+    """
+    Constants defining the supported register types in CHIPSEC.
+
+    These constants are used to identify different types of hardware
+    registers and their access methods.
+    """
     PCICFG = 'pcicfg'
     MMCFG = 'mmcfg'
     MMIO = 'mmio'
@@ -53,7 +64,21 @@ class RegisterType:
 
 
 class Register:
-    def __init__(self, cs):
+    """
+    Main register interface class for CHIPSEC.
+
+    This class provides a unified interface for accessing various types of
+    hardware registers. It instantiates and coordinates with specialized
+    register interface classes for different register types.
+    """
+
+    def __init__(self, cs: Any) -> None:
+        """
+        Initialize the Register interface.
+
+        Args:
+            cs: Chipset interface object
+        """
         self.cs = cs
         self.io = IO(cs)
         self.iobar = IOBar(cs)
@@ -111,42 +136,197 @@ class Register:
         return reg_def
 
     def get_def(self, reg_name: str) -> Dict[str, Any]:
-        """Return complete register definition"""
-        # breakpoint() # Not working right. RegisterTypes need to be changed to register objects.
+        """
+        Return complete register definition.
+
+        Args:
+            reg_name: Name of the register to retrieve
+
+        Returns:
+            Dictionary containing the complete register definition
+        """
         scope = self.cs.Cfg.get_scope(reg_name)
         fullscope = self.cs.Cfg.convert_platform_scope(scope, reg_name)
         vid = fullscope[0]
         dev_name = fullscope[1]
-        reg_def = self.cs.Cfg.platform.get_register_from_scope(fullscope) #REGISTERS[vid][dev_name][register]
+        # Get register definition from platform scope
+        reg_def = self.cs.Cfg.platform.get_register_from_scope(fullscope)
         if isinstance(reg_def, list):
             reg_def = reg_def[0]
+
+        # Map register object types to their definition processors
         def_type_map = {
             RegisterType.PCICFG: self._get_pci_def,
             RegisterType.MMCFG: self._get_pci_def,
             RegisterType.MM_MSGBUS: self._get_mmmsgbus_def,
             RegisterType.IMA: self._get_indirect_def,
-            # RegisterType.MEMORY: self._get_memory_def,
         }
-        if type(reg_def) in def_type_map:
-            return def_type_map[type(reg_def)](reg_def, vid, dev_name)
+
+        # Check if reg_def has a register_type attribute or method
+        if hasattr(reg_def, 'register_type'):
+            reg_type = reg_def.register_type
+        elif hasattr(reg_def, 'get_type'):
+            reg_type = reg_def.get_type()
+        else:
+            # Fallback to type-based mapping
+            reg_type = type(reg_def).__name__.lower()
+
+        if reg_type in def_type_map:
+            return def_type_map[reg_type](reg_def, vid, dev_name)
         else:
             return reg_def
 
-    # rework any call to this function
     def get_list_by_name(self, reg_name: str) -> 'ObjList':
+        """
+        Get list of register objects by name.
+
+        Args:
+            reg_name: Name of the register
+
+        Returns:
+            List of register objects matching the name
+        """
         return self.cs.Cfg.get_reglist(reg_name)
 
-    def get_list_by_name_without_scope(self, reg_name: str) -> 'ObjList': # TODO: rewrite so that it looks at all registers in platform structure. Should use a new function in platform. 
-        return self.cs.Cfg.get_reglist('*.*.' + reg_name)
+    def get_list_by_name_without_scope(self, reg_name: str) -> 'ObjList':
+        """
+        Get register list without scope prefix.
 
-    def get_instance_by_name(self, reg_name: str, instance: 'PCIObj'):
+        This method searches for registers across all vendors and devices
+        using the platform structure from the refactored configuration system.
+        It performs a comprehensive search through the platform structure and
+        falls back to legacy methods if needed.
+
+        Args:
+            reg_name: Name of the register without scope
+
+        Returns:
+            List of register objects matching the name across all scopes
+        """
+        result_list = ObjList()
+
+        # Check that the configuration is initialized
+        if not hasattr(self.cs, 'Cfg'):
+            logger().log_warning("Configuration not initialized")
+            return result_list
+
+        # Use the platform structure to search across all vendors and devices
+        if hasattr(self.cs.Cfg, 'platform') and self.cs.Cfg.platform:
+            # Log diagnostic info at debug level
+            platform = self.cs.Cfg.platform
+            if hasattr(platform, 'vendors') and platform.vendors:
+                vendor_count = len(platform.vendors)
+                logger().log_debug(f"Searching {vendor_count} vendors in platform structure")
+
+                # Search through all vendor/device combinations
+                for vendor_id in platform.vendors:
+                    vendor = platform.vendors[vendor_id]
+
+                    # Check if vendor.devices exists
+                    if hasattr(vendor, 'devices') and vendor.devices:
+                        for device_id in vendor.devices:
+                            device = vendor.devices[device_id]
+
+                            # Check for registers
+                            has_registers = (hasattr(device, 'registers') and
+                                            device.registers is not None)
+
+                            if has_registers and reg_name in device.registers:
+                                # Found the register, add all instances
+                                reg_objects = device.registers[reg_name]
+                                logger().log_debug(
+                                    f"Found register {reg_name} in {vendor_id}.{device_id}")
+
+                                if isinstance(reg_objects, list):
+                                    result_list.extend(reg_objects)
+                                else:
+                                    result_list.append(reg_objects)
+            else:
+                logger().log_debug("No vendors in platform structure")
+        else:
+            logger().log_debug("Platform structure not available")
+
+        # If no results found in platform structure, try fallback methods
+        if not result_list:
+            logger().log_debug(
+                f"No results found for {reg_name} in platform structure, trying fallbacks")
+
+            # Try different fallback approaches
+            try:
+                # First try direct wildcard approach
+                fallback_result = self.cs.Cfg.get_reglist('*.*.' + reg_name)
+                if fallback_result:
+                    logger().log_debug(
+                        f"Found {len(fallback_result)} results with '*.*.' fallback")
+                    result_list.extend(fallback_result)
+            except Exception as e:
+                logger().log_debug(f"First fallback failed: {str(e)}")
+
+                try:
+                    # Second approach: more flexible wildcard pattern
+                    fallback_result = self.cs.Cfg.get_reglist('*.' + reg_name)
+                    if fallback_result:
+                        logger().log_debug(
+                            f"Found {len(fallback_result)} results with '*.' fallback")
+                        result_list.extend(fallback_result)
+                except Exception as e2:
+                    logger().log_debug(f"Second fallback failed: {str(e2)}")
+
+                    try:
+                        # Legacy approach: check REGISTERS structure directly
+                        if hasattr(self.cs.Cfg, 'REGISTERS'):
+                            possible_regs = []
+
+                            # Search through legacy REGISTERS structure
+                            for vid in self.cs.Cfg.REGISTERS:
+                                for dev in self.cs.Cfg.REGISTERS[vid]:
+                                    if reg_name in self.cs.Cfg.REGISTERS[vid][dev]:
+                                        reg_path = f"{vid}.{dev}.{reg_name}"
+                                        possible_regs.append(reg_path)
+
+                            # Get register objects for each path found
+                            for reg_path in possible_regs:
+                                try:
+                                    reg_objs = self.cs.Cfg.get_reglist(reg_path)
+                                    logger().log_debug(
+                                        f"Found register via legacy lookup: {reg_path}")
+                                    result_list.extend(reg_objs)
+                                except Exception:
+                                    # Ignore errors for individual registers
+                                    pass
+                    except Exception as e3:
+                        logger().log_debug(f"All fallbacks failed: {str(e3)}")
+
+        # Log summary
+        if result_list:
+            logger().log_debug(
+                f"Found {len(result_list)} registers for {reg_name} without scope")
+        else:
+            logger().log_debug(f"No registers found for {reg_name} without scope")
+
+        return result_list
+
+    def get_instance_by_name(self, reg_name: str,
+                             instance: Any) -> Optional[Any]:
+        """
+        Get specific register instance by name and instance identifier.
+
+        Args:
+            reg_name: Name of the register
+            instance: Instance identifier
+
+        Returns:
+            Register instance if found, NullRegister object if not found
+        """
         try:
             for reg_obj in self.cs.Cfg.get_reglist(reg_name):
                 if reg_obj.get_instance() == instance:
                     return reg_obj
         except RegisterNotFoundError:
             logger().log_error(f'Register {reg_name} not found')
-        return None  # TODO Change to null register object
+
+        # Return a null register object instead of None for better error handling
+        return NullRegister(reg_name, instance)
 
     def has_field(self, reg_name: str, field_name: str) -> bool:
         """Checks if the register has specific field"""
@@ -161,38 +341,98 @@ class Register:
                 return False
         return False
 
-    def get_match(self, name: str):
-        vid, device, register, field = self.cs.Cfg.convert_internal_scope('', name)
+    def get_match(self, name: str) -> List[str]:
+        """
+        Get registers and fields matching a specific pattern.
+
+        Uses the modern platform structure to search for matching registers
+        across all vendors and devices.
+
+        Args:
+            name: Pattern to match (can include wildcards)
+
+        Returns:
+            List of matching register.field identifiers
+        """
+        vid, device, register, field = self.cs.Cfg.convert_internal_scope(
+            '', name)
         ret = []
-        if vid is None or vid == '*':
-            vid = self.cs.Cfg.REGISTERS.keys()
-        else:
-            vid = [vid]
-        for v in vid:
-            if v in self.cs.Cfg.REGISTERS:
+
+        # Use platform structure if available
+        if hasattr(self.cs.Cfg, 'platform') and self.cs.Cfg.platform:
+            # Get vendor list
+            if vid is None or vid == '*':
+                vendor_list = list(self.cs.Cfg.platform.vendors.keys())
+            else:
+                vendor_list = [vid] if vid in self.cs.Cfg.platform.vendors else []
+
+            for v in vendor_list:
+                vendor = self.cs.Cfg.platform.vendors[v]
+
+                # Get device list for this vendor
                 if device is None or device == '*':
-                    dev = self.cs.Cfg.REGISTERS[v].keys()
+                    device_list = list(vendor.devices.keys())
                 else:
-                    dev = [device]
-                for d in dev:
-                    if d in self.cs.Cfg.REGISTERS[v]:
+                    device_list = [device] if device in vendor.devices else []
+
+                for d in device_list:
+                    device_obj = vendor.devices[d]
+
+                    # Get register list for this device
+                    if hasattr(device_obj, 'registers'):
                         if register is None or register == '*':
-                            reg = self.cs.Cfg.REGISTERS[v][d].keys()
+                            register_list = list(device_obj.registers.keys())
                         else:
-                            reg = [register]
-                        for r in reg:
-                            if r in self.cs.Cfg.REGISTERS[v][d]:
+                            register_list = [register] if register in device_obj.registers else []
+
+                        for r in register_list:
+                            reg_obj = device_obj.registers[r]
+                            if isinstance(reg_obj, list) and len(reg_obj) > 0:
+                                reg_obj = reg_obj[0]
+
+                            # Get field list for this register
+                            if hasattr(reg_obj, 'fields'):
                                 if field is None or field == '*':
-                                    fld = self.cs.Cfg.REGISTERS[v][d][r][
-                                        0
-                                    ].fields.keys()
+                                    field_list = list(reg_obj.fields.keys())
                                 else:
-                                    if field in self.cs.CfgREGISTERS[v][d][r][0].fields:
-                                        fld = [field]
-                                    else:
-                                        fld = []
-                                for f in fld:
+                                    field_list = [field] if field in reg_obj.fields else []
+
+                                for f in field_list:
                                     ret.append(f'{v}.{d}.{r}.{f}')
+        else:
+            # Fallback to original method if platform not available
+            if vid is None or vid == '*':
+                vid_list = list(self.cs.Cfg.REGISTERS.keys())
+            else:
+                vid_list = [vid]
+
+            for v in vid_list:
+                if v in self.cs.Cfg.REGISTERS:
+                    if device is None or device == '*':
+                        dev_list = list(self.cs.Cfg.REGISTERS[v].keys())
+                    else:
+                        dev_list = [device]
+
+                    for d in dev_list:
+                        if d in self.cs.Cfg.REGISTERS[v]:
+                            if register is None or register == '*':
+                                reg_list = list(self.cs.Cfg.REGISTERS[v][d].keys())
+                            else:
+                                reg_list = [register]
+
+                            for r in reg_list:
+                                if r in self.cs.Cfg.REGISTERS[v][d]:
+                                    reg_obj = self.cs.Cfg.REGISTERS[v][d][r][0]
+                                    if field is None or field == '*':
+                                        field_list = list(reg_obj.fields.keys())
+                                    else:
+                                        if field in reg_obj.fields:
+                                            field_list = [field]
+                                        else:
+                                            field_list = []
+
+                                    for f in field_list:
+                                        ret.append(f'{v}.{d}.{r}.{f}')
         return ret
 
     def has_all_fields(self, reg_name: str, field_list: List[str]) -> bool:
@@ -402,7 +642,7 @@ class ObjList(list):
         if any(inst.get_field(field, preserve_field_position) != field_value for inst in self[1:]):
             return None
         return field_value
-    
+
     def is_all_field_value(
         self, value: int, field: str, preserve_field_position: bool = False
     ) -> bool:
@@ -442,3 +682,48 @@ class RegData(object):
     @value.setter
     def newvalue(self, value):
         self.__value = value
+
+
+class NullRegister:
+    """
+    Null object pattern for register instances that are not found.
+
+    This class provides a safe alternative to returning None when a register
+    instance cannot be found, preventing AttributeError exceptions.
+    """
+
+    def __init__(self, name: str, instance: Any) -> None:
+        """
+        Initialize the null register object.
+
+        Args:
+            name: Name of the register that was not found
+            instance: Instance identifier that was requested
+        """
+        self.name = name
+        self.instance = instance
+        self.value = None
+
+    def get_instance(self) -> Any:
+        """Return the instance identifier."""
+        return self.instance
+
+    def read(self) -> int:
+        """Null implementation of read operation."""
+        logger().log_warning(f'Attempted to read null register {self.name}')
+        return 0
+
+    def write(self, value: int) -> None:
+        """Null implementation of write operation."""
+        logger().log_warning(f'Attempted to write to null register {self.name}')
+
+    def has_field(self, field_name: str) -> bool:
+        """Null implementation - no fields available."""
+        return False
+
+    def get_field(self, field_name: str,
+                 preserve_field_position: bool = False) -> int:
+        """Null implementation of get_field."""
+        logger().log_warning(f'Attempted to get field {field_name} '
+                           f'from null register {self.name}')
+        return 0

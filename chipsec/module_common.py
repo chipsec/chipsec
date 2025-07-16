@@ -22,15 +22,29 @@
 """
 Common include file for modules
 
+This module provides the base class and common functionality for all CHIPSEC
+security assessment modules.
 """
 
+from typing import List
 import chipsec.chipset
 from chipsec.library.logger import logger
 from chipsec.library.returncode import ModuleResult, ReturnCode, result_priority
 
 
 class BaseModule:
-    def __init__(self):
+    """
+    Base class for all CHIPSEC security assessment modules.
+
+    This class provides the common functionality and interface that all
+    CHIPSEC modules should implement. It handles chipset access, logging,
+    and result tracking.
+    """
+
+    def __init__(self) -> None:
+        """
+        Initialize the base module with chipset access and logging.
+        """
         self.cs = chipsec.chipset.cs()
         self.logger = logger()
         self.result = ReturnCode(self.cs)
@@ -42,19 +56,30 @@ class BaseModule:
 
     def is_supported(self) -> bool:
         """
+        Check if this module is supported on the current platform.
+
         This method should be overwritten by the module returning True or False
-        depending whether or not this module is supported in the currently running
-        platform.
-        To access the currently running platform use
+        depending whether or not this module is supported in the currently
+        running platform.
+
+        Returns:
+            True if the module is supported, False otherwise
         """
         return True
 
     # -------------------------------------------------------
     # Legacy results
     # -------------------------------------------------------
-    def update_res(self, value) -> None:
+    def update_res(self, value: ModuleResult) -> None:
+        """
+        Update the legacy result status.
+
+        Args:
+            value: The new result status to set
+        """
         if value not in result_priority:
-            self.logger.log_verbose(f'Attempting to set invalid result status: {value}')
+            msg = f'Attempting to set invalid result status: {value}'
+            self.logger.log_verbose(msg)
             return
         cur_priority = result_priority[self.res]
         new_priority = result_priority[value]
@@ -62,11 +87,24 @@ class BaseModule:
             self.res = value
     # -------------------------------------------------------
 
-    def run(self, module_argv) -> int:
+    def run(self, module_argv: List[str]) -> int:
         """
-        This method should be overwritten by the module returning int
+        Run the module with the given arguments.
+
+        This method should be overwritten by the module returning an integer
+        exit code.
+
+        Args:
+            module_argv: List of command line arguments for the module
+
+        Returns:
+            Integer exit code (0 for success, non-zero for failure)
+
+        Raises:
+            NotImplementedError: If the subclass doesn't implement this method
         """
-        raise NotImplementedError('Sub-class should overwrite the run() method')
+        raise NotImplementedError(
+            'Sub-class should overwrite the run() method')
 
 
 BIOS = 'BIOS'

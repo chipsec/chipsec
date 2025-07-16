@@ -18,35 +18,89 @@
 # chipsec@intel.com
 #
 
-from chipsec.library.logger import logger
+"""
+Control interface module.
+
+This module provides functionality to access and manage platform control
+definitions in the CHIPSEC framework.
+"""
+
+from typing import Any, List, Optional
 from chipsec.library.register import ObjList
-from typing import Any
 
 
 class Control:
+    """
+    Control interface for platform control definitions.
 
-    def __init__(self, cs) -> None:
+    Provides methods to access and query control objects that define
+    platform-specific control mechanisms.
+    """
+
+    def __init__(self, cs: Any) -> None:
+        """
+        Initialize the Control interface.
+
+        Args:
+            cs: Chipset interface object
+        """
         self.cs = cs
 
-    def get_list_by_name(self, control_name: str):
-        """Gets list of control objects (by name)"""
+    def get_list_by_name(self, control_name: str) -> ObjList:
+        """
+        Get list of control objects by name.
+
+        Args:
+            control_name: Name of the control to retrieve objects for
+
+        Returns:
+            List of control objects matching the name
+        """
         controls = ObjList()
-        if control_name in self.cs.Cfg.CONTROLS.keys():
+        if control_name in self.cs.Cfg.CONTROLS:
             controls.extend(self.cs.Cfg.CONTROLS[control_name])
         return controls
-    
-    def get_instance_by_name(self, control_name: str, instance: Any):
-        if control_name in self.cs.Cfg.CONTROLS.keys():
+
+    def get_instance_by_name(self, control_name: str, instance: Any) -> Optional[Any]:
+        """
+        Get a specific control instance by name and instance identifier.
+
+        Args:
+            control_name: Name of the control
+            instance: Instance identifier to retrieve
+
+        Returns:
+            Control instance if found, None otherwise
+        """
+        if control_name in self.cs.Cfg.CONTROLS:
             for ctrl in self.cs.Cfg.CONTROLS[control_name]:
                 if instance == ctrl.instance:
                     return ctrl
         return None
 
-    def get_def(self, control_name: str):
-        """Gets control definition (by name)"""
+    def get_def(self, control_name: str) -> List[Any]:
+        """
+        Get control definition by name.
+
+        Args:
+            control_name: Name of the control to retrieve
+
+        Returns:
+            List of control definitions
+
+        Raises:
+            KeyError: If control_name is not found in configuration
+        """
         return self.cs.Cfg.CONTROLS[control_name]
 
     def is_defined(self, control_name: str) -> bool:
-        """Returns True if control_name Control is defined."""
-        return True if control_name in self.cs.Cfg.CONTROLS else False
+        """
+        Check if a control name is defined.
 
+        Args:
+            control_name: Name of the control to check
+
+        Returns:
+            True if control is defined, False otherwise
+        """
+        return control_name in self.cs.Cfg.CONTROLS
