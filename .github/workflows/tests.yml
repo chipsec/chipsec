@@ -9,6 +9,7 @@ jobs:
   build-linux-km:
     name: Linux kernel module
     strategy:
+      fail-fast: false
       matrix:
         distro:
           - {name: "alpine", tag: "3.18", variant: "-lts", image_prefix: "docker.io/library/"}
@@ -150,6 +151,7 @@ jobs:
   windows_driver:
     name: Windows driver matrix
     strategy:
+      fail-fast: false
       matrix:
         versions:
           - {window: "2019", python: "3.13"}
@@ -219,6 +221,7 @@ jobs:
   ubuntu-test:
     name: Test on Ubuntu matrix
     strategy:
+      fail-fast: false
       matrix:
         versions:
           - {ubuntu: "24.04", python: "3.13"}
