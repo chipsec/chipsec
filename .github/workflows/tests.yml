@@ -154,11 +154,11 @@ jobs:
       fail-fast: false
       matrix:
         versions:
-          - {window: "2019", python: "3.13"}
-          - {window: "2019", python: "3.11"}
-          - {window: "2019", python: "3.10"}
-          - {window: "2019", python: "3.9"}
-          - {window: "2019", python: "3.8"}
+          - {window: "2025", python: "3.13"}
+          - {window: "2025", python: "3.11"}
+          - {window: "2025", python: "3.10"}
+          - {window: "2025", python: "3.9"}
+          - {window: "2025", python: "3.8"}
           
           - {window: "2022", python: "3.13"}
           - {window: "2022", python: "3.11"}
