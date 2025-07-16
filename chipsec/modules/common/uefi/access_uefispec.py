@@ -109,7 +109,7 @@ class access_uefispec(BaseModule):
             "dbDefault": bs | rt,  # RO
             "dbxDefault": bs | rt,  # RO
             "dbtDefault": bs | rt,  # RO
-            "OsIndicationsSupported": bs | rt,  # RO
+            "OsIndicationsSupported": bs | rt,  # RO only after ExitBootServices()
             "OsIndications": nv | bs | rt,
             "SysPrep0001": nv | bs | rt,
             "SysPrep0002": nv | bs | rt,
@@ -117,7 +117,11 @@ class access_uefispec(BaseModule):
             "VendorKeys": bs | rt  # RO
         }
 
-        self.uefispec_ro_vars = ("HwErrRecSupport", "SetupMode", "SignatureSupport", "SecureBoot", "KEKDefault", "PKDefault", "dbDefault", "dbxDefault", "dbtDefault", "OsIndicationsSupported", "VendorKeys")
+        self.uefispec_ro_vars = ("HwErrRecSupport", "SetupMode", "SignatureSupport", "SecureBoot", "KEKDefault", "PKDefault", "dbDefault", "dbxDefault", "dbtDefault", "VendorKeys")
+        uefispec_rt_ro_vars = ("OsIndicationsSupported",)
+
+        if not self.cs.os_helper.is_efi():
+            self.uefispec_ro_vars += uefispec_rt_ro_vars
 
     def is_supported(self) -> bool:
         supported = self.cs.helper.EFI_supported()
