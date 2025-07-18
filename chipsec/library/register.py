@@ -25,6 +25,7 @@ Main functionality to read/write configuration registers based on their XML conf
 from typing import Any, Dict, List, Optional
 
 from chipsec.library.logger import logger
+from chipsec.library.options import Options
 from chipsec.library.defines import is_all_ones
 from chipsec.library.exceptions import CSReadError, RegisterTypeNotFoundError
 
@@ -45,6 +46,8 @@ class RegisterType:
 class Register:
     def __init__(self, cs):
         self.cs = cs
+        options = Options()
+        self.treat_missing_bar_as_error = options.get_section_data('Library_Config', 'treat_missing_bar_as_error') == "True"
 
     def is_defined(self, reg_name: str) -> bool:
         """Checks if register is defined in the XML config"""
@@ -66,7 +69,11 @@ class Register:
             else:
                 return self.cs.mmio.get_MMIO_BAR_base_address(register['bar'])[0] != 0
         except CSReadError:
-            logger().log_error(f'BAR {register["bar"]} not found/invalid')
+            message = f'BAR {register["bar"]} not found or is invalid'
+            if self.treat_missing_bar_as_error:
+                logger().log_error(message)
+                raise CSReadError(message)
+            logger().log_warning(message)
             return False
         
     def is_device_enabled(self, reg_name: str, bus: Optional[int]=None) -> bool:
