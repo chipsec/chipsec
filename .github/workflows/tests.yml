@@ -17,10 +17,10 @@ jobs:
           - {name: "alpine", tag: "3.16", variant: "-lts", image_prefix: "docker.io/library/"}
           - {name: "alpine", tag: "3.15", variant: "-lts", image_prefix: "docker.io/library/"}
           - {name: "alpine", tag: "3.14", variant: "-lts", image_prefix: "docker.io/library/"}
-          - {name: "archlinux", tag: "latest", image_prefix: "docker.io/library/"}
+          # - {name: "archlinux", tag: "latest", image_prefix: "docker.io/library/"}
           - {name: "archlinux", tag: "latest", variant: "-lts", image_prefix: "docker.io/library/"}
-          - {name: "archlinux", tag: "latest", variant: "-zen", image_prefix: "docker.io/library/"}
-          - {name: "archlinux", tag: "base", image_prefix: "docker.io/library/"}
+          # - {name: "archlinux", tag: "latest", variant: "-zen", image_prefix: "docker.io/library/"}
+          # - {name: "archlinux", tag: "base", image_prefix: "docker.io/library/"}
           - {name: "centos", tag: "stream9", image_prefix: "quay.io/centos/"}
           - {name: "debian", tag: "12", image_prefix: "docker.io/library/"}
           - {name: "debian", tag: "12-slim", image_prefix: "docker.io/library/"}
