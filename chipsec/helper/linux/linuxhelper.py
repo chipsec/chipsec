@@ -1,5 +1,6 @@
 # CHIPSEC: Platform Security Assessment Framework
 # Copyright (c) 2010-2021, Intel Corporation
+# Copyright (c) 2025, Oracle and/or its affiliates.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -447,7 +448,7 @@ class LinuxHelper(Helper):
         return self.kern_get_EFI_variable(name, guid)
 
     def set_EFI_variable(self, name: str, guid: str, buffer: bytes, buffer_size: int, attrs: Optional[int] = None) -> int:
-        return self.kern_set_EFI_variable(name, guid, buffer)
+        return self.kern_set_EFI_variable(name, guid, buffer, attrs)
 
     #
     # Internal (U)EFI Variable API functions via CHIPSEC kernel module
