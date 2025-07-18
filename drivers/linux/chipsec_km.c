@@ -56,6 +56,13 @@ MODULE_LICENSE("GPL");
 #    define IOREMAP_NO_CACHE(address, size) ioremap_nocache(address, size)
 #endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 15, 1)
+  /* 'ioremap_nocache' was deprecated in kernels >= 5.6, so instead we use 'ioremap' which
+  is no-cache by default since kernels 2.6.25. */
+#    define IOREMAP_PGPROT_CAST(address, size) ioremap_prot(address, size, __pgprot(0))
+#else /* KERNEL_VERSION < 2.6.25 */
+#    define IOREMAP_PGPROT_CAST(address, size) ioremap_prot(address, size, 0)
+#endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5,10,0)
 #include <linux/static_call.h>
@@ -339,7 +346,7 @@ static void *my_xlate_dev_mem_ptr(unsigned long phys)
     addr = (void __force *)IOREMAP_NO_CACHE(start, PAGE_SIZE);
 
     if (!addr)
-        addr = (void __force *)ioremap_prot(start, PAGE_SIZE,0);
+        addr = (void __force *)IOREMAP_PGPROT_CAST(start, PAGE_SIZE);
 
     if (addr)
         addr = (void *)((unsigned long)addr | (phys & ~PAGE_MASK));

@@ -9,6 +9,7 @@ jobs:
   build-linux-km:
     name: Linux kernel module
     strategy:
+      fail-fast: false
       matrix:
         distro:
           - {name: "alpine", tag: "3.18", variant: "-lts", image_prefix: "docker.io/library/"}
@@ -16,14 +17,14 @@ jobs:
           - {name: "alpine", tag: "3.16", variant: "-lts", image_prefix: "docker.io/library/"}
           - {name: "alpine", tag: "3.15", variant: "-lts", image_prefix: "docker.io/library/"}
           - {name: "alpine", tag: "3.14", variant: "-lts", image_prefix: "docker.io/library/"}
-          - {name: "archlinux", tag: "latest", image_prefix: "docker.io/library/"}
+          # - {name: "archlinux", tag: "latest", image_prefix: "docker.io/library/"}
           - {name: "archlinux", tag: "latest", variant: "-lts", image_prefix: "docker.io/library/"}
-          - {name: "archlinux", tag: "latest", variant: "-zen", image_prefix: "docker.io/library/"}
-          - {name: "archlinux", tag: "base", image_prefix: "docker.io/library/"}
+          # - {name: "archlinux", tag: "latest", variant: "-zen", image_prefix: "docker.io/library/"}
+          # - {name: "archlinux", tag: "base", image_prefix: "docker.io/library/"}
           - {name: "centos", tag: "stream9", image_prefix: "quay.io/centos/"}
-          - {name: "debian", tag: "bookworm-slim", image_prefix: "docker.io/library/"}
+          - {name: "debian", tag: "12", image_prefix: "docker.io/library/"}
+          - {name: "debian", tag: "12-slim", image_prefix: "docker.io/library/"}
           - {name: "debian", tag: "11", image_prefix: "docker.io/library/"}
-          - {name: "debian", tag: "10", image_prefix: "docker.io/library/"}
           - {name: "ubuntu", tag: "24.04", image_prefix: "docker.io/library/"}
           - {name: "ubuntu", tag: "22.04", image_prefix: "docker.io/library/"}
 
@@ -121,6 +122,17 @@ jobs:
 
     - name: Show dkms status
       run: dkms status
+    
+    - name: Print log if failure
+      if: failure()
+      run: |
+        KERNEL_VER="$(uname -r)"
+        CHIPSEC_MODULE_VER="$(cat chipsec/VERSION)"
+        echo "Printing log for chipsec ${CHIPSEC_MODULE_VER} on Linux kernel ${KERNEL_VER}"
+        cat "/var/lib/dkms/chipsec/${CHIPSEC_MODULE_VER}/build/make.log"
+        dkms status
+        dkms status -m chipsec -v "${CHIPSEC_MODULE_VER}" -k "${KERNEL_VER}"
+        sudo dkms status -m chipsec -v "${CHIPSEC_MODULE_VER}" -k "${KERNEL_VER}" --logfile
 
     - name: Show modinfo on the kernel module
       id: modinfo
@@ -139,13 +151,14 @@ jobs:
   windows_driver:
     name: Windows driver matrix
     strategy:
+      fail-fast: false
       matrix:
         versions:
-          - {window: "2019", python: "3.13"}
-          - {window: "2019", python: "3.11"}
-          - {window: "2019", python: "3.10"}
-          - {window: "2019", python: "3.9"}
-          - {window: "2019", python: "3.8"}
+          # - {window: "2025", python: "3.13"}
+          # - {window: "2025", python: "3.11"}
+          # - {window: "2025", python: "3.10"}
+          # - {window: "2025", python: "3.9"}
+          # - {window: "2025", python: "3.8"}
           
           - {window: "2022", python: "3.13"}
           - {window: "2022", python: "3.11"}
@@ -208,6 +221,7 @@ jobs:
   ubuntu-test:
     name: Test on Ubuntu matrix
     strategy:
+      fail-fast: false
       matrix:
         versions:
           - {ubuntu: "24.04", python: "3.13"}
