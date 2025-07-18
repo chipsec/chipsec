@@ -48,6 +48,7 @@ from chipsec.hal import hal_base
 from chipsec.library.exceptions import CSReadError
 from chipsec.library.logger import logger
 from chipsec.library.defines import get_bits, is_all_ones
+from chipsec.library.options import Options
 
 DEFAULT_MMIO_BAR_SIZE = 0x1000
 
@@ -66,7 +67,8 @@ class MMIO(hal_base.HALBase):
     def __init__(self, cs):
         super(MMIO, self).__init__(cs)
         self.cached_bar_addresses = {}
-        self.cache_bar_addresses_resolution = False
+        options = Options()
+        self.cache_bar_addresses_resolution = options.get_section_data('HAL_Config', 'mmio_cache_bar_addresses') == "True"
 
     ###########################################################################
     # Access to MMIO BAR defined by configuration files (chipsec/cfg/*.py)
