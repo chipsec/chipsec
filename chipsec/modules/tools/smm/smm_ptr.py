@@ -82,7 +82,6 @@ Examples:
 import struct
 import os
 import sys
-import time
 import math
 
 from chipsec.module_common import BaseModule, SMM
