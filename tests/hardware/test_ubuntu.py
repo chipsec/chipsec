@@ -15,11 +15,8 @@
 #
 #
 import os.path
-import subprocess
 
 from tests.hardware import test_generic
-
-from chipsec.helper import oshelper
 
 
 class GenericUbuntuTest(test_generic.GenericHardwareTest):

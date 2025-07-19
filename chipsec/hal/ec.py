@@ -41,7 +41,7 @@ Usage:
     >>> write_range( start_offset, buffer )
 
 """
-from typing import List, Optional
+from typing import Optional
 from chipsec.hal import hal_base
 from chipsec.library.logger import print_buffer_bytes
 

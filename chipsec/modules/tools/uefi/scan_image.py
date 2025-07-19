@@ -22,13 +22,13 @@ file against this list of expected executables
 
 Usage:
   ``chipsec_main -m tools.uefi.scan_image [-a generate|check,<json>,<fw_image>]``
-    - ``generate``	Generates a list of EFI executable binaries from the UEFI
+    - ``generate``  Generates a list of EFI executable binaries from the UEFI
                         firmware image (default)
-    - ``check``		Decodes UEFI firmware image and checks all EFI executable
+    - ``check``     Decodes UEFI firmware image and checks all EFI executable
                         binaries against a specified list
-    - ``json``		JSON file with configuration of allowed list EFI
+    - ``json``      JSON file with configuration of allowed list EFI
                         executables (default = ``efilist.json``)
-    - ``fw_image``	Full file path to UEFI firmware image. If not specified,
+    - ``fw_image``  Full file path to UEFI firmware image. If not specified,
                         the module will dump firmware image directly from ROM
 
 Examples:
@@ -61,7 +61,7 @@ from chipsec.library.returncode import ModuleResult
 
 from chipsec.hal.uefi import UEFI
 from chipsec.hal.spi import SPI, BIOS
-from chipsec.hal.uefi_fv import EFI_MODULE, EFI_SECTION, SECTION_NAMES, EFI_SECTION_PE32
+from chipsec.hal.uefi_fv import EFI_MODULE, EFI_SECTION
 from chipsec.hal.spi_uefi import build_efi_model, search_efi_tree, EFIModuleType, UUIDEncoder
 from chipsec.library.file import write_file, read_file
 

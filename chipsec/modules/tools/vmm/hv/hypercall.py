@@ -23,10 +23,6 @@
 Hyper-V specific hypercall functionality
 """
 
-import os
-import sys
-import time
-import chipsec_util
 from random import *
 from struct import *
 from chipsec.modules.tools.vmm.hv.define import *

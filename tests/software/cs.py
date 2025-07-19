@@ -22,7 +22,6 @@ from tests.software import mock_helper
 
 from chipsec.library import logger
 from chipsec import chipset
-from chipsec.helper import oshelper
 
 
 class TestChipsecCs(unittest.TestCase):
