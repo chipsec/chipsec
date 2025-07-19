@@ -28,7 +28,6 @@
 """
 Access to SMBus Controller
 """
-from typing import List
 from chipsec.hal import iobar, hal_base
 from chipsec.library.exceptions import IOBARNotFoundError, RegisterNotFoundError
 
