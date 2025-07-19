@@ -206,7 +206,7 @@ class LinuxHelper(Helper):
     # currently all chipsec ioctl functions are _IOWR
     # currently all size are pointer
     def compute_ioctlbase(self, itype: str = 'C') -> int:
-        # define _IOWR(type,nr,size)	 _IOC(_IOC_READ|_IOC_WRITE,(type),(nr),(_IOC_TYPECHECK(size)))
+        # define _IOWR(type,nr,size)     _IOC(_IOC_READ|_IOC_WRITE,(type),(nr),(_IOC_TYPECHECK(size)))
         # define _IOC(dir,type,nr,size) \
         #    (((dir)  << _IOC_DIRSHIFT) | \
         #    ((type) << _IOC_TYPESHIFT) | \
