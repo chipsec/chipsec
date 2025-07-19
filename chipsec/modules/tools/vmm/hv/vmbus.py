@@ -22,10 +22,7 @@
 """
 Hyper-V VMBus functionality
 """
-import os
-import sys
 import time
-import chipsec_util
 from struct import *
 from random import *
 from chipsec.library.intel.vmm_common import *
