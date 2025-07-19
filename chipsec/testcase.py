@@ -25,7 +25,7 @@ from collections import OrderedDict
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
 from chipsec.library.logger import logger
-from typing import Dict, List, Type, Optional
+from typing import Dict, List, Optional
 
 
 class ExitCode:
