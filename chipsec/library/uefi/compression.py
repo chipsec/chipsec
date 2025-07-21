@@ -19,10 +19,16 @@
 
 
 import platform
+import struct
 
 from typing import List, Any
 
 from chipsec.library.logger import logger
+
+# ZLIB AMD custom header format constants
+EFI_SECTION_ZLIB_AMD_HEADER_FORMAT = '<I'
+EFI_SECTION_ZLIB_AMD_HEADER_LENGTH = struct.calcsize(EFI_SECTION_ZLIB_AMD_HEADER_FORMAT)
+
 
 def show_import_error(import_name: str) -> None:
     if platform.system().lower() in ('windows', 'linux', 'darwin'):
@@ -55,6 +61,42 @@ except ImportError as exception:
 
     show_import_error(exception.name)
 
+try:
+    import gzip
+
+    has_gzip = True
+except ImportError as exception:
+    has_gzip = False
+
+    show_import_error(exception.name)
+
+try:
+    import zlib
+
+    has_zlib = True
+except ImportError as exception:
+    has_zlib = False
+
+    show_import_error(exception.name)
+
+try:
+    import zstandard
+
+    has_zstd = True
+except ImportError as exception:
+    has_zstd = False
+
+    show_import_error(exception.name)
+
+try:
+    import lz4.frame
+
+    has_lz4 = True
+except ImportError as exception:
+    has_lz4 = False
+
+    show_import_error(exception.name)
+
 #
 # Compression Types
 #
@@ -66,11 +108,21 @@ COMPRESSION_TYPE_BROTLI = 4
 COMPRESSION_TYPE_EFI_STANDARD = 5
 COMPRESSION_TYPE_UNKNOWN = 6
 COMPRESSION_TYPE_LZMAF86 = 7
+COMPRESSION_TYPE_GZIP = 8
+COMPRESSION_TYPE_ZLIB = 9
+COMPRESSION_TYPE_ZSTD = 10
+COMPRESSION_TYPE_LZ4 = 11
+COMPRESSION_TYPE_ZLIB_AMD = 12
 COMPRESSION_TYPES_ALGORITHMS: List[int] = [COMPRESSION_TYPE_LZMA,
                                            COMPRESSION_TYPE_TIANO,
                                            COMPRESSION_TYPE_UEFI,
                                            COMPRESSION_TYPE_BROTLI,
                                            COMPRESSION_TYPE_LZMAF86,
+                                           COMPRESSION_TYPE_GZIP,
+                                           COMPRESSION_TYPE_ZLIB,
+                                           COMPRESSION_TYPE_ZSTD,
+                                           COMPRESSION_TYPE_LZ4,
+                                           COMPRESSION_TYPE_ZLIB_AMD,
                                            COMPRESSION_TYPE_NONE, ]
 COMPRESSION_TYPES: List[int] = [COMPRESSION_TYPE_NONE,
                                 COMPRESSION_TYPE_TIANO,
@@ -79,18 +131,139 @@ COMPRESSION_TYPES: List[int] = [COMPRESSION_TYPE_NONE,
                                 COMPRESSION_TYPE_BROTLI,
                                 COMPRESSION_TYPE_EFI_STANDARD,
                                 COMPRESSION_TYPE_UNKNOWN,
-                                COMPRESSION_TYPE_LZMAF86, ]
+                                COMPRESSION_TYPE_LZMAF86,
+                                COMPRESSION_TYPE_GZIP,
+                                COMPRESSION_TYPE_ZLIB,
+                                COMPRESSION_TYPE_ZSTD,
+                                COMPRESSION_TYPE_LZ4,
+                                COMPRESSION_TYPE_ZLIB_AMD, ]
+
+COMPRESSION_TYPE_NAMES = {
+    COMPRESSION_TYPE_NONE: 'None',
+    COMPRESSION_TYPE_TIANO: 'Tiano',
+    COMPRESSION_TYPE_UEFI: 'UEFI',
+    COMPRESSION_TYPE_LZMA: 'LZMA',
+    COMPRESSION_TYPE_BROTLI: 'Brotli',
+    COMPRESSION_TYPE_EFI_STANDARD: 'EFI Standard',
+    COMPRESSION_TYPE_UNKNOWN: 'Unknown',
+    COMPRESSION_TYPE_LZMAF86: 'LZMA F86',
+    COMPRESSION_TYPE_GZIP: 'GZIP',
+    COMPRESSION_TYPE_ZLIB: 'ZLIB',
+    COMPRESSION_TYPE_ZSTD: 'Zstandard',
+    COMPRESSION_TYPE_LZ4: 'LZ4',
+    COMPRESSION_TYPE_ZLIB_AMD: 'ZLIB AMD'
+}
 
 
-class UEFICompression: #TODO: Check to see where this should live...
+def get_compression_type_name(compression_type: int) -> str:
+    """Get human-readable name for compression type."""
+    return COMPRESSION_TYPE_NAMES.get(compression_type, f'Unknown (0x{compression_type:02X})')
+
+
+class UEFICompression:
+    """
+    UEFI compression/decompression handler supporting multiple algorithms.
+    
+    This class provides unified compression and decompression capabilities
+    for various UEFI firmware compression formats including legacy and
+    modern compression algorithms.
+    """
     decompression_oder_type1: List[int] = [COMPRESSION_TYPE_TIANO, COMPRESSION_TYPE_UEFI]
     decompression_oder_type2: List[int] = [COMPRESSION_TYPE_TIANO,
                                            COMPRESSION_TYPE_UEFI,
                                            COMPRESSION_TYPE_LZMA,
-                                           COMPRESSION_TYPE_BROTLI, ]
+                                           COMPRESSION_TYPE_BROTLI,
+                                           COMPRESSION_TYPE_GZIP,
+                                           COMPRESSION_TYPE_ZLIB,
+                                           COMPRESSION_TYPE_ZLIB_AMD,
+                                           COMPRESSION_TYPE_ZSTD,
+                                           COMPRESSION_TYPE_LZ4, ]
 
     def __init__(self):
         pass
+
+    def is_compression_supported(self, compression_type: int) -> bool:
+        """Check if a compression type is supported by the current environment."""
+        return compression_type in self.get_supported_compression_types()
+
+    def get_supported_compression_types(self) -> List[int]:
+        """Get list of compression types supported in current environment."""
+        supported = [COMPRESSION_TYPE_NONE]
+        if has_eficomp:
+            supported.extend([COMPRESSION_TYPE_TIANO, COMPRESSION_TYPE_UEFI])
+        if has_lzma:
+            supported.extend([COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_LZMAF86])
+        if has_brotli:
+            supported.append(COMPRESSION_TYPE_BROTLI)
+        if has_gzip:
+            supported.append(COMPRESSION_TYPE_GZIP)
+        if has_zlib:
+            supported.append(COMPRESSION_TYPE_ZLIB)
+            supported.append(COMPRESSION_TYPE_ZLIB_AMD)
+        if has_zstd:
+            supported.append(COMPRESSION_TYPE_ZSTD)
+        if has_lz4:
+            supported.append(COMPRESSION_TYPE_LZ4)
+        return supported
+
+    def detect_compression_type(self, data: bytes) -> int:
+        """
+        Attempt to detect compression type from data headers.
+        Returns COMPRESSION_TYPE_UNKNOWN if unable to detect.
+        """
+        if not data:
+            return COMPRESSION_TYPE_UNKNOWN
+            
+        # Check for common compression signatures
+        if data.startswith(b'\x1f\x8b'):  # GZIP magic
+            return COMPRESSION_TYPE_GZIP
+        elif data.startswith(b'\x78\x9c') or data.startswith(b'\x78\xda'):  # ZLIB magic
+            return COMPRESSION_TYPE_ZLIB
+        elif data.startswith(b'\x28\xb5\x2f\xfd'):  # Zstandard magic
+            return COMPRESSION_TYPE_ZSTD
+        elif data.startswith(b'\x04"M\x18'):  # LZ4 magic
+            return COMPRESSION_TYPE_LZ4
+        elif len(data) >= 13 and data[0:1] in [b'\x5d', b'\x6d']:  # LZMA patterns
+            return COMPRESSION_TYPE_LZMA
+        elif len(data) >= 6:
+            # Check for Brotli (more complex detection)
+            try:
+                # Brotli doesn't have a clear magic number, but we can try to detect the window size
+                if data[0] & 0x0F == 0x06:  # Common Brotli window size pattern
+                    return COMPRESSION_TYPE_BROTLI
+            except Exception:
+                pass
+                
+        # If no signature matches, return unknown
+        return COMPRESSION_TYPE_UNKNOWN
+
+    def get_compression_info(self, compression_type: int) -> dict:
+        """Get detailed information about a compression type."""
+        return {
+            'type': compression_type,
+            'name': get_compression_type_name(compression_type),
+            'supported': self.is_compression_supported(compression_type),
+            'category': self._get_compression_category(compression_type)
+        }
+        
+    def _get_compression_category(self, compression_type: int) -> str:
+        """Get compression type category for classification."""
+        if compression_type == COMPRESSION_TYPE_NONE:
+            return 'None'
+        elif compression_type in [COMPRESSION_TYPE_TIANO, COMPRESSION_TYPE_UEFI]:
+            return 'EFI Native'
+        elif compression_type in [COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_LZMAF86]:
+            return 'LZMA Family'
+        elif compression_type in [COMPRESSION_TYPE_GZIP, COMPRESSION_TYPE_ZLIB]:
+            return 'Deflate Family'
+        elif compression_type == COMPRESSION_TYPE_BROTLI:
+            return 'Modern'
+        elif compression_type == COMPRESSION_TYPE_ZSTD:
+            return 'Modern'
+        elif compression_type == COMPRESSION_TYPE_LZ4:
+            return 'Modern'
+        else:
+            return 'Unknown'
 
     def rotate_list(self, rot_list: List[Any], n: int) -> List[Any]:
         return rot_list[n:] + rot_list[:n]
@@ -105,12 +278,18 @@ class UEFICompression: #TODO: Check to see where this should live...
                 data = compressed_data
             elif compression_type == COMPRESSION_TYPE_TIANO and has_eficomp:
                 try:
-                    data = EfiCompressor.TianoDecompress(compressed_data)
+                    if self._is_efi_compressed(compressed_data):
+                        data = EfiCompressor.TianoDecompress(compressed_data)
+                    else:
+                        data = b''
                 except Exception:
                     data = b''
             elif compression_type == COMPRESSION_TYPE_UEFI and has_eficomp:
                 try:
-                    data = EfiCompressor.UefiDecompress(compressed_data)
+                    if self._is_efi_compressed(compressed_data):
+                        data = EfiCompressor.UefiDecompress(compressed_data)
+                    else:
+                        data = b''
                 except Exception:
                     data = b''
             elif compression_type in [COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_LZMAF86] and has_lzma:
@@ -128,17 +307,55 @@ class UEFICompression: #TODO: Check to see where this should live...
                 if compression_type == COMPRESSION_TYPE_LZMAF86:
                     try:
                         data = EfiCompressor.LZMAf86Decompress(data)
-                    except Exception as msg:
+                    except Exception:
                         data = b''
             elif compression_type == COMPRESSION_TYPE_BROTLI and has_brotli:
                 try:
                     data = brotli.decompress(compressed_data)
                 except brotli.error:
                     data = b''
+            elif compression_type == COMPRESSION_TYPE_GZIP and has_gzip:
+                try:
+                    data = gzip.decompress(compressed_data)
+                except (gzip.BadGzipFile, OSError):
+                    data = b''
+            elif compression_type == COMPRESSION_TYPE_ZLIB and has_zlib:
+                try:
+                    data = zlib.decompress(compressed_data)
+                except zlib.error:
+                    data = b''
+            elif compression_type == COMPRESSION_TYPE_ZLIB_AMD and has_zlib:
+                try:
+                    # AMD ZLIB has a custom header with compressed size
+                    compressed_size = struct.unpack_from(EFI_SECTION_ZLIB_AMD_HEADER_FORMAT, compressed_data)[0]
+                    if compressed_size + EFI_SECTION_ZLIB_AMD_HEADER_LENGTH == len(compressed_data):
+                        data = zlib.decompress(compressed_data[EFI_SECTION_ZLIB_AMD_HEADER_LENGTH:])
+                    else:
+                        data = b''
+                except Exception:
+                    data = b''
+            elif compression_type == COMPRESSION_TYPE_ZSTD and has_zstd:
+                try:
+                    decompressor = zstandard.ZstdDecompressor()
+                    data = decompressor.decompress(compressed_data)
+                except (zstandard.ZstdError, Exception):
+                    data = b''
+            elif compression_type == COMPRESSION_TYPE_LZ4 and has_lz4:
+                try:
+                    data = lz4.frame.decompress(compressed_data)
+                except Exception:
+                    data = b''
             else:
                 data = b''
+                # Log specific reason for failure if compression type is known but not supported
+                if compression_type in COMPRESSION_TYPE_NAMES:
+                    comp_name = COMPRESSION_TYPE_NAMES[compression_type]
+                    if not self.is_compression_supported(compression_type):
+                        logger().log_hal(f'{comp_name} compression not supported (missing library)')
+                    else:
+                        logger().log_hal(f'Failed to decompress {comp_name} data')
             if not data:
-                logger().log_hal(f'Cannot decompress data with {compression_type}')
+                logger().log_hal(f'Cannot decompress data with compression type {get_compression_type_name(compression_type)}')
         else:
             logger().log_error(f'Unknown EFI compression type 0x{compression_type:X}')
             data = b''
@@ -175,11 +392,17 @@ class UEFICompression: #TODO: Check to see where this should live...
             elif compression_type == COMPRESSION_TYPE_TIANO:
                 try:
                     data = EfiCompressor.TianoCompress(uncompressed_data)
+                    if not self._is_efi_compressed(data):
+                        data = b''
+                        raise RuntimeError('Failed to validate EFI compression header')
                 except Exception:
                     data = b''
             elif compression_type == COMPRESSION_TYPE_UEFI:
                 try:
                     data = EfiCompressor.UefiCompress(uncompressed_data)
+                    if not self._is_efi_compressed(data):
+                        data = b''
+                        raise RuntimeError('Failed to validate EFI compression header')
                 except Exception:
                     data = b''
             elif compression_type in [COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_LZMAF86]:
@@ -194,9 +417,184 @@ class UEFICompression: #TODO: Check to see where this should live...
                     data = brotli.compress(uncompressed_data)
                 except brotli.error:
                     data = b''
+            elif compression_type == COMPRESSION_TYPE_GZIP and has_gzip:
+                try:
+                    data = gzip.compress(uncompressed_data)
+                except Exception:
+                    data = b''
+            elif compression_type == COMPRESSION_TYPE_ZLIB and has_zlib:
+                try:
+                    data = zlib.compress(uncompressed_data)
+                except zlib.error:
+                    data = b''
+            elif compression_type == COMPRESSION_TYPE_ZLIB_AMD and has_zlib:
+                try:
+                    # Compress data first
+                    compressed_data = zlib.compress(uncompressed_data)
+                    # Add AMD header with compressed size
+                    amd_header_data = struct.pack(EFI_SECTION_ZLIB_AMD_HEADER_FORMAT, len(compressed_data))
+                    data = amd_header_data + compressed_data
+                except zlib.error:
+                    data = b''
+            elif compression_type == COMPRESSION_TYPE_ZSTD and has_zstd:
+                try:
+                    compressor = zstandard.ZstdCompressor()
+                    data = compressor.compress(uncompressed_data)
+                except (zstandard.ZstdError, Exception):
+                    data = b''
+            elif compression_type == COMPRESSION_TYPE_LZ4 and has_lz4:
+                try:
+                    data = lz4.frame.compress(uncompressed_data)
+                except Exception:
+                    data = b''
             else:
                 data = b''
         else:
             logger().log_error(f'Unknown EFI compression type 0x{compression_type:X}')
             data = b''
         return data
+
+    @staticmethod
+    def get_compression_type_from_guid(guid_str: str) -> int:
+        """
+        Get compression type from GUID string.
+        
+        Args:
+            guid_str: GUID string (e.g., "EE4E5898-3914-4259-9D6E-DC7BD79403CF")
+            
+        Returns:
+            Compression type constant or COMPRESSION_TYPE_UNKNOWN
+        """
+        # Import here to avoid circular imports
+        from chipsec.library.uefi.fv import (
+            LZMAF86_DECOMPRESS_GUID, LZMA_CUSTOM_DECOMPRESS_GUID, TIANO_DECOMPRESSED_GUID,
+            BROTLI_CUSTOM_DECOMPRESS_GUID, GZIP_CUSTOM_DECOMPRESS_GUID, ZLIB_CUSTOM_DECOMPRESS_GUID,
+            ZSTD_CUSTOM_DECOMPRESS_GUID, LZ4_CUSTOM_DECOMPRESS_GUID,
+            EFI_GUIDED_SECTION_GZIP, EFI_GUIDED_SECTION_LZMA_HP, EFI_GUIDED_SECTION_LZMA_MS,
+            EFI_GUIDED_SECTION_ZLIB_AMD1, EFI_GUIDED_SECTION_ZLIB_AMD2
+        )
+        
+        # Convert string to uppercase for comparison
+        guid_upper = guid_str.upper()
+        
+        # Standard compression GUIDs
+        if guid_upper == str(LZMAF86_DECOMPRESS_GUID).upper():
+            return COMPRESSION_TYPE_LZMAF86
+        elif guid_upper == str(LZMA_CUSTOM_DECOMPRESS_GUID).upper():
+            return COMPRESSION_TYPE_LZMA
+        elif guid_upper == str(TIANO_DECOMPRESSED_GUID).upper():
+            return COMPRESSION_TYPE_TIANO
+        elif guid_upper == str(BROTLI_CUSTOM_DECOMPRESS_GUID).upper():
+            return COMPRESSION_TYPE_BROTLI
+        elif guid_upper in [str(GZIP_CUSTOM_DECOMPRESS_GUID).upper(), str(EFI_GUIDED_SECTION_GZIP).upper()]:
+            return COMPRESSION_TYPE_GZIP
+        elif guid_upper in [str(ZLIB_CUSTOM_DECOMPRESS_GUID).upper(), str(EFI_GUIDED_SECTION_ZLIB_AMD1).upper(), str(EFI_GUIDED_SECTION_ZLIB_AMD2).upper()]:
+            return COMPRESSION_TYPE_ZLIB
+        elif guid_upper == str(ZSTD_CUSTOM_DECOMPRESS_GUID).upper():
+            return COMPRESSION_TYPE_ZSTD
+        elif guid_upper == str(LZ4_CUSTOM_DECOMPRESS_GUID).upper():
+            return COMPRESSION_TYPE_LZ4
+        # Vendor-specific LZMA variants
+        elif guid_upper in [str(EFI_GUIDED_SECTION_LZMA_HP).upper(), str(EFI_GUIDED_SECTION_LZMA_MS).upper()]:
+            return COMPRESSION_TYPE_LZMA
+        else:
+            return COMPRESSION_TYPE_UNKNOWN
+
+    @staticmethod
+    def get_guid_info_from_compression_type(compression_type: int) -> dict:
+        """
+        Get GUID information for a compression type.
+        
+        Args:
+            compression_type: Compression type constant
+            
+        Returns:
+            Dictionary with GUID information including variants
+        """
+        from chipsec.library.uefi.fv import (
+            LZMAF86_DECOMPRESS_GUID, LZMA_CUSTOM_DECOMPRESS_GUID, TIANO_DECOMPRESSED_GUID,
+            BROTLI_CUSTOM_DECOMPRESS_GUID, GZIP_CUSTOM_DECOMPRESS_GUID, ZLIB_CUSTOM_DECOMPRESS_GUID,
+            ZSTD_CUSTOM_DECOMPRESS_GUID, LZ4_CUSTOM_DECOMPRESS_GUID,
+            EFI_GUIDED_SECTION_GZIP, EFI_GUIDED_SECTION_LZMA_HP, EFI_GUIDED_SECTION_LZMA_MS,
+            EFI_GUIDED_SECTION_ZLIB_AMD1, EFI_GUIDED_SECTION_ZLIB_AMD2
+        )
+        
+        if compression_type == COMPRESSION_TYPE_LZMAF86:
+            return {
+                'primary': str(LZMAF86_DECOMPRESS_GUID),
+                'variants': [],
+                'name': 'LZMA F86'
+            }
+        elif compression_type == COMPRESSION_TYPE_LZMA:
+            return {
+                'primary': str(LZMA_CUSTOM_DECOMPRESS_GUID),
+                'variants': [str(EFI_GUIDED_SECTION_LZMA_HP), str(EFI_GUIDED_SECTION_LZMA_MS)],
+                'name': 'LZMA'
+            }
+        elif compression_type == COMPRESSION_TYPE_TIANO:
+            return {
+                'primary': str(TIANO_DECOMPRESSED_GUID),
+                'variants': [],
+                'name': 'Tiano'
+            }
+        elif compression_type == COMPRESSION_TYPE_BROTLI:
+            return {
+                'primary': str(BROTLI_CUSTOM_DECOMPRESS_GUID),
+                'variants': [],
+                'name': 'Brotli'
+            }
+        elif compression_type == COMPRESSION_TYPE_GZIP:
+            return {
+                'primary': str(GZIP_CUSTOM_DECOMPRESS_GUID),
+                'variants': [str(EFI_GUIDED_SECTION_GZIP)],
+                'name': 'GZIP'
+            }
+        elif compression_type == COMPRESSION_TYPE_ZLIB:
+            return {
+                'primary': str(ZLIB_CUSTOM_DECOMPRESS_GUID),
+                'variants': [str(EFI_GUIDED_SECTION_ZLIB_AMD1), str(EFI_GUIDED_SECTION_ZLIB_AMD2)],
+                'name': 'ZLIB'
+            }
+        elif compression_type == COMPRESSION_TYPE_ZSTD:
+            return {
+                'primary': str(ZSTD_CUSTOM_DECOMPRESS_GUID),
+                'variants': [],
+                'name': 'Zstandard'
+            }
+        elif compression_type == COMPRESSION_TYPE_LZ4:
+            return {
+                'primary': str(LZ4_CUSTOM_DECOMPRESS_GUID),
+                'variants': [],
+                'name': 'LZ4'
+            }
+        else:
+            return {
+                'primary': None,
+                'variants': [],
+                'name': 'Unknown'
+            }
+
+    @staticmethod
+    def _is_efi_compressed(efi_data: bytes) -> bool:
+        """
+        Check if data is EFI compressed by validating the header structure.
+        
+        Args:
+            efi_data: The compressed data to validate
+            
+        Returns:
+            True if the data has a valid EFI compression header, False otherwise
+        """
+        if len(efi_data) < 8:
+            return False
+            
+        size_compressed = int.from_bytes(efi_data[0:4], byteorder='little')
+        size_decompressed = int.from_bytes(efi_data[4:8], byteorder='little')
+        
+        # Check if sizes are reasonable
+        check_size = 0 < size_compressed < size_decompressed
+        
+        # Check if the compressed size matches the actual data length
+        check_data = size_compressed + 8 == len(efi_data)
+        
+        return check_size and check_data
