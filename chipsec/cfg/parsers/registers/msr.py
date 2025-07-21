@@ -28,13 +28,7 @@ control settings.
 from typing import Dict, Any, Tuple
 from chipsec.chipset import cs
 from chipsec.library.register import BaseConfigRegisterHelper
-from chipsec.library.exceptions import CSConfigError
-
-
-class MSRRegisterError(CSConfigError):
-    """Exception raised for MSR register-specific errors."""
-    pass
-
+from chipsec.library.exceptions import MSRRegisterError
 
 class MSRRegisters(BaseConfigRegisterHelper):
     """

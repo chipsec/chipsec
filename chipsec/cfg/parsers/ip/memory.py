@@ -26,13 +26,8 @@ memory-mapped regions.
 
 from typing import Dict, Any, Union
 
-from chipsec.cfg.parsers.ip.generic import GenericConfig, GenericConfigError
-
-
-class MemoryConfigError(GenericConfigError):
-    """Custom exception for memory configuration errors."""
-    pass
-
+from chipsec.cfg.parsers.ip.generic import GenericConfig
+from chipsec.library.exceptions import MemoryConfigError
 
 class MemoryConfig(GenericConfig):
     """
@@ -102,8 +97,7 @@ class MemoryConfig(GenericConfig):
                 if isinstance(field_value, str):
                     # Try to parse as hex if it's a string
                     try:
-                        int(field_value,
-                            16 if field_value.startswith('0x') else 10)
+                        int(field_value, 0)
                     except ValueError:
                         return False
                 elif not isinstance(field_value, int):
@@ -127,8 +121,7 @@ class MemoryConfig(GenericConfig):
             if isinstance(self.address, int):
                 return self.address
             elif isinstance(self.address, str):
-                return int(self.address,
-                           16 if self.address.startswith('0x') else 10)
+                return int(self.address, 0)
             else:
                 raise MemoryConfigError(
                     f"Invalid address type: {type(self.address)}")
@@ -150,8 +143,7 @@ class MemoryConfig(GenericConfig):
             if isinstance(self.limit, int):
                 return self.limit
             elif isinstance(self.limit, str):
-                return int(self.limit,
-                           16 if self.limit.startswith('0x') else 10)
+                return int(self.limit, 0)
             else:
                 raise MemoryConfigError(
                     f"Invalid limit type: {type(self.limit)}")

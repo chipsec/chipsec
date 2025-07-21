@@ -28,13 +28,7 @@ through Intel's Message Bus protocol.
 from typing import Dict, Any
 from chipsec.chipset import cs
 from chipsec.library.register import BaseConfigRegisterHelper
-from chipsec.library.exceptions import CSConfigError
-
-
-class MSGBUSRegisterError(CSConfigError):
-    """Exception raised for MSGBUS register-specific errors."""
-    pass
-
+from chipsec.library.exceptions import MSGBUSRegisterError
 
 class MSGBUSRegisters(BaseConfigRegisterHelper):
     """

@@ -26,14 +26,8 @@ in the CHIPSEC framework. I/O registers are accessed through CPU I/O port instru
 
 from typing import Dict, Any
 from chipsec.library.register import BaseConfigRegisterHelper
-from chipsec.library.exceptions import CSConfigError
+from chipsec.library.exceptions import IORegisterError
 from chipsec.chipset import cs
-
-
-class IORegisterError(CSConfigError):
-    """Exception raised for I/O register-specific errors."""
-    pass
-
 
 class IORegisters(BaseConfigRegisterHelper):
     """

@@ -159,9 +159,9 @@ class IOBAR(hal_base.HALBase):
         self.logger.log('--------------------------------------------------------------------------------')
         self.logger.log(f' {"I/O Range":35} | {"B:D.F":7} | {"Base":16} | {"Size":8} | {"En?":3} | Description')
         self.logger.log('--------------------------------------------------------------------------------')
-        for vid in self.cs.Cfg.IO_BARS:
-            for dev in self.cs.Cfg.IO_BARS[vid]:
-                for _bar_name in self.cs.Cfg.IO_BARS[vid][dev]:
+        for vid in self.cs.Cfg.IO_BARS.keys():
+            for dev in self.cs.Cfg.IO_BARS[vid].keys():
+                for _bar_name in self.cs.Cfg.IO_BARS[vid][dev].keys():
                     bar_name = f'{vid}.{dev}.{_bar_name}'
                     if not self.is_IO_BAR_defined(bar_name):
                         continue

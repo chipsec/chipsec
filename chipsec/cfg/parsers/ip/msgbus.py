@@ -26,13 +26,7 @@ Message buses provide communication interfaces between different platform compon
 
 from typing import Dict, Any, Optional
 from chipsec.cfg.parsers.ip.generic import GenericConfig
-from chipsec.library.exceptions import CSConfigError
-
-
-class MSGBUSConfigError(CSConfigError):
-    """Exception raised for MSGBUS configuration-specific errors."""
-    pass
-
+from chipsec.library.exceptions import MSGBUSConfigError
 
 class MSGBUSConfig(GenericConfig):
     """
@@ -98,7 +92,7 @@ class MSGBUSConfig(GenericConfig):
         """
         try:
             if isinstance(self.port, str):
-                return int(self.port, 16) if self.port.startswith('0x') else int(self.port)
+                return int(self.port, 0)
             return int(self.port)
         except (ValueError, TypeError):
             return None

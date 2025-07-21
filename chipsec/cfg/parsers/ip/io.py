@@ -26,12 +26,8 @@ I/O port-based IP parsers.
 
 from typing import Dict, Any, Union
 
-from chipsec.cfg.parsers.ip.generic import GenericConfig, GenericConfigError
-
-
-class IOConfigError(GenericConfigError):
-    """Custom exception for I/O configuration errors."""
-    pass
+from chipsec.cfg.parsers.ip.generic import GenericConfig
+from chipsec.library.exceptions import IOConfigError
 
 
 class IOConfig(GenericConfig):

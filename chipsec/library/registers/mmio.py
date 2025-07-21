@@ -27,6 +27,7 @@ registers in the CHIPSEC framework.
 
 from typing import Any, Optional, List
 from chipsec.library.registers.baseregister import BaseRegister
+from chipsec.library.exceptions import MMIOBARNotFoundError
 
 
 class MMIO(BaseRegister):
@@ -115,12 +116,12 @@ class MMIO(BaseRegister):
             Tuple of (base_address, size)
 
         Raises:
-            Exception: If the BAR cannot be found or accessed
+            MMIOBARNotFoundError: If the BAR cannot be found or accessed
         """
         mmio_bar = self.get_def(bar_name)
 
         if mmio_bar is None:
-            raise Exception(f"Couldn't find MMIO BAR {bar_name}")
+            raise MMIOBARNotFoundError(f"Couldn't find MMIO BAR {bar_name}")
 
         if instance is not None:
             mmio_bar.set_instance(instance)

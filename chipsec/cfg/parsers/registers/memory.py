@@ -25,15 +25,9 @@ in the CHIPSEC framework. Memory registers can be accessed through DRAM or MMIO 
 """
 
 from typing import Dict, Any
-from chipsec.library.exceptions import CSConfigError
+from chipsec.library.exceptions import MemoryRegisterError
 from chipsec.library.register import BaseConfigRegisterHelper
 from chipsec.chipset import cs
-
-
-class MemoryRegisterError(CSConfigError):
-    """Exception raised for memory register-specific errors."""
-    pass
-
 
 class MEMORYRegisters(BaseConfigRegisterHelper):
     """

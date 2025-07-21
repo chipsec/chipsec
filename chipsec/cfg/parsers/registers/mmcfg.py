@@ -28,13 +28,7 @@ space through memory-mapped I/O.
 from typing import Dict, Any
 from chipsec.chipset import cs
 from chipsec.library.register import BaseConfigRegisterHelper
-from chipsec.library.exceptions import CSReadError, CSConfigError
-
-
-class MMCFGRegisterError(CSConfigError):
-    """Exception raised for MMCFG register-specific errors."""
-    pass
-
+from chipsec.library.exceptions import CSReadError, MMCFGRegisterError
 
 class MMCFGRegisters(BaseConfigRegisterHelper):
     """
@@ -115,11 +109,11 @@ class MMCFGRegisters(BaseConfigRegisterHelper):
         Get the PCI device address in b:d.f format.
 
         Returns:
-            PCI address string (e.g., '00:1f.0')
+            PCI address string (e.g., '00:1F.0')
         """
         if not self.is_device_present():
             return "Device not present"
-        return f"{self.pci.bus:02d}:{self.pci.dev:02d}.{self.pci.fun:d}"
+        return f"{self.pci.bus:02X}:{self.pci.dev:02X}.{self.pci.fun:X}"
 
     def get_mmcfg_offset(self) -> int:
         """

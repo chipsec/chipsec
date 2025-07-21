@@ -26,12 +26,7 @@ MSRs are CPU-specific registers that provide access to processor features and de
 
 from typing import Dict, Any, Optional
 from chipsec.cfg.parsers.ip.generic import GenericConfig
-from chipsec.library.exceptions import CSConfigError
-
-
-class MSRConfigError(CSConfigError):
-    """Exception raised for MSR configuration-specific errors."""
-    pass
+from chipsec.library.exceptions import MSRConfigError
 
 
 class MSRConfig(GenericConfig):
@@ -102,7 +97,7 @@ class MSRConfig(GenericConfig):
 
         if address is not None:
             try:
-                return int(address, 16) if isinstance(address, str) else int(address)
+                return int(address, 0)
             except (ValueError, TypeError):
                 return None
         return None

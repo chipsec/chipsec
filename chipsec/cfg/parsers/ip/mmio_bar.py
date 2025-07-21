@@ -28,15 +28,10 @@ from typing import Optional, TYPE_CHECKING
 
 from chipsec.cfg.parsers.ip.generic import GenericConfig, GenericConfigError
 from chipsec.cfg.parsers.ip.platform import RegisterList
+from chipsec.library.exceptions import MMIOBarConfigError
 
 if TYPE_CHECKING:
     from chipsec.cfg.parsers.ip.pci_device import PCIObj
-
-
-class MMIOBarConfigError(GenericConfigError):
-    """Custom exception for MMIO BAR configuration errors."""
-    pass
-
 
 class MMIOObj:
     """

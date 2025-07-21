@@ -26,7 +26,6 @@ platform configuration files and populating the CHIPSEC configuration objects.
 
 import copy
 import os
-from typing import Dict, List, Any, Optional, Set, TYPE_CHECKING
 
 from chipsec.cfg.parsers.ip.iobar import IOBarConfig
 from chipsec.cfg.parsers.ip.io import IOConfig
@@ -38,15 +37,15 @@ from chipsec.cfg.parsers.ip.msr import MSRConfig
 from chipsec.cfg.parsers.ip.pci_device import PCIConfig
 from chipsec.cfg.parsers.controls import CONTROLHelper
 from chipsec.cfg.parsers.locks import LOCKSHelper
-from chipsec.cfg.parsers.registers.io import IORegisters  #
-from chipsec.cfg.parsers.registers.iobar import IOBARRegisters  #
-from chipsec.cfg.parsers.registers.memory import MEMORYRegisters  #
-from chipsec.cfg.parsers.registers.mm_msgbus import MM_MSGBUSRegisters  #
-from chipsec.cfg.parsers.registers.mmcfg import MMCFGRegisters  #
-from chipsec.cfg.parsers.registers.mmio import MMIORegisters  #
-from chipsec.cfg.parsers.registers.msgbus import MSGBUSRegisters  #
-from chipsec.cfg.parsers.registers.msr import MSRRegisters  #
-from chipsec.cfg.parsers.registers.pci import PCIRegisters  # pcicfg
+from chipsec.cfg.parsers.registers.io import IORegisters
+from chipsec.cfg.parsers.registers.iobar import IOBARRegisters
+from chipsec.cfg.parsers.registers.memory import MEMORYRegisters
+from chipsec.cfg.parsers.registers.mm_msgbus import MM_MSGBUSRegisters
+from chipsec.cfg.parsers.registers.mmcfg import MMCFGRegisters
+from chipsec.cfg.parsers.registers.mmio import MMIORegisters
+from chipsec.cfg.parsers.registers.msgbus import MSGBUSRegisters
+from chipsec.cfg.parsers.registers.msr import MSRRegisters
+from chipsec.cfg.parsers.registers.pci import PCIRegisters
 from chipsec.cfg.parsers.core_parser_helper import config_convert_data as _config_convert_data, CoreParserHelper
 from chipsec.library.exceptions import CSConfigError
 from chipsec.parsers import BaseConfigParser

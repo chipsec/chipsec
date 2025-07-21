@@ -278,8 +278,8 @@ class Register:
                             possible_regs = []
 
                             # Search through legacy REGISTERS structure
-                            for vid in self.cs.Cfg.REGISTERS:
-                                for dev in self.cs.Cfg.REGISTERS[vid]:
+                            for vid in self.cs.Cfg.REGISTERS.keys():
+                                for dev in self.cs.Cfg.REGISTERS[vid].keys():
                                     if reg_name in self.cs.Cfg.REGISTERS[vid][dev]:
                                         reg_path = f"{vid}.{dev}.{reg_name}"
                                         possible_regs.append(reg_path)

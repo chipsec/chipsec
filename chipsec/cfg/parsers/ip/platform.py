@@ -29,16 +29,10 @@ from typing import List, Union, Any
 from re import match
 
 from chipsec.library.exceptions import (
-    CSConfigError, RegisterNotFoundError, ScopeNotFoundError, BARNotFoundError
+    PlatformConfigError, RegisterNotFoundError, ScopeNotFoundError, BARNotFoundError
 )
 from chipsec.library.register import ObjList
 from chipsec.library.logger import logger
-
-
-class PlatformConfigError(CSConfigError):
-    """Exception raised for platform configuration-specific errors."""
-    pass
-
 
 class Recursable:
     """

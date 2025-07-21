@@ -28,7 +28,9 @@ import os
 from typing import Dict, List, Set, Any, Optional
 import xml.etree.ElementTree as ET
 from chipsec.library.defines import is_hex, CHIPSET_CODE_UNKNOWN
-from chipsec.library.exceptions import CSConfigError
+from chipsec.library.exceptions import (
+    CSConfigError, PlatformDetectionError, ConfigurationValidationError, ParserLoadError
+)
 from chipsec.library.file import get_main_dir
 from chipsec.library.logger import logger
 from chipsec.library.register import ObjList
@@ -82,21 +84,6 @@ class ConfigurationState:
     platform_detected: bool = False
     validation_passed: bool = False
 
-
-# Custom exception classes for better error handling
-class PlatformDetectionError(CSConfigError):
-    """Raised when platform detection fails."""
-    pass
-
-
-class ConfigurationValidationError(CSConfigError):
-    """Raised when configuration validation fails."""
-    pass
-
-
-class ParserLoadError(CSConfigError):
-    """Raised when parser loading fails."""
-    pass
 
 
 class PlatformDetector:
