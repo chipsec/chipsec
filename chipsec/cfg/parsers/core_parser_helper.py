@@ -33,24 +33,11 @@ from xml.etree.ElementTree import Element
 from chipsec.parsers import config_data
 from chipsec.library.display import make_dict_hex
 from chipsec.library.logger import logger
+from chipsec.library.exceptions import XMLConversionError, ConfigurationError
 
 if TYPE_CHECKING:
     from chipsec.config import ChipsecConfig
 
-
-class ParserError(Exception):
-    """Base exception for parser-related errors."""
-    pass
-
-
-class XMLConversionError(ParserError):
-    """Exception raised when XML data conversion fails."""
-    pass
-
-
-class ConfigurationError(ParserError):
-    """Exception raised when configuration processing fails."""
-    pass
 
 
 @dataclass
@@ -64,7 +51,7 @@ class ConversionRules:
     range_list_keys: Set[str]
 
     @classmethod
-    def default_rules(cls, did_is_range: bool = False) -> 'ConversionRules':
+    def default_rules(cls) -> 'ConversionRules':
         """Create default conversion rules."""
         int_keys = {
             'dev', 'fun', 'vid', 'did', 'rid', 'offset',
@@ -76,10 +63,6 @@ class ConversionRules:
 
         range_list_keys = {'detection_value'}
 
-        if did_is_range:
-            int_keys.discard('did')
-            range_list_keys.add('did')
-
         return cls(
             int_keys=int_keys,
             bool_keys={'req_pch'},
@@ -87,6 +70,20 @@ class ConversionRules:
             str_list_keys={'config'},
             range_list_keys=range_list_keys
         )
+    
+    def set_did_as_range(self):
+        """Set 'did' attribute to be treated as a range."""
+        if 'did' in self.int_keys:
+            self.int_keys.discard('did')
+            self.range_list_keys.add('did')
+        return self
+    
+    def set_did_as_int(self):
+        """Set 'did' attribute to be treated as an integer."""
+        if 'did' not in self.int_keys:
+            self.int_keys.add('did')
+            self.range_list_keys.discard('did')
+        return self
 
 
 class XMLConfigConverter:
@@ -116,16 +113,15 @@ class XMLConfigConverter:
             raise XMLConversionError("XML node cannot be None")
 
         # Update rules if did_is_range differs from initialization
-        if did_is_range and 'did' in self.rules.int_keys:
-            rules = ConversionRules.default_rules(did_is_range=True)
-        else:
-            rules = self.rules
+        if did_is_range:
+            self.rules.set_did_as_range()
+
 
         node_data = {}
 
         try:
             for key, value in xml_node.attrib.items():
-                node_data[key] = self._convert_attribute(key, value, rules)
+                node_data[key] = self._convert_attribute(key, value, self.rules)
         except Exception as e:
             raise XMLConversionError(f"Failed to convert XML node: {e}") from e
 
@@ -160,7 +156,7 @@ class XMLConfigConverter:
             for item in value.split(','):
                 item = item.strip()
                 if item.upper().endswith('*'):
-                    # Wildcard range (e.g., "0x1000*" -> 0x1000-0x100F)
+                    # Wildcard range (e.g., "0x100*" -> 0x1000-0x100F)
                     base = int(item.replace('*', '0'), 0)
                     int_items.extend(range(base, base + 0x10))
                 elif '-' in item:

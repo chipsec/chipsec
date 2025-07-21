@@ -26,13 +26,7 @@ in the CHIPSEC framework. Control helpers provide access to specific fields with
 
 from typing import Dict, Any, Optional
 from chipsec.parsers import BaseConfigHelper
-from chipsec.library.exceptions import CSConfigError
-
-
-class ControlHelperError(CSConfigError):
-    """Exception raised for control helper-specific errors."""
-    pass
-
+from chipsec.library.exceptions import ControlHelperError
 
 class CONTROLHelper(BaseConfigHelper):
     """

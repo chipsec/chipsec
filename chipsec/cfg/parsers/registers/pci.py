@@ -27,12 +27,7 @@ from typing import Dict, Any, Union
 
 from chipsec.chipset import cs
 from chipsec.library.register import BaseConfigRegisterHelper
-from chipsec.library.exceptions import CSReadError, CSConfigError
-
-
-class PCIRegisterError(CSConfigError):
-    """Custom exception for PCI register configuration errors."""
-    pass
+from chipsec.library.exceptions import CSReadError, CSConfigError, PCIRegisterError
 
 
 class PCIRegisters(BaseConfigRegisterHelper):
@@ -94,7 +89,7 @@ class PCIRegisters(BaseConfigRegisterHelper):
             # Validate offset
             if isinstance(self.offset, str):
                 try:
-                    int(self.offset, 16 if self.offset.startswith('0x') else 10)
+                    int(self.offset, 0)
                 except ValueError:
                     return False
             elif not isinstance(self.offset, int):
@@ -122,8 +117,7 @@ class PCIRegisters(BaseConfigRegisterHelper):
             if isinstance(self.offset, int):
                 return self.offset
             elif isinstance(self.offset, str):
-                return int(self.offset,
-                          16 if self.offset.startswith('0x') else 10)
+                return int(self.offset, 0)
             else:
                 raise PCIRegisterError(
                     f"Invalid offset type: {type(self.offset)}")
@@ -140,9 +134,9 @@ class PCIRegisters(BaseConfigRegisterHelper):
         """
         try:
             if self.pci and hasattr(self.pci, 'bus') and self.pci.bus is not None:
-                bus = f'{self.pci.bus:02d}'
-                dev = f'{self.pci.dev:02d}' if self.pci.dev is not None else 'XX'
-                fun = f'{self.pci.fun:01d}' if self.pci.fun is not None else 'X'
+                bus = f'{self.pci.bus:02X}'
+                dev = f'{self.pci.dev:02X}' if self.pci.dev is not None else 'XX'
+                fun = f'{self.pci.fun:X}' if self.pci.fun is not None else 'X'
                 return f'{bus}:{dev}.{fun}'
             return 'Unknown'
         except Exception:

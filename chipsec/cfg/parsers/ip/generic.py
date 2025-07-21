@@ -28,12 +28,7 @@ functionality like configuration validation, manipulation, and utility methods.
 from typing import Dict, Any, List, Optional
 
 from chipsec.parsers import BaseConfigHelper
-
-
-class GenericConfigError(Exception):
-    """Custom exception for generic configuration errors."""
-    pass
-
+from chipsec.library.exceptions import GenericConfigError
 
 class GenericConfig(BaseConfigHelper):
     """
@@ -153,17 +148,16 @@ class GenericConfig(BaseConfigHelper):
                 return False
 
             # Check for duplicate configurations (if they're hashable)
-            try:
-                unique_configs = set()
-                for item in self.config:
+            unique_configs = set()
+            for item in self.config:
+                try:
                     if isinstance(item, (str, int, float, bool, tuple)):
                         if item in unique_configs:
                             # Found duplicate, but this might be intentional
                             pass
                         unique_configs.add(item)
-            except (TypeError, AttributeError):
-                # Items are not hashable, skip duplicate check
-                pass
+                except (TypeError, AttributeError):
+                    pass  # Non-hashable items, skip duplicate check
 
             return True
         except Exception:

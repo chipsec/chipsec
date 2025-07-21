@@ -26,13 +26,7 @@ in the CHIPSEC framework. Lock helpers provide access to lock bits and dependenc
 
 from typing import Optional
 from collections import namedtuple
-from chipsec.library.exceptions import CSConfigError
-
-
-class LockHelperError(CSConfigError):
-    """Exception raised for lock helper-specific errors."""
-    pass
-
+from chipsec.library.exceptions import LockHelperError
 
 class LOCKSHelper(namedtuple('LocksHelper', 'register field attributes lock_value dependency dependency_value')):
     """

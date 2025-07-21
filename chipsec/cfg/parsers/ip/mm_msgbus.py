@@ -26,13 +26,7 @@ in the CHIPSEC framework. Memory-mapped message buses provide MMIO-based communi
 
 from typing import Dict, Any, Optional
 from chipsec.cfg.parsers.ip.generic import GenericConfig
-from chipsec.library.exceptions import CSConfigError
-
-
-class MM_MSGBUSConfigError(CSConfigError):
-    """Exception raised for MM_MSGBUS configuration-specific errors."""
-    pass
-
+from chipsec.library.exceptions import MM_MSGBUSConfigError
 
 class MM_MSGBUSConfig(GenericConfig):
     """
@@ -98,7 +92,7 @@ class MM_MSGBUSConfig(GenericConfig):
         """
         try:
             if isinstance(self.port, str):
-                return int(self.port, 16) if self.port.startswith('0x') else int(self.port)
+                return int(self.port, 0)
             return int(self.port)
         except (ValueError, TypeError):
             return None

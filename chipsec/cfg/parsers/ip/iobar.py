@@ -27,14 +27,11 @@ I/O base address registers.
 from typing import Dict, Any, Optional, Union, TYPE_CHECKING
 
 from chipsec.cfg.parsers.ip.generic import GenericConfig, GenericConfigError
+from chipsec.library.exceptions import IOBarConfigError
 
 if TYPE_CHECKING:
     from chipsec.cfg.parsers.ip.pci_device import PCIObj
 
-
-class IOBarConfigError(GenericConfigError):
-    """Custom exception for I/O BAR configuration errors."""
-    pass
 
 
 class IOObj:

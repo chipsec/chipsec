@@ -26,13 +26,8 @@ in the CHIPSEC framework. I/O BAR registers provide access to device registers t
 
 from typing import Dict, Any, Optional, Tuple
 from chipsec.library.register import BaseConfigRegisterHelper
-from chipsec.library.exceptions import CSConfigError
+from chipsec.library.exceptions import IOBARRegisterError
 from chipsec.chipset import cs
-
-
-class IOBARRegisterError(CSConfigError):
-    """Exception raised for I/O BAR register-specific errors."""
-    pass
 
 
 class IOBARRegisters(BaseConfigRegisterHelper):

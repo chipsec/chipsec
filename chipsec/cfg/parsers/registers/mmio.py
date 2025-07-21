@@ -28,13 +28,7 @@ memory-mapped address spaces.
 from typing import Dict, Any
 from chipsec.chipset import cs
 from chipsec.library.register import BaseConfigRegisterHelper
-from chipsec.library.exceptions import CSConfigError
-
-
-class MMIORegisterError(CSConfigError):
-    """Exception raised for MMIO register-specific errors."""
-    pass
-
+from chipsec.library.exceptions import MMIORegisterError
 
 class MMIORegisters(BaseConfigRegisterHelper):
     """

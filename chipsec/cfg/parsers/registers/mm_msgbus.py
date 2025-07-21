@@ -27,14 +27,8 @@ memory-mapped message bus protocols.
 
 from typing import Dict, Any
 from chipsec.library.register import BaseConfigRegisterHelper
-from chipsec.library.exceptions import CSConfigError
+from chipsec.library.exceptions import MM_MSGBUSRegisterError
 from chipsec.chipset import cs
-
-
-class MM_MSGBUSRegisterError(CSConfigError):
-    """Exception raised for MM_MSGBUS register-specific errors."""
-    pass
-
 
 class MM_MSGBUSRegisters(BaseConfigRegisterHelper):
     """

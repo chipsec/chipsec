@@ -28,14 +28,10 @@ including reading and writing control values with proper error handling.
 from typing import Dict, Any, Optional, TYPE_CHECKING
 from chipsec.parsers import BaseConfigHelper
 from chipsec.library.logger import logger
+from chipsec.library.exceptions import ControlError
 
 if TYPE_CHECKING:
     # RegisterHelper type hint - actual import will be at runtime
-    pass
-
-
-class ControlError(Exception):
-    """Exception raised when control operations fail."""
     pass
 
 
@@ -223,9 +219,9 @@ class CONTROLHelper(BaseConfigHelper):
                 raise ControlError(error_msg)
 
             return current_value
+        except ControlError:
+            raise
         except Exception as e:
-            if isinstance(e, ControlError):
-                raise
             error_msg = f"Failed to read and validate control {self.name}: {e}"
             self.logger.log_error(error_msg)
             raise ControlError(error_msg) from e
@@ -256,9 +252,9 @@ class CONTROLHelper(BaseConfigHelper):
                     raise ControlError(error_msg)
 
             return True
+        except ControlError:
+            raise
         except Exception as e:
-            if isinstance(e, ControlError):
-                raise
             error_msg = f"Safe write failed for control {self.name}: {e}"
             self.logger.log_error(error_msg)
             raise ControlError(error_msg) from e

@@ -26,13 +26,8 @@ PCI-based IP parsers.
 
 from typing import Dict, Any, Optional, List, Union
 
-from chipsec.cfg.parsers.ip.generic import GenericConfig, GenericConfigError
-
-
-class PCIConfigError(GenericConfigError):
-    """Custom exception for PCI configuration errors."""
-    pass
-
+from chipsec.cfg.parsers.ip.generic import GenericConfig
+from chipsec.library.exceptions import PCIConfigError, GenericConfigError
 
 class PCIObj:
     """
@@ -104,8 +99,7 @@ class PCIObj:
                                             ('rid', self.rid)]:
                 if isinstance(field_value, str):
                     try:
-                        int(field_value,
-                            16 if field_value.startswith('0x') else 10)
+                        int(field_value, 0)
                     except ValueError:
                         return False
                 elif not isinstance(field_value, int):
@@ -160,8 +154,7 @@ class PCIObj:
             Integer representation of the value
         """
         if isinstance(value, str):
-            base = 16 if value.startswith('0x') else 10
-            return int(value, base)
+            return int(value, 0)
         return value
 
 
@@ -185,7 +178,7 @@ class PCIConfig(GenericConfig):
         """
         try:
             # Handle device ID and name
-            self.did: Optional[Union[int, str]] = cfg_obj.get('did', None)
+            self.did: Optional[int] = cfg_obj.get('did', None)
             if 'name' not in cfg_obj and self.did is not None:
                 cfg_obj['name'] = str(self.did)
 
