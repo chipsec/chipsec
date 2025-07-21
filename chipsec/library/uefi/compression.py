@@ -184,26 +184,7 @@ class UEFICompression:
 
     def is_compression_supported(self, compression_type: int) -> bool:
         """Check if a compression type is supported by the current environment."""
-        if compression_type == COMPRESSION_TYPE_NONE:
-            return True
-        elif compression_type in [COMPRESSION_TYPE_TIANO, COMPRESSION_TYPE_UEFI]:
-            return has_eficomp
-        elif compression_type in [COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_LZMAF86]:
-            return has_lzma
-        elif compression_type == COMPRESSION_TYPE_BROTLI:
-            return has_brotli
-        elif compression_type == COMPRESSION_TYPE_GZIP:
-            return has_gzip
-        elif compression_type == COMPRESSION_TYPE_ZLIB:
-            return has_zlib
-        elif compression_type == COMPRESSION_TYPE_ZLIB_AMD:
-            return has_zlib
-        elif compression_type == COMPRESSION_TYPE_ZSTD:
-            return has_zstd
-        elif compression_type == COMPRESSION_TYPE_LZ4:
-            return has_lz4
-        else:
-            return False
+        return compression_type in self.get_supported_compression_types()
 
     def get_supported_compression_types(self) -> List[int]:
         """Get list of compression types supported in current environment."""
