@@ -572,7 +572,7 @@ class LinuxHelper(Helper):
         header_size = 60  # 4*15
         namelen = len(name)
         if value:
-            if type(value) == str:
+            if isinstance(value, str):
                 value = str.encode(value)
             datalen = len(value)
         else:
