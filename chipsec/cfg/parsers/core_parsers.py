@@ -47,7 +47,7 @@ from chipsec.cfg.parsers.registers.msgbus import MSGBUSRegisters
 from chipsec.cfg.parsers.registers.msr import MSRRegisters
 from chipsec.cfg.parsers.registers.pci import PCIRegisters
 from chipsec.cfg.parsers.core_parser_helper import config_convert_data as _config_convert_data, CoreParserHelper
-from chipsec.library.exceptions import CSConfigError
+from chipsec.library.exceptions import PlatformConfigError
 from chipsec.parsers import BaseConfigParser
 from chipsec.parsers import Stage
 from chipsec.parsers import info_data, config_data
@@ -349,7 +349,7 @@ class CoreConfigRegisters(BaseConfigParser):
                 try:
                     barname = self._make_reg_name(stage_data, stage_data.dev_name, True)
                     self.cfg.platform.get_obj_from_fullname(barname)
-                except CSConfigError:
+                except PlatformConfigError:
                     barname = self._make_reg_name(stage_data, reg_attr['bar'], True)
                 reg_attr['bar'] = barname
             if 'size' not in reg_attr:

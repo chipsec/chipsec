@@ -36,6 +36,9 @@ from chipsec.library.strings import make_hex_key_str
 from chipsec.library.exceptions import HALNotFoundError, HALInitializationError
 if logger().DEBUG:
     import traceback
+else:
+    traceback = type('traceback', (), {})()  # Create a dummy traceback object if not in debug mode
+    traceback.format_exc = lambda: "Traceback not available in non-debug mode"
 # Search subfolders for hals
 
 class Hals:

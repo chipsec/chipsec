@@ -72,9 +72,9 @@ class MMIOObj:
 
             self.base = base
             self.size = size
+        except MMIOBarConfigError:
+            raise
         except Exception as e:
-            if isinstance(e, MMIOBarConfigError):
-                raise
             raise MMIOBarConfigError(
                 f"Error setting MMIO base and size: {str(e)}") from e
 
@@ -190,9 +190,9 @@ class MMIOBarConfig(GenericConfig, RegisterList):
                 for key in cfg_obj['ids']:
                     self.add_obj(key)
 
+        except MMIOBarConfigError:
+            raise
         except Exception as e:
-            if isinstance(e, (MMIOBarConfigError, GenericConfigError)):
-                raise
             raise MMIOBarConfigError(
                 f"Error initializing MMIO BAR configuration: {str(e)}") from e
 
@@ -238,15 +238,19 @@ class MMIOBarConfig(GenericConfig, RegisterList):
         Raises:
             MMIOBarConfigError: If instance not found or update fails
         """
-        try:
-            if instance not in self.instances:
-                raise MMIOBarConfigError(f"Instance {instance} not found")
-            self.instances[instance].base = base
-        except Exception as e:
-            if isinstance(e, MMIOBarConfigError):
+        if instance is None:
+            for inst in self.instances:
+                self.instances[inst].base = base
+        else:
+            try:
+                if instance not in self.instances:
+                    raise MMIOBarConfigError(f"Instance {instance} not found")
+                self.instances[instance].base = base
+            except MMIOBarConfigError:
                 raise
-            raise MMIOBarConfigError(
-                f"Error updating base address: {str(e)}") from e
+            except Exception as e:
+                raise MMIOBarConfigError(
+                    f"Error updating base address: {str(e)}") from e
 
     def get_base(self, instance):
         """
