@@ -35,7 +35,7 @@ usage:
 
 from typing import Optional
 from chipsec.hal import hal_base
-from chipsec.library.exceptions import CSReadError, RegisterNotFoundError
+from chipsec.library.exceptions import MMIOBarConfigError, RegisterNotFoundError
 
 
 class MMMsgBus(hal_base.HALBase):
@@ -79,8 +79,10 @@ class MMMsgBus(hal_base.HALBase):
         hidden = all(dev is None for dev in self.cs.device.get_bus('8086.P2SBC'))
 
         p2sbc_reg = self.cs.register.get_list_by_name(self.p2sbHide['reg'])
-
-        p2sbc_reg.write_field(self.p2sbHide['field'], value)
+        try:
+            p2sbc_reg.write_field(self.p2sbHide['field'], value)
+        except MMIOBarConfigError as e:
+            self.logger.log_hal(f"Failed to write to P2SB register {self.p2sbHide['reg']}: {e}")
         return hidden
     
     def get_sbreg_base_address(self) -> int:
@@ -92,7 +94,7 @@ class MMMsgBus(hal_base.HALBase):
         try:
             mmio_addr = self.cs.hals.MMIO.get_MMIO_BAR_base_address('8086.P2SBC.SBREGBAR')[0]
             return mmio_addr
-        except CSReadError:
+        except MMIOBarConfigError:
             self.logger.log_hal('Failed to read MMIO BAR base address for 8086.P2SBC.SBREGBAR')
         self.logger.log_hal('Attempting to unhide and read MMIO BAR base address for 8086.P2SBC.SBREGBAR')
         self.__unhide_p2sb()
