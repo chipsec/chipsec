@@ -95,16 +95,16 @@ class MMIORegisters(BaseConfigRegisterHelper):
             raise MMIORegisterError("MMIO register configuration must have a valid name")
 
         if not isinstance(self.size, int) or self.size not in [1, 2, 4, 8]:
-            raise MMIORegisterError(f"Invalid register size: {self.size}. Must be 1, 2, 4, or 8 bytes")
+            raise MMIORegisterError(f"Size for {self.name} is invalid: {self.size}. Must be 1, 2, 4, or 8 bytes")
 
         if not isinstance(self.offset, int) or self.offset < 0:
-            raise MMIORegisterError(f"Invalid offset: {self.offset}. Must be a non-negative integer")
+            raise MMIORegisterError(f"Offset for {self.name} is invalid: {self.offset}. Must be a non-negative integer")
 
         if not self.bar and not self.range:
-            raise MMIORegisterError("MMIO register must specify either 'bar' or 'range'")
+            raise MMIORegisterError(f"MMIO register {self.name} must specify either 'bar' or 'range'")
 
         if self.bar and self.range:
-            raise MMIORegisterError("MMIO register cannot specify both 'bar' and 'range'")
+            raise MMIORegisterError(f"MMIO register {self.name} cannot specify both 'bar' and 'range'")
 
     def get_offset_hex(self) -> str:
         """

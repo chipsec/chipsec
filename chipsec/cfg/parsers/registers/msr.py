@@ -86,13 +86,13 @@ class MSRRegisters(BaseConfigRegisterHelper):
             raise MSRRegisterError("MSR register configuration must have a valid name")
 
         if not isinstance(self.thread, int) or self.thread < 0:
-            raise MSRRegisterError(f"Invalid thread/instance: {self.thread}. Must be a non-negative integer")
+            raise MSRRegisterError(f"Thread/Instance for {self.name} is invalid: {self.thread}. Must be a non-negative integer")
 
         if not isinstance(self.msr, int) or self.msr < 0:
-            raise MSRRegisterError(f"Invalid MSR number: {self.msr}. Must be a non-negative integer")
+            raise MSRRegisterError(f"MSR number for {self.name} is invalid: {self.msr}. Must be a non-negative integer")
 
         if not isinstance(self.size, int) or self.size not in [1, 2, 4, 8]:
-            raise MSRRegisterError(f"Invalid register size: {self.size}. Must be 1, 2, 4, or 8 bytes")
+            raise MSRRegisterError(f"Size for {self.name} is invalid: {self.size}. Must be 1, 2, 4, or 8 bytes")
 
     def get_msr_hex(self) -> str:
         """

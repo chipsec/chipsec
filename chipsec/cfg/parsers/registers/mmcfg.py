@@ -87,13 +87,13 @@ class MMCFGRegisters(BaseConfigRegisterHelper):
             raise MMCFGRegisterError("MMCFG register configuration must have a valid name")
 
         if not isinstance(self.size, int) or self.size not in [1, 2, 4, 8]:
-            raise MMCFGRegisterError(f"Invalid register size: {self.size}. Must be 1, 2, 4, or 8 bytes")
+            raise MMCFGRegisterError(f"Size for {self.name} is invalid: {self.size}. Must be 1, 2, 4, or 8 bytes")
 
         if not isinstance(self.offset, int) or self.offset < 0:
-            raise MMCFGRegisterError(f"Invalid offset: {self.offset}. Must be a non-negative integer")
+            raise MMCFGRegisterError(f"Offset for {self.name} is invalid: {self.offset}. Must be a non-negative integer")
 
         if self.pci is None:
-            raise MMCFGRegisterError("PCI object must be provided for MMCFG register")
+            raise MMCFGRegisterError(f"PCI object must be provided for MMCFG register {self.name}")
 
     def is_device_present(self) -> bool:
         """

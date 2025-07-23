@@ -88,13 +88,13 @@ class MM_MSGBUSRegisters(BaseConfigRegisterHelper):
             raise MM_MSGBUSRegisterError("MM_MSGBUS register configuration must have a valid name")
 
         if not isinstance(self.offset, int) or self.offset < 0:
-            raise MM_MSGBUSRegisterError(f"Invalid offset: {self.offset}. Must be a non-negative integer")
+            raise MM_MSGBUSRegisterError(f"Offset for {self.name} is invalid: {self.offset}. Must be a non-negative integer")
 
         if not isinstance(self.port, int) or self.port < 0:
-            raise MM_MSGBUSRegisterError(f"Invalid port: {self.port}. Must be a non-negative integer")
+            raise MM_MSGBUSRegisterError(f"Port for {self.name} is invalid: {self.port}. Must be a non-negative integer")
 
         if not isinstance(self.size, int) or self.size not in [1, 2, 4, 8]:
-            raise MM_MSGBUSRegisterError(f"Invalid register size: {self.size}. Must be 1, 2, 4, or 8 bytes")
+            raise MM_MSGBUSRegisterError(f"Size for {self.name} is invalid: {self.size}. Must be 1, 2, 4, or 8 bytes")
 
     def get_port_hex(self) -> str:
         """

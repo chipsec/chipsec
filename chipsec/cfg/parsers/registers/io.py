@@ -82,10 +82,10 @@ class IORegisters(BaseConfigRegisterHelper):
             raise IORegisterError("I/O register configuration must have a valid name")
 
         if not isinstance(self.io_port, int) or self.io_port < 0 or self.io_port > 0xFFFF:
-            raise IORegisterError(f"Invalid I/O port: {self.io_port}. Must be 0-65535 range")
+            raise IORegisterError(f"IOReg {self.name} has invalid I/O port: {self.io_port}. Must be 0-65535 range")
 
         if not isinstance(self.size, int) or self.size not in [1, 2, 4]:
-            raise IORegisterError(f"Invalid register size: {self.size}. Must be 1, 2, or 4 bytes")
+            raise IORegisterError(f"IOReg {self.name} has invalid register size: {self.size}. Must be 1, 2, or 4 bytes")
 
     def get_port_address(self) -> int:
         """
