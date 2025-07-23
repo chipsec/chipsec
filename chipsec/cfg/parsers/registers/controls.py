@@ -86,14 +86,14 @@ class CONTROLHelper(BaseConfigHelper):
             raise ControlHelperError("Control helper configuration must have a valid name")
 
         if not self.field:
-            raise ControlHelperError("Control helper configuration must have a valid field name")
+            raise ControlHelperError(f"Control helper configuration for {self.name} must have a valid field name")
 
         if self.__reg is None:
-            raise ControlHelperError("Control helper must have a valid register object")
+            raise ControlHelperError(f"Control helper configuration for {self.name} must have a valid register object")
 
         # Verify that the register has the required field access methods
         if not hasattr(self.__reg, 'read_field') or not hasattr(self.__reg, 'write_field'):
-            raise ControlHelperError("Register object must support field read/write operations")
+            raise ControlHelperError(f"Register object for {self.name} must support field read/write operations")
 
     def get_register_name(self) -> str:
         """

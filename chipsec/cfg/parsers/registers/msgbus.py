@@ -86,10 +86,10 @@ class MSGBUSRegisters(BaseConfigRegisterHelper):
             raise MSGBUSRegisterError("MSGBUS register configuration must have a valid name")
 
         if not isinstance(self.offset, int) or self.offset < 0:
-            raise MSGBUSRegisterError(f"Invalid offset: {self.offset}. Must be a non-negative integer")
+            raise MSGBUSRegisterError(f"Offset for {self.name} is invalid: {self.offset}. Must be a non-negative integer")
 
         if not isinstance(self.port, int) or self.port < 0:
-            raise MSGBUSRegisterError(f"Invalid port: {self.port}. Must be a non-negative integer")
+            raise MSGBUSRegisterError(f"Port for {self.name} is invalid: {self.port}. Must be a non-negative integer")
 
     def get_port_hex(self) -> str:
         """

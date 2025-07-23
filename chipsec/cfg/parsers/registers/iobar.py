@@ -92,13 +92,13 @@ class IOBARRegisters(BaseConfigRegisterHelper):
             raise IOBARRegisterError("I/O BAR register configuration must have a valid name")
 
         if not isinstance(self.size, int) or self.size not in [1, 2, 4, 8]:
-            raise IOBARRegisterError(f"Invalid register size: {self.size}. Must be 1, 2, 4, or 8 bytes")
+            raise IOBARRegisterError(f"I/O Bar for {self.name} has invalid register size: {self.size}. Must be 1, 2, 4, or 8 bytes")
 
         if not isinstance(self.offset, int) or self.offset < 0:
-            raise IOBARRegisterError(f"Invalid offset: {self.offset}. Must be a non-negative integer")
+            raise IOBARRegisterError(f"I/O Bar for {self.name} has invalid offset: {self.offset}. Must be a non-negative integer")
 
         if not self.bar:
-            raise IOBARRegisterError("I/O BAR register configuration must have a valid BAR identifier")
+            raise IOBARRegisterError(f"I/O Bar for {self.name} must have a valid BAR identifier")
 
     def get_bar_info(self) -> Tuple[Optional[int], Optional[int]]:
         """

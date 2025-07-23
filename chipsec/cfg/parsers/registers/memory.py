@@ -92,16 +92,16 @@ class MEMORYRegisters(BaseConfigRegisterHelper):
             raise MemoryRegisterError("Memory register configuration must have a valid name")
 
         if not isinstance(self.address, int) or self.address < 0:
-            raise MemoryRegisterError(f"Invalid address: {self.address}. Must be a positive integer")
+            raise MemoryRegisterError(f"Address for {self.name} is invalid: {self.address}. Must be a positive integer")
 
         if not isinstance(self.offset, int) or self.offset < 0:
-            raise MemoryRegisterError(f"Invalid offset: {self.offset}. Must be a non-negative integer")
+            raise MemoryRegisterError(f"Offset for {self.name} is invalid: {self.offset}. Must be a non-negative integer")
 
         if not isinstance(self.size, int) or self.size not in [1, 2, 4, 8]:
-            raise MemoryRegisterError(f"Invalid register size: {self.size}. Must be 1, 2, 4, or 8 bytes")
+            raise MemoryRegisterError(f"Size for {self.name} is invalid: {self.size}. Must be 1, 2, 4, or 8 bytes")
 
         if self.access not in ['dram', 'mmio']:
-            raise MemoryRegisterError(f"Invalid access method: {self.access}. Must be 'dram' or 'mmio'")
+            raise MemoryRegisterError(f"Access method for {self.name} is invalid: {self.access}. Must be 'dram' or 'mmio'")
 
     def get_physical_address(self) -> int:
         """

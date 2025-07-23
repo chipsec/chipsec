@@ -76,12 +76,12 @@ class MSGBUSConfig(GenericConfig):
             raise MSGBUSConfigError("MSGBUS configuration must have a valid name")
 
         if self.port is None:
-            raise MSGBUSConfigError("MSGBUS configuration must have a valid port")
+            raise MSGBUSConfigError(f"MSGBUS configuration for {self.name} must have a valid port")
 
         # Validate port format and range
         port_int = self.get_port_as_int()
         if port_int is None or port_int < 0 or port_int > 0xFF:
-            raise MSGBUSConfigError(f"Invalid port value: {self.port}. Must be 0-255 range")
+            raise MSGBUSConfigError(f"MSGBUS configuration for {self.name} has invalid port value: {self.port}. Must be 0-255 range")
 
     def get_port_as_int(self) -> Optional[int]:
         """
