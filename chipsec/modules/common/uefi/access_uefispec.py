@@ -1,5 +1,6 @@
 # CHIPSEC: Platform Security Assessment Framework
 # Copyright (c) 2010-2021, Intel Corporation
+# Copyright (c) 2025, Oracle and/or its affiliates.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -25,9 +26,9 @@ Checks protection of UEFI variables defined in the UEFI spec to have certain per
 Returns failure if variable attributes are not as defined in `table 11 "Global Variables" <http://uefi.org/>`_ of the UEFI spec.
 
 usage:
-    ``chipsec_main -m common.uefi.access_uefispec [-a modify]``
+    ``chipsec_main -m common.uefi.access_uefispec [-a modify[,attribute]]``
 
-    - ``-a modify``: Attempt to modify each variable in addition to checking attributes
+    - ``[-a modify[,attribute]]``: Attempt to modify each variable in addition to checking attributes; optionally change the attribute as well
 
 Where:
     - ``[]``: optional line
@@ -35,6 +36,7 @@ Where:
 Examples:
     >>> chipsec_main.py -m common.uefi.access_uefispec
     >>> chipsec_main.py -m common.uefi.access_uefispec -a modify
+    >>> chipsec_main.py -m common.uefi.access_uefispec -a modify,7
 
 NOTE:
 Requires an OS with UEFI Runtime API support.
@@ -45,7 +47,7 @@ from chipsec.library.returncode import ModuleResult
 from chipsec.hal.uefi import UEFI, EFI_VARIABLE_NON_VOLATILE, EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_RUNTIME_ACCESS, get_attr_string
 from chipsec.hal.uefi import EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_APPEND_WRITE
 from chipsec.hal.uefi_common import StatusCode
-from typing import List
+from typing import List, Optional
 
 
 TAGS = [BIOS, SECUREBOOT]
@@ -142,7 +144,7 @@ class access_uefispec(BaseModule):
         else:
             return False
 
-    def can_modify(self, name: str, guid: str, data: bytes) -> bool:
+    def can_modify(self, name: str, guid: str, data: bytes, attrs: int) -> bool:
         ret = False
 
         # origdata = _uefi.get_EFI_variable(name, guid)
@@ -151,20 +153,20 @@ class access_uefispec(BaseModule):
         baddata = 'Z' * datalen  # 0x5A is ASCII 'Z'
         if baddata == origdata:
             baddata = 'A' * datalen  # in case we failed to restore previously
-        status = self._uefi.set_EFI_variable(name, guid, baddata)
+        status = self._uefi.set_EFI_variable(name, guid, baddata, len(baddata), attrs)
         if status != StatusCode.EFI_SUCCESS:
             self.logger.log_good(f'Writing EFI variable {name} did not succeed.')
         newdata = self._uefi.get_EFI_variable(name, guid)
         if self.diff_var(newdata, origdata):
             self.logger.log_bad(f'Corruption of EFI variable of concern {name}. Trying to recover.')
             ret = True
-            self._uefi.set_EFI_variable(name, guid, origdata)
+            self._uefi.set_EFI_variable(name, guid, origdata, len(origdata), attrs)
             if self.diff_var(self._uefi.get_EFI_variable(name, guid), origdata):
                 nameguid = name + ' (' + guid + ')'
                 self.logger.log_bad(f'RECOVERY FAILED. Variable {nameguid} remains corrupted. Original data value: {origdata}')
         return ret
 
-    def check_vars(self, do_modify: bool) -> int:
+    def check_vars(self, do_modify: bool, attribute: Optional[int] = None) -> int:
         res = ModuleResult.PASSED
         vars = self._uefi.list_EFI_variables()
         if vars is None:
@@ -206,15 +208,19 @@ class access_uefispec(BaseModule):
                         self.result.setStatusBit(self.result.status.VERIFY)
 
                 if do_modify:
-                    self.logger.log(f"[*] Testing modification of {name} ..")
+                    if attribute != None:
+                        attrs = attribute
+
+                    self.logger.log(f"[*] Testing modification of {name} with attribute {str(attrs)}..")
+
                     if name in self.uefispec_ro_vars:
-                        if self.can_modify(name, guid, data):
+                        if self.can_modify(name, guid, data, attrs):
                             ro_concern.append(name)
                             self.logger.log_bad(f"Variable {name} should be read only.")
                             self.result.setStatusBit(self.result.status.POTENTIALLY_VULNERABLE)
                             res = ModuleResult.FAILED
                     else:
-                        if self.can_modify(name, guid, data):
+                        if self.can_modify(name, guid, data, attrs):
                             rw_variables.append(name)
 
         if uefispec_concern:
@@ -248,5 +254,11 @@ class access_uefispec(BaseModule):
         self.logger.start_test("Access Control of EFI Variables")
 
         do_modify = (len(module_argv) > 0 and module_argv[0] == OPT_MODIFY)
-        self.res = self.check_vars(do_modify)
+        attribute = None
+
+        if len(module_argv) > 1:
+            attribute = module_argv[1]
+
+        self.res = self.check_vars(do_modify, attribute)
+
         return self.result.getReturnCode(self.res)
