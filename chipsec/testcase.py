@@ -302,7 +302,7 @@ class LegacyResults(ChipsecResults):
                         'not applicable': ExitCode.NOTAPPLICABLE,
                         'information': ExitCode.INFORMATION,
                         'archived': ExitCode.ARCHIVED
-                        }
+        }
         for result in destination.keys():
             if len(summary[result]) != 0:
                 return destination[result]

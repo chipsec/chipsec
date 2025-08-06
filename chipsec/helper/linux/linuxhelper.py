@@ -465,7 +465,7 @@ class LinuxHelper(Helper):
             9: 'EFI_OUT_OF_RESOURCES',
             14: 'EFI_NOT_FOUND',
             26: 'EFI_SECURITY_VIOLATION'
-            }
+        }
         off = 0
         data = b''
         attr = 0
