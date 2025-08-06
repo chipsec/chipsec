@@ -1,22 +1,23 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
+
 
 from typing import Dict
 from chipsec.library.tpm import tpm2_commands
@@ -51,11 +52,11 @@ TPM_RID = 0x0F04
 TPM_INTCAP = 0x0014
 TPM_INTENABLE = 0x0008
 
-list_of_registers = ['TPM_ACCESS', 
-                    'TPM_STS', 
-                    'TPM_DID_VID', 
-                    'TPM_RID', 
-                    'TPM_INTF_CAPABILITY', 
+list_of_registers = ['TPM_ACCESS',
+                    'TPM_STS',
+                    'TPM_DID_VID',
+                    'TPM_RID',
+                    'TPM_INTF_CAPABILITY',
                     'TPM_INT_ENABLE']
 
 LOCALITY: Dict[str, int] = {
@@ -338,7 +339,7 @@ RESPONSE_TAG = {}
 RESPONSE_CODE = {
     # https://trustedcomputinggroup.org/wp-content/uploads/TPM-Rev-2.0-Part-2-Structures-01.38.pdf
     # Section 6.6.3
-    #VER1
+    # VER1
     0x000: ['TPM_RC_SUCCESS', 'No error.'],
     0x01E: ['TPM_RC_BAD_TAG', 'Bad tag in the message.'],
     0x100: ['TPM_RC_INITIALIZE', 'TPM not initialized by TPM2_Startup() or already initialized.'],
@@ -377,7 +378,7 @@ RESPONSE_CODE = {
     0x155: ['TPM_RC_SENSITIVE', 'Sensitive area did not unmarshal correctly after decryption.'],
     0x156: ['TPM_RC_READ_ONLY', 'Command failed because TPM is in Read-Only mode.'],
     0x17F: ['TPM_RC_MAX_FM0', 'Largest version 1 code that is not a warning.'],
-    #FMT1
+    # FMT1
     0x081: ['TPM_RC_ASYMMETRIC', 'Asymmetric algorithm not supported or incorrect.'],
     0x082: ['TPM_RC_ATTRIBUTES', 'Inconsistent attributes.'],
     0x083: ['TPM_RC_HASH', 'Unsupported or inappropriate hash algorithm.'],
