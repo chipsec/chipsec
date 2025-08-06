@@ -314,7 +314,7 @@ sig_types: Dict[str, Tuple[str, Callable, int, str]] = {
     "446dbf63-2502-4cda-bcfa-2465d2b0fe9d": ("EFI_CERT_X509_SHA512_GUID", parse_x509_sha512, 0x60, "X509_SHA512"),
     "452e8ced-dfff-4b8c-ae01-5118862e682c": ("EFI_CERT_EXTERNAL_MANAGEMENT_GUID", parse_external, 0x11, "EXTERNAL_MANAGEMENT"),
     "4AAFD29D-68DF-49EE-8AA9-347D375665A7": ("EFI_CERT_TYPE_PKCS7_GUID", parse_pkcs7, 0, "PKCS7"),
-    }
+}
 
 
 def parse_sb_db(db: bytes, decode_dir: str) -> List[bytes]:
@@ -908,7 +908,7 @@ EFI_REVISIONS: List[int] = [
     EFI_2_00_SYSTEM_TABLE_REVISION,
     EFI_1_10_SYSTEM_TABLE_REVISION,
     EFI_1_02_SYSTEM_TABLE_REVISION
-    ]
+]
 
 
 def EFI_SYSTEM_TABLE_REVISION(revision: int) -> str:
