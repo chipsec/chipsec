@@ -21,7 +21,7 @@
 import importlib
 import platform
 import struct
-from typing import Dict, Final, List
+from typing import Dict, List
 
 from chipsec.hal.uefi_fv import EFI_SECTION_ZLIB_AMD_HEADER_FORMAT, EFI_SECTION_ZLIB_AMD_HEADER_LENGTH
 from chipsec.library.logger import logger
@@ -39,18 +39,18 @@ for module_name in ['brotli', 'EfiCompressor', 'gzip', 'lzma', 'zlib']:
         if platform.system().lower() in ['windows', 'linux', 'darwin']:
             logger().log_error(f'Failed to import compression module "{import_error.name}"')
 
-COMPRESSION_TYPE_NONE: Final[int] = 0
-COMPRESSION_TYPE_TIANO: Final[int] = 1
-COMPRESSION_TYPE_UEFI: Final[int] = 2
-COMPRESSION_TYPE_LZMA: Final[int] = 3
-COMPRESSION_TYPE_BROTLI: Final[int] = 4
-COMPRESSION_TYPE_EFI_STANDARD: Final[int] = 5
-COMPRESSION_TYPE_UNKNOWN: Final[int] = 6
-COMPRESSION_TYPE_LZMAF86: Final[int] = 7
-COMPRESSION_TYPE_ZLIB_AMD: Final[int] = 8
-COMPRESSION_TYPE_GZIP: Final[int] = 9
+COMPRESSION_TYPE_NONE: int = 0
+COMPRESSION_TYPE_TIANO: int = 1
+COMPRESSION_TYPE_UEFI: int = 2
+COMPRESSION_TYPE_LZMA: int = 3
+COMPRESSION_TYPE_BROTLI: int = 4
+COMPRESSION_TYPE_EFI_STANDARD: int = 5
+COMPRESSION_TYPE_UNKNOWN: int = 6
+COMPRESSION_TYPE_LZMAF86: int = 7
+COMPRESSION_TYPE_ZLIB_AMD: int = 8
+COMPRESSION_TYPE_GZIP: int = 9
 
-COMPRESSION_TYPES_ALGORITHMS: Final[List[int]] = [
+COMPRESSION_TYPES_ALGORITHMS: List[int] = [
     COMPRESSION_TYPE_LZMA,
     COMPRESSION_TYPE_TIANO,
     COMPRESSION_TYPE_UEFI,
@@ -61,7 +61,7 @@ COMPRESSION_TYPES_ALGORITHMS: Final[List[int]] = [
     COMPRESSION_TYPE_NONE
 ]
 
-COMPRESSION_TYPES: Final[List[int]] = [
+COMPRESSION_TYPES: List[int] = [
     COMPRESSION_TYPE_BROTLI,
     COMPRESSION_TYPE_EFI_STANDARD,
     COMPRESSION_TYPE_GZIP,
@@ -74,12 +74,12 @@ COMPRESSION_TYPES: Final[List[int]] = [
     COMPRESSION_TYPE_ZLIB_AMD
 ]
 
-COMPRESSION_TYPES_UNKNOWN_EFI: Final[List[int]] = [
+COMPRESSION_TYPES_UNKNOWN_EFI: List[int] = [
     COMPRESSION_TYPE_TIANO,
     COMPRESSION_TYPE_UEFI
 ]
 
-COMPRESSION_TYPES_UNKNOWN_ALL: Final[List[int]] = [
+COMPRESSION_TYPES_UNKNOWN_ALL: List[int] = [
     COMPRESSION_TYPE_TIANO,
     COMPRESSION_TYPE_UEFI,
     COMPRESSION_TYPE_LZMA,
