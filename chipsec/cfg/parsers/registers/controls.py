@@ -102,7 +102,7 @@ class CONTROLHelper(BaseConfigHelper):
         Returns:
             Name of the register containing this control field
         """
-        return getattr(self.__reg, 'name', 'Unknown')
+        return self.cfg.get('register', getattr(self.__reg, 'name', 'Unknown Register'))
 
     def get_field_name(self) -> str:
         """

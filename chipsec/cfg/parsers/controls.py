@@ -133,7 +133,7 @@ class CONTROLHelper(BaseConfigHelper):
         Returns:
             Register name
         """
-        return getattr(self.__reg, 'name', 'Unknown Register')
+        return self.cfg.get('register', getattr(self.__reg, 'name', 'Unknown Register'))
 
     def get_current_value(self) -> Optional[int]:
         """
