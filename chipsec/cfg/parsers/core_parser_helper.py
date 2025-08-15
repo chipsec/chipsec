@@ -384,8 +384,9 @@ class CoreParserHelper:
                 pci_config = self.cfg.CONFIG_PCI
                 if (vid_str in pci_config and
                     bar_attr['device'] in pci_config[vid_str]):
-                    instances = pci_config[vid_str][bar_attr['device']].instances
-                    bar_attr['ids'] = instances.values()
+                    instances = []
+                    [instances.extend(list(inst.instances.values())) for inst in pci_config[vid_str][bar_attr['device']]]
+                    bar_attr['ids'] = instances
 
                 bar_obj = cfg_obj(bar_attr)
                 device_dest[bar_name] = bar_obj
