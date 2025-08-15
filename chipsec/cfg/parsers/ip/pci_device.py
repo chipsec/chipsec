@@ -181,7 +181,9 @@ class PCIConfig(GenericConfig):
             self.did: Optional[int] = cfg_obj.get('did', None)
             if 'name' not in cfg_obj and self.did is not None:
                 cfg_obj['name'] = str(self.did)
-
+                self.__name_updated = False
+            elif 'name' in cfg_obj:
+                self.__name_updated = True
             super().__init__(cfg_obj)
 
             self.instances: Dict[int, PCIObj] = {}
@@ -316,25 +318,28 @@ class PCIConfig(GenericConfig):
         except Exception:
             return False
 
-    def update_name(self, name: str) -> None:
-        """
-        Update the configuration name.
+    def update_name(self, name: str) -> bool:
+        """Update the configuration name if it hasn't been updated before.
 
-        Args:
-            name: New name for the configuration
+        This method allows updating the name only once. Subsequent calls will be ignored
+        and logged as debug messages.
 
-        Raises:
-            PCIConfigError: If name update fails
-        """
-        try:
-            if not isinstance(name, str) or not name.strip():
-                raise PCIConfigError("Name must be a non-empty string")
+            name (str): New name for the configuration. Must be a non-empty string.
+
+        Returns:
+            bool: True if the name was successfully updated, False if the name has 
+                  already been set previously.
+
+            PCIConfigError: If name is not a string or is empty/whitespace only."""
+
+        if not isinstance(name, str) or not name.strip():
+            raise PCIConfigError("IP must be a non-empty string")
+        if not self.__name_updated:
             self.name = name
-        except Exception as e:
-            if isinstance(e, PCIConfigError):
-                raise
-            raise PCIConfigError(
-                f"Error updating name: {str(e)}") from e
+            self.__name_updated = True
+            return True
+        self.logger.log_debug(f"Name has already been set to {self.name} and cannot be updated to {name}")
+        return False
 
     def get_pci_summary(self) -> Dict[str, Any]:
         """

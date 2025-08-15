@@ -486,9 +486,12 @@ class Vendor(Recursable):
             ip_name: Name of the IP
             obj: IP configuration object
         """
-        ip = IP(ip_name, obj)
-        self.ip_list.append(ip.name)
-        self.__setattr__(ip.name, ip)
+        if ip_name in self.ip_list:
+            self.get_ip(ip_name).update_obj(obj)
+        else:
+            ip = IP(ip_name, obj)
+            self.ip_list.append(ip.name)
+            self.__setattr__(ip.name, ip)
 
     def get_ip(self, ip_name: str) -> 'IP':
         """
@@ -537,6 +540,15 @@ class IP(Recursable, RegisterList):
         RegisterList.__init__(self)
         self.bar_list = []
         self.name = name
+        self.obj = ipobj
+
+    def update_obj(self, ipobj: Any) -> None:
+        """
+        Update the object of the IP.
+
+        Args:
+            ipobj: IP configuration object
+        """
         self.obj = ipobj
 
     def add_bar(self, bar_name: str, barobj: Any) -> None:
