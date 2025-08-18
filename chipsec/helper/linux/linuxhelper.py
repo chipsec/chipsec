@@ -551,7 +551,8 @@ class LinuxHelper(Helper):
                 variables[name].append(var)
         return variables
 
-    def kern_set_EFI_variable(self, name: str, guid: str, value: bytes, attr: int = 0x7) -> int:
+    def kern_set_EFI_variable(self, name: str, guid: str, value: bytes, attr: Optional[int] = None) -> int:
+        attr = 0x7 if attr is None else attr
         status_dict = {
             0: 'EFI_SUCCESS',
             1: 'EFI_LOAD_ERROR',
