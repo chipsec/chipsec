@@ -75,7 +75,9 @@ class Device:
             List of device objects matching the name
         """
         devices = self.cs.Cfg.get_objlist(device_name)
-        return [ip.obj for ip in devices]
+        objlist = []
+        [objlist.extend(ip.obj) for ip in devices]
+        return objlist 
 
     def is_defined(self, device_name: str) -> bool:
         """

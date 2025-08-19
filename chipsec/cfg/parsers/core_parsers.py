@@ -137,14 +137,15 @@ class DevConfig(BaseConfigParser):
     def _process_pci_dev(self, vid_str, dev_name, dev_attr):
         obj = None
         if dev_name in self.cfg.CONFIG_PCI[vid_str] and 'config' in dev_attr:
-            self.cfg.CONFIG_PCI[vid_str][dev_name].add_config(dev_attr['config'])
+            for pci_dev in self.cfg.CONFIG_PCI[vid_str][dev_name]:
+                pci_dev.add_config(dev_attr['config'])
         if 'did' in dev_attr:
             for did in dev_attr['did']:
                 did_str = make_hex_key_str(did)
                 if vid_str in self.cfg.CONFIG_PCI_RAW and did_str in self.cfg.CONFIG_PCI_RAW[vid_str]:
                     cfg_data = self.cfg.CONFIG_PCI_RAW[vid_str][did_str]
-                    obj = self._add_dev(vid_str, dev_name, cfg_data, dev_attr)
-                    break
+                    if cfg_data:
+                        obj = self._add_dev(vid_str, dev_name, cfg_data, dev_attr)
         elif set(['bus', 'dev', 'fun']).issubset(dev_attr.keys()):
             if vid_str in self.cfg.CONFIG_PCI_RAW:
                 for did_str in self.cfg.CONFIG_PCI_RAW[vid_str]:
@@ -157,8 +158,7 @@ class DevConfig(BaseConfigParser):
         if dev_name not in self.cfg.CONFIG_PCI[vid_str]:
             obj = self._add_dev(vid_str, dev_name, None, dev_attr)
 
-        if dev_name not in self.cfg.platform.get_vendor(vid_str).ip_list:
-            self.cfg.platform.get_vendor(vid_str).add_ip(dev_name, obj)
+        self.cfg.platform.get_vendor(vid_str).add_ip(dev_name, obj)
 
     def _add_dev(self, vid_str, name, pci_info, dev_attr):
         if name not in self.cfg.CONFIG_PCI[vid_str]:
@@ -166,20 +166,25 @@ class DevConfig(BaseConfigParser):
                 node = getattr(self.cfg, key)
                 if name not in node[vid_str]:
                     node[vid_str][name] = {}
+            self.cfg.CONFIG_PCI[vid_str][name] = []
         if pci_info:
             pci_info.update_name(name)
             if 'config' in dev_attr:
                 pci_info.add_config(dev_attr['config'])
-            self.cfg.CONFIG_PCI[vid_str][name] = pci_info
+            self.cfg.CONFIG_PCI[vid_str][name].append(pci_info)
         else:
             dev_attr['bus'] = None
             if 'did' in dev_attr:
                 dev_attr['did'] = dev_attr['did'][0]
             dev_attr['name'] = name
+            if 'dev' not in dev_attr:
+                dev_attr['dev'] = None
+            if 'fun' not in dev_attr:
+                dev_attr['fun'] = None
             pci_obj = PCIConfig(dev_attr)
             if 'config' in dev_attr:
                 pci_obj.add_config(dev_attr['config'])
-            self.cfg.CONFIG_PCI[vid_str][name] = pci_obj
+            self.cfg.CONFIG_PCI[vid_str][name].append(pci_obj)
         return self.cfg.CONFIG_PCI[vid_str][name]
 
     def _add_ip(self, vid_str, ip_name, ip_obj=None):
@@ -233,7 +238,10 @@ class DevConfig(BaseConfigParser):
                 continue
             dev_name = dev_attr['name']
             self._process_pci_dev(stage_data.vid_str, dev_name, dev_attr)
-            ret_val.extend(self.parser_helper.process_config_complex(stage_data, dev_name, self.cfg.CONFIG_PCI[stage_data.vid_str][dev_name]))
+            data_list = self.cfg.CONFIG_PCI[stage_data.vid_str][dev_name]
+            for data in data_list:
+                ret_val.extend(self.parser_helper.process_config_complex(stage_data, dev_name, data))
+
             hex_dict = make_dict_hex(dev_attr)
             self.logger.log_debug(f"    + {dev_attr['name']:16}: {hex_dict}")
             for subcomponent in dev.iter('subcomponent'):
@@ -473,7 +481,10 @@ class CoreConfigRegisters(BaseConfigParser):
                 objs.append(cont_obj)
 
             # Update storage location with new data
-            self.cfg.CONTROLS[name] = objs
+            if name in self.cfg.CONTROLS:
+                self.cfg.CONTROLS[name].extend(objs)
+            else:
+                self.cfg.CONTROLS[name] = objs
             hex_dict = make_dict_hex(attrs)
             self.logger.log_debug(f"    + {attrs['name']:16}: {hex_dict}")
 

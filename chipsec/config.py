@@ -808,7 +808,7 @@ class Cfg:
         for vid_str in cfg_vids:
             root_path = os.path.join(cfg_path, vid_str)
             cfg_files.extend([config_data(vid_str, None, f.path, None, None)
-                             for f in sorted(os.scandir(root_path), key=lambda x: x.name)
+                             for f in sorted(os.scandir(root_path), key=lambda x: x.name.lower())
                              if fnmatch(f.name, '*.xml')])
 
         # Process platform info data and generate lookup tables
