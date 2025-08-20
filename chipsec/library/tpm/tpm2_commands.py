@@ -1,23 +1,22 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
-
 
 
 """
@@ -50,10 +49,10 @@ class TPM_RESPONSE_HEADER(namedtuple('TPM_RESPONSE_HEADER', 'ResponseTag DataSiz
             _str += f'{response[0]}: {response[1]}'
         except:
             _str += 'Invalid return code'
-        
+
         _str += '\n'
         return _str
-    
+
 
 def startup(command_argv):
     """
@@ -61,7 +60,7 @@ def startup(command_argv):
     1: TPM_ST_CLEAR
     2: TPM_ST_STATE
     """
-    #session = _read_session(int(command_argv[0]), tpm_defines.TPM_ST_NO_SESSIONS)
+    # session = _read_session(int(command_argv[0]), tpm_defines.TPM_ST_NO_SESSIONS)
     command_format = '=HIIH'
     size = 0x0C000000
     try:
@@ -154,7 +153,7 @@ def pcrread(command_argv):
     """
     TPM2_PCR_Read command.
     """
-    #session = _read_session(command_argv[0])
+    # session = _read_session(command_argv[0])
     command_format = '=HIII'
     size = 0x0C000000
     try:
