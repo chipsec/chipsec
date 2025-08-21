@@ -82,14 +82,17 @@ class StatusCode:
     EFI_INVALID_LANGUAGE = 32
     EFI_COMPROMISED_DATA = 33
     EFI_HTTP_ERROR = 35
-    '''
-  EFI_WARN_UNKNOWN_GLYPH    = 1
-  EFI_WARN_DELETE_FAILURE   = 2
-  EFI_WARN_WRITE_FAILURE    = 3
-  EFI_WARN_BUFFER_TOO_SMALL = 4
-  EFI_WARN_STALE_DATA       = 5
-  EFI_WARN_FILE_SYSTEM      = 6
-  '''
+    # UEFI 2.11 additional status codes
+    EFI_IP_ADDRESS_CONFLICT = 34
+    EFI_RECONNECT_REQUIRED = 36
+    # Warning codes
+    EFI_WARN_UNKNOWN_GLYPH = 1
+    EFI_WARN_DELETE_FAILURE = 2
+    EFI_WARN_WRITE_FAILURE = 3
+    EFI_WARN_BUFFER_TOO_SMALL = 4
+    EFI_WARN_STALE_DATA = 5
+    EFI_WARN_FILE_SYSTEM = 6
+    EFI_WARN_RESET_REQUIRED = 7
 
 
 EFI_STATUS_DICT: Dict[int, str] = {
@@ -125,7 +128,17 @@ EFI_STATUS_DICT: Dict[int, str] = {
     StatusCode.EFI_END_OF_FILE: "EFI_END_OF_FILE",
     StatusCode.EFI_INVALID_LANGUAGE: "EFI_INVALID_LANGUAGE",
     StatusCode.EFI_COMPROMISED_DATA: "EFI_COMPROMISED_DATA",
-    StatusCode.EFI_HTTP_ERROR: "EFI_HTTP_ERROR"
+    StatusCode.EFI_IP_ADDRESS_CONFLICT: "EFI_IP_ADDRESS_CONFLICT",
+    StatusCode.EFI_HTTP_ERROR: "EFI_HTTP_ERROR",
+    StatusCode.EFI_RECONNECT_REQUIRED: "EFI_RECONNECT_REQUIRED",
+    # Warning codes
+    StatusCode.EFI_WARN_UNKNOWN_GLYPH: "EFI_WARN_UNKNOWN_GLYPH",
+    StatusCode.EFI_WARN_DELETE_FAILURE: "EFI_WARN_DELETE_FAILURE",
+    StatusCode.EFI_WARN_WRITE_FAILURE: "EFI_WARN_WRITE_FAILURE",
+    StatusCode.EFI_WARN_BUFFER_TOO_SMALL: "EFI_WARN_BUFFER_TOO_SMALL",
+    StatusCode.EFI_WARN_STALE_DATA: "EFI_WARN_STALE_DATA",
+    StatusCode.EFI_WARN_FILE_SYSTEM: "EFI_WARN_FILE_SYSTEM",
+    StatusCode.EFI_WARN_RESET_REQUIRED: "EFI_WARN_RESET_REQUIRED"
 }
 
 EFI_MAX_BIT = 0x8000000000000000
@@ -165,6 +178,83 @@ def bit_set(value: int, mask: int, polarity: bool = False) -> bool:
 def get_3b_size(s_data: bytes) -> int:
     s_str = bytestostring(s_data)
     return (ord(s_str[0]) + (ord(s_str[1]) << 8) + (ord(s_str[2]) << 16))
+
+
+def validate_uefi_structure_header(data: bytes, offset: int = 0, min_size: int = 4) -> bool:
+    """
+    Validate basic UEFI structure header requirements.
+    
+    Args:
+        data: Raw binary data
+        offset: Offset into data to start validation
+        min_size: Minimum expected structure size
+        
+    Returns:
+        True if basic validation passes, False otherwise
+    """
+    if len(data) < offset + min_size:
+        return False
+    
+    # Check for basic structure alignment (most UEFI structures are 4-byte aligned)
+    if offset % 4 != 0:
+        return False
+        
+    return True
+
+
+def is_valid_uefi_guid(guid_bytes: bytes) -> bool:
+    """
+    Validate if bytes represent a valid UEFI GUID.
+    
+    Args:
+        guid_bytes: 16-byte GUID data
+        
+    Returns:
+        True if valid UEFI GUID format, False otherwise
+    """
+    if len(guid_bytes) != EFI_GUID_SIZE:
+        return False
+    
+    # Check for null GUID (all zeros)
+    if guid_bytes == b'\x00' * EFI_GUID_SIZE:
+        return False
+    
+    # Check for invalid GUID (all 0xFF)
+    if guid_bytes == b'\xff' * EFI_GUID_SIZE:
+        return False
+    
+    return True
+
+
+def calculate_checksum8(data: bytes) -> int:
+    """
+    Calculate 8-bit checksum for UEFI structures.
+    
+    Args:
+        data: Binary data to checksum
+        
+    Returns:
+        8-bit checksum value
+    """
+    checksum = 0
+    for byte in data:
+        checksum = (checksum + byte) & 0xFF
+    return (0x100 - checksum) & 0xFF
+
+
+def verify_checksum8(data: bytes, expected_checksum: int) -> bool:
+    """
+    Verify 8-bit checksum for UEFI structures.
+    
+    Args:
+        data: Binary data to verify
+        expected_checksum: Expected checksum value
+        
+    Returns:
+        True if checksum is valid, False otherwise
+    """
+    calculated = calculate_checksum8(data)
+    return calculated == expected_checksum
 
 
 # #################################################################################################

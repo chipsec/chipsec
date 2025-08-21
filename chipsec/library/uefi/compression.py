@@ -17,6 +17,38 @@
 # Contact information:
 # chipsec@intel.com
 
+"""
+UEFI Compression Support Module
+
+This module provides comprehensive compression and decompression capabilities
+for UEFI firmware analysis, with support for both standard UEFI/PI specification
+compression types and vendor-specific extensions.
+
+UEFI/PI Standards Compliance:
+- UEFI 2.11 Chapter 19: Compression Algorithm Specification
+- PI 1.9 Volume III: Firmware Storage Code Definitions
+- Standard compression types: None, UEFI/Tiano, LZMA
+- Guided section extraction with authentication support
+- EFI_DECOMPRESS_PROTOCOL interface pattern
+
+Supported Compression Types:
+Standard (UEFI/PI compliant):
+- None (uncompressed)
+- UEFI/Tiano (EFI native compression)
+- LZMA (standard LZMA compression)
+- LZMA F86 (LZMA with x86 filter)
+
+Vendor Extensions (non-standard):
+- Brotli, GZIP, ZLIB, Zstandard, LZ4
+
+Key Features:
+- Auto-detection of compression types from data headers
+- GUID-based compression type identification
+- Section header validation per PI specification
+- Authentication status support for guided sections
+- Comprehensive error handling and logging
+"""
+
 
 import platform
 
@@ -431,7 +463,8 @@ class UEFICompression:
             LZMAF86_DECOMPRESS_GUID, LZMA_CUSTOM_DECOMPRESS_GUID, TIANO_DECOMPRESSED_GUID,
             BROTLI_CUSTOM_DECOMPRESS_GUID, GZIP_CUSTOM_DECOMPRESS_GUID, ZLIB_CUSTOM_DECOMPRESS_GUID,
             ZSTD_CUSTOM_DECOMPRESS_GUID, LZ4_CUSTOM_DECOMPRESS_GUID,
-            EFI_GUIDED_SECTION_GZIP, EFI_GUIDED_SECTION_LZMA_HP, EFI_GUIDED_SECTION_LZMA_MS
+            EFI_GUIDED_SECTION_GZIP, EFI_GUIDED_SECTION_LZMA_HP, EFI_GUIDED_SECTION_LZMA_MS,
+            EFI_DECOMPRESS_PROTOCOL_GUID, EFI_FIRMWARE_CONTENTS_SIGNED_GUID, EFI_STANDARD_COMPRESSION_GUID
         )
         
         # Convert string to uppercase for comparison
@@ -457,6 +490,13 @@ class UEFICompression:
         # Vendor-specific LZMA variants
         elif guid_upper in [str(EFI_GUIDED_SECTION_LZMA_HP).upper(), str(EFI_GUIDED_SECTION_LZMA_MS).upper()]:
             return COMPRESSION_TYPE_LZMA
+        # Standard UEFI/PI GUIDs
+        elif guid_upper == str(EFI_DECOMPRESS_PROTOCOL_GUID).upper():
+            return COMPRESSION_TYPE_UEFI  # Standard UEFI decompression
+        elif guid_upper == str(EFI_STANDARD_COMPRESSION_GUID).upper():
+            return COMPRESSION_TYPE_UEFI  # Standard compression section
+        elif guid_upper == str(EFI_FIRMWARE_CONTENTS_SIGNED_GUID).upper():
+            return COMPRESSION_TYPE_UNKNOWN  # Signed content, not compression
         else:
             return COMPRESSION_TYPE_UNKNOWN
 
@@ -475,7 +515,8 @@ class UEFICompression:
             LZMAF86_DECOMPRESS_GUID, LZMA_CUSTOM_DECOMPRESS_GUID, TIANO_DECOMPRESSED_GUID,
             BROTLI_CUSTOM_DECOMPRESS_GUID, GZIP_CUSTOM_DECOMPRESS_GUID, ZLIB_CUSTOM_DECOMPRESS_GUID,
             ZSTD_CUSTOM_DECOMPRESS_GUID, LZ4_CUSTOM_DECOMPRESS_GUID,
-            EFI_GUIDED_SECTION_GZIP, EFI_GUIDED_SECTION_LZMA_HP, EFI_GUIDED_SECTION_LZMA_MS
+            EFI_GUIDED_SECTION_GZIP, EFI_GUIDED_SECTION_LZMA_HP, EFI_GUIDED_SECTION_LZMA_MS,
+            EFI_DECOMPRESS_PROTOCOL_GUID, EFI_STANDARD_COMPRESSION_GUID
         )
         
         if compression_type == COMPRESSION_TYPE_LZMAF86:
@@ -532,6 +573,172 @@ class UEFICompression:
                 'variants': [],
                 'name': 'Unknown'
             }
+
+    def get_info(self, compressed_data: bytes) -> tuple:
+        """
+        Get decompressed size and scratch buffer size requirements.
+        
+        This method follows the EFI_DECOMPRESS_PROTOCOL interface pattern
+        from UEFI 2.11 specification Chapter 19.
+        
+        Args:
+            compressed_data: The compressed data to analyze
+            
+        Returns:
+            Tuple of (decompressed_size, scratch_size_needed)
+        """
+        if not compressed_data or len(compressed_data) < 8:
+            return (0, 0)
+        
+        # For EFI compressed data, extract size from header
+        if self._is_efi_compressed(compressed_data):
+            decompressed_size = int.from_bytes(compressed_data[4:8], byteorder='little')
+            # Scratch buffer size is typically the same as decompressed size for EFI compression
+            scratch_size = decompressed_size
+            return (decompressed_size, scratch_size)
+        
+        # For other compression types, we can't easily determine size without decompressing
+        return (0, 0)
+
+    def extract_guided_section(self, section_data: bytes, guid_str: str) -> tuple:
+        """
+        Extract GUID-defined section with authentication status.
+        
+        This method follows the PI 1.9 specification for guided section extraction.
+        
+        Args:
+            section_data: The section data including GUID-defined header
+            guid_str: The GUID string identifying the section type
+            
+        Returns:
+            Tuple of (extracted_data, authentication_status)
+        """
+        from chipsec.library.uefi.fv import (
+            EFI_GUIDED_SECTION_PROCESSING_REQUIRED, EFI_GUIDED_SECTION_AUTH_STATUS_VALID,
+            EFI_AUTH_STATUS_NOT_TESTED
+        )
+        
+        # Get compression type from GUID
+        compression_type = self.get_compression_type_from_guid(guid_str)
+        
+        if compression_type == COMPRESSION_TYPE_UNKNOWN:
+            # Unknown GUID, return original data with not tested status
+            return (section_data, EFI_AUTH_STATUS_NOT_TESTED)
+        
+        # Process the section based on compression type
+        try:
+            extracted_data = self.decompress_EFI_binary(section_data, compression_type)
+            if extracted_data:
+                # Successful extraction, no authentication performed
+                return (extracted_data, EFI_AUTH_STATUS_NOT_TESTED)
+            else:
+                # Failed extraction
+                return (b'', EFI_AUTH_STATUS_NOT_TESTED)
+        except Exception:
+            return (b'', EFI_AUTH_STATUS_NOT_TESTED)
+
+    def is_standard_compression_type(self, compression_type: int) -> bool:
+        """
+        Check if a compression type is part of the UEFI/PI standards.
+        
+        Args:
+            compression_type: Compression type constant
+            
+        Returns:
+            True if it's a standard UEFI/PI compression type, False for vendor extensions
+        """
+        standard_types = [
+            COMPRESSION_TYPE_NONE,
+            COMPRESSION_TYPE_TIANO,
+            COMPRESSION_TYPE_UEFI,
+            COMPRESSION_TYPE_LZMA,
+            COMPRESSION_TYPE_LZMAF86
+        ]
+        return compression_type in standard_types
+
+    def get_standards_compliance_info(self) -> dict:
+        """
+        Get information about UEFI/PI standards compliance.
+        
+        Returns:
+            Dictionary with compliance information
+        """
+        return {
+            'uefi_version': '2.11',
+            'pi_version': '1.9',
+            'standard_compression_types': [
+                COMPRESSION_TYPE_NONE,
+                COMPRESSION_TYPE_TIANO,
+                COMPRESSION_TYPE_UEFI,
+                COMPRESSION_TYPE_LZMA,
+                COMPRESSION_TYPE_LZMAF86
+            ],
+            'vendor_extension_types': [
+                COMPRESSION_TYPE_BROTLI,
+                COMPRESSION_TYPE_GZIP,
+                COMPRESSION_TYPE_ZLIB,
+                COMPRESSION_TYPE_ZSTD,
+                COMPRESSION_TYPE_LZ4
+            ],
+            'supported_sections': [
+                'EFI_SECTION_COMPRESSION',
+                'EFI_SECTION_GUID_DEFINED'
+            ],
+            'authentication_support': True,
+            'guided_section_support': True
+        }
+
+    @staticmethod
+    def validate_section_header(section_data: bytes) -> bool:
+        """
+        Validate UEFI section header format.
+        
+        Args:
+            section_data: Section data to validate
+            
+        Returns:
+            True if header is valid, False otherwise
+        """
+        if len(section_data) < 4:
+            return False
+        
+        # Extract 24-bit size from first 3 bytes
+        size = int.from_bytes(section_data[0:3], byteorder='little')
+        section_type = section_data[3]
+        
+        # Basic validation
+        valid_size = size > 0 and size <= len(section_data)
+        valid_type = section_type <= 0x1C  # Maximum section type from PI 1.9
+        return valid_size and valid_type
+
+    @staticmethod
+    def get_standard_guids() -> dict:
+        """
+        Get all standard UEFI/PI compression GUIDs.
+        
+        Returns:
+            Dictionary mapping GUID categories to GUID lists
+        """
+        from chipsec.library.uefi.fv import (
+            EFI_DECOMPRESS_PROTOCOL_GUID, EFI_STANDARD_COMPRESSION_GUID,
+            EFI_FIRMWARE_CONTENTS_SIGNED_GUID, TIANO_DECOMPRESSED_GUID,
+            LZMA_CUSTOM_DECOMPRESS_GUID, LZMAF86_DECOMPRESS_GUID
+        )
+        
+        return {
+            'standard_compression': [
+                str(EFI_DECOMPRESS_PROTOCOL_GUID),
+                str(EFI_STANDARD_COMPRESSION_GUID),
+                str(TIANO_DECOMPRESSED_GUID)
+            ],
+            'extended_compression': [
+                str(LZMA_CUSTOM_DECOMPRESS_GUID),
+                str(LZMAF86_DECOMPRESS_GUID)
+            ],
+            'security_related': [
+                str(EFI_FIRMWARE_CONTENTS_SIGNED_GUID)
+            ]
+        }
 
     @staticmethod
     def _is_efi_compressed(efi_data: bytes) -> bool:

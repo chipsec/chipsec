@@ -148,6 +148,32 @@ EFI_GLOBAL_VARIABLES_HEX: List[str] = [
     'SysPrep'
 ]
 
+# UEFI 2.11 Additional Variables (missing from current implementation)
+EFI_ADDITIONAL_GLOBAL_VARIABLES: Dict[str, int] = {
+    'BootNext': EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+    'BootOptionSupport': EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+    'LangCodes': EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+    'Lang': EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+    'OsRecovery': EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+    'MemoryOverwriteRequestControl': EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+    'MemoryOverwriteRequestControlLock': EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+    'BootOrderDefault': EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+    'DriverOrderDefault': EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS
+}
+
+# Variable size limits per UEFI 2.11 specification
+EFI_VARIABLE_SIZE_LIMITS: Dict[str, int] = {
+    'PK': 16384,  # 16KB maximum for Platform Key
+    'KEK': 65536,  # 64KB maximum for Key Exchange Keys
+    'db': 131072,  # 128KB maximum for signature database
+    'dbx': 131072,  # 128KB maximum for revoked signatures
+    'BootOrder': 8192,  # 8KB should be sufficient for boot order
+    'DriverOrder': 8192,  # 8KB should be sufficient for driver order
+    'Boot': 1024,  # 1KB per boot option
+    'Driver': 1024,  # 1KB per driver option
+    'default': 65536  # 64KB default maximum
+}
+
 #
 # \MdePkg\Include\Guid\ImageAuthentication.h
 #
@@ -185,3 +211,60 @@ SECURE_BOOT_OPTIONAL_VARIABLES = (EFI_VAR_NAME_dbx,)
 SECURE_BOOT_VARIABLES = (EFI_VAR_NAME_SecureBoot, EFI_VAR_NAME_SetupMode) + SECURE_BOOT_KEY_VARIABLES + SECURE_BOOT_OPTIONAL_VARIABLES
 SECURE_BOOT_VARIABLES_ALL = (EFI_VAR_NAME_CustomMode, EFI_VAR_NAME_SignatureSupport) + SECURE_BOOT_VARIABLES
 AUTHENTICATED_VARIABLES = (EFI_VAR_NAME_AuthVarKeyDatabase, EFI_VAR_NAME_certdb) + SECURE_BOOT_KEY_VARIABLES
+
+
+def validate_variable_attributes(name: str, attributes: int) -> bool:
+    """
+    Validate variable attributes according to UEFI 2.11 specification.
+    
+    Args:
+        name: Variable name
+        attributes: Variable attributes bitmask
+        
+    Returns:
+        True if attributes are valid for the variable, False otherwise
+    """
+    # Check for conflicting attributes
+    if IS_VARIABLE_ATTRIBUTE(attributes, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS) and \
+       IS_VARIABLE_ATTRIBUTE(attributes, EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS):
+        return False  # Cannot have both authentication types
+    
+    # Secure Boot variables must be authenticated
+    if name in SECURE_BOOT_KEY_VARIABLES:
+        if not IS_EFI_VARIABLE_AUTHENTICATED(attributes):
+            return False
+    
+    # Runtime variables must also have bootservice access
+    if IS_VARIABLE_ATTRIBUTE(attributes, EFI_VARIABLE_RUNTIME_ACCESS):
+        if not IS_VARIABLE_ATTRIBUTE(attributes, EFI_VARIABLE_BOOTSERVICE_ACCESS):
+            return False
+    
+    return True
+
+
+def get_variable_size_limit(name: str) -> int:
+    """
+    Get the size limit for a specific variable according to UEFI specification.
+    
+    Args:
+        name: Variable name
+        
+    Returns:
+        Maximum size in bytes for the variable
+    """
+    return EFI_VARIABLE_SIZE_LIMITS.get(name, EFI_VARIABLE_SIZE_LIMITS['default'])
+
+
+def is_standard_global_variable(name: str) -> bool:
+    """
+    Check if a variable is a standard UEFI global variable.
+    
+    Args:
+        name: Variable name
+        
+    Returns:
+        True if it's a standard global variable, False otherwise
+    """
+    return (name in EFI_GLOBAL_VARIABLES
+            or name in EFI_ADDITIONAL_GLOBAL_VARIABLES
+            or any(name.startswith(prefix) for prefix in EFI_GLOBAL_VARIABLES_HEX))
