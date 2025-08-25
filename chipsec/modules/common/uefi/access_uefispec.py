@@ -258,7 +258,7 @@ class access_uefispec(BaseModule):
         attribute = None
 
         if len(module_argv) > 1:
-            attribute = module_argv[1]
+            attribute = int(module_argv[1], base=0)
 
         self.res = self.check_vars(do_modify, attribute)
 
