@@ -186,7 +186,7 @@ class Register:
         Returns:
             List of register objects matching the name
         """
-        return self.cs.Cfg.get_reglist(reg_name)
+        return self.cs.Cfg.get_reglist(reg_name).filter_enabled()
 
     def get_list_by_name_without_scope(self, reg_name: str) -> 'ObjList':
         """
@@ -458,6 +458,10 @@ class BaseConfigRegisterHelper(BaseConfigHelper):
             self.default = None
         self.fields = cfg_obj['FIELDS']
 
+    def is_enabled(self) -> bool:
+        """Check if the register is enabled"""
+        return True
+
     def read(self) -> int:
         """Read the object"""
         raise NotImplementedError()
@@ -569,7 +573,7 @@ class BaseConfigRegisterHelper(BaseConfigHelper):
 
 
 class ObjList(list):
-    def __init__(self, iterable: list = []):
+    def __init__(self, iterable: List[BaseConfigRegisterHelper] = []):
         super().__init__(iterable)
 
     def read(self) -> List[int]:
@@ -664,6 +668,12 @@ class ObjList(list):
 
     def all_has_field(self, field: str) -> bool:
         return all(inst.has_field(field) for inst in self)
+    
+    def filter_with_field(self, field:str) -> 'ObjList':
+        return ObjList([inst for inst in self if inst.has_field(field)])
+
+    def filter_enabled(self) -> 'ObjList':
+        return ObjList([inst for inst in self if inst.is_enabled()])
 
 
 class RegData(object):
