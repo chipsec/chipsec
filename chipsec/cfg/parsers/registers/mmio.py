@@ -84,6 +84,14 @@ class MMIORegisters(BaseConfigRegisterHelper):
         except Exception as e:
             raise MMIORegisterError(f"Failed to initialize MMIO register configuration: {e}") from e
 
+    def is_enabled(self) -> bool:
+        """Check if the MMIO register is enabled."""
+        try:
+            self.populate_base_address()
+        except Exception as e:
+            return False
+        return self.bar_base is not None
+
     def _validate_mmio_config(self) -> None:
         """
         Validate MMIO register-specific configuration requirements.

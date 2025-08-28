@@ -100,6 +100,15 @@ class IOBARRegisters(BaseConfigRegisterHelper):
         if not self.bar:
             raise IOBARRegisterError(f"I/O Bar for {self.name} must have a valid BAR identifier")
 
+    def is_enabled(self) -> bool:
+        """Check if the I/O BAR register is enabled."""
+        try:
+            self._resolve_bar_address()
+        except Exception as e:
+            self.logger.log_debug(f"Failed to resolve I/O BAR address for {self.name}: {e}")
+            return False
+        return self.io_port is not None
+
     def get_bar_info(self) -> Tuple[Optional[int], Optional[int]]:
         """
         Get BAR base address and size information.
@@ -147,11 +156,13 @@ class IOBARRegisters(BaseConfigRegisterHelper):
 
     def _resolve_bar_address(self) -> None:
         """
-        Resolve the BAR base address using CHIPSEC HAL.
+        Resolve the BAR base address using CHIPSEC HAL if not already done.
 
         Raises:
             IOBARRegisterError: If BAR resolution fails
         """
+        if self.io_port is not None:
+            return
         try:
             _cs = cs()
             (self.bar_base, self.bar_size) = _cs.hals.IOBAR.get_IO_BAR_base_address(self.bar, self.get_instance())
@@ -215,9 +226,8 @@ class IOBARRegisters(BaseConfigRegisterHelper):
         try:
             self.logger.log_debug(f'reading {self.name}')
 
-            # Resolve BAR address if not already done
-            if self.io_port is None:
-                self._resolve_bar_address()
+            # Resolve BAR address
+            self._resolve_bar_address()
 
             if not self.is_valid_port():
                 raise IOBARRegisterError(f"Invalid I/O port for register {self.name}: {self.get_effective_port_hex()}")
@@ -243,9 +253,8 @@ class IOBARRegisters(BaseConfigRegisterHelper):
         try:
             self.logger.log_debug(f'writing 0x{value:X} to {self.name}')
 
-            # Resolve BAR address if not already done
-            if self.io_port is None:
-                self._resolve_bar_address()
+            # Resolve BAR address
+            self._resolve_bar_address()
 
             if not self.is_valid_port():
                 raise IOBARRegisterError(f"Invalid I/O port for register {self.name}: {self.get_effective_port_hex()}")

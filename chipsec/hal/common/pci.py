@@ -68,40 +68,40 @@ class Pci(HALBase):
             value |= (self.helper.read_pci_reg(bus, device, function, address + 4, 4) << 32)
         else:
             raise CSReadError('PCI Device size should be 1, 2, 4, or 8')
-        self.logger.log_hal(f'[pci] reading B/D/F: {bus}/{device}/{function}, offset: 0x{address:02X}, value: 0x{value:0{size}X}')
+        self.logger.log_hal(f'[pci] reading B/D/F: {bus:x}/{device:x}/{function:x}, offset: 0x{address:02X}, value: 0x{value:0{size}X}')
         return value
 
     def read_dword(self, bus: int, device: int, function: int, address: int) -> int:
         value = self.helper.read_pci_reg(bus, device, function, address, 4)
         if self.hal_log_every_read or value != 0xFFFFFFFF:
-            self.logger.log_hal(f'[pci] reading B/D/F: {bus:d}/{device:d}/{function:d}, offset: 0x{address:02X}, value: 0x{value:08X}')
+            self.logger.log_hal(f'[pci] reading B/D/F: {bus:x}/{device:x}/{function:x}, offset: 0x{address:02X}, value: 0x{value:08X}')
         return value
 
     def read_word(self, bus: int, device: int, function: int, address: int) -> int:
         word_value = self.helper.read_pci_reg(bus, device, function, address, 2)
         if self.hal_log_every_read or word_value != 0xFFFF:
-            self.logger.log_hal(f'[pci] reading B/D/F: {bus:d}/{device:d}/{function:d}, offset: 0x{address:02X}, value: 0x{word_value:04X}')
+            self.logger.log_hal(f'[pci] reading B/D/F: {bus:x}/{device:x}/{function:x}, offset: 0x{address:02X}, value: 0x{word_value:04X}')
         return word_value
 
     def read_byte(self, bus: int, device: int, function: int, address: int) -> int:
         byte_value = self.helper.read_pci_reg(bus, device, function, address, 1)
         if self.hal_log_every_read or byte_value != 0xFF:
-            self.logger.log_hal(f'[pci] reading B/D/F: {bus:d}/{device:d}/{function:d}, offset: 0x{address:02X}, value: 0x{byte_value:02X}')
+            self.logger.log_hal(f'[pci] reading B/D/F: {bus:x}/{device:x}/{function:x}, offset: 0x{address:02X}, value: 0x{byte_value:02X}')
         return byte_value
 
     def write_byte(self, bus: int, device: int, function: int, address: int, byte_value: int) -> None:
         self.write(bus, device, function, address, 1, byte_value)
-        self.logger.log_hal(f'[pci] writing B/D/F: {bus:d}/{device:d}/{function:d}, offset: 0x{address:02X}, value: 0x{byte_value:02X}')
+        self.logger.log_hal(f'[pci] writing B/D/F: {bus:x}/{device:x}/{function:x}, offset: 0x{address:02X}, value: 0x{byte_value:02X}')
         return None
 
     def write_word(self, bus: int, device: int, function: int, address: int, word_value: int) -> None:
         self.write(bus, device, function, address, 2, word_value)
-        self.logger.log_hal(f'[pci] writing B/D/F: {bus:d}/{device:d}/{function:d}, offset: 0x{address:02X}, value: 0x{word_value:04X}')
+        self.logger.log_hal(f'[pci] writing B/D/F: {bus:x}/{device:x}/{function:x}, offset: 0x{address:02X}, value: 0x{word_value:04X}')
         return None
 
     def write_dword(self, bus: int, device: int, function: int, address: int, dword_value: int) -> None:
         self.write(bus, device, function, address, 4, dword_value)
-        self.logger.log_hal(f'[pci] writing B/D/F: {bus:d}/{device:d}/{function:d}, offset: 0x{address:02X}, value: 0x{dword_value:08X}')
+        self.logger.log_hal(f'[pci] writing B/D/F: {bus:x}/{device:x}/{function:x}, offset: 0x{address:02X}, value: 0x{dword_value:08X}')
         return None
 
     def write(self, bus: int, device: int, function: int, address: int, size: int, value: int) -> None:
@@ -161,7 +161,7 @@ class Pci(HALBase):
                     elif f == 0 and spec:
                         break
                 except OsHelperError:
-                    self.logger.log_hal(f"[pci] unable to access B/D/F: {b:d}/{d:d}/{f:d}")
+                    self.logger.log_hal(f"[pci] unable to access B/D/F: {b:x}/{d:x}/{f:x}")
         self.hal_log_every_read = True
         return devices
 
