@@ -139,7 +139,7 @@ class RegisterList:
         if register_name in self.register_list:
             return ObjList(self.__getattribute__(register_name))
         else:
-            raise RegisterNotFoundError(f'Invalid register name: {register_name}')
+            return ObjList() # raise RegisterNotFoundError(f'Invalid register name: {register_name}')
 
     def get_register_matches(self, register_name: str) -> ObjList:
         """
@@ -161,10 +161,10 @@ class RegisterList:
             if match(reg_name, reg):
                 registers.extend(self.get_register(reg))
 
-        if registers:
-            return registers
-        else:
-            raise RegisterNotFoundError(f'Invalid register name: {register_name}')
+        # if registers:
+        return registers
+        # else:
+        #     raise RegisterNotFoundError(f'Invalid register name: {register_name}')
 
 
 class Platform(Recursable):

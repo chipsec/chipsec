@@ -157,8 +157,8 @@ class DevConfig(BaseConfigParser):
                             break
         if dev_name not in self.cfg.CONFIG_PCI[vid_str]:
             obj = self._add_dev(vid_str, dev_name, None, dev_attr)
-
-        self.cfg.platform.get_vendor(vid_str).add_ip(dev_name, obj)
+        if obj:
+            self.cfg.platform.get_vendor(vid_str).add_ip(dev_name, obj)
 
     def _add_dev(self, vid_str, name, pci_info, dev_attr):
         if name not in self.cfg.CONFIG_PCI[vid_str]:
@@ -399,40 +399,46 @@ class CoreConfigRegisters(BaseConfigParser):
             reg_attr.update(stage_data.attrs)
             full_parent_name = self._make_ip_name(stage_data)
             parentobj = None
-            reg_attr['full_name'] = '.'.join([full_parent_name, reg_name])
-            if reg_attr['type'] == 'pcicfg':
-                reg_obj = self.create_register_object_with_pointer(PCIRegisters, reg_attr)
-            elif reg_attr['type'] == 'mmcfg':
-                reg_obj = self.create_register_object_with_pointer(MMCFGRegisters, reg_attr)
-            elif reg_attr['type'] == 'mmio':
-                parentobj = self.cfg.platform.get_obj_from_fullname(reg_attr['bar'])
-                reg_attr['full_name'] = '.'.join([reg_attr['bar'], reg_name])
-                reg_obj = self.create_register_object_bar(MMIORegisters, reg_attr)
-            elif reg_attr['type'] == 'iobar':
-                parentobj = self.cfg.platform.get_obj_from_fullname(reg_attr['bar'])
-                reg_attr['full_name'] = '.'.join([reg_attr['bar'], reg_name])
-                reg_obj = self.create_register_object_bar(IOBARRegisters, reg_attr)
-            elif reg_attr['type'] == 'msr':
-                threads_to_use = None
-                if 'scope' in reg_attr.keys():
-                    if reg_attr['scope'] == 'package':
-                        packages = self.cfg.CPU['packages']
-                        threads_to_use = [packages[p][0] for p in packages]
-                    elif reg_attr['scope'] == 'cores':
-                        cores = self.cfg.CPU['cores']
-                        threads_to_use = [cores[p][0] for p in cores]
-                if threads_to_use is None:
-                    threads_to_use = range(self.cfg.CPU['threads'])
-                reg_obj = self.create_register_object(MSRRegisters, reg_attr, threads_to_use)
-            elif reg_attr['type'] == 'io':
-                reg_obj = self.create_register_object(IORegisters, reg_attr, [None])
-            elif reg_attr['type'] == 'msgbus':
-                reg_obj = self.create_register_object(MSGBUSRegisters, reg_attr, [None])
-            elif reg_attr['type'] == 'mm_msgbus':
-                reg_obj = self.create_register_object(MM_MSGBUSRegisters, reg_attr, [None])
-            elif reg_attr['type'] == 'memory':
-                reg_obj = self.create_register_object_with_pointer(MEMORYRegisters, reg_attr)
-            else:
+            try:
+                reg_attr['full_name'] = '.'.join([full_parent_name, reg_name])
+                if reg_attr['type'] == 'pcicfg':
+                    reg_obj = self.create_register_object_with_pointer(PCIRegisters, reg_attr)
+                elif reg_attr['type'] == 'mmcfg':
+                    reg_obj = self.create_register_object_with_pointer(MMCFGRegisters, reg_attr)
+                elif reg_attr['type'] == 'mmio':
+                    parentobj = self.cfg.platform.get_obj_from_fullname(reg_attr['bar'])
+                    reg_attr['full_name'] = '.'.join([reg_attr['bar'], reg_name])
+                    reg_obj = self.create_register_object_bar(MMIORegisters, reg_attr)
+                elif reg_attr['type'] == 'iobar':
+                    parentobj = self.cfg.platform.get_obj_from_fullname(reg_attr['bar'])
+                    reg_attr['full_name'] = '.'.join([reg_attr['bar'], reg_name])
+                    reg_obj = self.create_register_object_bar(IOBARRegisters, reg_attr)
+                elif reg_attr['type'] == 'msr':
+                    threads_to_use = None
+                    if 'scope' in reg_attr.keys():
+                        if reg_attr['scope'] == 'package':
+                            packages = self.cfg.CPU['packages']
+                            threads_to_use = [packages[p][0] for p in packages]
+                        elif reg_attr['scope'] == 'cores':
+                            cores = self.cfg.CPU['cores']
+                            threads_to_use = [cores[p][0] for p in cores]
+                    if threads_to_use is None:
+                        threads_to_use = range(self.cfg.CPU['threads'])
+                    reg_obj = self.create_register_object(MSRRegisters, reg_attr, threads_to_use)
+                elif reg_attr['type'] == 'io':
+                    reg_obj = self.create_register_object(IORegisters, reg_attr, [None])
+                elif reg_attr['type'] == 'msgbus':
+                    reg_obj = self.create_register_object(MSGBUSRegisters, reg_attr, [None])
+                elif reg_attr['type'] == 'mm_msgbus':
+                    reg_obj = self.create_register_object(MM_MSGBUSRegisters, reg_attr, [None])
+                elif reg_attr['type'] == 'memory':
+                    reg_obj = self.create_register_object_with_pointer(MEMORYRegisters, reg_attr)
+                else:
+                    self.logger.log("Did not create register object for:")
+                    self.logger.log(reg_attr)
+                    continue
+            except Exception as e:
+                self.logger.log(f"Error creating register object: {e}")
                 self.logger.log("Did not create register object for:")
                 self.logger.log(reg_attr)
                 continue

@@ -23,7 +23,7 @@
 		</testcase>
 		<testcase classname="chipsec.modules.common.bios_wp" name="chipsec.modules.common.bios_wp" time="0.007980">
 			<pass type="Passed"/>
-			<system-out>[*] BC = 0x000000AA &lt;&lt; BIOS Control (b:d.f 00:31.5 + 0xDC)
+			<system-out>[*] BC = 0x000000AA &lt;&lt; BIOS Control (b:d.f 00:1f.5 + 0xDC)
     [00] BIOSWE           = 0 &lt;&lt; BIOS Write Enable 
     [01] BLE              = 1 &lt;&lt; BIOS Lock Enable 
     [02] SRC              = 2 &lt;&lt; SPI Read Configuration 

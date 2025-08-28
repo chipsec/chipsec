@@ -74,6 +74,10 @@ class PCIRegisters(BaseConfigRegisterHelper):
             raise PCIRegisterError(
                 f"Error initializing PCI register: {str(e)}") from e
 
+    def is_enabled(self) -> bool:
+        """Check if the PCI register is enabled."""
+        return self.pci.bus is not None
+
     def validate_pci_register_config(self) -> bool:
         """
         Validate PCI register-specific configuration.
@@ -176,18 +180,15 @@ class PCIRegisters(BaseConfigRegisterHelper):
             reg_val_str = f'0x{self.value:0{self.size * 2}X}'
         else:
             reg_val_str = self.value
-        if self.pci.bus is not None:
-            b = f'{self.pci.bus:02d}'
-        else:
-            b = self.pci.bus
-        d = self.pci.dev
-        f = self.pci.fun
+        b = f'{self.pci.bus:02x}' if self.pci.bus is not None else self.pci.bus
+        d = f'{self.pci.dev:02x}' if self.pci.dev is not None else self.pci.dev
+        f = f'{self.pci.fun:x}' if self.pci.fun is not None else self.pci.fun
         o = self.offset
         if self.default is not None:
             default = f'{self.default:X}'
         else:
             default = 'Not Provided'
-        reg_str = f'[*] {self.name} = {reg_val_str} << {self.desc} (b:d.f {b}:{d:02d}.{f:d} + 0x{o:X}) [default: {default}]'
+        reg_str = f'[*] {self.name} = {reg_val_str} << {self.desc} (b:d.f {b}:{d}.{f} + 0x{o:X}) [default: {default}]'
         reg_str += self._register_fields_str(True)
         return reg_str
 
@@ -197,14 +198,12 @@ class PCIRegisters(BaseConfigRegisterHelper):
             reg_val_str = f'0x{self.value:0{self.size * 2}X}'
         else:
             reg_val_str = self.value
-        if self.pci.bus is not None:
-            b = f'{self.pci.bus:02d}'
-        else:
-            b = self.pci.bus
-        d = self.pci.dev
-        f = self.pci.fun
+        
+        b = f'{self.pci.bus:02x}' if self.pci.bus is not None else self.pci.bus
+        d = f'{self.pci.dev:02x}' if self.pci.dev is not None else self.pci.dev
+        f = f'{self.pci.fun:x}' if self.pci.fun is not None else self.pci.fun
         o = self.offset
-        reg_str = f'[*] {self.name} = {reg_val_str} << {self.desc} (b:d.f {b}:{d:02d}.{f:d} + 0x{o:X})'
+        reg_str = f'[*] {self.name} = {reg_val_str} << {self.desc} (b:d.f {b}:{d}.{f} + 0x{o:X})'
         reg_str += self._register_fields_str()
         return reg_str
 

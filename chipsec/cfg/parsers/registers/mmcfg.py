@@ -76,6 +76,10 @@ class MMCFGRegisters(BaseConfigRegisterHelper):
         except Exception as e:
             raise MMCFGRegisterError(f"Failed to initialize MMCFG register configuration: {e}") from e
 
+    def is_enabled(self) -> bool:
+        """Check if the MMCFG register is enabled."""
+        return self.pci.bus is not None
+
     def _validate_mmcfg_config(self) -> None:
         """
         Validate MMCFG register-specific configuration requirements.
