@@ -52,9 +52,9 @@ class MMCFG(hal_base.HALBase):
         super(MMCFG, self).__init__(cs)
         self.base_list = []
         if self.cs.is_server():
-            self.PCIEXBAR = "8086.MemMap_VTd.PCIEXBAR"
-            self.MmioCfgBaseAddr = "8086.MemMap_VTd.MmioCfgBaseAddr"
-            self.MMCFG = "8086.MemMap_VTd.MMCFG"
+            self.PCIEXBAR = "8086.MEMMAP_VTD.PCIEXBAR"
+            self.MmioCfgBaseAddr = "8086.MEMMAP_VTD.MmioCfgBaseAddr"
+            self.MMCFG = "8086.MEMMAP_VTD.MMCFG"
         else:
             self.PCIEXBAR = "8086.HOSTCTL.PCIEXBAR"
             self.MmioCfgBaseAddr = "8086.HOSTCTL.MmioCfgBaseAddr"
