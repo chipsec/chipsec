@@ -205,7 +205,7 @@ class MMIO(hal_base.HALBase):
                     base_field = bar.base_field
                     try:
                         base = bar_reg.read_field(base_field, preserve)
-                    except CSReadError:
+                    except (CSReadError, AttributeError):
                         continue
                     try:
                         reg_mask = bar_reg.get_field_mask(base_field, preserve)
