@@ -23,7 +23,9 @@ only the public space registers were described here.
 -->
   <registers>
 
-    <register name="TXT_STS" type="memory" range="TXT" offset="0x000" size="8" desc="TXT Status">
+    <!-- Memory Range of TXT space -->
+
+    <register name="STS" type="memory" offset="0x000" size="8" desc="TXT Status">
       <field name="SENTER_DONE_STS" bit="0" size="1" desc="SENTER Done"/>
       <field name="SEXIT_DONE_STS" bit="1" size="1" desc="SEXIT Done"/>
       <field name="MEM_UNLOCK_STS" bit="4" size="1" desc="Memory Unlocked"/>
@@ -34,21 +36,21 @@ only the public space registers were described here.
       <field name="MEM_CONFIG_OK_STS" bit="11" size="1" desc="Mem CFG OK"/>
       <field name="PMRC_LOCK_STS" bit="12" size="1" desc="PMRC Locked"/>
       <field name="SMM_OPEN_STS" bit="13" size="1" desc="SMM Opened"/>
-      <field name="TXT_LOCALITY3_OPEN_STS" bit="14" size="1" desc="Locality 3 Opened"/>
-      <field name="TXT_LOCALITY1_OPEN_STS" bit="15" size="1" desc="Locality 1 Opened"/>
-      <field name="TXT_LOCALITY2_OPEN_STS" bit="16" size="1" desc="Locality 2 Opened"/>
+      <field name="LOCALITY3_OPEN_STS" bit="14" size="1" desc="Locality 3 Opened"/>
+      <field name="LOCALITY1_OPEN_STS" bit="15" size="1" desc="Locality 1 Opened"/>
+      <field name="LOCALITY2_OPEN_STS" bit="16" size="1" desc="Locality 2 Opened"/>
       <field name="SEQ_IN_PROGRESS" bit="17" size="1" desc="Seq In Progress"/>
     </register>
-    <register name="TXT_ESTS" type="memory" range="TXT" offset="0x008" size="8" desc="TXT Error Status">
-      <field name="TXT_RESET_STS" bit="0" size="1" desc="TXT Reset"/>
+    <register name="ESTS" type="memory" offset="0x008" size="8" desc="TXT Error Status">
+      <field name="RESET_STS" bit="0" size="1" desc="TXT Reset"/>
       <field name="ROGUE_STS" bit="1" size="1" desc="Rogue Status"/>
       <field name="MEMORY_ATTACK" bit="2" size="1" desc="Memory Attack"/>
       <field name="ALIAS_FAULT" bit="5" size="1" desc="Alias Fault"/>
       <field name="WAKE_ERROR_STS" bit="6" size="1" desc="Wake Error"/>
     </register>
-    <register name="TXT_THREADS_EXISTS" type="memory" range="TXT" offset="0x010" size="8" desc="TXT Threads Exists"/>
-    <register name="TXT_THREADS_JOIN" type="memory" range="TXT" offset="0x020" size="8" desc="TXT Threads Join"/>
-    <register name="TXT_ERRORCODE" type="memory" range="TXT" offset="0x030" size="8" desc="TXT Error Code (0xC0000001 when successful SINIT)">
+    <register name="THREADS_EXISTS" type="memory" offset="0x010" size="8" desc="TXT Threads Exists"/>
+    <register name="THREADS_JOIN" type="memory" offset="0x020" size="8" desc="TXT Threads Join"/>
+    <register name="ERRORCODE" type="memory" offset="0x030" size="8" desc="TXT Error Code (0xC0000001 when successful SINIT)">
       <field name="TYPE2_MODULE_TYPE" bit="0" size="4" desc="Module Type (0 for BIOS ACM, 1 for SINIT)"/>
       <field name="TYPE2_CLASS_CODE" bit="4" size="6" desc="Class Code"/>
       <field name="TYPE2_MAJOR_ERROR_CODE" bit="10" size="5" desc="Major Error Code"/>
@@ -59,85 +61,85 @@ only the public space registers were described here.
       <field name="VALID" bit="31" size="1" desc="Valid Register Content"/>
     </register>
 
-    <!-- TXT_CMD_RESET at offset 0x38 -->
-    <!-- TXT_CMD_OPEN_PRIVATE at offset 0x40 -->
-    <!-- TXT_CMD_CLOSE_PRIVATE at offset 0x48 -->
+    <!-- CMD_RESET at offset 0x38 -->
+    <!-- CMD_OPEN_PRIVATE at offset 0x40 -->
+    <!-- CMD_CLOSE_PRIVATE at offset 0x48 -->
 
-    <!-- TDX's SEAM Loader documents LT_CRASH2 with LT_CRASH being the old name of TXT_ERRORCODE -->
-    <register name="TXT_CRASH2" type="memory" range="TXT" offset="0x050" size="8" desc="Second Error Code"/>
+    <!-- TDX's SEAM Loader documents LT_CRASH2 with LT_CRASH being the old name of ERRORCODE -->
+    <register name="CRASH2" type="memory" offset="0x050" size="8" desc="Second Error Code"/>
 
-    <register name="TXT_SPAD" type="memory" range="TXT" offset="0x0A0" size="8" desc="Boot Status">
+    <register name="SPAD" type="memory" offset="0x0A0" size="8" desc="Boot Status">
       <field name="ACM_INTERNAL" bit="0" size="30" desc="ACM Internal Use"/>
-      <field name="TXT_STARTUP_SUCCESS" bit="30" size="1" desc="TXT Startup Success"/>
+      <field name="STARTUP_SUCCESS" bit="30" size="1" desc="TXT Startup Success"/>
       <field name="BOOT_STATUS" bit="31" size="16" desc="General Startup ACM to BIOS status communication"/>
       <field name="MEM_POWER_DOWN_EXECUTED" bit="47" size="1" desc="Memory content was cleared via power down"/>
       <field name="BOOT_STATUS_DETAILS_48" bit="48" size="5" desc="Startup ACM to BIOS communication in MP platforms"/>
-      <field name="TXT_POLICY_ENABLE" bit="53" size="1" desc="Startup ACM indication of run-time enabled status of TXT"/>
+      <field name="POLICY_ENABLE" bit="53" size="1" desc="Startup ACM indication of run-time enabled status of TXT"/>
       <field name="BOOT_STATUS_DETAILS_54" bit="54" size="5" desc="Startup ACM to BIOS communication in MP platforms"/>
       <field name="BIOS_TRUSTED" bit="59" size="1" desc="BIOS is trusted"/>
-      <field name="TXT_POLICY_DISABLE" bit="60" size="1" desc="TXT has been disabled by runtime FIT type 0xA record policy setting"/>
+      <field name="POLICY_DISABLE" bit="60" size="1" desc="TXT has been disabled by runtime FIT type 0xA record policy setting"/>
       <field name="BOOT_STATUS_DETAILS_61" bit="61" size="1" desc="Startup ACM to BIOS communication in MP platforms"/>
       <field name="CPU_ERROR" bit="62" size="1" desc="ACM authentication error"/>
       <field name="S_ACM_SUCCESS" bit="63" size="1" desc="S-ACM successfully enforced its logic for all provisioned technologies"/>
     </register>
 
-    <register name="TXT_VER_FSBIF" type="memory" range="TXT" offset="0x100" size="4" desc="TXT Front Side Bus Interface">
+    <register name="VER_FSBIF" type="memory" offset="0x100" size="4" desc="TXT Front Side Bus Interface">
       <field name="DEBUG_FUSE" bit="31" size="1" desc="Chipset is Production Fused (0 for Debug)"/>
     </register>
-    <register name="TXT_DIDVID" type="memory" range="TXT" offset="0x110" size="8" desc="TXT Device ID">
+    <register name="DIDVID" type="memory" offset="0x110" size="8" desc="TXT Device ID">
       <field name="VID" bit="0" size="16" desc="Vendor ID"/>
       <field name="DID" bit="16" size="16" desc="Device ID"/>
       <field name="RID" bit="32" size="16" desc="Revision ID"/>
       <field name="EXTID" bit="48" size="16" desc="Extended ID"/>
     </register>
-    <register name="TXT_EID" type="memory" range="TXT" offset="0x118" size="8" desc="TXT EID"/>
+    <register name="EID" type="memory" offset="0x118" size="8" desc="TXT EID"/>
 
     <!--
       TXT.VER.QPIIF was renamed TXT.VER.EMIF "for EMC Version Number Register"
       in Intel® Trusted Execution Technology (Intel® TXT) Software Development Guide
       (document number 315168-017 from January 2021)
     -->
-    <register name="TXT_VER_QPIIF" type="memory" range="TXT" offset="0x200" size="4" desc="TXT Intel QuickPath Interconnect Interface">
+    <register name="VER_QPIIF" type="memory" offset="0x200" size="4" desc="TXT Intel QuickPath Interconnect Interface">
       <field name="PMRC_CAPABLE" bit="19" size="1" desc="PMRC Capable"/>
       <field name="DPR_CAPABLE" bit="26" size="1" desc="DPR Capable"/>
       <field name="DEBUG_FUSE" bit="31" size="1" desc="Chipset is Production Fused (0 for Debug)"/>
     </register>
 
-    <!-- TXT_CMD_LOCK_MEM_CONFIG at offset 0x210 -->
-    <!-- TXT_CMD_UNLOCK_MEM_CONFIG at offset 0x218 -->
-    <!-- TXT_CMD_UNLOCK_MEMORY at offset 0x220 -->
-    <!-- TXT_LOCK_BASE at offset 0x230 -->
-    <!-- TXT_UNLOCK_BASE at offset 0x238 -->
-    <!-- TXT_CMD_CACHE_INVALIDATE at offset 0x250 -->
-    <!-- TXT_CMD_FLUSH_WB at offset 0x258 -->
+    <!-- CMD_LOCK_MEM_CONFIG at offset 0x210 -->
+    <!-- CMD_UNLOCK_MEM_CONFIG at offset 0x218 -->
+    <!-- CMD_UNLOCK_MEMORY at offset 0x220 -->
+    <!-- LOCK_BASE at offset 0x230 -->
+    <!-- UNLOCK_BASE at offset 0x238 -->
+    <!-- CMD_CACHE_INVALIDATE at offset 0x250 -->
+    <!-- CMD_FLUSH_WB at offset 0x258 -->
 
-    <register name="TXT_NODMA_BASE" type="memory" range="TXT" offset="0x260" size="4" desc="No DMA Base Address"/>
-    <register name="TXT_NODMA_SIZE" type="memory" range="TXT" offset="0x268" size="4" desc="No DMA Size"/>
-    <register name="TXT_SINIT_BASE" type="memory" range="TXT" offset="0x270" size="4" desc="SINIT Base Address"/>
-    <register name="TXT_SINIT_SIZE" type="memory" range="TXT" offset="0x278" size="4" desc="SINIT Size"/>
+    <register name="NODMA_BASE" type="memory" offset="0x260" size="4" desc="No DMA Base Address"/>
+    <register name="NODMA_SIZE" type="memory" offset="0x268" size="4" desc="No DMA Size"/>
+    <register name="SINIT_BASE" type="memory" offset="0x270" size="4" desc="SINIT Base Address"/>
+    <register name="SINIT_SIZE" type="memory" offset="0x278" size="4" desc="SINIT Size"/>
 
-    <!-- TXT_CMD_LOCK_PMRC at offset 0x280 -->
-    <!-- TXT_CMD_UNLOCK_PMRC at offset 0x288 -->
+    <!-- CMD_LOCK_PMRC at offset 0x280 -->
+    <!-- CMD_UNLOCK_PMRC at offset 0x288 -->
 
-    <register name="TXT_MLE_JOIN" type="memory" range="TXT" offset="0x290" size="4" desc="MLE Join Base Address"/>
-    <register name="TXT_BLOCKMAP_CAP" type="memory" range="TXT" offset="0x2A0" size="8" desc="Block Map CAP"/>
-    <register name="TXT_BLOCKMAP_CNF" type="memory" range="TXT" offset="0x2A8" size="8" desc="Block Map CNF"/>
-    <register name="TXT_BLOCKMAP_POINTER" type="memory" range="TXT" offset="0x2B0" size="8" desc="Block Map Pointer"/>
+    <register name="MLE_JOIN" type="memory" offset="0x290" size="4" desc="MLE Join Base Address"/>
+    <register name="BLOCKMAP_CAP" type="memory" offset="0x2A0" size="8" desc="Block Map CAP"/>
+    <register name="BLOCKMAP_CNF" type="memory" offset="0x2A8" size="8" desc="Block Map CNF"/>
+    <register name="BLOCKMAP_POINTER" type="memory" offset="0x2B0" size="8" desc="Block Map Pointer"/>
 
-    <!-- TXT_CMD_BLOCKMAP_EN at offset 0x2C0 -->
-    <!-- TXT_CMD_BLOCKMAP_DIS at offset 0x2C8 -->
-    <!-- TXT_CMD_NODMA_CACHE_EN at offset 0x2D0 -->
-    <!-- TXT_CMD_NODMA_CACHE_DIS at offset 0x2D8 -->
-    <!-- TXT_CMD_NODMA_TABLE_PROTECT_EN at offset 0x2E0 -->
-    <!-- TXT_CMD_NODMA_TABLE_PROTECT_DIS at offset 0x2E8 -->
-    <!-- TXT_CMD_MEM_CONFIG_CHECKED at offset 0x2F0 -->
+    <!-- CMD_BLOCKMAP_EN at offset 0x2C0 -->
+    <!-- CMD_BLOCKMAP_DIS at offset 0x2C8 -->
+    <!-- CMD_NODMA_CACHE_EN at offset 0x2D0 -->
+    <!-- CMD_NODMA_CACHE_DIS at offset 0x2D8 -->
+    <!-- CMD_NODMA_TABLE_PROTECT_EN at offset 0x2E0 -->
+    <!-- CMD_NODMA_TABLE_PROTECT_DIS at offset 0x2E8 -->
+    <!-- CMD_MEM_CONFIG_CHECKED at offset 0x2F0 -->
 
-    <register name="TXT_HEAP_BASE" type="memory" range="TXT" offset="0x300" size="4" desc="TXT Heap Base Address"/>
-    <register name="TXT_HEAP_SIZE" type="memory" range="TXT" offset="0x308" size="4" desc="TXT Heap Size"/>
-    <register name="TXT_MSEG_BASE" type="memory" range="TXT" offset="0x310" size="4" desc="TXT MSEG Base Address"/>
-    <register name="TXT_MSEG_SIZE" type="memory" range="TXT" offset="0x318" size="4" desc="TXT MSEG Size"/>
-    <register name="TXT_SCRATCHPAD_0" type="memory" range="TXT" offset="0x320" size="8" desc="TXT Scratchpad 0"/>
-    <register name="TXT_ACM_STATUS" type="memory" range="TXT" offset="0x328" size="4" desc="TXT ACM Status">
+    <register name="HEAP_BASE" type="memory" offset="0x300" size="4" desc="TXT Heap Base Address"/>
+    <register name="HEAP_SIZE" type="memory" offset="0x308" size="4" desc="TXT Heap Size"/>
+    <register name="MSEG_BASE" type="memory" offset="0x310" size="4" desc="TXT MSEG Base Address"/>
+    <register name="MSEG_SIZE" type="memory" offset="0x318" size="4" desc="TXT MSEG Size"/>
+    <register name="SCRATCHPAD_0" type="memory" offset="0x320" size="8" desc="TXT Scratchpad 0"/>
+    <register name="ACM_STATUS" type="memory" offset="0x328" size="4" desc="TXT ACM Status">
        <field name="MODULE_TYPE" bit="0" size="4" desc="Module Type"/>
        <field name="CLASS_CODE" bit="4" size="6" desc="Class Code"/>
        <field name="MAJOR_ERROR_CODE" bit="10" size="5" desc="Major Error Code"/>
@@ -145,30 +147,30 @@ only the public space registers were described here.
        <field name="MINOR_ERROR_CODE" bit="16" size="12" desc="Minor Error Code"/>
        <field name="VALID" bit="31" size="1" desc="Valid"/>
     </register>
-    <register name="TXT_ACM_BIOS_POLICY" type="memory" range="TXT" offset="0x32C" size="4" desc="TXT ACM BIOS Policy"/>
-    <register name="TXT_DPR" type="memory" range="TXT" offset="0x330" size="4" desc="TXT DMA Protected Range (deprecated, replaced by PCI0.0.0_DPR)">
+    <register name="ACM_BIOS_POLICY" type="memory" offset="0x32C" size="4" desc="TXT ACM BIOS Policy"/>
+    <register name="DPR" type="memory" offset="0x330" size="4" desc="TXT DMA Protected Range (deprecated, replaced by PCI0.0.0_DPR)">
       <field name="LOCK" bit="0" size="1" desc="Lock Bits 19:0"/>
       <field name="SIZE" bit="4" size="8" desc="Protected Memory Size (in MB)"/>
       <field name="TOP" bit="20" size="12" desc="Top Address+1 of DPR (base of TSEG)"/>
     </register>
-    <register name="TXT_FIT" type="memory" range="TXT" offset="0x340" size="4" desc="FIT (Firmware Interface Table)">
+    <register name="FIT" type="memory" offset="0x340" size="4" desc="FIT (Firmware Interface Table)">
       <field name="FIT_FAILED" bit="0" size="1" desc="FIT Failed"/>
       <field name="S_ACM_FAILED" bit="1" size="1" desc="S-ACM Failed"/>
       <field name="FIT_MEASURED" bit="2" size="1" desc="FIT Measured"/>
       <field name="FIT_FALLBACK" bit="3" size="1" desc="FIT Fallback"/>
     </register>
 
-    <register name="TXT_INCREMENT" type="memory" range="TXT" offset="0x350" size="8" desc="TXT Increment"/>
-    <register name="TXT_SPAD_3" type="memory" range="TXT" offset="0x358" size="8" desc="TXT Status 3"/>
-    <register name="TXT_SCRATCHPAD_4" type="memory" range="TXT" offset="0x360" size="8" desc="TXT Scratchpad 4"/>
-    <register name="TXT_SCRATCHPAD_5" type="memory" range="TXT" offset="0x368" size="8" desc="TXT Scratchpad 5"/>
-    <register name="TXT_INCREMENT_2" type="memory" range="TXT" offset="0x370" size="8" desc="TXT Increment 2"/>
-    <register name="TXT_SCRATCHPAD" type="memory" range="TXT" offset="0x378" size="8" desc="ACM Policy Status">
+    <register name="INCREMENT" type="memory" offset="0x350" size="8" desc="TXT Increment"/>
+    <register name="SPAD_3" type="memory" offset="0x358" size="8" desc="TXT Status 3"/>
+    <register name="SCRATCHPAD_4" type="memory" offset="0x360" size="8" desc="TXT Scratchpad 4"/>
+    <register name="SCRATCHPAD_5" type="memory" offset="0x368" size="8" desc="TXT Scratchpad 5"/>
+    <register name="INCREMENT_2" type="memory" offset="0x370" size="8" desc="TXT Increment 2"/>
+    <register name="SCRATCHPAD" type="memory" offset="0x378" size="8" desc="ACM Policy Status">
       <field name="KM_ID" bit="0" size="4" desc="Key Manifest ID used for verified Key Manifest"/>
       <field name="MEASURED_BOOT" bit="4" size="1" desc="Perform measured boot"/>
       <field name="VERIFIED_BOOT" bit="5" size="1" desc="Perform verified boot"/>
       <field name="HAP" bit="6" size="1" desc="High Assurance Platform"/>
-      <field name="TXT_SUPPORTED" bit="7" size="1" desc="TXT Supported"/>
+      <field name="SUPPORTED" bit="7" size="1" desc="TXT Supported"/>
       <field name="BOOT_MEDIA" bit="8" size="1" desc="Boot media"/>
       <field name="DCD" bit="9" size="1" desc="Disable CPU Debug"/>
       <field name="DBI" bit="10" size="1" desc="Disable BSP Init"/>
@@ -178,7 +180,7 @@ only the public space registers were described here.
       <field name="TPM_SUCCESS" bit="15" size="1" desc="TPM Success"/>
       <field name="BOOT_POLICIES_2" bit="17" size="1" desc="Boot Policies"/>
       <field name="BACKUP_ACTION" bit="18" size="2" desc="Backup Action"/>
-      <field name="TXT_PROFILE" bit="20" size="5" desc="TXT Profile"/>
+      <field name="PROFILE" bit="20" size="5" desc="TXT Profile"/>
       <field name="MEMORY_SCRUB_POLICY" bit="25" size="2" desc="Memory Scrub Policy"/>
       <field name="KM_ARB_EN" bit="27" size="1" desc="KM ARB (Key Manifest Anti-Rollback) enable"/>
       <field name="BPM_ARB_EN" bit="28" size="1" desc="BPM ARB (Boot Policy Manifest Anti-Rollback) enable"/>
@@ -188,45 +190,45 @@ only the public space registers were described here.
       <field name="TPM_STARTUP_LOCALITY" bit="36" size="1" desc="Locality at which TPM2_Startup command was executed (0 for locality 3, 1 for locality 0)"/>
     </register>
 
-    <!-- TXT_CMD_OPEN_LOCALITY1 at offset 0x380 -->
-    <!-- TXT_CMD_CLOSE_LOCALITY1 at offset 0x388 -->
-    <!-- TXT_CMD_OPEN_LOCALITY2 at offset 0x390 -->
-    <!-- TXT_CMD_CLOSE_LOCALITY2 at offset 0x398 -->
-    <!-- TXT_CMD_OPEN_LOCALITY3 at offset 0x3A0 -->
-    <!-- TXT_CMD_CLOSE_LOCALITY3 at offset 0x3A8 -->
+    <!-- CMD_OPEN_LOCALITY1 at offset 0x380 -->
+    <!-- CMD_CLOSE_LOCALITY1 at offset 0x388 -->
+    <!-- CMD_OPEN_LOCALITY2 at offset 0x390 -->
+    <!-- CMD_CLOSE_LOCALITY2 at offset 0x398 -->
+    <!-- CMD_OPEN_LOCALITY3 at offset 0x3A0 -->
+    <!-- CMD_CLOSE_LOCALITY3 at offset 0x3A8 -->
 
-    <register name="TXT_PUBLIC_KEY_0" type="memory" range="TXT" offset="0x400" size="8" desc="ACM Public Key Hash (bits 0:63)"/>
-    <register name="TXT_PUBLIC_KEY_1" type="memory" range="TXT" offset="0x408" size="8" desc="ACM Public Key Hash (bits 64:127)"/>
-    <register name="TXT_PUBLIC_KEY_2" type="memory" range="TXT" offset="0x410" size="8" desc="ACM Public Key Hash (bits 128:191)"/>
-    <register name="TXT_PUBLIC_KEY_3" type="memory" range="TXT" offset="0x418" size="8" desc="ACM Public Key Hash (bits 192:255)"/>
+    <register name="PUBLIC_KEY_0" type="memory" offset="0x400" size="8" desc="ACM Public Key Hash (bits 0:63)"/>
+    <register name="PUBLIC_KEY_1" type="memory" offset="0x408" size="8" desc="ACM Public Key Hash (bits 64:127)"/>
+    <register name="PUBLIC_KEY_2" type="memory" offset="0x410" size="8" desc="ACM Public Key Hash (bits 128:191)"/>
+    <register name="PUBLIC_KEY_3" type="memory" offset="0x418" size="8" desc="ACM Public Key Hash (bits 192:255)"/>
 
-    <register name="TXT_ESTS_SET" type="memory" range="TXT" offset="0x608" size="8" desc="TXT ESTS Set"/>
-    <register name="TXT_EXISTS_SET" type="memory" range="TXT" offset="0x610" size="8" desc="TXT EXISTS Set"/>
-    <register name="TXT_JOINS_SET" type="memory" range="TXT" offset="0x620" size="8" desc="TXT JOINS Set"/>
-    <register name="TXT_SCLEAN_SET" type="memory" range="TXT" offset="0x670" size="8" desc="TXT SCLEAN Set"/>
-    <register name="TXT_SPAD_SET" type="memory" range="TXT" offset="0x6A0" size="8" desc="TXT SPAD Set"/>
-    <register name="TXT_EXISTS_CLEAR" type="memory" range="TXT" offset="0x710" size="8" desc="TXT EXISTS Clear"/>
-    <register name="TXT_JOINS_CLEAR" type="memory" range="TXT" offset="0x720" size="8" desc="TXT EXISTS Clear"/>
-    <register name="TXT_SCLEAN_CLEAR" type="memory" range="TXT" offset="0x770" size="8" desc="TXT SCLEAN Clear"/>
-    <register name="TXT_SPAD_CLEAR" type="memory" range="TXT" offset="0x7A0" size="8" desc="TXT SPAD Clear"/>
+    <register name="ESTS_SET" type="memory" offset="0x608" size="8" desc="TXT ESTS Set"/>
+    <register name="EXISTS_SET" type="memory" offset="0x610" size="8" desc="TXT EXISTS Set"/>
+    <register name="JOINS_SET" type="memory" offset="0x620" size="8" desc="TXT JOINS Set"/>
+    <register name="SCLEAN_SET" type="memory" offset="0x670" size="8" desc="TXT SCLEAN Set"/>
+    <register name="SPAD_SET" type="memory" offset="0x6A0" size="8" desc="TXT SPAD Set"/>
+    <register name="EXISTS_CLEAR" type="memory" offset="0x710" size="8" desc="TXT EXISTS Clear"/>
+    <register name="JOINS_CLEAR" type="memory" offset="0x720" size="8" desc="TXT EXISTS Clear"/>
+    <register name="SCLEAN_CLEAR" type="memory" offset="0x770" size="8" desc="TXT SCLEAN Clear"/>
+    <register name="SPAD_CLEAR" type="memory" offset="0x7A0" size="8" desc="TXT SPAD Clear"/>
 
-    <register name="TXT_VER_FTIF" type="memory" range="TXT" offset="0x800" size="4" desc="TXT FT Interface">
+    <register name="VER_FTIF" type="memory" offset="0x800" size="4" desc="TXT FT Interface">
       <field name="TPM_IF" bit="16" size="4" desc="TPM Interface (0 if not present, 1 for LPC, 5 for SPI, 7 for CRB and fTPM)"/>
     </register>
-    <register name="TXT_PCH_DIDVID" type="memory" range="TXT" offset="0x810" size="8" desc="TXT Platform Controller Hub Device ID">
+    <register name="PCH_DIDVID" type="memory" offset="0x810" size="8" desc="TXT Platform Controller Hub Device ID">
       <field name="VID" bit="0" size="16" desc="Vendor ID"/>
       <field name="DID" bit="16" size="16" desc="Device ID"/>
       <field name="RID" bit="32" size="16" desc="Revision ID"/>
     </register>
 
-    <register name="INSMM" type="memory" range="TXT" offset="0x880" size="4" desc="InSMM.STS (also known as LT.UCS)">
+    <register name="INSMM" type="memory" offset="0x880" size="4" desc="InSMM.STS (also known as LT.UCS)">
       <field name="STS" bit="0" size="1" desc="BIOS Write Enable when enabled by SPI.BC.EISS=1"/>
     </register>
 
-    <!-- TXT_CMD_SECRETS at offset 0x8E0 -->
-    <!-- TXT_CMD_NO_SECRETS at offset 0x8E8 -->
+    <!-- CMD_SECRETS at offset 0x8E0 -->
+    <!-- CMD_NO_SECRETS at offset 0x8E8 -->
 
-    <register name="TXT_E2STS" type="memory" range="TXT" offset="0x8F0" size="8" desc="TXT Extended Error Status">
+    <register name="E2STS" type="memory" offset="0x8F0" size="8" desc="TXT Extended Error Status">
       <field name="SLEEP_ENTRY_ERROR_STS" bit="0" size="1" desc="Sleep Entry Error"/>
       <field name="SECRETS_STS" bit="1" size="1" desc="Secrets in Memory"/>
       <field name="BLOCK_MEM_STS" bit="2" size="1" desc="Block Memory"/>
@@ -234,24 +236,24 @@ only the public space registers were described here.
       <field name="RESET_POLICY" bit="32" size="1" desc="Reset Policy"/>
     </register>
 
-    <register name="TXT_FT_REGS1" type="memory" range="TXT" offset="0x900" size="4" desc="TXT FT Regs 1"/>
-    <register name="TXT_FT_REGS2" type="memory" range="TXT" offset="0x904" size="4" desc="TXT FT Regs 2"/>
+    <register name="FT_REGS1" type="memory" offset="0x900" size="4" desc="TXT FT Regs 1"/>
+    <register name="FT_REGS2" type="memory" offset="0x904" size="4" desc="TXT FT Regs 2"/>
 
-    <register name="TXT_SEQ_START" type="memory" range="TXT" offset="0xD80" size="8" desc="TXT Seq Start"/>
-    <register name="TXT_SEQ_DONE" type="memory" range="TXT" offset="0xD90" size="8" desc="TXT Seq Done"/>
+    <register name="SEQ_START" type="memory" offset="0xD80" size="8" desc="TXT Seq Start"/>
+    <register name="SEQ_DONE" type="memory" offset="0xD90" size="8" desc="TXT Seq Done"/>
 
-    <register name="TXT_INCREMENT_3" type="memory" range="TXT" offset="0xD98" size="8" desc="TXT Increment 3"/>
-    <register name="TXT_SCRATCHPAD_7" type="memory" range="TXT" offset="0xDA0" size="8" desc="TXT Scratchpad 7"/>
-    <register name="TXT_INCREMENT_4" type="memory" range="TXT" offset="0xDA8" size="8" desc="TXT Increment 4"/>
-    <register name="TXT_SCRATCHPAD_8" type="memory" range="TXT" offset="0xDB0" size="8" desc="TXT Scratchpad 8"/>
-    <register name="TXT_INCREMENT_5" type="memory" range="TXT" offset="0xDB8" size="8" desc="TXT Increment 5"/>
-    <register name="TXT_SCRATCHPAD_9" type="memory" range="TXT" offset="0xDC0" size="8" desc="TXT Scratchpad 9"/>
-    <register name="TXT_INCREMENT_6" type="memory" range="TXT" offset="0xDC8" size="8" desc="TXT Increment 6"/>
-    <register name="TXT_SCRATCHPAD_10" type="memory" range="TXT" offset="0xDD0" size="8" desc="TXT Scratchpad 10"/>
-    <register name="TXT_INCREMENT_7" type="memory" range="TXT" offset="0xDD8" size="8" desc="TXT Increment 7"/>
-    <register name="TXT_SCRATCHPAD_11" type="memory" range="TXT" offset="0xDE0" size="8" desc="TXT Scratchpad 11"/>
-    <register name="TXT_INCREMENT_8" type="memory" range="TXT" offset="0xDE8" size="8" desc="TXT Increment 8"/>
-    <register name="TXT_SCRATCHPAD_12" type="memory" range="TXT" offset="0xDF0" size="8" desc="TXT Scratchpad 12"/>
+    <register name="INCREMENT_3" type="memory" offset="0xD98" size="8" desc="TXT Increment 3"/>
+    <register name="SCRATCHPAD_7" type="memory" offset="0xDA0" size="8" desc="TXT Scratchpad 7"/>
+    <register name="INCREMENT_4" type="memory" offset="0xDA8" size="8" desc="TXT Increment 4"/>
+    <register name="SCRATCHPAD_8" type="memory" offset="0xDB0" size="8" desc="TXT Scratchpad 8"/>
+    <register name="INCREMENT_5" type="memory" offset="0xDB8" size="8" desc="TXT Increment 5"/>
+    <register name="SCRATCHPAD_9" type="memory" offset="0xDC0" size="8" desc="TXT Scratchpad 9"/>
+    <register name="INCREMENT_6" type="memory" offset="0xDC8" size="8" desc="TXT Increment 6"/>
+    <register name="SCRATCHPAD_10" type="memory" offset="0xDD0" size="8" desc="TXT Scratchpad 10"/>
+    <register name="INCREMENT_7" type="memory" offset="0xDD8" size="8" desc="TXT Increment 7"/>
+    <register name="SCRATCHPAD_11" type="memory" offset="0xDE0" size="8" desc="TXT Scratchpad 11"/>
+    <register name="INCREMENT_8" type="memory" offset="0xDE8" size="8" desc="TXT Increment 8"/>
+    <register name="SCRATCHPAD_12" type="memory" offset="0xDF0" size="8" desc="TXT Scratchpad 12"/>
   </registers>
 
   <controls>
