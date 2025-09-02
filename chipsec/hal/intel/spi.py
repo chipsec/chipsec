@@ -489,8 +489,7 @@ class SPI(hal_base.HALBase):
 
     def check_hardware_sequencing(self) -> None:
         # Test if the flash decriptor is valid (and hardware sequencing enabled)
-        self.hsfs.read()
-        fdv = self.hsfs.get_field('FDV')
+        fdv = self.hsfs.read_field('FDV')
         if fdv == 0:
             self.logger.log_error("HSFS.FDV is 0, hardware sequencing is disabled")
             raise SpiRuntimeError("Chipset does not support hardware sequencing")
@@ -715,8 +714,6 @@ class SPI(hal_base.HALBase):
     #
 
     def get_SPI_JEDEC_ID(self) -> int:
-
-        #if self.cs.register.has_field('HSFS', 'FCYCLE'):
         if self.hsfs.has_field('FCYCLE'):
             self.check_hardware_sequencing()
 
