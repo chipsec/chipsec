@@ -99,10 +99,10 @@ class TXTCommand(BaseCommand):
         self.logger.log("")
 
         # Read TXT Device ID
-        self._log_register("TXT_DIDVID")
+        self._log_register("DIDVID")
         self.logger.log("")
 
-        pub_list = self.cs.register.get_list_by_name("TXT_PUBLIC_KEY_*")
+        pub_list = self.cs.register.get_list_by_name("PUBLIC_KEY_*")
         pub_values = pub_list.read()
         # Read hashes of public keys
         txt_pubkey = struct.pack("<QQQQ", *pub_values)
@@ -124,32 +124,32 @@ class TXTCommand(BaseCommand):
         self.logger.log("")
 
         # Read TXT status
-        self._log_register("TXT_STS")
-        self._log_register("TXT_ESTS")
-        self._log_register("TXT_E2STS")
-        self._log_register("TXT_ERRORCODE")
+        self._log_register("STS")
+        self._log_register("ESTS")
+        self._log_register("E2STS")
+        self._log_register("ERRORCODE")
         self.logger.log("")
-        self._log_register("TXT_SPAD")
-        self._log_register("TXT_ACM_STATUS")
-        self._log_register("TXT_FIT")
-        self._log_register("TXT_SCRATCHPAD")
+        self._log_register("SPAD")
+        self._log_register("ACM_STATUS")
+        self._log_register("FIT")
+        self._log_register("SCRATCHPAD")
         self.logger.log("")
 
         # Read memory area for TXT components
-        self._log_register("TXT_SINIT_BASE")
-        self._log_register("TXT_SINIT_SIZE")
-        self._log_register("TXT_MLE_JOIN")
-        self._log_register("TXT_HEAP_BASE")
-        self._log_register("TXT_HEAP_SIZE")
-        self._log_register("TXT_MSEG_BASE")
-        self._log_register("TXT_MSEG_SIZE")
+        self._log_register("SINIT_BASE")
+        self._log_register("SINIT_SIZE")
+        self._log_register("MLE_JOIN")
+        self._log_register("HEAP_BASE")
+        self._log_register("HEAP_SIZE")
+        self._log_register("MSEG_BASE")
+        self._log_register("MSEG_SIZE")
         self.logger.log("")
 
         # Read other registers in the TXT memory area
-        self._log_register("TXT_DPR")
-        self._log_register("TXT_VER_FSBIF")
-        self._log_register("TXT_VER_QPIIF")
-        self._log_register("TXT_PCH_DIDVID")
+        self._log_register("DPR")
+        self._log_register("VER_FSBIF")
+        self._log_register("VER_QPIIF")
+        self._log_register("PCH_DIDVID")
         self._log_register("INSMM")
 
     def run(self):
