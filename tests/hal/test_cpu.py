@@ -238,7 +238,7 @@ class TestHalCpu(unittest.TestCase):
         reg_call_1 = call('8086.MEMMAP_VTD.TSEG')
         reg_call_2 = call('8086.MEMMAP_VTD.TSEG')
         field_call_1 = call('base', True)
-        field_call_2 = call('limit', False)
+        field_call_2 = call('limit', True)
         mock_self.cs.register.get_list_by_name().read_field.side_effect = [[0x88400000], [0x88700000]]
         mock_self.cs.is_server.return_value = True
         CPU.get_TSEG(mock_self)
@@ -249,7 +249,7 @@ class TestHalCpu(unittest.TestCase):
         mock_self = Mock()
         mock_self.cs.is_server.return_value = True
         mock_self.cs.register.get_list_by_name().read_field.side_effect = [[0x88400000], [0x88700000]]
-        expected_result = (0x88400000, 0x88700000FFFFF, 0x886FF77D00000)
+        expected_result = (0x88400000, 0x887FFFFF, 0x400000)
         result = CPU.get_TSEG(mock_self)
         self.assertEqual(result, expected_result)
 
