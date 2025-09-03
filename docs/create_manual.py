@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#/usr/bin/env python3
 # CHIPSEC: Platform Security Assessment Framework
 # Copyright (c) 2023, Intel Corporation
 #
@@ -128,9 +128,18 @@ def GenerateHTMLorJSON(option: str) -> None:
 
 
 def DeleteSphinxCollateral() -> None:
-    shutil.rmtree(os.path.join(CHIPSEC_DIR, '.doctrees'))
-    shutil.rmtree(os.path.join(SPHINX_DIR, 'logs'))
-    shutil.rmtree(SPHINX_MOD_DIR)
+    try:
+        shutil.rmtree(os.path.join(CHIPSEC_DIR, '.doctrees'))
+    except Exception:
+        print("Error deleting .doctrees")
+    try:
+        shutil.rmtree(os.path.join(SPHINX_DIR, 'logs'))
+    except Exception:
+        print("Error deleting logs")
+    try:
+        shutil.rmtree(SPHINX_MOD_DIR)
+    except Exception:
+        print("Error deleating module dir")
 
 
 def main(argv: Sequence[str] = sys.argv[1:]):
@@ -144,7 +153,8 @@ def main(argv: Sequence[str] = sys.argv[1:]):
             GenerateHTMLorJSON(argv[0])
         GeneratePDF()
         DeleteSphinxCollateral()
-    except Exception:
+    except Exception as e:
+        print(f'Exception: {e}')
         return 1
     return 0
 
