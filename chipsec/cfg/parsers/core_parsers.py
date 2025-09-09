@@ -485,9 +485,8 @@ class CoreConfigRegisters(BaseConfigParser):
             for reg in regs:
                 cont_obj = CONTROLHelper(attrs, reg)
                 objs.append(cont_obj)
-
             # Update storage location with new data
-            if name in self.cfg.CONTROLS:
+            if name in self.cfg.CONTROLS and len(set(self.cfg.CONTROLS[name]).intersection(objs)) == 0:
                 self.cfg.CONTROLS[name].extend(objs)
             else:
                 self.cfg.CONTROLS[name] = objs

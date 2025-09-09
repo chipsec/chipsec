@@ -281,8 +281,9 @@ class CONTROLHelper(BaseConfigHelper):
             return False
         return (self.name == other.name and
                 self.field == other.field and
-                self.get_register_name() == other.get_register_name())
+                self.get_register_name() == other.get_register_name() and
+                self.instance == other.instance)
 
     def __hash__(self) -> int:
         """Return hash of control for use in sets/dicts."""
-        return hash((self.name, self.field, self.get_register_name()))
+        return hash((self.name, self.field, self.get_register_name(), self.instance))
