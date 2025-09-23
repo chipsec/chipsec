@@ -502,6 +502,9 @@ class BaseConfigRegisterHelper(BaseConfigHelper):
     def has_field(self, field_name: str) -> bool:
         return self.fields.get(field_name, None) is not None
 
+    def has_all_fields(self, field_names: List[str]) -> bool:
+        return all(self.has_field(name) for name in field_names)
+
     def get_mask(self) -> int:
         mask = make_mask(self.size * 8)
         return mask

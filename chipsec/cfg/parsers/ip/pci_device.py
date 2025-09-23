@@ -179,6 +179,7 @@ class PCIConfig(GenericConfig):
         try:
             # Handle device ID and name
             self.did: Optional[int] = cfg_obj.get('did', None)
+            self.vid: Optional[int] = cfg_obj.get('vid', None)
             if 'name' not in cfg_obj and self.did is not None:
                 cfg_obj['name'] = str(self.did)
                 self.__name_updated = False
