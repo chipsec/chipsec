@@ -125,13 +125,13 @@
     <register name="CAPID0_B"   type="pcicfg" offset="0xE8" size="4" desc="Capabilities B"/>
 
     <register name="GFXVTBAR" type="mmio" bar="MCHBAR" offset="0x5400" size="8" desc="Processor Graphics VT-d MMIO Base Address">
-      <field name="Enable" bit="0"  size="1" desc="Enable"/>
-      <field name="Base"   bit="12" size="27" desc="GFX VTD Base Address"/>
+      <field name="ENABLE" bit="0"  size="1" desc="Enable"/>
+      <field name="BASE"   bit="12" size="27" desc="GFX VTD Base Address"/>
     </register>
 
     <register name="VTBAR" type="mmio" bar="MCHBAR" offset="0x5410" size="8" desc="VT-d MMIO Base Address">
-      <field name="Enable" bit="0"  size="1"  desc="Enable"/>
-      <field name="Base"   bit="12" size="27" desc="VTD Base Address"/>
+      <field name="ENABLE" bit="0"  size="1"  desc="Enable"/>
+      <field name="BASE"   bit="12" size="27" desc="VTD Base Address"/>
     </register>
 
     <register name="REMAPBASE"  type="mmio" bar="MCHBAR" offset="0x5090" size="8" desc="Memory Remap Base Address">
