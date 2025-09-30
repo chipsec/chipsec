@@ -671,9 +671,12 @@ class ObjList(list):
 
     def all_has_field(self, field: str) -> bool:
         return all(inst.has_field(field) for inst in self)
-    
-    def filter_with_field(self, field:str) -> 'ObjList':
+
+    def filter_with_field(self, field: str) -> 'ObjList':
         return ObjList([inst for inst in self if inst.has_field(field)])
+    
+    def filter_with_fields(self, fields: List[str]) -> 'ObjList':
+        return ObjList([inst for inst in self if inst.has_all_fields(fields)])
 
     def filter_enabled(self) -> 'ObjList':
         return ObjList([inst for inst in self if inst.is_enabled()])
