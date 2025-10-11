@@ -1987,8 +1987,7 @@ static int find_symbols(void)
 }
 
 /// Function executed upon loading module
-int __init
-init_module (void)
+int chipsec_module_init (void)
 {
     int ret = 0;
     printk(KERN_ALERT "Chipsec module loaded \n");
@@ -2013,7 +2012,7 @@ init_module (void)
 }
 
 /// Function executed when unloading module
-void cleanup_module (void)
+void chipsec_module_exit (void)
 {
     struct allocated_mem_list *e, *tmp;
 
@@ -2029,3 +2028,6 @@ void cleanup_module (void)
         kfree(e);
     }
 }
+
+module_init(chipsec_module_init)
+module_exit(chipsec_module_exit)
