@@ -2029,5 +2029,5 @@ static void __exit chipsec_module_exit (void)
     }
 }
 
-module_init(chipsec_module_init)
-module_exit(chipsec_module_exit)
+module_init(chipsec_module_init);
+module_exit(chipsec_module_exit);
