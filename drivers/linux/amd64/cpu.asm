@@ -43,12 +43,12 @@
 
  section .text
 
-setctx_cpuid:
+%macro SETCTX_CPUID 0
 	xchg rax, [rdi]
 	xchg rbx, [rdi+0x8]
 	xchg rcx, [rdi+0x10]
 	xchg rdx, [rdi+0x18]
-	ret
+%endmacro
 
 ;This function has one argument: CPUID_CTX structure which contain 4 regs: rax, rbx, rcx, rdx:
 ;------------------------------------------------------------------------------
@@ -60,11 +60,11 @@ setctx_cpuid:
 
 __cpuid__:
 
-	call setctx_cpuid
+	SETCTX_CPUID
 
 	cpuid
 
-	call setctx_cpuid
+	SETCTX_CPUID
 
 	ret
 
