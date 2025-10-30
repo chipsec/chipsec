@@ -49,6 +49,7 @@ class ConversionRules:
     int_list_keys: Set[str]
     str_list_keys: Set[str]
     range_list_keys: Set[str]
+    case_insensitive_keys: Set[str]
 
     @classmethod
     def default_rules(cls) -> 'ConversionRules':
@@ -68,7 +69,8 @@ class ConversionRules:
             bool_keys={'req_pch'},
             int_list_keys={'bus'},
             str_list_keys={'config'},
-            range_list_keys=range_list_keys
+            range_list_keys=range_list_keys,
+            case_insensitive_keys={'name'}
         )
     
     def set_did_as_range(self):
@@ -141,6 +143,8 @@ class XMLConfigConverter:
                 return self._parse_range_data(value)
             elif key in rules.bool_keys:
                 return value.lower() == 'true'
+            elif key in rules.case_insensitive_keys:
+                return value.upper()
             else:
                 return value
         except ValueError as e:

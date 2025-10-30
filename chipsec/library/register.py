@@ -483,6 +483,7 @@ class BaseConfigRegisterHelper(BaseConfigHelper):
         self.value = value
 
     def set_field(self, field_name: str, field_value: int) -> int:
+        field_name = field_name.upper()
         field_attrs = self.fields[field_name]
         bit = field_attrs['bit']
         size = field_attrs['size']
@@ -492,6 +493,7 @@ class BaseConfigRegisterHelper(BaseConfigHelper):
     def get_field(
         self, field_name: str, preserve_field_position: Optional[bool] = False
     ) -> int:
+        field_name = field_name.upper()
         if self.value is None:
             self.read()
         field_attrs = self.fields[field_name]
@@ -500,6 +502,7 @@ class BaseConfigRegisterHelper(BaseConfigHelper):
         return get_bits(self.value, field_bit, field_size, preserve_field_position)
 
     def has_field(self, field_name: str) -> bool:
+        field_name = field_name.upper()
         return self.fields.get(field_name, None) is not None
 
     def has_all_fields(self, field_names: List[str]) -> bool:
@@ -645,6 +648,8 @@ class ObjList(list):
 
     def get_field_value_if_equivalent(self, field: str, preserve_field_position: bool = False) -> Optional[int]:
         """Get field value if all instances have the same value for that field"""
+        if len(self) == 0:
+            return None
         field_value = self[0].get_field(field, preserve_field_position)
         if any(inst.get_field(field, preserve_field_position) != field_value for inst in self[1:]):
             return None
@@ -740,6 +745,10 @@ class NullRegister:
     def get_field(self, field_name: str,
                  preserve_field_position: bool = False) -> int:
         """Null implementation of get_field."""
+        field_name = field_name.upper()
         logger().log_warning(f'Attempted to get field {field_name} '
                            f'from null register {self.name}')
         return 0
+
+    def read_field(self, field_name: str, preserve_field_position: bool = False) -> int:
+        return self.get_field(field_name, preserve_field_position)

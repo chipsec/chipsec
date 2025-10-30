@@ -948,7 +948,7 @@ class Cfg:
     ###
     def set_scope(self, scope: Dict[str, str]) -> None:
         """Set the current scope for register access."""
-        self.scope.update(scope)
+        self.scope.update((k.upper() if k is not None else None, v.upper() if v is not None else None) for k, v in scope.items())
 
     def clear_scope(self) -> None:
         """Clear the current scope for register access."""
@@ -975,7 +975,7 @@ class Cfg:
             sname = scope + '.' + name
         else:
             sname = name
-        return sname.split('.')
+        return sname.upper().split('.')
 
     def get_objlist(self, name: str):
         scope = self.get_scope(name)

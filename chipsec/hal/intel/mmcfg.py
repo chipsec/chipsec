@@ -90,6 +90,8 @@ class MMCFG(hal_base.HALBase):
         """
         base_instance = None
         for _instance in self.base_list:
+            if _instance is None or _instance.bus is None:
+                continue
             if bus >= _instance.bus:
                 base_instance = _instance
             else:

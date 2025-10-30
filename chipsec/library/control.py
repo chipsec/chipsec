@@ -56,6 +56,7 @@ class Control:
         Returns:
             List of control objects matching the name
         """
+        control_name = control_name.upper()
         controls = ObjList()
         if control_name in self.cs.Cfg.CONTROLS:
             controls.extend(self.cs.Cfg.CONTROLS[control_name])
@@ -72,6 +73,7 @@ class Control:
         Returns:
             Control instance if found, None otherwise
         """
+        control_name = control_name.upper()
         if control_name in self.cs.Cfg.CONTROLS:
             for ctrl in self.cs.Cfg.CONTROLS[control_name]:
                 if instance == ctrl.instance:
@@ -91,6 +93,7 @@ class Control:
         Raises:
             KeyError: If control_name is not found in configuration
         """
+        control_name = control_name.upper()
         return self.cs.Cfg.CONTROLS[control_name]
 
     def is_defined(self, control_name: str) -> bool:
@@ -103,4 +106,5 @@ class Control:
         Returns:
             True if control is defined, False otherwise
         """
+        control_name = control_name.upper()
         return control_name in self.cs.Cfg.CONTROLS
