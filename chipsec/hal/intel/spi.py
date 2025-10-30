@@ -46,6 +46,7 @@ import struct
 import time
 from typing import Dict, List, Tuple, Optional
 from chipsec.library.defines import BIT0, BIT1, BIT2, BIT5
+from chipsec.library.register import NullRegister
 from chipsec.library.file import write_file, read_file
 from chipsec.library.logger import print_buffer_bytes
 from chipsec.hal import hal_base
@@ -124,6 +125,8 @@ class SPI(hal_base.HALBase):
         # which are required to send SPI cycles once for performance reasons
     def get_registers(self) -> None:
         self.hsfs = self.cs.register.get_instance_by_name('8086.SPI.SPIBAR.HSFS', self.instance)
+        if type(self.hsfs) is NullRegister:
+            raise HALInitializationError(f"Missing SPIBAR registers [{self.hsfs.name}]. Be sure to have them defined for the SPI HAL to work.")
         self.hsfc = self.cs.register.get_instance_by_name('8086.SPI.SPIBAR.HSFC', self.instance)
         self.faddr = self.cs.register.get_instance_by_name('8086.SPI.SPIBAR.FADDR', self.instance)
         self.fdata0 = self.cs.register.get_instance_by_name('8086.SPI.SPIBAR.FDATA0', self.instance)

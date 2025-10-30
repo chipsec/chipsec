@@ -77,7 +77,7 @@ class ia_untrusted(BaseModule):
                 if ia_untrusted == 0:
                     res = ModuleResult.FAILED
                     self.result.setStatusBit(self.result.status.CONFIGURATION)
-                    self.logger.log_bad(f'IA_UNTRUSTED not set on thread {bd.get_instace()}.')
+                    self.logger.log_bad(f'IA_UNTRUSTED not set on thread {bd.get_instance()}.')
                 else:
                     self.logger.log_good(f'IA_UNTRUSTED set on thread {bd.get_instance()}.')
         return res
