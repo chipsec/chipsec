@@ -309,6 +309,7 @@ jobs:
     - name: Run xml cfg checker
       run: |
         python tests/cfg_checker.py
+        python tests/xml_validator.py
 
     - name: pylint pilot for modules folder
       run: |
