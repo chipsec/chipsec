@@ -121,4 +121,4 @@ class VirtMemory(hal_base.HALBase):
         return ret == 1
 
 
-haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': ['VirtMemory']}
+haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': {'virtmemory': "VirtMemory"}}

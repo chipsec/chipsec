@@ -111,7 +111,7 @@ class SPI(hal_base.HALBase):
     def __init__(self, cs):
         super(SPI, self).__init__(cs)
         self.instance = cs.device.get_instance_by_name('8086.SPI', 0)
-        self.mmio = cs.hals.MMIO
+        self.mmio = cs.hals.mmio
         self.get_registers()
         # self.rcba_spi_base = self.get_SPI_MMIO_base()
         # We try to map SPIBAR in the process memory, this will increase the
@@ -463,7 +463,7 @@ class SPI(hal_base.HALBase):
         # Other options ;)
         # chipsec.chipset.write_register( self.cs, "FADDR", (spi_fla & Cfg.PCH_RCBA_SPI_FADDR_MASK) )
         # write_MMIO_reg( self.cs, spi_base, self.faddr.offset, (spi_fla & Cfg.PCH_RCBA_SPI_FADDR_MASK) )
-        # self.cs.hals.Memory.write_physical_mem_dword( spi_base + self.faddr.offset, (spi_fla & Cfg.PCH_RCBA_SPI_FADDR_MASK) )
+        # self.cs.hals.memory.write_physical_mem_dword( spi_base + self.faddr.offset, (spi_fla & Cfg.PCH_RCBA_SPI_FADDR_MASK) )
 
         if self.logger.HAL:
             _faddr = self.spi_reg_read(self.faddr.offset)
@@ -739,4 +739,4 @@ class SPI(hal_base.HALBase):
         return (jedec_id, manu, part)
 
 
-haldata = {"arch": [hal_base.HALBase.MfgIds.Intel], 'name': ['SPI']}
+haldata = {"arch": [hal_base.HALBase.MfgIds.Intel], 'name': {'spi': "SPI"}}

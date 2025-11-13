@@ -99,13 +99,13 @@ KEY:
 
     def list_locks(self) -> None:
         self.logger.log('Locks identified within the configuration:')
-        for lock in self.cs.hals.Locks.get_locks():
+        for lock in self.cs.hals.locks.get_locks():
             self.logger.log(lock)
         self.logger.log('')
         return
 
     def checkall_locks(self) -> None:
-        locks = self.cs.hals.Locks.get_locks()
+        locks = self.cs.hals.locks.get_locks()
         if not locks:
             self.logger.log('Did not find any locks')
             return
@@ -113,7 +113,7 @@ KEY:
             self.log_key()
         res = self.log_header()
         for lock in locks:
-            is_locked = self.cs.hals.Locks.is_locked(lock)
+            is_locked = self.cs.hals.locks.is_locked(lock)
             is_locked_str = self.check_log(lock, is_locked)
             res = f"{res}\n{is_locked_str}"
         if self.logger.HAL:
@@ -125,7 +125,7 @@ KEY:
             self.log_key()
         res = self.log_header()
         for lock in self.lockname:
-            is_locked = self.cs.hals.Locks.is_locked(lock)
+            is_locked = self.cs.hals.locks.is_locked(lock)
             is_locked_str = self.check_log(lock, is_locked)
             res = f"{res}\n{is_locked_str}"
         if self.logger.HAL:

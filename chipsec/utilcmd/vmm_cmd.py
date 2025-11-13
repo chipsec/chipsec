@@ -93,11 +93,11 @@ class VMMCommand(BaseCommand):
 
     def enumerate(self):
         self.logger.log('[CHIPSEC] enumerating VirtIo devices...')
-        virtdev_list = get_virtio_devices(self.cs.hals.Pci.enumerate_devices())
+        virtdev_list = get_virtio_devices(self.cs.hals.pci.enumerate_devices())
         self._dump_virtio(virtdev_list)
 
     def vmm_virtio(self):
-        did, vid = self.cs.hals.Pci.get_DIDVID(self.bus, self.dev, self.fun)
+        did, vid = self.cs.hals.pci.get_DIDVID(self.bus, self.dev, self.fun)
         dev = (self.bus, self.dev, self.fun, vid, did, 0)
         virt_dev = get_virtio_devices([dev])
         self._dump_virtio(virt_dev)
@@ -116,7 +116,7 @@ class VMMCommand(BaseCommand):
         self.logger.log("[CHIPSEC]   R10: 0x{:016X}".format(self.r10))
         self.logger.log("[CHIPSEC]   R11: 0x{:016X}".format(self.r11))
 
-        rax = self.cs.hals.Vmm.hypercall(self.ax, self.bx, self.cx, self.dx, self.si, self.di, self.r8, self.r9, self.r10, self.r11)
+        rax = self.cs.hals.vmm.hypercall(self.ax, self.bx, self.cx, self.dx, self.si, self.di, self.r8, self.r9, self.r10, self.r11)
 
         self.logger.log("[CHIPSEC] < RAX: 0x{:016X}".format(rax))
 
@@ -125,7 +125,7 @@ class VMMCommand(BaseCommand):
             pt_fname = 'ept_{:08X}'.format(self.eptp)
             self.logger.log("[CHIPSEC] EPT physical base: 0x{:016X}".format(self.eptp))
             self.logger.log("[CHIPSEC] Dumping EPT to '{}'...".format(pt_fname))
-            self.cs.hals.Vmm.dump_EPT_page_tables(self.eptp, pt_fname)
+            self.cs.hals.vmm.dump_EPT_page_tables(self.eptp, pt_fname)
         else:
             self.logger.log("[CHIPSEC] Finding EPT hierarchy in memory is not implemented yet")
             self.logger.log_error(VMMCommand.__doc__)

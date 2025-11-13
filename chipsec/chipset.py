@@ -88,11 +88,11 @@ class Chipset:
 
     def get_cpuid(self):
         """Get CPU identification information."""
-        return self.hals.CpuId.get_proc_info()
+        return self.hals.cpuid.get_proc_info()
 
     def get_mfgid(self) -> str:
         """Get CPU manufacturer identification."""
-        return self.hals.CpuId.get_mfgid()
+        return self.hals.cpuid.get_mfgid()
 
     @classmethod
     def basic_init_with_helper(cls, helper=None):
@@ -192,7 +192,7 @@ class Chipset:
         verbose_condition = (start_helper and ((self.logger.VERBOSE) or
                                                (load_config and (_unknown_pch or _unknown_proc))))
         if verbose_condition:
-            pcilib.print_pci_devices(self.hals.Pci.enumerate_devices())
+            pcilib.print_pci_devices(self.hals.pci.enumerate_devices())
         if _unknown_pch or _unknown_proc:
             msg.append('Results from this system may be incorrect.')
             self.logger.log(f'[!]            {msg[-1]}')
@@ -322,7 +322,7 @@ class Chipset:
                 self.logger.log_debug('[*] Unable to load cached PCI configuration.')
         if not enum_devices:
             try:
-                enum_devices = self.hals.Pci.enumerate_devices()
+                enum_devices = self.hals.pci.enumerate_devices()
                 if reuse_scan:
                     json.dump(enum_devices, open(enum_devices_filename, 'w'))
             except Exception:
@@ -344,7 +344,7 @@ class Chipset:
     def init_topology(self):
         """Initialize CPU topology information."""
         self.logger.log_debug('[*] Gathering CPU Topology..')
-        topology = self.hals.CPU.get_cpu_topology()
+        topology = self.hals.cpu.get_cpu_topology()
         self.Cfg.set_topology(topology)
 
     def is_all_value(self, regdata: Type[RegData], value: int, mask: Optional[int] = None) -> bool:

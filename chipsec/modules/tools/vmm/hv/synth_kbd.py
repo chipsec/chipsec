@@ -62,10 +62,10 @@ class RingBufferFuzzer(RingBuffer):
     ##
     def ringbuffer_read(self):
         if self.fuzzing:
-            buffer = self.cs.hals.Memory.read_physical_mem(self.pfn[self.send_size], 0x10)
+            buffer = self.cs.hals.memory.read_physical_mem(self.pfn[self.send_size], 0x10)
             write_index, read_index, interrupt_mask, pending_send_sz = unpack('<4L', buffer)
             overwrite(buffer, DD(randint(0, 0xFFFFFFFF)), 4 * randint(0, 3))
-            self.cs.hals.Memory.write_physical_mem(self.pfn[self.send_size], len(buffer), buffer)
+            self.cs.hals.memory.write_physical_mem(self.pfn[self.send_size], len(buffer), buffer)
             result = ''
             self.count += 1
             if self.count > 1000000:

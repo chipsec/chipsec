@@ -122,7 +122,7 @@ class sinkhole(BaseModule):
     def run(self, module_argv):
         self.logger.start_test('x86 SMM Memory Sinkhole')
 
-        if self.cs.hals.CPU.check_SMRR_supported():
+        if self.cs.hals.cpu.check_SMRR_supported():
             self.logger.log_good('SMRR range protection is supported')
             self.res = self.check_LAPIC_SMRR_overlap()
         else:

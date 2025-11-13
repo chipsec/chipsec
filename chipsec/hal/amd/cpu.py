@@ -248,10 +248,10 @@ class CPU(hal_base.HALBase):
             logger().log_error('could not dump page tables')
 
     def dump_page_tables_all(self) -> None:
-        for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
+        for tid in range(self.cs.hals.msr.get_cpu_thread_count()):
             cr3 = self.read_cr(tid, 3)
             logger().log_hal(f'[cpu{tid:d}] found paging hierarchy base (CR3): 0x{cr3:08X}')
             self.dump_page_tables(cr3)
 
 
-haldata = {"arch":[hal_base.HALBase.MfgIds.AMD], 'name': ['CPU']}
+haldata = {"arch":[hal_base.HALBase.MfgIds.AMD], 'name': {'cpu': "CPU"}}

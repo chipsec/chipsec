@@ -169,7 +169,7 @@ class IORegisters(BaseConfigRegisterHelper):
         try:
             self.logger.log_debug(f'reading {self.name}')
             _cs = cs()
-            self.value = _cs.hals.Io.read(self.io_port, self.size)
+            self.value = _cs.hals.io.read(self.io_port, self.size)
             return self.value
         except Exception as e:
             raise IORegisterError(f"Failed to read I/O register {self.name} at port 0x{self.io_port:X}: {e}") from e
@@ -187,7 +187,7 @@ class IORegisters(BaseConfigRegisterHelper):
         try:
             self.logger.log_debug(f'writing 0x{value:X} to {self.name}')
             _cs = cs()
-            _cs.hals.Io.write(self.io_port, value, self.size)
+            _cs.hals.io.write(self.io_port, value, self.size)
             self.value = value
         except Exception as e:
             raise IORegisterError(f"Failed to write to I/O register {self.name} at port 0x{self.io_port:X}: {e}") from e

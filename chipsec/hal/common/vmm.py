@@ -53,7 +53,7 @@ class Vmm(HALBase):
             (self.membuf1_va, self.membuf1_pa) = (0, 0)
 
     def init(self) -> None:
-        (self.membuf0_va, self.membuf0_pa) = self.cs.hals.Memory.alloc_physical_mem(0x2000, 0xFFFFFFFFFFFFFFFF)
+        (self.membuf0_va, self.membuf0_pa) = self.cs.hals.memory.alloc_physical_mem(0x2000, 0xFFFFFFFFFFFFFFFF)
         (self.membuf1_va, self.membuf1_pa) = (self.membuf0_va + 0x1000, self.membuf0_pa + 0x1000)
         if self.membuf0_va == 0:
             logger().log("[vmm] Could not allocate memory!")
@@ -70,9 +70,9 @@ class Vmm(HALBase):
         return self.hypercall(0, arg3, arg5, 0, arg4, 0, vector, 0, arg1, arg2)
 
     def hypercall64_memory_based(self, hypervisor_input_value: int, parameters: AnyStr, size: int = 0) -> int:
-        self.cs.hals.Memory.write_physical_mem(self.membuf0_pa, len(parameters[:0x1000]), parameters[:0x1000])
+        self.cs.hals.memory.write_physical_mem(self.membuf0_pa, len(parameters[:0x1000]), parameters[:0x1000])
         regs = self.hypercall(hypervisor_input_value & ~0x00010000, self.membuf0_pa, self.membuf1_pa)
-        self.output = self.cs.hals.Memory.read_physical_mem(self.membuf1_pa, size) if size > 0 else ''
+        self.output = self.cs.hals.memory.read_physical_mem(self.membuf1_pa, size) if size > 0 else ''
         return regs
 
     def hypercall64_fast(self, hypervisor_input_value: int, param0: int = 0, param1: int = 0) -> int:
@@ -80,7 +80,7 @@ class Vmm(HALBase):
 
     def hypercall64_extended_fast(self, hypervisor_input_value: int, parameter_block: bytes) -> int:
         (param0, param1, xmm_regs) = struct.unpack('<QQ96s', parameter_block)
-        self.cs.hals.Memory.write_physical_mem(self.membuf0_pa, 0x60, xmm_regs)
+        self.cs.hals.memory.write_physical_mem(self.membuf0_pa, 0x60, xmm_regs)
         return self.hypercall(hypervisor_input_value | 0x00010000, param0, param1, 0, 0, 0, 0, 0, 0, 0, self.membuf0_va)
 
     #
@@ -147,14 +147,14 @@ class VirtIO_Device:
 
     def dump_device(self) -> None:
         logger().log(f"\n[vmm] VirtIO device {self.bus:02X}:{self.dev:02X}.{self.fun:01X}")
-        dev_cfg = self.cs.hals.Pci.dump_pci_config(self.bus, self.dev, self.fun)
+        dev_cfg = self.cs.hals.pci.dump_pci_config(self.bus, self.dev, self.fun)
         pretty_print_hex_buffer(dev_cfg)
-        bars = self.cs.hals.Pci.get_device_bars(self.bus, self.dev, self.fun)
+        bars = self.cs.hals.pci.get_device_bars(self.bus, self.dev, self.fun)
         for (bar, isMMIO, _, _, _, size) in bars:
             if isMMIO:
-                self.cs.hals.Mmio.dump_MMIO(bar, size)
+                self.cs.hals.mmio.dump_MMIO(bar, size)
             else:
-                self.cs.hals.PortIo.dump_range(bar, size, 4)
+                self.cs.hals.portio.dump_range(bar, size, 4)
 
 
-haldata = {"arch": [HALBase.MfgIds.Any], 'name': ['Vmm']}
+haldata = {"arch": [HALBase.MfgIds.Any], 'name': {'vmm': "Vmm"}}

@@ -77,15 +77,15 @@ class TPMCommand(BaseCommand):
             tpm_eventlog.parse(log)
 
     def tpm_command(self):
-        self.cs.hals.TPM.command(self.command_name, self.locality, *self.command_parameters)
+        self.cs.hals.tpm.command(self.command_name, self.locality, *self.command_parameters)
 
     def tpm_state(self):
-        self.cs.hals.TPM.dump_access(self.locality)
-        self.cs.hals.TPM.dump_status(self.locality)
-        self.cs.hals.TPM.dump_didvid(self.locality)
-        self.cs.hals.TPM.dump_rid(self.locality)
-        self.cs.hals.TPM.dump_intcap(self.locality)
-        self.cs.hals.TPM.dump_intenable(self.locality)
+        self.cs.hals.tpm.dump_access(self.locality)
+        self.cs.hals.tpm.dump_status(self.locality)
+        self.cs.hals.tpm.dump_didvid(self.locality)
+        self.cs.hals.tpm.dump_rid(self.locality)
+        self.cs.hals.tpm.dump_intcap(self.locality)
+        self.cs.hals.tpm.dump_intenable(self.locality)
 
     def run(self):
         try:

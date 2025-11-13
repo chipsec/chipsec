@@ -106,22 +106,22 @@ class iofuzz(BaseModule):
             self.logger.log(f'[*] Fuzzing I/O port 0x{io_addr:04X}')
 
             self.logger.log('    Reading port')
-            port_value = self.cs.hals.Io.read(io_addr)
+            port_value = self.cs.hals.io.read(io_addr)
 
             if _FUZZ_SPECIAL_VALUES:
                 self.logger.log('    Writing special 1-2-4 byte values')
                 try:
-                    self.cs.hals.Io.write_port_byte(io_addr, port_value)
-                    self.cs.hals.Io.write_port_byte(io_addr, (~port_value) & 0xFF)
-                    self.cs.hals.Io.write_port_byte(io_addr, 0xFF)
-                    self.cs.hals.Io.write_port_byte(io_addr, 0x00)
-                    self.cs.hals.Io.write_port_byte(io_addr, 0x5A)
-                    self.cs.hals.Io.write_port_word(io_addr, 0xFFFF)
-                    self.cs.hals.Io.write_port_word(io_addr, 0x0000)
-                    self.cs.hals.Io.write_port_word(io_addr, 0x5AA5)
-                    self.cs.hals.Io.write_port_dword(io_addr, 0xFFFFFFFF)
-                    self.cs.hals.Io.write_port_dword(io_addr, 0x00000000)
-                    self.cs.hals.Io.write_port_word(io_addr, 0x5AA55AA5)
+                    self.cs.hals.io.write_port_byte(io_addr, port_value)
+                    self.cs.hals.io.write_port_byte(io_addr, (~port_value) & 0xFF)
+                    self.cs.hals.io.write_port_byte(io_addr, 0xFF)
+                    self.cs.hals.io.write_port_byte(io_addr, 0x00)
+                    self.cs.hals.io.write_port_byte(io_addr, 0x5A)
+                    self.cs.hals.io.write_port_word(io_addr, 0xFFFF)
+                    self.cs.hals.io.write_port_word(io_addr, 0x0000)
+                    self.cs.hals.io.write_port_word(io_addr, 0x5AA5)
+                    self.cs.hals.io.write_port_dword(io_addr, 0xFFFFFFFF)
+                    self.cs.hals.io.write_port_dword(io_addr, 0x00000000)
+                    self.cs.hals.io.write_port_word(io_addr, 0x5AA55AA5)
                 except:
                     pass
 
@@ -129,7 +129,7 @@ class iofuzz(BaseModule):
             for v in range(MAX_PORT_VALUE + 1):
                 for _ in range(write_count):
                     try:
-                        self.cs.hals.Io.write_port_byte(io_addr, v)
+                        self.cs.hals.io.write_port_byte(io_addr, v)
                     except:
                         pass
 

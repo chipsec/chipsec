@@ -29,14 +29,14 @@ class TestSMBUS(unittest.TestCase):
         base_address = 123456
         mock_cs = MagicMock()
         smbus_hal = SMBus(mock_cs)
-        mock_cs.hals.IOBAR.is_IO_BAR_defined.return_value = True
-        mock_cs.hals.IOBAR.get_IO_BAR_base_address.return_value = (base_address, None)
+        mock_cs.hals.iobar.is_IO_BAR_defined.return_value = True
+        mock_cs.hals.iobar.get_IO_BAR_base_address.return_value = (base_address, None)
         self.assertEqual(smbus_hal.get_SMBus_Base_Address(), base_address)
 
     def test_get_SMBus_Base_Address_invalid_base(self):
         mock_cs = MagicMock()
         smbus_hal = SMBus(mock_cs)
-        mock_cs.hals.IOBAR.is_IO_BAR_defined.return_value = False
+        mock_cs.hals.iobar.is_IO_BAR_defined.return_value = False
         self.assertRaises(IOBARNotFoundError, smbus_hal.get_SMBus_Base_Address)
 
     def test_display_SMBus_info(self):
@@ -45,8 +45,8 @@ class TestSMBUS(unittest.TestCase):
         mock_cs = MagicMock()
         mock_cs.register.is_defined.return_value = True
         mock_cs.register.get_instance_by_name().read.return_value = reg_read_val
-        mock_cs.hals.IOBAR.is_IO_BAR_defined.return_value = True
-        mock_cs.hals.IOBAR.get_IO_BAR_base_address.return_value = (base_address, None)
+        mock_cs.hals.iobar.is_IO_BAR_defined.return_value = True
+        mock_cs.hals.iobar.get_IO_BAR_base_address.return_value = (base_address, None)
         smbus_hal = SMBus(mock_cs)
         smbus_hal.logger = MagicMock()
         smbus_hal.logger.HAL = True

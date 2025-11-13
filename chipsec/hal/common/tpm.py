@@ -375,19 +375,19 @@ class TPM(hal_base.HALBase):
     def read_register(self, register_name: str, locality: int) -> int:
         reg_obj = self.cs.register.get_list_by_name(f'*.TPM.{register_name}')[0]
         offset = reg_obj.offset + self.get_locality_value(locality)
-        value = self.cs.hals.MMIO.read_MMIO_reg(reg_obj.address, offset, reg_obj.size)
+        value = self.cs.hals.mmio.read_MMIO_reg(reg_obj.address, offset, reg_obj.size)
         return value
 
     def write_register(self, register_name: str, locality: int, value: int) -> None:
         reg_obj = self.cs.register.get_list_by_name(f'*.TPM.{register_name}')[0]
         offset = reg_obj.offset + self.get_locality_value(locality)
-        self.cs.hals.MMIO.write_MMIO_reg(reg_obj.address, offset, value, reg_obj.size)
+        self.cs.hals.mmio.write_MMIO_reg(reg_obj.address, offset, value, reg_obj.size)
 
     def write_subset_register(self, register_name: str, locality: int, value: int, size: int) -> None:
         reg_obj = self.cs.register.get_list_by_name(f'*.TPM.{register_name}')[0]
         offset = reg_obj.offset + self.get_locality_value(locality)
         if size > 0 and size <= reg_obj.size:
-            self.cs.hals.MMIO.write_MMIO_reg(reg_obj.address, offset, value, size)
+            self.cs.hals.mmio.write_MMIO_reg(reg_obj.address, offset, value, size)
         else:
             self.logger.log('[write_subset_register] Improper write size')
 
@@ -398,4 +398,4 @@ class TPM(hal_base.HALBase):
         return None
 
 
-haldata = {"arch": [hal_base.HALBase.MfgIds.Any], 'name': ['TPM']}
+haldata = {"arch": [hal_base.HALBase.MfgIds.Any], 'name': {'tpm': "TPM"}}

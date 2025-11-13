@@ -103,9 +103,9 @@ class bios_wp(BaseModule):
         return write_protected
 
     def check_SPI_protected_ranges(self) -> bool:
-        (bios_base, bios_limit, _) = self.cs.hals.SPI.get_SPI_region(BIOS)
+        (bios_base, bios_limit, _) = self.cs.hals.spi.get_SPI_region(BIOS)
         self.logger.log(f'\n[*] BIOS Region: Base = 0x{bios_base:08X}, Limit = 0x{bios_limit:08X}')
-        self.cs.hals.SPI.display_SPI_Protected_Ranges()
+        self.cs.hals.spi.display_SPI_Protected_Ranges()
 
         pr_cover_bios = False
         pr_partial_cover_bios = False
@@ -113,13 +113,13 @@ class bios_wp(BaseModule):
         # areas_to_protect = [(bios_base, bios_limit)]
         device = self.cs.device.get_list_by_name('8086.SPI')[0]
         for instance in device.instances.values():
-            self.cs.hals.SPI.set_instance(instance)
-            (bios_base, bios_limit, _) = self.cs.hals.SPI.get_SPI_region(BIOS)
+            self.cs.hals.spi.set_instance(instance)
+            (bios_base, bios_limit, _) = self.cs.hals.spi.get_SPI_region(BIOS)
             self.logger.log(f'\n[*] Checking instance: {instance}')
             self.logger.log(f'[*] BIOS Region: Base = 0x{bios_base:08X}, Limit = 0x{bios_limit:08X}')
 
             areas_to_protect = [(bios_base, bios_limit)]
-            SPI_protected_ranges = self.cs.hals.SPI.get_SPI_Protected_Ranges()
+            SPI_protected_ranges = self.cs.hals.spi.get_SPI_Protected_Ranges()
             for (base, limit, wpe, _, _, _) in SPI_protected_ranges:
                 if base > limit:
                     continue

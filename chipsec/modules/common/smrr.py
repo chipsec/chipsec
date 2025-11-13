@@ -80,7 +80,7 @@ class smrr(BaseModule):
 
     def check_SMRR(self, do_modify: bool) -> int:
 
-        if self.cs.hals.CPU.check_SMRR_supported():
+        if self.cs.hals.cpu.check_SMRR_supported():
             self.logger.log_good('OK. SMRR range protection is supported')
         else:
             self.logger.log_not_applicable('CPU does not support SMRR range protection of SMRAM')
@@ -140,7 +140,7 @@ class smrr(BaseModule):
 
         self.logger.log(f'[*] Trying to read memory at SMRR base 0x{smrrbase:08X}...')
 
-        ok = 0xFFFFFFFF == self.cs.hals.Memory.read_physical_mem_dword(smrrbase)
+        ok = 0xFFFFFFFF == self.cs.hals.memory.read_physical_mem_dword(smrrbase)
         smrr_ok = smrr_ok and ok
         if ok:
             self.logger.log_passed('SMRR reads are blocked in non-SMM mode')
@@ -149,8 +149,8 @@ class smrr(BaseModule):
 
         if (do_modify):
             self.logger.log(f'[*] Trying to modify memory at SMRR base 0x{smrrbase:08X}...')
-            self.cs.hals.Memory.write_physical_mem_dword(smrrbase, 0x90909090)
-            ok = 0x90909090 != self.cs.hals.Memory.read_physical_mem_dword(smrrbase)
+            self.cs.hals.memory.write_physical_mem_dword(smrrbase, 0x90909090)
+            ok = 0x90909090 != self.cs.hals.memory.read_physical_mem_dword(smrrbase)
             smrr_ok = smrr_ok and ok
             if ok:
                 self.logger.log_good('SMRR writes are blocked in non-SMM mode')

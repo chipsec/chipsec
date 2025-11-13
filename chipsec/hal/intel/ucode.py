@@ -70,7 +70,7 @@ class Ucode(hal_base.HALBase):
         self.cs = cs
 
     def ucode_update_id(self, cpu_thread_id: int) -> int:
-        (bios_sign_id_lo, bios_sign_id_hi) = self.cs.hals.Msr.read_msr(cpu_thread_id, IA32_MSR_BIOS_SIGN_ID)
+        (bios_sign_id_lo, bios_sign_id_hi) = self.cs.hals.msr.read_msr(cpu_thread_id, IA32_MSR_BIOS_SIGN_ID)
         ucode_update_id = bios_sign_id_hi
 
         if (bios_sign_id_lo & IA32_MSR_BIOS_SIGN_ID_STATUS):
@@ -86,7 +86,7 @@ class Ucode(hal_base.HALBase):
             return False
         ucode_buf = self.read_ucode_file(ucode_file)
         if (ucode_buf is not None) and (len(ucode_buf) > 0):
-            for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
+            for tid in range(self.cs.hals.msr.get_cpu_thread_count()):
                 self.load_ucode_update(tid, ucode_buf)
         return True
 
@@ -120,4 +120,4 @@ class Ucode(hal_base.HALBase):
             return ucode_buf
 
 
-haldata = {"arch": [hal_base.HALBase.MfgIds.Intel], 'name': ['Ucode']}
+haldata = {"arch": [hal_base.HALBase.MfgIds.Intel], 'name': {'ucode': "Ucode"}}

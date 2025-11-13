@@ -39,10 +39,16 @@ if logger().DEBUG:
 else:
     traceback = type('traceback', (), {})()  # Create a dummy traceback object if not in debug mode
     traceback.format_exc = lambda: "Traceback not available in non-debug mode"
-# Search subfolders for hals
 
 class Hals:
-    
+    """
+        HALs manager class
+        Search for HAL modules in chipsec/hal/ subdirectories
+        Will look for Architecture specific HALs based on mfgid first, then generic HALs in the common directory. If both are found, it will use the Architecture specific HAL.
+        For all HAL modules, it will look for a 'haldata' attribute that contains the following information:
+            name: dict of HAL class names with keys as the HAL name (e.g., 'memory', 'msr', etc.) and values as the class name (e.g., 'Memory', 'Msr', etc.)
+            arch: list of supported architectures (MfgIds) for the HAL module. See MfgIds enum in hal_base.py for available architectures.
+    """
 
     def __init__(self, cs):
         self.cs = cs
@@ -71,7 +77,7 @@ class Hals:
     def __getattr__(self, name):
         best_hal = self.find_best_hal_by_name(name)
         try:
-            hal_class = getattr(best_hal['mod'], name)
+            hal_class = getattr(best_hal['mod'], best_hal['name'][name])
             setattr(self, name, hal_class(self.cs))
         except Exception as err:
             logger().log_debug(traceback.format_exc())
@@ -82,10 +88,10 @@ class Hals:
         # hal_path = f'{self.hals_import_location}{name}'
         selected_hals = []
         for hal in self._available_hals:
-            if name in hal['name'] and self.is_mfgid_in_haldata(hal):
+            if name in hal['name'].keys() and self.is_mfgid_in_haldata(hal):
                 hal['priority'] = 1
                 selected_hals.append(hal)
-            elif name in hal['name'] and self.is_any_mfgid_in_haldata(hal):
+            elif name in hal['name'].keys() and self.is_any_mfgid_in_haldata(hal):
                 hal['priority'] = 2 
                 selected_hals.append(hal)
 

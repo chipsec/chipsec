@@ -68,4 +68,4 @@ class MemRange(HALBase):
         return None
 
 
-haldata = {"arch":[HALBase.MfgIds.Any], 'name': ['MemRange']}
+haldata = {"arch":[HALBase.MfgIds.Any], 'name': {'memrange': "MemRange"}}

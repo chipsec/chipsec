@@ -47,7 +47,7 @@ class SPIDescCommand(BaseCommand):
         self.logger.log("[CHIPSEC] Parsing SPI Flash Descriptor from file '{}'\n".format(self.fd_file))
         fd = read_file(self.fd_file)
         if fd:
-            self.cs.hals.SpiDescriptor.parse_spi_flash_descriptor(fd)
+            self.cs.hals.spidescriptor.parse_spi_flash_descriptor(fd)
 
 
 commands = {'spidesc': SPIDescCommand}
