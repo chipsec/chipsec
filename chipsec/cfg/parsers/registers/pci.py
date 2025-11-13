@@ -212,7 +212,7 @@ class PCIRegisters(BaseConfigRegisterHelper):
         self.logger.log_debug(f'reading {self.name}')
         _cs = cs()
         if self.pci.bus is not None:
-            self.value = _cs.hals.Pci.read(self.pci.bus, self.pci.dev, self.pci.fun, self.offset, self.size)
+            self.value = _cs.hals.pci.read(self.pci.bus, self.pci.dev, self.pci.fun, self.offset, self.size)
         else:
             raise CSReadError(f'PCI Device is not available ({self.pci.bus}:{self.pci.dev}.{self.pci.fun})')
         return self.value
@@ -221,6 +221,6 @@ class PCIRegisters(BaseConfigRegisterHelper):
         """Write the object"""
         _cs = cs()
         if self.pci.bus is not None:
-            _cs.hals.Pci.write(self.pci.bus, self.pci.dev, self.pci.fun, self.offset, self.size, value)
+            _cs.hals.pci.write(self.pci.bus, self.pci.dev, self.pci.fun, self.offset, self.size, value)
         else:
             raise CSReadError(f'PCI Device is not available ({self.pci.bus}:{self.pci.dev}.{self.pci.fun})')

@@ -207,7 +207,7 @@ class MSRRegisters(BaseConfigRegisterHelper):
         try:
             self.logger.log_debug(f'reading {self.name}')
             _cs = cs()
-            eax, edx = _cs.hals.Msr.read_msr(self.thread, self.msr)
+            eax, edx = _cs.hals.msr.read_msr(self.thread, self.msr)
             self.value = self._combine_32bit_values(eax, edx)
             return self.value
         except Exception as e:
@@ -229,7 +229,7 @@ class MSRRegisters(BaseConfigRegisterHelper):
             self.logger.log_debug(f'writing 0x{value:X} to {self.name}')
             _cs = cs()
             eax, edx = self._split_64bit_value(value)
-            _cs.hals.Msr.write(self.thread, self.msr, eax, edx)
+            _cs.hals.msr.write(self.thread, self.msr, eax, edx)
             self.value = value
         except Exception as e:
             raise MSRRegisterError(

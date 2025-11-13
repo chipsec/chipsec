@@ -181,7 +181,7 @@ class s3script_modify(BaseModule):
                     pa = bootscript_pa + e.offset_in_script
                     self.logger.log(f'[*] Modifying S3 boot script entry at address 0x{pa:016X}..')
 
-                    orig_entry_buf = self.cs.hals.Memory.read_physical_mem(pa, e.length)
+                    orig_entry_buf = self.cs.hals.memory.read_physical_mem(pa, e.length)
                     self.logger.log("[*] Original entry:")
                     print_buffer_bytes(orig_entry_buf)
 
@@ -191,9 +191,9 @@ class s3script_modify(BaseModule):
                         e.decoded_opcode.value = new_value
 
                     entry_buf = encode_s3bootscript_entry(e)
-                    self.cs.hals.Memory.write_physical_mem(pa, e.length, entry_buf)
+                    self.cs.hals.memory.write_physical_mem(pa, e.length, entry_buf)
 
-                    new_entry_buf = self.cs.hals.Memory.read_physical_mem(pa, e.length)
+                    new_entry_buf = self.cs.hals.memory.read_physical_mem(pa, e.length)
                     self.logger.log("[*] Modified entry:")
                     print_buffer_bytes(new_entry_buf)
                     return True
@@ -203,10 +203,10 @@ class s3script_modify(BaseModule):
 
     def modify_s3_dispatch(self):
         ep_size = len(self.DISPATCH_ENTRYPOINT_INSTR)
-        (smram_base, _, _) = self.cs.hals.CPU.get_SMRAM()
-        (_, new_entrypoint) = self.cs.hals.Memory.alloc_physical_mem(ep_size, smram_base)
-        self.cs.hals.Memory.write_physical_mem(new_entrypoint, ep_size, self.DISPATCH_ENTRYPOINT_INSTR)
-        new_ep = self.cs.hals.Memory.read_physical_mem(new_entrypoint, ep_size)
+        (smram_base, _, _) = self.cs.hals.cpu.get_SMRAM()
+        (_, new_entrypoint) = self.cs.hals.memory.alloc_physical_mem(ep_size, smram_base)
+        self.cs.hals.memory.write_physical_mem(new_entrypoint, ep_size, self.DISPATCH_ENTRYPOINT_INSTR)
+        new_ep = self.cs.hals.memory.read_physical_mem(new_entrypoint, ep_size)
         self.logger.log_good(f'Allocated new DISPATCH entry-point at 0x{new_entrypoint:016X} (size = 0x{ep_size:X}):')
         print_buffer_bytes(new_ep)
 
@@ -226,15 +226,15 @@ class s3script_modify(BaseModule):
                     pa = bootscript_pa + e.offset_in_script
                     self.logger.log(f'[*] Modifying S3 boot script entry at address 0x{pa:016X}..')
 
-                    orig_entry_buf = self.cs.hals.Memory.read_physical_mem(pa, e.length)
+                    orig_entry_buf = self.cs.hals.memory.read_physical_mem(pa, e.length)
                     self.logger.log("[*] Original entry:")
                     print_buffer_bytes(orig_entry_buf)
 
                     e.decoded_opcode.entrypoint = new_entrypoint
                     entry_buf = encode_s3bootscript_entry(e)
-                    self.cs.hals.Memory.write_physical_mem(pa, e.length, entry_buf)
+                    self.cs.hals.memory.write_physical_mem(pa, e.length, entry_buf)
 
-                    new_entry_buf = self.cs.hals.Memory.read_physical_mem(pa, e.length)
+                    new_entry_buf = self.cs.hals.memory.read_physical_mem(pa, e.length)
                     self.logger.log("[*] Modified entry:")
                     print_buffer_bytes(new_entry_buf)
                     self.logger.log('After sleep/resume, the system should hang')
@@ -267,19 +267,19 @@ class s3script_modify(BaseModule):
             return False
 
         ep_size = len(self.DISPATCH_ENTRYPOINT_INSTR)
-        self.cs.hals.Memory.write_physical_mem(ep_pa, ep_size, self.DISPATCH_ENTRYPOINT_INSTR)
-        new_ep = self.cs.hals.Memory.read_physical_mem(ep_pa, ep_size)
+        self.cs.hals.memory.write_physical_mem(ep_pa, ep_size, self.DISPATCH_ENTRYPOINT_INSTR)
+        new_ep = self.cs.hals.memory.read_physical_mem(ep_pa, ep_size)
         self.logger.log(f'[*] New DISPATCH entry-point at 0x{ep_pa:016X} (size = 0x{ep_size:X}):')
         print_buffer_bytes(new_ep)
         return True
 
     def modify_s3_mem(self, address, new_value):
         if address is None:
-            (smram_base, _, _) = self.cs.hals.CPU.get_SMRAM()
-            (_, address) = self.cs.hals.Memory.alloc_physical_mem(0x1000, smram_base)
+            (smram_base, _, _) = self.cs.hals.cpu.get_SMRAM()
+            (_, address) = self.cs.hals.memory.alloc_physical_mem(0x1000, smram_base)
             self.logger.log(f'[*] Allocated memory at 0x{address:016X} as a target of MEM_WRITE opcode')
 
-        val = self.cs.hals.Memory.read_physical_mem_dword(address)
+        val = self.cs.hals.memory.read_physical_mem_dword(address)
         self.logger.log(f'[*] Original value at 0x{address:016X}: 0x{val:08X}')
 
         (bootscript_PAs, parsed_scripts) = self.get_bootscript()
@@ -298,16 +298,16 @@ class s3script_modify(BaseModule):
                     pa = bootscript_pa + e.offset_in_script
                     self.logger.log(f'[*] Modifying S3 boot script entry at address 0x{pa:016X}..')
 
-                    orig_entry_buf = self.cs.hals.Memory.read_physical_mem(pa, e.length)
+                    orig_entry_buf = self.cs.hals.memory.read_physical_mem(pa, e.length)
                     self.logger.log("[*] Original entry:")
                     print_buffer_bytes(orig_entry_buf)
 
                     e.decoded_opcode.address = address
                     e.decoded_opcode.values[0] = new_value
                     entry_buf = encode_s3bootscript_entry(e)
-                    self.cs.hals.Memory.write_physical_mem(pa, e.length, entry_buf)
+                    self.cs.hals.memory.write_physical_mem(pa, e.length, entry_buf)
 
-                    new_entry_buf = self.cs.hals.Memory.read_physical_mem(pa, e.length)
+                    new_entry_buf = self.cs.hals.memory.read_physical_mem(pa, e.length)
                     self.logger.log("[*] Modified entry:")
                     print_buffer_bytes(new_entry_buf)
                     self.logger.log(f'After sleep/resume, read address 0x{address:08X} and look for value 0x{new_value:08X}')
@@ -326,7 +326,7 @@ class s3script_modify(BaseModule):
         for bootscript_pa in bootscript_PAs:
             if bootscript_pa == 0:
                 continue
-            script_buffer = self.cs.hals.Memory.read_physical_mem(bootscript_pa, 4)
+            script_buffer = self.cs.hals.memory.read_physical_mem(bootscript_pa, 4)
             script_type, _ = id_s3bootscript_type(script_buffer, False)
             self.logger.log(f'[*] S3 boot script type: 0x{script_type:0X}')
 
@@ -339,7 +339,7 @@ class s3script_modify(BaseModule):
                     self.logger.log_good(f'Found TERMINATE opcode at offset 0x{e.offset_in_script:X}')
                     self.logger.log(e)
                     pa = bootscript_pa + e.offset_in_script
-                    orig_entry_buf = self.cs.hals.Memory.read_physical_mem(pa, e.length)
+                    orig_entry_buf = self.cs.hals.memory.read_physical_mem(pa, e.length)
 
                     self.logger.log("[*] New S3 boot script opcode:")
                     self.logger.log(new_opcode)
@@ -347,10 +347,10 @@ class s3script_modify(BaseModule):
                     new_entry = create_s3bootscript_entry_buffer(script_type, new_opcode, e_index)
                     print_buffer_bytes(new_entry)
 
-                    self.cs.hals.Memory.write_physical_mem(pa, len(new_entry), new_entry)
+                    self.cs.hals.memory.write_physical_mem(pa, len(new_entry), new_entry)
                     last_entry_pa = pa + len(new_entry)
                     self.logger.log(f'[*] Moving TERMINATE opcode to the last entry at 0x{last_entry_pa:016X}..')
-                    self.cs.hals.Memory.write_physical_mem(last_entry_pa, len(orig_entry_buf), orig_entry_buf)
+                    self.cs.hals.memory.write_physical_mem(last_entry_pa, len(orig_entry_buf), orig_entry_buf)
                     return True
 
         self.logger.log_bad("Did not find TERMINATE opcode")
@@ -409,9 +409,9 @@ class s3script_modify(BaseModule):
                     return self.result.getReturnCode(ModuleResult.ERROR)
             elif 'dispatch' == scmd:
                 if len(module_argv) < 3:
-                    (smram_base, _, _) = self.cs.hals.CPU.get_SMRAM()
-                    (_, entrypoint) = self.cs.hals.Memory.alloc_physical_mem(0x1000, smram_base)
-                    self.cs.hals.Memory.write_physical_mem(entrypoint, len(self.DISPATCH_ENTRYPOINT_INSTR), self.DISPATCH_ENTRYPOINT_INSTR)
+                    (smram_base, _, _) = self.cs.hals.cpu.get_SMRAM()
+                    (_, entrypoint) = self.cs.hals.memory.alloc_physical_mem(0x1000, smram_base)
+                    self.cs.hals.memory.write_physical_mem(entrypoint, len(self.DISPATCH_ENTRYPOINT_INSTR), self.DISPATCH_ENTRYPOINT_INSTR)
                 else:
                     entrypoint = int(module_argv[2], 16)
                 new_opcode = op_dispatch(dispatch_opcode, None, entrypoint)

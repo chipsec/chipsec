@@ -129,8 +129,8 @@ class SMBus(hal_base.HALBase):
         self.smb_reg_address.write(hst_sa)
 
     def get_SMBus_Base_Address(self):
-        if self.cs.hals.IOBAR.is_IO_BAR_defined('8086.SMBUS.SMBUS_BASE'):
-            (sba_base, _) = self.cs.hals.IOBAR.get_IO_BAR_base_address('8086.SMBUS.SMBUS_BASE', self.instance)
+        if self.cs.hals.iobar.is_IO_BAR_defined('8086.SMBUS.SMBUS_BASE'):
+            (sba_base, _) = self.cs.hals.iobar.get_IO_BAR_base_address('8086.SMBUS.SMBUS_BASE', self.instance)
             return sba_base
         else:
             raise IOBARNotFoundError('IOBARAccessError: SMBUS_BASE')
@@ -591,8 +591,8 @@ class SMBusMMIO(SMBus):
         return (cmd.value & 0x3) == 0x3
 
     def get_SMBus_mmio_Base_Address(self):
-        if self.cs.hals.MMIO.is_MMIO_BAR_defined('8086.SMBUS.SMBUS_MMIOBAR'):
-            (smb_mmio_base, _) = self.cs.hals.MMIO.get_MMIO_BAR_base_address('8086.SMBUS.SMBUS_MMIOBAR', self.instance)
+        if self.cs.hals.mmio.is_MMIO_BAR_defined('8086.SMBUS.SMBUS_MMIOBAR'):
+            (smb_mmio_base, _) = self.cs.hals.mmio.get_MMIO_BAR_base_address('8086.SMBUS.SMBUS_MMIOBAR', self.instance)
             self.logger.log_hal(f"SMBUS MMIO base: 0x{smb_mmio_base:016X} (assuming below 4GB)")
             return smb_mmio_base
         else:
@@ -608,4 +608,4 @@ class SMBusMMIO(SMBus):
 
 
 
-haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': ['SMBus', 'SMBusMMIO']}
+haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': {'smbus': "SMBus", 'smbusmmio': "SMBusMMIO"}}

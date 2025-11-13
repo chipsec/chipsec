@@ -179,7 +179,7 @@ class MM_MSGBUSRegisters(BaseConfigRegisterHelper):
         try:
             self.logger.log_debug(f'reading {self.name}')
             _cs = cs()
-            self.value = _cs.hals.MMMsgBus.read(self.port, self.offset)
+            self.value = _cs.hals.mmmsgbus.read(self.port, self.offset)
             return self.value
         except Exception as e:
             raise MM_MSGBUSRegisterError(
@@ -199,7 +199,7 @@ class MM_MSGBUSRegisters(BaseConfigRegisterHelper):
         try:
             self.logger.log_debug(f'writing 0x{value:X} to {self.name}')
             _cs = cs()
-            _cs.hals.MMMsgBus.write(self.port, self.offset, value)
+            _cs.hals.mmmsgbus.write(self.port, self.offset, value)
             self.value = value
         except Exception as e:
             raise MM_MSGBUSRegisterError(

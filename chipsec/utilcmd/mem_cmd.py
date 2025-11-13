@@ -114,21 +114,21 @@ class MemCommand(BaseCommand):
         with open(fname, 'wb') as f:
             # read leading bytes to the next boundary
             if (head_len > 0):
-                f.write(self.cs.hals.Memory.read_physical_mem(pa_start, ALIGNED_4KB + 1 - head_len))
+                f.write(self.cs.hals.memory.read_physical_mem(pa_start, ALIGNED_4KB + 1 - head_len))
 
             for addr in range(pa, end, ALIGNED_4KB + 1):
-                f.write(self.cs.hals.Memory.read_physical_mem(addr, ALIGNED_4KB + 1))
+                f.write(self.cs.hals.memory.read_physical_mem(addr, ALIGNED_4KB + 1))
 
             # read trailing bytes
             if (tail_len > 0):
-                f.write(self.cs.hals.Memory.read_physical_mem(end, tail_len))
+                f.write(self.cs.hals.memory.read_physical_mem(end, tail_len))
 
     def mem_allocate(self) -> None:
-        (va, pa) = self.cs.hals.Memory.alloc_physical_mem(self.allocate_length)
+        (va, pa) = self.cs.hals.memory.alloc_physical_mem(self.allocate_length)
         self.logger.log(f'[CHIPSEC] Allocated {self.allocate_length:X} bytes of physical memory: VA = 0x{va:016X}, PA = 0x{pa:016X}')
 
     def mem_search(self) -> None:
-        buffer = self.cs.hals.Memory.read_physical_mem(self.phys_address, self.length)
+        buffer = self.cs.hals.memory.read_physical_mem(self.phys_address, self.length)
         buffer = bytestostring(buffer)
         offset = buffer.find(self.value)
 
@@ -143,7 +143,7 @@ class MemCommand(BaseCommand):
 
     def mem_read(self) -> None:
         self.logger.log(f'[CHIPSEC] Reading buffer from memory: PA = 0x{self.phys_address:016X}, len = 0x{self.buffer_length:X}..')
-        buffer = self.cs.hals.Memory.read_physical_mem(self.phys_address, self.buffer_length)
+        buffer = self.cs.hals.memory.read_physical_mem(self.phys_address, self.buffer_length)
         if self.file_name:
             write_file(self.file_name, buffer)
             self.logger.log(f'[CHIPSEC] Written 0x{len(buffer):X} bytes to \'{self.file_name}\'')
@@ -165,11 +165,11 @@ class MemCommand(BaseCommand):
             return
         self.logger.log(f'[CHIPSEC] Reading {width:X}-byte value from PA 0x{self.phys_address:016X}..')
         if 0x1 == width:
-            value = self.cs.hals.Memory.read_physical_mem_byte(self.phys_address)
+            value = self.cs.hals.memory.read_physical_mem_byte(self.phys_address)
         elif 0x2 == width:
-            value = self.cs.hals.Memory.read_physical_mem_word(self.phys_address)
+            value = self.cs.hals.memory.read_physical_mem_word(self.phys_address)
         elif 0x4 == width:
-            value = self.cs.hals.Memory.read_physical_mem_dword(self.phys_address)
+            value = self.cs.hals.memory.read_physical_mem_dword(self.phys_address)
         self.logger.log(f'[CHIPSEC] Value = 0x{value:X}')
 
     def mem_write(self) -> None:
@@ -189,7 +189,7 @@ class MemCommand(BaseCommand):
             return
 
         self.logger.log(f'[CHIPSEC] writing buffer to memory: PA = 0x{self.phys_address:016X}, len = 0x{self.buffer_length:X}..')
-        self.cs.hals.Memory.write_physical_mem(self.phys_address, self.buffer_length, buffer)
+        self.cs.hals.memory.write_physical_mem(self.phys_address, self.buffer_length, buffer)
 
     def mem_writeval(self) -> None:
         try:
@@ -203,10 +203,10 @@ class MemCommand(BaseCommand):
             return
         self.logger.log(f'[CHIPSEC] Writing {width:X}-byte value 0x{self.write_data:X} to PA 0x{self.phys_address:016X}..')
         if 0x1 == width:
-            self.cs.hals.Memory.write_physical_mem_byte(self.phys_address, self.write_data)
+            self.cs.hals.memory.write_physical_mem_byte(self.phys_address, self.write_data)
         elif 0x2 == width:
-            self.cs.hals.Memory.write_physical_mem_word(self.phys_address, self.write_data)
+            self.cs.hals.memory.write_physical_mem_word(self.phys_address, self.write_data)
         elif 0x4 == width:
-            self.cs.hals.Memory.write_physical_mem_dword(self.phys_address, self.write_data)
+            self.cs.hals.memory.write_physical_mem_dword(self.phys_address, self.write_data)
 
 commands = {'mem': MemCommand}

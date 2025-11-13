@@ -78,12 +78,12 @@ class IGD(hal_base.HALBase):
         return legacy
 
     def get_GMADR(self) -> int:
-        base, _ = self.cs.hals.MMIO.get_MMIO_BAR_base_address('GMADR')
+        base, _ = self.cs.hals.mmio.get_MMIO_BAR_base_address('GMADR')
         self.logger.log_hal(f'[igd] Aperture (GMADR): 0x{base:016X}')
         return base
 
     def get_GTTMMADR(self) -> int:
-        base, _ = self.cs.hals.MMIO.get_MMIO_BAR_base_address('GTTMMADR')
+        base, _ = self.cs.hals.mmio.get_MMIO_BAR_base_address('GTTMMADR')
         self.logger.log_hal(f'[igd] Graphics MMIO and GTT (GTTMMADR): 0x{base:016X}')
         return base
 
@@ -98,31 +98,31 @@ class IGD(hal_base.HALBase):
         gtt_base = self.get_GGTT_base()
         reg_off = (self.get_PTE_size() * pte_num)
 
-        pte_lo = self.cs.hals.MMIO.read_MMIO_reg(gtt_base, reg_off)
+        pte_lo = self.cs.hals.mmio.read_MMIO_reg(gtt_base, reg_off)
         pte_hi = 0
         if self.get_PTE_size() == 8:
-            pte_hi = self.cs.hals.MMIO.read_MMIO_reg(gtt_base, reg_off + 4)
+            pte_hi = self.cs.hals.mmio.read_MMIO_reg(gtt_base, reg_off + 4)
         return (pte_lo | (pte_hi << 32))
 
     def write_GGTT_PTE(self, pte_num: int, pte: int) -> int:
         gtt_base = self.get_GGTT_base()
-        self.cs.hals.MMIO.write_MMIO_reg(gtt_base, self.get_PTE_size() * pte_num, pte & 0xFFFFFFFF)
+        self.cs.hals.mmio.write_MMIO_reg(gtt_base, self.get_PTE_size() * pte_num, pte & 0xFFFFFFFF)
         if self.get_PTE_size() == 8:
-            self.cs.hals.MMIO.write_MMIO_reg(gtt_base, self.get_PTE_size() * pte_num + 4, pte >> 32)
+            self.cs.hals.mmio.write_MMIO_reg(gtt_base, self.get_PTE_size() * pte_num + 4, pte >> 32)
         return pte
 
     def write_GGTT_PTE_from_PA(self, pte_num: int, pa: int) -> int:
         pte = self.get_GGTT_PTE_from_PA(pa)
         gtt_base = self.get_GGTT_base()
-        self.cs.hals.MMIO.write_MMIO_reg(gtt_base, self.get_PTE_size() * pte_num, pte & 0xFFFFFFFF)
+        self.cs.hals.mmio.write_MMIO_reg(gtt_base, self.get_PTE_size() * pte_num, pte & 0xFFFFFFFF)
         if self.get_PTE_size() == 8:
-            self.cs.hals.MMIO.write_MMIO_reg(gtt_base, self.get_PTE_size() * pte_num + 4, pte >> 32)
+            self.cs.hals.mmio.write_MMIO_reg(gtt_base, self.get_PTE_size() * pte_num + 4, pte >> 32)
         return pte
 
     def dump_GGTT_PTEs(self, num: int) -> None:
         gtt_base = self.get_GGTT_base()
         self.logger.log('[igd] Global GTT contents:')
-        ptes = self.cs.hals.MMIO.read_MMIO(gtt_base, num * self.get_PTE_size())
+        ptes = self.cs.hals.mmio.read_MMIO(gtt_base, num * self.get_PTE_size())
         pte_num = 0
         for pte in ptes:
             self.logger.log(f'PTE[{pte_num:03d}]: {pte:08X}')
@@ -187,7 +187,7 @@ class IGD(hal_base.HALBase):
 
         self.logger.log_hal(f'[igd] Original data at address 0x{address:016X}:')
         if self.logger.HAL:
-            print_buffer_bytes(self.cs.hals.Memory.read_physical_mem(address, size))
+            print_buffer_bytes(self.cs.hals.memory.read_physical_mem(address, size))
 
         buffer = b''
         pa = address
@@ -205,14 +205,14 @@ class IGD(hal_base.HALBase):
                 size = r if (r > 0) else 0x1000
             if value is None:
                 self.logger.log_hal(f'[igd] Reading 0x{size:X} bytes at 0x{pa:016X} through GFx aperture 0x{igd_addr + pa_off:016X}...')
-                page = self.cs.hals.Memory.read_physical_mem(igd_addr + pa_off, size)
+                page = self.cs.hals.memory.read_physical_mem(igd_addr + pa_off, size)
                 buffer += page
                 if self.logger.HAL:
                     print_buffer_bytes(page[:size])
             else:
                 self.logger.log_hal(f'[igd] Writing 0x{size:X} bytes to 0x{pa:016X} through GFx aperture 0x{igd_addr + pa_off:016X}...')
                 page = value[p * 0x1000:p * 0x1000 + size]
-                self.cs.hals.Memory.write_physical_mem(igd_addr + pa_off, size, page)
+                self.cs.hals.memory.write_physical_mem(igd_addr + pa_off, size, page)
                 if self.logger.HAL:
                     print_buffer_bytes(page)
             pa += size
@@ -225,7 +225,7 @@ class IGD(hal_base.HALBase):
     
     def display_igd_pci_info(self) -> None:
         igd_list = self.cs.device.get_list_by_name('8086.IGD')
-        for vid, did, rid, instance in self.cs.hals.Pci.get_viddidrid_from_device_list(igd_list):
+        for vid, did, rid, instance in self.cs.hals.pci.get_viddidrid_from_device_list(igd_list):
             self.logger.log(f'[*] IGD ({instance.bus:X}:{instance.dev:X}.{instance.fun:X}):')
             self.logger.log(f'[*]   VID: {vid:04X}')
             self.logger.log(f'[*]   DID: {did:04X}')
@@ -233,4 +233,4 @@ class IGD(hal_base.HALBase):
             self.logger.log('')
 
 
-haldata = {"arch":[hal_base.HALBase.MfgIds.Intel], 'name': ['IGD']}
+haldata = {"arch":[hal_base.HALBase.MfgIds.Intel], 'name': {'igd': "IGD"}}

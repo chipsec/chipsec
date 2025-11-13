@@ -67,14 +67,14 @@ class Msr(HALBase):
     # TODO: Move this somewhere else.
     def get_cpu_thread_count(self) -> int:
         if not self.topo:
-            self.topo = self.cs.hals.CPU.get_cpu_topology()
+            self.topo = self.cs.hals.cpu.get_cpu_topology()
         self.logger.log_hal(f'[Msr] # of logical CPUs: {self.topo["threads"]:d}')
         return self.topo['threads']
 
 
     def get_cpu_core_count(self) -> int:
         if not self.topo:
-            self.topo = self.cs.hals.CPU.get_cpu_topology()
+            self.topo = self.cs.hals.cpu.get_cpu_topology()
         core_count = len(self.topo['cores'])
         self.logger.log_hal(f'[Msr] # of cores in Package: {core_count:d}')
         return core_count
@@ -177,4 +177,4 @@ class Msr(HALBase):
         for tid in range(self.get_cpu_thread_count()):
             self.GDT(tid, num_entries)
 
-haldata = {"arch":[HALBase.MfgIds.Intel], 'name': ['Msr']}
+haldata = {"arch":[HALBase.MfgIds.Intel], 'name': {'msr': "Msr"}}

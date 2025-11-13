@@ -75,13 +75,13 @@ class IDTCommand(BaseCommand):
         parser.parse_args(self.argv, namespace=self)
 
     def run(self) -> None:
-        num_threads = self.cs.hals.Msr.get_cpu_thread_count()
+        num_threads = self.cs.hals.msr.get_cpu_thread_count()
         if self._thread and self._thread < num_threads:
             self.logger.log(f'[CHIPSEC] Dumping IDT of CPU thread {self._thread:d}')
-            self.cs.hals.Msr.IDT(self._thread, 4)
+            self.cs.hals.msr.IDT(self._thread, 4)
         else:
             self.logger.log(f'[CHIPSEC] Dumping IDT of {num_threads:d} CPU threads')
-            self.cs.hals.Msr.IDT_all(4)
+            self.cs.hals.msr.IDT_all(4)
 
 
 class GDTCommand(BaseCommand):
@@ -103,13 +103,13 @@ class GDTCommand(BaseCommand):
         parser.parse_args(self.argv, namespace=self)
 
     def run(self) -> None:
-        num_threads = self.cs.hals.Msr.get_cpu_thread_count()
+        num_threads = self.cs.hals.msr.get_cpu_thread_count()
         if self._thread and self._thread < num_threads:
             self.logger.log(f'[CHIPSEC] Dumping IDT of CPU thread {self._thread:d}')
-            self.cs.hals.Msr.GDT(self._thread, 4)
+            self.cs.hals.msr.GDT(self._thread, 4)
         else:
             self.logger.log(f'[CHIPSEC] Dumping IDT of {num_threads:d} CPU threads')
-            self.cs.hals.Msr.GDT_all(4)
+            self.cs.hals.msr.GDT_all(4)
 
 
 class LDTCommand(BaseCommand):

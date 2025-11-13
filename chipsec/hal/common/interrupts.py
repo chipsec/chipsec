@@ -77,20 +77,20 @@ class Interrupts(hal_base.HALBase):
     def send_SMI_APMC(self, SMI_code_port_value: int, SMI_data_port_value: int) -> None:
         logger().log_hal(f"[intr] sending SMI via APMC ports: code 0xB2 <- 0x{SMI_code_port_value:02X}, data 0xB3 <- 0x{SMI_data_port_value:02X}")
         SMI_code_data = (SMI_data_port_value << 8 | SMI_code_port_value)
-        return self.cs.hals.Io.write_port_word(SMI_APMC_PORT, SMI_code_data)
+        return self.cs.hals.io.write_port_word(SMI_APMC_PORT, SMI_code_data)
 
     def send_NMI(self) -> None:
         # logger().log_hal("[intr] Sending NMI# through TCO1_CTL[NMI_NOW]")
         # reg, ba = self.cs.device.get_IO_space("TCOBASE")
         # breakpoint()
         # tcobase = self.cs.register.read_field(reg, ba)
-        # return self.cs.hals.Io.write_port_byte(tcobase + NMI_TCO1_CTL + 1, NMI_NOW)
+        # return self.cs.hals.io.write_port_byte(tcobase + NMI_TCO1_CTL + 1, NMI_NOW)
         smbus_instance = self.cs.device.get_instance_by_name('8086.SMBUS', 0)
         if smbus_instance is not None:
             self.logger.log_hal("[intr] Sending NMI# through TCO1_CTL[NMI_NOW]")
             try:
-                tcobase, _ = self.cs.hals.IOBAR.get_IO_BAR_base_address("8086.SMBUS.TCOBASE", smbus_instance.instances[0])
-                return self.cs.hals.IOBAR.write_port_byte(tcobase + NMI_TCO1_CTL + 1, NMI_NOW)
+                tcobase, _ = self.cs.hals.iobar.get_IO_BAR_base_address("8086.SMBUS.TCOBASE", smbus_instance.instances[0])
+                return self.cs.hals.iobar.write_port_byte(tcobase + NMI_TCO1_CTL + 1, NMI_NOW)
             except CSReadError:
                 self.logger.log("Error finding register 8086.SMBUS.TCOBASE")
         else:
@@ -152,7 +152,7 @@ class Interrupts(hal_base.HALBase):
         phys_address = start
         found_at = 0
         while phys_address <= end:
-            buffer = self.cs.hals.Memory.read_physical_mem(phys_address, chunk_sz)
+            buffer = self.cs.hals.memory.read_physical_mem(phys_address, chunk_sz)
             buffer = bytestostring(buffer)
             offset = buffer.find('smmc')
             if offset != -1:
@@ -191,24 +191,24 @@ MdeModulePkg/Core/PiSmmCore/PiSmmCorePrivateData.h
         BufferSize_offset = CommBuffer_offset + 8
         ReturnStatus_offset = BufferSize_offset + 8
 
-        self.hals.Memorymem.write_physical_mem(smmc + CommBuffer_offset, 8, struct.pack("Q", payload_loc))
-        self.cs.hals.Memory.write_physical_mem(smmc + BufferSize_offset, 8, struct.pack("Q", len(data_hdr)))
-        self.cs.hals.Memory.write_physical_mem(payload_loc, len(data_hdr), data_hdr)
+        self.hals.memorymem.write_physical_mem(smmc + CommBuffer_offset, 8, struct.pack("Q", payload_loc))
+        self.cs.hals.memory.write_physical_mem(smmc + BufferSize_offset, 8, struct.pack("Q", len(data_hdr)))
+        self.cs.hals.memory.write_physical_mem(payload_loc, len(data_hdr), data_hdr)
 
         if self.logger.VERBOSE:
             self.logger.log("[*] Communication buffer on input")
-            print_buffer_bytes(self.cs.hals.Memory.read_physical_mem(payload_loc, len(data_hdr)))
+            print_buffer_bytes(self.cs.hals.memory.read_physical_mem(payload_loc, len(data_hdr)))
             self.logger.log("")
 
         self.send_SMI_APMC(CommandPort, DataPort)
 
         if self.logger.VERBOSE:
             self.logger.log("[*] Communication buffer on output")
-            print_buffer_bytes(self.cs.hals.Memory.read_physical_mem(payload_loc, len(data_hdr)))
+            print_buffer_bytes(self.cs.hals.memory.read_physical_mem(payload_loc, len(data_hdr)))
             self.logger.log("")
 
-        ReturnStatus = struct.unpack("Q", self.cs.hals.Memory.read_physical_mem(smmc + ReturnStatus_offset, 8))[0]
+        ReturnStatus = struct.unpack("Q", self.cs.hals.memory.read_physical_mem(smmc + ReturnStatus_offset, 8))[0]
         return ReturnStatus
 
 
-haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': ['Interrupts']}
+haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': {'interrupts': "Interrupts"}}

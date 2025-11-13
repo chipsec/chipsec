@@ -70,7 +70,7 @@ class IgdCommand(BaseCommand):
 
     def read_dma(self) -> None:
         self.logger.log(f'[CHIPSEC] Reading buffer from memory: PA = 0x{self.address:016X}, len = 0x{self.width:X}..')
-        buffer = self.cs.hals.IGD.gfx_aperture_dma_read_write(self.address, self.width)
+        buffer = self.cs.hals.igd.gfx_aperture_dma_read_write(self.address, self.width)
         if self.file_name:
             write_file(self.file_name, buffer)
             self.logger.log(f'[CHIPSEC] Written 0x{len(buffer):X} bytes to \'{self.file_name}\'')
@@ -96,14 +96,14 @@ class IgdCommand(BaseCommand):
             return
 
         self.logger.log(f'[CHIPSEC] Writing buffer to memory: PA = 0x{self.address:016X}, len = 0x{self.size:X}..')
-        self.cs.hals.IGD.gfx_aperture_dma_read_write(self.address, self.size, buffer)
+        self.cs.hals.igd.gfx_aperture_dma_read_write(self.address, self.size, buffer)
 
     def print_igd_pci_info(self) -> None:
-        self.cs.hals.IGD.display_igd_pci_info()
+        self.cs.hals.igd.display_igd_pci_info()
 
     def run(self) -> None:
 
-        if not self.cs.hals.IGD.is_device_enabled():
+        if not self.cs.hals.igd.is_device_enabled():
             self.logger.log('[CHIPSEC] Looks like internal graphics device is not enabled')
             return
 

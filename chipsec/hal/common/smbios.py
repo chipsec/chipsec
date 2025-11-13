@@ -270,7 +270,7 @@ class SMBIOS(hal_base.HALBase):
         # original buffer.
         try:
             logger().log_hal(f'Validating 32bit SMBIOS header @ 0x{pa:08X}')
-            mem_buffer = self.cs.hals.Memory.read_physical_mem(pa, SMBIOS_2_x_ENTRY_POINT_SIZE)
+            mem_buffer = self.cs.hals.memory.read_physical_mem(pa, SMBIOS_2_x_ENTRY_POINT_SIZE)
             ep_data = SMBIOS_2_x_ENTRY_POINT(*struct.unpack_from(SMBIOS_2_x_ENTRY_POINT_FMT, mem_buffer))
         except:
             logger().log_hal('- Memory read failed')
@@ -294,7 +294,7 @@ class SMBIOS(hal_base.HALBase):
         # original buffer.
         try:
             logger().log_hal(f'Validating 64bit SMBIOS header @ 0x{pa:08X}')
-            mem_buffer = self.cs.hals.Memory.read_physical_mem(pa, SMBIOS_3_x_ENTRY_POINT_SIZE)
+            mem_buffer = self.cs.hals.memory.read_physical_mem(pa, SMBIOS_3_x_ENTRY_POINT_SIZE)
             ep_data = SMBIOS_3_x_ENTRY_POINT(*struct.unpack_from(SMBIOS_3_x_ENTRY_POINT_FMT, mem_buffer))
         except:
             logger().log_hal('- Memory read failed')
@@ -337,7 +337,7 @@ class SMBIOS(hal_base.HALBase):
 
         # Determine regions to scan
         if self.smbios_2_guid_found or self.smbios_3_guid_found:
-            (smm_base, _, _) = self.cs.hals.CPU.get_SMRAM()
+            (smm_base, _, _) = self.cs.hals.cpu.get_SMRAM()
             pa = smm_base - SCAN_SIZE
         else:
             entries_to_find = 2
@@ -346,7 +346,7 @@ class SMBIOS(hal_base.HALBase):
         # Scan memory for the signature
         logger().log_hal(f'Scanning memory for {entries_to_find:d} signature(s)')
         while (pa >= SCAN_LOW_LIMIT):
-            mem_buffer = self.cs.hals.Memory.read_physical_mem(pa, SCAN_SIZE)
+            mem_buffer = self.cs.hals.memory.read_physical_mem(pa, SCAN_SIZE)
             sig_pa = mem_buffer.find(SMBIOS_2_x_SIG) + pa
             if sig_pa >= pa and self.smbios_2_pa is None:
                 logger().log_hal(f'+ Found SMBIOS 2.x signature @ 0x{sig_pa:08X}')
@@ -375,11 +375,11 @@ class SMBIOS(hal_base.HALBase):
         # Read the raw data regions
         logger().log_hal('Reading SMBIOS data tables:')
         if self.smbios_2_ep is not None and self.smbios_2_ep.TableAddr != 0 and self.smbios_2_ep.TableLen != 0:
-            self.smbios_2_data = self.cs.hals.Memory.read_physical_mem(self.smbios_2_ep.TableAddr, self.smbios_2_ep.TableLen)
+            self.smbios_2_data = self.cs.hals.memory.read_physical_mem(self.smbios_2_ep.TableAddr, self.smbios_2_ep.TableLen)
             if self.smbios_2_data is None:
                 logger().log_hal('- Failed to read 32bit SMBIOS data')
         if self.smbios_3_ep is not None and self.smbios_3_ep.TableAddr != 0 and self.smbios_3_ep.MaxSize != 0:
-            self.smbios_3_data = self.cs.hals.Memory.read_physical_mem(self.smbios_3_ep.TableAddr, self.smbios_3_ep.MaxSize)
+            self.smbios_3_data = self.cs.hals.memory.read_physical_mem(self.smbios_3_ep.TableAddr, self.smbios_3_ep.MaxSize)
             if self.smbios_3_data is None:
                 logger().log_hal('- Failed to read 64bit SMBIOS data')
 
@@ -513,4 +513,4 @@ class SMBIOS(hal_base.HALBase):
         return ret_val
 
 
-haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': ['SMBIOS']}
+haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': {'smbios': "SMBIOS"}}

@@ -61,13 +61,13 @@ class MMMsgBusCommand(BaseCommand):
 
     def msgbus_mm_read(self):
         self.logger.log(f'[CHIPSEC] MMIO msgbus read: port 0x{self.port:02X} + 0x{self.reg:08X}')
-        res = self.cs.hals.MMMsgBus.read(self.port, self.reg)
+        res = self.cs.hals.mmmsgbus.read(self.port, self.reg)
         self._log_result(res)
         return True
 
     def msgbus_mm_write(self):
         self.logger.log(f'[CHIPSEC] MMIO msgbus write: port 0x{self.port:02X} + 0x{self.reg:08X} < 0x{self.val:08X}')
-        res = self.cs.hals.MMMsgBus.write(self.port, self.reg, self.val)
+        res = self.cs.hals.mmmsgbus.write(self.port, self.reg, self.val)
         self._log_result(res)
         return True
 

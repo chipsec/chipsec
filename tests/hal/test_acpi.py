@@ -26,7 +26,7 @@ class TestACPI(unittest.TestCase):
         mock_cs = MagicMock()
         rsdp_buf = b'RSD PTR \x93INTEL\x00\x02(\xd0^z'
         rsdp_buf_ext = b'RSD PTR \x93INTEL\x00\x02(\xd0^z$\x00\x00\x00\xc0\xd0^z\x00\x00\x00\x00t\x00\x00\x00'
-        mock_cs.hals.Memory.read_physical_mem.side_effect = [rsdp_buf, rsdp_buf_ext]
+        mock_cs.hals.memory.read_physical_mem.side_effect = [rsdp_buf, rsdp_buf_ext]
         pa = 983056
         test_acpi = ACPI(mock_cs)
         self.assertIsInstance(test_acpi.read_RSDP(pa), RSDP)

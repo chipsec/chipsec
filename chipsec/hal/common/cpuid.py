@@ -40,7 +40,7 @@ class CpuId(hal_base.HALBase):
         self.helper = cs.helper
 
     def cpuid(self, eax: int, ecx: int) -> Tuple[int, int, int, int]:
-        return self.cs.hals.CPU.cpuid(eax, ecx)
+        return self.cs.hals.cpu.cpuid(eax, ecx)
 
     def get_proc_info(self):
         (eax, _, _, _) = self.cpuid(0x01, 0x00)
@@ -55,4 +55,4 @@ class CpuId(hal_base.HALBase):
         
         
 
-haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': ['CpuId']}
+haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': {'cpuid': "CpuId"}}

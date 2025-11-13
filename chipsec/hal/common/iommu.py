@@ -187,4 +187,4 @@ class IOMMU(hal_base.HALBase):
         return None
 
 
-haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': ['IOMMU']}
+haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': {'iommu': "IOMMU"}}

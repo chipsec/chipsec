@@ -57,7 +57,7 @@ class RingBuffer(BaseModuleDebug):
     # ringbuffer_alloc - allocates kernel memory for ring buffer
     ##
     def ringbuffer_alloc(self, pages=4):
-        (va, pa) = self.cs.hals.Memory.alloc_physical_mem(pages << 12, 0xFFFFFFFFFFFFFFFF)
+        (va, pa) = self.cs.hals.memory.alloc_physical_mem(pages << 12, 0xFFFFFFFFFFFFFFFF)
         self.base_addr.append(va)
         if pa != 0:
             for i in range(pages):
@@ -72,7 +72,7 @@ class RingBuffer(BaseModuleDebug):
     def ringbuffer_init(self):
         init_page = '\x00' * 0x1000
         for addr in self.pfn:
-            self.cs.hals.Memory.write_physical_mem(addr, len(init_page), init_page)
+            self.cs.hals.memory.write_physical_mem(addr, len(init_page), init_page)
         return
 
     ##
@@ -86,7 +86,7 @@ class RingBuffer(BaseModuleDebug):
             page = ring_data_page + (index >> 12) % ring_data_size
             addr = self.pfn[page] + (index & 0xFFF)
             size = min(total, 0x1000 - (index & 0xFFF))
-            data += self.cs.hals.Memory.read_physical_mem(addr, size)
+            data += self.cs.hals.memory.read_physical_mem(addr, size)
             total -= size
             index += size
         return data
@@ -101,7 +101,7 @@ class RingBuffer(BaseModuleDebug):
             page = ring_data_page + (index >> 12) % ring_data_size
             addr = self.pfn[page] + (index & 0xFFF)
             size = min(len(data), 0x1000 - (index & 0xFFF))
-            self.cs.hals.Memory.write_physical_mem(addr, size, data[:size])
+            self.cs.hals.memory.write_physical_mem(addr, size, data[:size])
             data = data[size:]
             index += size
         return
@@ -111,7 +111,7 @@ class RingBuffer(BaseModuleDebug):
     ##
     def ringbuffer_read(self):
         ring_data_size = (len(self.pfn) - self.send_size - 1) << 12
-        buffer = self.cs.hals.Memory.read_physical_mem(self.pfn[self.send_size], 0x10)
+        buffer = self.cs.hals.memory.read_physical_mem(self.pfn[self.send_size], 0x10)
         write_index, read_index, _, _ = unpack('<4L', buffer)
         delta = write_index - read_index
         avail = delta if delta >= 0 else ring_data_size + delta
@@ -121,7 +121,7 @@ class RingBuffer(BaseModuleDebug):
         pksize = 8 * unpack('<4HQ', header)[2] + 8
         buffer = self.ringbuffer_copyfrom(read_index, pksize)
         read_index = (read_index + pksize) % ring_data_size
-        self.cs.hals.Memory.write_physical_mem(self.pfn[self.send_size] + 4, 4, DD(read_index))
+        self.cs.hals.memory.write_physical_mem(self.pfn[self.send_size] + 4, 4, DD(read_index))
         return buffer[:pksize - 8]
 
     ##
@@ -129,7 +129,7 @@ class RingBuffer(BaseModuleDebug):
     ##
     def ringbuffer_write(self, data):
         ring_data_size = (self.send_size - 1) << 12
-        buffer = self.cs.hals.Memory.read_physical_mem(self.pfn[0], 0x10)
+        buffer = self.cs.hals.memory.read_physical_mem(self.pfn[0], 0x10)
         write_index, read_index, _, _ = unpack('<4L', buffer)
         delta = read_index - write_index
         avail = delta if delta > 0 else ring_data_size + delta
@@ -138,7 +138,7 @@ class RingBuffer(BaseModuleDebug):
             return False
         self.ringbuffer_copyto(write_index, data)
         write_index = (write_index + len(data)) % ring_data_size
-        self.cs.hals.Memory.write_physical_mem(self.pfn[0] + 0, 4, DD(write_index))
+        self.cs.hals.memory.write_physical_mem(self.pfn[0] + 0, 4, DD(write_index))
         self.signal = True
         return True
 
@@ -166,8 +166,8 @@ class HyperV(BaseModuleDebug):
         BaseModuleDebug.__init__(self)
         self.hypercall = VMM(self.cs)
         self.hypercall.init()
-        self.membuf = self.cs.hals.Memory.alloc_physical_mem(4 * 0x1000, 0xFFFFFFFF)
-        self.cs.hals.Memory.write_physical_mem(self.membuf[1], 4 * 0x1000, b'\x00' * 4 * 0x1000)
+        self.membuf = self.cs.hals.memory.alloc_physical_mem(4 * 0x1000, 0xFFFFFFFF)
+        self.cs.hals.memory.write_physical_mem(self.membuf[1], 4 * 0x1000, b'\x00' * 4 * 0x1000)
         self.old_sint2 = []
         self.old_simp = []
         self.old_siefp = []
@@ -178,13 +178,13 @@ class HyperV(BaseModuleDebug):
         BaseModuleDebug.__del__(self)
         self.dbg('Free kernel memory')
         # if self.membuf[0] != 0:
-        #    self.cs.hals.Memory.free_physical_mem(self.membuf[0])
+        #    self.cs.hals.memory.free_physical_mem(self.membuf[0])
         if len(self.old_sint2) == 2:
-            self.cs.hals.Msr.write_msr(0, HV_X64_MSR_SINT2, self.old_sint2[0], self.old_sint2[1])
+            self.cs.hals.msr.write_msr(0, HV_X64_MSR_SINT2, self.old_sint2[0], self.old_sint2[1])
         if len(self.old_simp) == 2:
-            self.cs.hals.Msr.write_msr(0, HV_X64_MSR_SIMP, self.old_simp[0], self.old_simp[1])
+            self.cs.hals.msr.write_msr(0, HV_X64_MSR_SIMP, self.old_simp[0], self.old_simp[1])
         if len(self.old_siefp) == 2:
-            self.cs.hals.Msr.write_msr(0, HV_X64_MSR_SIEFP, self.old_siefp[0], self.old_siefp[1])
+            self.cs.hals.msr.write_msr(0, HV_X64_MSR_SIEFP, self.old_siefp[0], self.old_siefp[1])
         for i in [x for x in self.ringbuffers]:
             del self.ringbuffers[i]
 
@@ -192,16 +192,16 @@ class HyperV(BaseModuleDebug):
     # hv_init
     ##
     def hv_init(self):
-        self.old_sint2 = self.cs.hals.Msr.read_msr(0, HV_X64_MSR_SINT2)
-        self.old_simp = self.cs.hals.Msr.read_msr(0, HV_X64_MSR_SIMP)
-        self.old_siefp = self.cs.hals.Msr.read_msr(0, HV_X64_MSR_SIEFP)
+        self.old_sint2 = self.cs.hals.msr.read_msr(0, HV_X64_MSR_SINT2)
+        self.old_simp = self.cs.hals.msr.read_msr(0, HV_X64_MSR_SIMP)
+        self.old_siefp = self.cs.hals.msr.read_msr(0, HV_X64_MSR_SIEFP)
         pa = self.membuf[1]
-        self.sint3 = self.cs.hals.Msr.read_msr(0, HV_X64_MSR_SINT3)
-        self.cs.hals.Msr.write_msr(0, HV_X64_MSR_SINT2, self.sint3[0], self.sint3[1])
-        self.cs.hals.Msr.write_msr(0, HV_X64_MSR_SIEFP, (pa & 0xFFFFFFFF) | 0x1, pa >> 32)
-        #self.cs.hals.Msr.write_msr(0, HV_X64_MSR_SCONTROL, 0x1, 0x0)
-        self.simp = self.cs.hals.Msr.read_msr(0, HV_X64_MSR_SIMP)
-        self.siefp = self.cs.hals.Msr.read_msr(0, HV_X64_MSR_SIEFP)
+        self.sint3 = self.cs.hals.msr.read_msr(0, HV_X64_MSR_SINT3)
+        self.cs.hals.msr.write_msr(0, HV_X64_MSR_SINT2, self.sint3[0], self.sint3[1])
+        self.cs.hals.msr.write_msr(0, HV_X64_MSR_SIEFP, (pa & 0xFFFFFFFF) | 0x1, pa >> 32)
+        #self.cs.hals.msr.write_msr(0, HV_X64_MSR_SCONTROL, 0x1, 0x0)
+        self.simp = self.cs.hals.msr.read_msr(0, HV_X64_MSR_SIMP)
+        self.siefp = self.cs.hals.msr.read_msr(0, HV_X64_MSR_SIEFP)
         self.simp = (self.simp[0] + (self.simp[1] << 32)) & 0xFFFFFFFFFFFFF000
         self.siefp = (self.siefp[0] + (self.siefp[1] << 32)) & 0xFFFFFFFFFFFFF000
         return
@@ -225,14 +225,14 @@ class HyperV(BaseModuleDebug):
     # hv_recv_msg - recieve message if exist otherwise empty string
     ##
     def hv_recv_msg(self, sint):
-        buffer = self.cs.hals.Memory.read_physical_mem(self.simp + 0x100 * sint, 0x100)
+        buffer = self.cs.hals.memory.read_physical_mem(self.simp + 0x100 * sint, 0x100)
         message_type, payload_size, message_flags = unpack('<LBB', buffer[0:6])
         if message_type == HVMSG_NONE:
             buffer = ''
         else:
-            self.cs.hals.Memory.write_physical_mem(self.simp + 0x100 * sint, 0x4, DD(HVMSG_NONE))
+            self.cs.hals.memory.write_physical_mem(self.simp + 0x100 * sint, 0x4, DD(HVMSG_NONE))
             if message_flags & 0x1:
-                self.cs.hals.Msr.write_msr(0, HV_X64_MSR_EOM, 0x0, 0x0)
+                self.cs.hals.msr.write_msr(0, HV_X64_MSR_EOM, 0x0, 0x0)
         return buffer
 
     ##
@@ -249,7 +249,7 @@ class HyperV(BaseModuleDebug):
     ##
     def hv_recv_events(self, sint):
         events = set()
-        buffer = self.cs.hals.Memory.read_physical_mem(self.siefp + 0x100 * sint, 0x100)
+        buffer = self.cs.hals.memory.read_physical_mem(self.siefp + 0x100 * sint, 0x100)
         buffer = unpack('<64L', buffer)
         for i in range(64):
             if buffer[i]:
@@ -351,12 +351,12 @@ class VMBus(HyperV):
             monitor_bit = channel['monitor_id'] & 0x1F
             monitor_grp = channel['monitor_id'] >> 5
             trigger_group_offset = 8 + 8 * monitor_grp
-            self.cs.hals.Memory.set_mem_bit(self.send_int_page, child_relid)
-            self.cs.hals.Memory.set_mem_bit(self.monitor_page2 + trigger_group_offset, monitor_bit)
+            self.cs.hals.memory.set_mem_bit(self.send_int_page, child_relid)
+            self.cs.hals.memory.set_mem_bit(self.monitor_page2 + trigger_group_offset, monitor_bit)
         else:
             # Send an event notification to the parent
             self.dbg('Send an event notification to the parent ...')
-            self.cs.hals.Memory.set_mem_bit(self.send_int_page, child_relid)
+            self.cs.hals.memory.set_mem_bit(self.send_int_page, child_relid)
             result = self.hv_signal_event(channel['connection_id'], 0x0)
             if result != 0:
                 status = hypercall_status_codes[result] if result in hypercall_status_codes else ''

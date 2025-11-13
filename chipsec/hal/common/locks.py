@@ -207,4 +207,4 @@ class Locks(HALBase):
         return self.cs.register.get_list_by_name(lock_register)
 
 
-haldata = {"arch": [HALBase.MfgIds.Any], 'name': ['Locks']}
+haldata = {"arch": [HALBase.MfgIds.Any], 'name': {'locks': "Locks"}}

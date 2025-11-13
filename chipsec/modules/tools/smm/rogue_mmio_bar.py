@@ -105,7 +105,7 @@ class rogue_mmio_bar(BaseModule):
             return False
         
         if self.logger.VERBOSE:
-            self.cs.hals.MMIO.dump_MMIO(base, size)
+            self.cs.hals.mmio.dump_MMIO(base, size)
             write_file('mmio_mem.orig', orig_mmio)
 
         for smi_code in range(self.smic_start, self.smic_end + 1):
@@ -128,7 +128,7 @@ class rogue_mmio_bar(BaseModule):
                     self.logger.log(f'  restored BAR with 0x{bar:X}')
 
                     # check the contents at the address range used to relocate MMIO BAR
-                    buf = self.cs.hals.Memory.read_physical_mem(self.reloc_mmio, size)
+                    buf = self.cs.hals.memory.read_physical_mem(self.reloc_mmio, size)
                     diff = DIFF(orig_mmio, buf, size)
                     self.logger.log("  checking relocated MMIO")
                     if len(diff) > 0:
@@ -140,17 +140,17 @@ class rogue_mmio_bar(BaseModule):
 
     def copy_bar(self, bar_base, bar_base_mem, size):
         for off in range(0, size, 4):
-            r = self.cs.hals.Memory.read_physical_mem_dword(bar_base + off)
-            self.cs.hals.Memory.write_physical_mem_dword(bar_base_mem + off, r)
-        return self.cs.hals.Memory.read_physical_mem(bar_base_mem, size)
+            r = self.cs.hals.memory.read_physical_mem_dword(bar_base + off)
+            self.cs.hals.memory.write_physical_mem_dword(bar_base_mem + off, r)
+        return self.cs.hals.memory.read_physical_mem(bar_base_mem, size)
 
     def modify_bar(self, b, d, f, off, is64bit, bar, new_bar):
         # Modify MMIO BAR address
         if is64bit:
-            self.cs.hals.Pci.write_dword(b, d, f, off + PCI_HDR_BAR_STEP, ((new_bar >> 32) & 0xFFFFFFFF))
-        self.cs.hals.Pci.write_dword(b, d, f, off, (new_bar & 0xFFFFFFFF))
+            self.cs.hals.pci.write_dword(b, d, f, off + PCI_HDR_BAR_STEP, ((new_bar >> 32) & 0xFFFFFFFF))
+        self.cs.hals.pci.write_dword(b, d, f, off, (new_bar & 0xFFFFFFFF))
         # Check that the MMIO BAR has been modified correctly. Restore original and skip if not
-        l = self.cs.hals.Pci.read_dword(b, d, f, off)
+        l = self.cs.hals.pci.read_dword(b, d, f, off)
         if l != (new_bar & 0xFFFFFFFF):
             self.restore_bar(b, d, f, off, is64bit, bar)
             self.logger.log(f'  skipping ({l:X} != {new_bar:X})')
@@ -160,8 +160,8 @@ class rogue_mmio_bar(BaseModule):
 
     def restore_bar(self, b, d, f, off, is64bit, bar):
         if is64bit:
-            self.cs.hals.Pci.write_dword(b, d, f, off + PCI_HDR_BAR_STEP, ((bar >> 32) & 0xFFFFFFFF))
-        self.cs.hals.Pci.write_dword(b, d, f, off, (bar & 0xFFFFFFFF))
+            self.cs.hals.pci.write_dword(b, d, f, off + PCI_HDR_BAR_STEP, ((bar >> 32) & 0xFFFFFFFF))
+        self.cs.hals.pci.write_dword(b, d, f, off, (bar & 0xFFFFFFFF))
         return True
 
     def run(self, module_argv):
@@ -183,21 +183,21 @@ class rogue_mmio_bar(BaseModule):
                 self.logger.log_error("Incorrect b:d.f format\nUsage:\nchipsec_main -m tools.smm.rogue_mmio_bar [-a <smi_start:smi_end>,<b:d.f>]")
         else:
             self.logger.log("[*] Discovering PCIe devices..")
-            pcie_devices = self.cs.hals.Pci.enumerate_devices()
+            pcie_devices = self.cs.hals.pci.enumerate_devices()
 
         self.logger.log("[*] Testing MMIO of PCIe devices:")
         for (b, d, f, _, _, _) in pcie_devices:
             self.logger.log(f'    {b:02X}:{d:02X}.{f:X}')
 
         # allocate a page or SMM communication buffer (often supplied in EBX register)
-        _, self.comm = self.cs.hals.Memory.alloc_physical_mem(0x1000, BOUNDARY_4GB - 1)
-        #self.cs.hals.Memory.write_physical_mem( self.comm, 0x1000, chr(0)*0x1000 )
+        _, self.comm = self.cs.hals.memory.alloc_physical_mem(0x1000, BOUNDARY_4GB - 1)
+        #self.cs.hals.memory.write_physical_mem( self.comm, 0x1000, chr(0)*0x1000 )
 
         # allocate range in physical memory (should cover all MMIO ranges including GTTMMADR)
         bsz = 2 * MAX_MMIO_RANGE_SIZE
-        (va, pa) = self.cs.hals.Memory.alloc_physical_mem(bsz, BOUNDARY_4GB - 1)
+        (va, pa) = self.cs.hals.memory.alloc_physical_mem(bsz, BOUNDARY_4GB - 1)
         self.logger.log(f'[*] Allocated memory range : 0x{pa:016X} (0x{bsz:X} bytes)')
-        self.cs.hals.Memory.write_physical_mem(pa, bsz, _MEM_FILL_VALUE * bsz)
+        self.cs.hals.memory.write_physical_mem(pa, bsz, _MEM_FILL_VALUE * bsz)
         # align at the MAX_MMIO_RANGE_SIZE boundary within allocated range
         self.reloc_mmio = pa & (~(MAX_MMIO_RANGE_SIZE - 1))
         if self.reloc_mmio < pa:
@@ -206,7 +206,7 @@ class rogue_mmio_bar(BaseModule):
 
         for (b, d, f, vid, did, _) in pcie_devices:
             self.logger.log(f'[*] Enumerating device {b:02X}:{d:02X}.{f:X} MMIO BARs..')
-            device_bars = self.cs.hals.Pci.get_device_bars(b, d, f, True)
+            device_bars = self.cs.hals.pci.get_device_bars(b, d, f, True)
             for (base, isMMIO, is64bit, bar_off, bar, size) in device_bars:
                 if isMMIO and size <= MAX_MMIO_RANGE_SIZE:
                     self.logger.flush()

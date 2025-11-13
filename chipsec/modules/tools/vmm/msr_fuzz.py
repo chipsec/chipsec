@@ -105,7 +105,7 @@ class msr_fuzz (BaseModule):
                 if _READ_MSR:
                     self.logger.log(f'[*] rdmsr 0x{msr_addr:08X}')
                     try:
-                        (_, _) = self.cs.hals.Msr.read_msr(0, msr_addr)
+                        (_, _) = self.cs.hals.msr.read_msr(0, msr_addr)
                     except:
                         pass
 
@@ -113,17 +113,17 @@ class msr_fuzz (BaseModule):
 
                 if _FUZZ_VALUE_0_all1s:
                     try:
-                        self.cs.hals.Msr.write_msr(0, msr_addr, 0, 0)
+                        self.cs.hals.msr.write_msr(0, msr_addr, 0, 0)
                     except:
                         pass
                     try:
-                        self.cs.hals.Msr.write_msr(0, msr_addr, 0xFFFFFFFF, 0xFFFFFFFF)
+                        self.cs.hals.msr.write_msr(0, msr_addr, 0xFFFFFFFF, 0xFFFFFFFF)
                     except:
                         pass
 
                 if _FUZZ_VALUE_5A:
                     try:
-                        self.cs.hals.Msr.write_msr(0, msr_addr, 0x5A5A5A5A, 0x5A5A5A5A)
+                        self.cs.hals.msr.write_msr(0, msr_addr, 0x5A5A5A5A, 0x5A5A5A5A)
                     except:
                         pass
 
@@ -131,7 +131,7 @@ class msr_fuzz (BaseModule):
                     val_hi = random.randint(0, 0xFFFFFFFF)
                     val_lo = random.randint(0, 0xFFFFFFFF)
                     try:
-                        self.cs.hals.Msr.write_msr(0, msr_addr, val_hi, val_lo)
+                        self.cs.hals.msr.write_msr(0, msr_addr, val_hi, val_lo)
                     except:
                         pass
             it += 1

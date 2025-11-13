@@ -178,4 +178,4 @@ class Memory(HALBase):
         return None
 
 
-haldata = {"arch":[HALBase.MfgIds.Any], 'name': ['Memory']}
+haldata = {"arch":[HALBase.MfgIds.Any], 'name': {'memory': "Memory"}}

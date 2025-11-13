@@ -67,7 +67,7 @@ class smm_addr(BaseModule):
 
     def check_SMMMask(self) -> int:
 
-        if self.cs.hals.CPU.check_SMRR_supported():
+        if self.cs.hals.cpu.check_SMRR_supported():
             self.logger.log_good("OK. SMMMask range protection is supported")
         else:
             self.logger.log_not_applicable("CPU does not support SMMMask range protection of SMRAM")
@@ -127,7 +127,7 @@ class smm_addr(BaseModule):
         self.logger.log('')
         self.logger.log("[*] Verifying that SMM range base & mask are the same on all logical CPUs..")
         smmbase  = []
-        for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
+        for tid in range(self.cs.hals.msr.get_cpu_thread_count()):
             smmbase.append(self.cs.register.read('SMM_BASE', tid))
             smmmask = self.cs.register.read('SMMMASK', tid)
             self.logger.log(f"[CPU{tid:d}] SMMMask = {smmbase[tid]:016X}, SMMMask = {smmmask:016X}")
@@ -147,7 +147,7 @@ class smm_addr(BaseModule):
 
         for tid_base in smmbase:
             self.logger.log(f"[*] Trying to read memory at SMM base 0x{tid_base:08X}..")
-            ok = 0xFFFFFFFF == self.cs.hals.Memory.read_physical_mem_dword(tid_base)
+            ok = 0xFFFFFFFF == self.cs.hals.memory.read_physical_mem_dword(tid_base)
             if not ok:
                 self.logger.log_bad("Able to read SMM base at 0x{tid_base:08X}..")
                 break

@@ -26,14 +26,14 @@ Access to of PCI/PCIe device hierarchy
 - identifying PCI/PCIe devices MMIO and I/O ranges (BARs)
 
 usage:
-    >>> self.cs.hals.Pci.read_byte( 0, 0, 0, 0x88 )
-    >>> self.cs.hals.Pci.write_byte( 0, 0, 0, 0x88, 0x1A )
-    >>> self.cs.hals.Pci.enumerate_devices()
-    >>> self.cs.hals.Pci.enumerate_xroms()
-    >>> self.cs.hals.Pci.find_XROM( 2, 0, 0, True, True, 0xFED00000 )
-    >>> self.cs.hals.Pci.get_device_bars( 2, 0, 0 )
-    >>> self.cs.hals.Pci.get_DIDVID( 2, 0, 0 )
-    >>> self.cs.hals.Pci.is_enabled( 2, 0, 0 )
+    >>> self.cs.hals.pci.read_byte( 0, 0, 0, 0x88 )
+    >>> self.cs.hals.pci.write_byte( 0, 0, 0, 0x88, 0x1A )
+    >>> self.cs.hals.pci.enumerate_devices()
+    >>> self.cs.hals.pci.enumerate_xroms()
+    >>> self.cs.hals.pci.find_XROM( 2, 0, 0, True, True, 0xFED00000 )
+    >>> self.cs.hals.pci.get_device_bars( 2, 0, 0 )
+    >>> self.cs.hals.pci.get_DIDVID( 2, 0, 0 )
+    >>> self.cs.hals.pci.is_enabled( 2, 0, 0 )
 """
 
 import struct
@@ -186,14 +186,14 @@ class Pci(HALBase):
     #
 
     def parse_XROM(self, xrom: pcilib.XROM, xrom_dump: bool = False) -> Optional[pcilib.PCI_XROM_HEADER]:
-        xrom_sig = self.cs.hals.Memory.read_physical_mem_word(xrom.base)
+        xrom_sig = self.cs.hals.memory.read_physical_mem_word(xrom.base)
         if xrom_sig != pcilib.XROM_SIGNATURE:
             return None
-        xrom_hdr_buf = self.cs.hals.Memory.read_physical_mem(xrom.base, pcilib.PCI_XROM_HEADER_SIZE)
+        xrom_hdr_buf = self.cs.hals.memory.read_physical_mem(xrom.base, pcilib.PCI_XROM_HEADER_SIZE)
         xrom_hdr = pcilib.PCI_XROM_HEADER(*struct.unpack_from(pcilib.PCI_XROM_HEADER_FMT, xrom_hdr_buf))
         if xrom_dump:
             xrom_fname = f'xrom_{xrom.bus:X}-{xrom.dev:X}-{xrom.fun:X}_{xrom.vid:X}{xrom.did:X}.bin'
-            xrom_buf = self.cs.hals.Memory.read_physical_mem(xrom.base, xrom.size)  # use xrom_hdr.InitSize ?
+            xrom_buf = self.cs.hals.memory.read_physical_mem(xrom.base, xrom.size)  # use xrom_hdr.InitSize ?
             write_file(xrom_fname, xrom_buf)
         return xrom_hdr
 
@@ -394,4 +394,4 @@ class Pci(HALBase):
         return vendor_info
 
 
-haldata = {"arch": [HALBase.MfgIds.Any, HALBase.MfgIds.Intel], 'name': ['Pci']}
+haldata = {"arch": [HALBase.MfgIds.Any, HALBase.MfgIds.Intel], 'name': {'pci': "Pci"}}

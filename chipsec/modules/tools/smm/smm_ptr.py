@@ -418,7 +418,7 @@ class smm_ptr(BaseModule):
         if _sig is not None:
             s += f' -> SIG at +0x{_sig_offset:X}'
         self.logger.log(s)
-        self.cs.hals.Memory.write_physical_mem(_addr, self.fill_size, fill_buf)
+        self.cs.hals.memory.write_physical_mem(_addr, self.fill_size, fill_buf)
 
         if self.logger.VERBOSE:
             self.logger.log(f'Filling in contents at PA 0x{_addr:016X}:')
@@ -426,7 +426,7 @@ class smm_ptr(BaseModule):
 
         if is_ptr_in_buffer and _ptr is not None:
             self.logger.log(f'[*] Writing buffer at PA 0x{_ptr:016X} with 0x{self.fill_size:X} bytes \'{self.fill_byte}\'')
-            self.cs.hals.Memory.write_physical_mem(_ptr, self.fill_size, self.fill_byte * self.fill_size)
+            self.cs.hals.memory.write_physical_mem(_ptr, self.fill_size, self.fill_byte * self.fill_size)
 
         return True
 
@@ -465,7 +465,7 @@ class smm_ptr(BaseModule):
         self.logger.log('    < Checking buffers')
 
         expected_buf = FILL_BUFFER(self.fill_byte, self.fill_size, _smi_desc.ptr_in_buffer, _smi_desc.ptr, _smi_desc.ptr_offset, _smi_desc.sig, _smi_desc.sig_offset)
-        buf = self.cs.hals.Memory.read_physical_mem(_addr, self.fill_size)
+        buf = self.cs.hals.memory.read_physical_mem(_addr, self.fill_size)
         differences = DIFF(expected_buf, buf, self.fill_size)
         _changed = len(differences) > 0
 
@@ -479,7 +479,7 @@ class smm_ptr(BaseModule):
             self.logger.log(f'    Contents changed at 0x{_addr:016X} +{differences}')
             if restore_contents:
                 self.logger.log(f'    Restoring 0x{self.fill_size:X} bytes at 0x{_addr:016X}')
-                self.cs.hals.Memory.write_physical_mem(_addr, self.fill_size, expected_buf)
+                self.cs.hals.memory.write_physical_mem(_addr, self.fill_size, expected_buf)
             if DUMP_MEMORY_ON_DETECT:
                 _pth_smi = os.path.join(_pth, f'{_smi_desc.smi_code:X}_{_smi_desc.name}')
                 if not os.path.exists(_pth_smi):
@@ -491,7 +491,7 @@ class smm_ptr(BaseModule):
         _changed1 = False
         expected_buf = filler
         if _smi_desc.ptr_in_buffer and (_ptr is not None):
-            buf1 = self.cs.hals.Memory.read_physical_mem(_ptr, self.fill_size)
+            buf1 = self.cs.hals.memory.read_physical_mem(_ptr, self.fill_size)
             differences1 = DIFF(expected_buf, buf1, self.fill_size)
             _changed1 = len(differences1) > 0
 
@@ -503,7 +503,7 @@ class smm_ptr(BaseModule):
                 self.logger.log(f'    Contents changed at 0x{_ptr:016X} +{differences1}')
                 if restore_contents:
                     self.logger.log(f'    Restoring 0x{self.fill_size:X} bytes at PA 0x{_ptr:016X}')
-                    self.cs.hals.Memory.write_physical_mem(_ptr, self.fill_size, expected_buf)
+                    self.cs.hals.memory.write_physical_mem(_ptr, self.fill_size, expected_buf)
                 if DUMP_MEMORY_ON_DETECT:
                     _pth_smi = os.path.join(_pth, f'{_smi_desc.smi_code:X}_{_smi_desc.name}')
                     if not os.path.exists(_pth_smi):
@@ -759,18 +759,18 @@ class smm_ptr(BaseModule):
             self.fill_size = int(module_argv[2], 16)
         if len(module_argv) > 3:
             if 'smram' == module_argv[3]:
-                (_addr, _, _) = self.cs.hals.CPU.get_SMRAM()
+                (_addr, _, _) = self.cs.hals.cpu.get_SMRAM()
                 self.is_check_memory = False
                 self.logger.log(f'[*] Using SMRAM base address (0x{_addr:016X}) to pass to SMI handlers')
             else:
                 _addr = int(module_argv[3], 16)
                 self.logger.log(f'[*] Using address from command-line (0x{_addr:016X}) to pass to SMI handlers')
         else:
-            (_, _addr) = self.cs.hals.Memory.alloc_physical_mem(self.fill_size, _MAX_ALLOC_PA)
+            (_, _addr) = self.cs.hals.memory.alloc_physical_mem(self.fill_size, _MAX_ALLOC_PA)
             self.logger.log(f'[*] Allocated memory buffer (to pass to SMI handlers)       : 0x{_addr:016X}')
 
         if self.is_check_memory:
-            (_, _addr1) = self.cs.hals.Memory.alloc_physical_mem(self.fill_size, _MAX_ALLOC_PA)
+            (_, _addr1) = self.cs.hals.memory.alloc_physical_mem(self.fill_size, _MAX_ALLOC_PA)
             self.logger.log(f'[*] Allocated 2nd buffer (address will be in the 1st buffer): 0x{_addr1:016X}')
 
         # @TODO: Need to check that SW/APMC SMI is enabled

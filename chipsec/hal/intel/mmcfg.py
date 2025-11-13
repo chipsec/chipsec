@@ -109,7 +109,7 @@ class MMCFG(hal_base.HALBase):
         bar = self.cs.register.mmio.get_def(self.MMCFG)
         bar_base, bar_size = bar.get_base(base_instance)
         if not bar_base:
-            bar_base, bar_size = self.cs.hals.MMIO.get_MMIO_BAR_base_address(self.MMCFG, base_instance)
+            bar_base, bar_size = self.cs.hals.mmio.get_MMIO_BAR_base_address(self.MMCFG, base_instance)
         return bar_base, bar_size
 
     def _adjust_bar_base_for_length(self, bar_base: int, base_instance: 'PCIObj') -> int:
@@ -153,7 +153,7 @@ class MMCFG(hal_base.HALBase):
         """
         pciexbar, pciexbar_sz = self.get_MMCFG_base_address(bus)
         pciexbar_off = (bus * 32 * 8 + dev * 8 + fun) * 0x1000 + off
-        value = self.cs.hals.MMIO.read_MMIO_reg(pciexbar, pciexbar_off, size, pciexbar_sz)
+        value = self.cs.hals.mmio.read_MMIO_reg(pciexbar, pciexbar_off, size, pciexbar_sz)
         self.logger.log_hal(f"[mmcfg] Reading MMCFG register at bus {bus}, device {dev}, function {fun}, offset 0x{off:X}")
         self.logger.log_hal("[mmcfg] reading {:02d}:{:02d}.{:d} + 0x{:02X} (MMCFG + 0x{:08X}): 0x{:08X}".format(
             bus, dev, fun, off, pciexbar_off, value))
@@ -182,7 +182,7 @@ class MMCFG(hal_base.HALBase):
             mask = 0xFFFF
         else:
             mask = 0xFFFFFFFF
-        self.cs.hals.MMIO.write_MMIO_reg(pciexbar, pciexbar_off, (value & mask), size)
+        self.cs.hals.mmio.write_MMIO_reg(pciexbar, pciexbar_off, (value & mask), size)
         self.logger.log_hal(f"[mmcfg] Writing value 0x{value:X} to MMCFG register at bus {bus}, device {dev}, function {fun}, offset 0x{off:X}")
         self.logger.log_hal("[mmcfg] writing {:02d}:{:02d}.{:d} + 0x{:02X} (MMCFG + 0x{:08X}): 0x{:08X}".format(
             bus, dev, fun, off, pciexbar_off, value))
@@ -224,4 +224,4 @@ class MMCFG(hal_base.HALBase):
         return VSECEntry(vsec)
 
 
-haldata = {"arch": [hal_base.HALBase.MfgIds.Intel], 'name': ['MMCFG']}
+haldata = {"arch": [hal_base.HALBase.MfgIds.Intel], 'name': {'mmcfg': "MMCFG"}}

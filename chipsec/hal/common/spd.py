@@ -308,7 +308,7 @@ Base Configuration and DRAM Parameters
 
 class SPD: #TODO: Refactor to derive from HALBase.
     def __init__(self, cs):
-        self.smbus = cs.hals.SMBus
+        self.smbus = cs.hals.smbus
 
     def read_byte(self, offset: int, device: int = SPD_SMBUS_ADDRESS) -> int:
         return self.smbus.read_byte(device, offset)
@@ -408,4 +408,4 @@ class SPD: #TODO: Refactor to derive from HALBase.
             logger().log(str(spd))
 
 
-haldata = {"arch":[HALBase.MfgIds.Any], 'name': ['SPD']}
+haldata = {"arch":[HALBase.MfgIds.Any], 'name': {'spd': "SPD"}}

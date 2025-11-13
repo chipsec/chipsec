@@ -75,12 +75,12 @@ class PortIOCommand(BaseCommand):
         self._iobar.list_IO_BARs()
 
     def io_read(self) -> None:
-        value = self.cs.hals.Io.read(self._port, self._width)
+        value = self.cs.hals.io.read(self._port, self._width)
         self.logger.log(f'[CHIPSEC] IN 0x{self._port:04X} -> 0x{value:08X} (size = 0x{self._width:02X})')
         return
 
     def io_write(self) -> None:
-        self.cs.hals.Io.write(self._port, self._value, self._width)
+        self.cs.hals.io.write(self._port, self._value, self._width)
         self.logger.log(
             f'[CHIPSEC] OUT 0x{self._port:04X} <- 0x{self._value:08X} (size = 0x{self._width:02X})')
         return

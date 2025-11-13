@@ -52,17 +52,17 @@ class rom_armor(BaseModule):
         return self.cs.is_amd()
 
     def check_ROMAMOR(self) -> bool:
-        reg_value = self.cs.hals.PSP.smu_read32(SMU_PSP_SMN_BASE + SMU_PSP_MBOX_CMD_STATUS)
+        reg_value = self.cs.hals.psp.smu_read32(SMU_PSP_SMN_BASE + SMU_PSP_MBOX_CMD_STATUS)
         self.logger.log_information(f"PSP Mailbox Status 0x{reg_value:X}")
-        reg_value = self.cs.hals.PSP.smu_read32(SMU_PSP_SMN_BASE + 0x109fc)
+        reg_value = self.cs.hals.psp.smu_read32(SMU_PSP_SMN_BASE + 0x109fc)
         self.logger.log_information(f"PSP Mailbox Features 0x{reg_value:X}")
-        hsti = self.cs.hals.PSP.query_HSTI()
+        hsti = self.cs.hals.psp.query_HSTI()
         self.logger.log_information(f"HSTI 0x{hsti:X}")
         return bool(hsti>>11)
 
     def check_RA_Fencing(self) -> int:
         # Confirm SPI Control Bass address is blocked
-        spi_ctrl_bar = self.cs.hals.Pci.read_dword(0,0x14,3,0xa0)
+        spi_ctrl_bar = self.cs.hals.pci.read_dword(0,0x14,3,0xa0)
 
         if(spi_ctrl_bar == 0xFFFFFFFF):
             self.logger.log_good("SPI BAR access from host is blocked")

@@ -61,7 +61,7 @@ class UCodeCommand(BaseCommand):
 
     def ucode_id(self):
         if self.cpu_thread_id is None:
-            for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
+            for tid in range(self.cs.hals.msr.get_cpu_thread_count()):
                 ucode_update_id = self.cs.ucode.ucode_update_id(tid)
                 self.logger.log("[CHIPSEC] CPU{:d}: Microcode update ID = 0x{:08X}".format(tid, ucode_update_id))
         else:
@@ -77,9 +77,9 @@ class UCodeCommand(BaseCommand):
             self.cs.ucode.update_ucode(self.cpu_thread_id, self.ucode_filename)
 
     def ucode_decode(self):
-        ucode_buffer = self.cs.hals.Ucode.read_ucode_file(self.ucode_filename)
+        ucode_buffer = self.cs.hals.ucode.read_ucode_file(self.ucode_filename)
         self.logger.log("[CHIPSEC] Decoding Microcode Update header file: '{}'".format(self.ucode_filename))
-        self.cs.hals.Ucode.dump_ucode_update_header(ucode_buffer)
+        self.cs.hals.ucode.dump_ucode_update_header(ucode_buffer)
 
 
 commands = {'ucode': UCodeCommand}

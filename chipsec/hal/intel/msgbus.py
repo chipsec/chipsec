@@ -176,4 +176,4 @@ class MsgBus(hal_base.HALBase):
         return self.msgbus_write_message(port, register, MessageBusOpcode.MB_OPCODE_REG_WRITE, data)
 
 
-haldata = {"arch": [hal_base.HALBase.MfgIds.Intel], 'name': ['MsgBus']}
+haldata = {"arch": [hal_base.HALBase.MfgIds.Intel], 'name': {'msgbus': "MsgBus"}}

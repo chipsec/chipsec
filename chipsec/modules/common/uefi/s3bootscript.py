@@ -125,7 +125,7 @@ class s3bootscript(BaseModule):
             res |= BOOTSCRIPT_OUTSIDE_SMRAM
             self.logger.log_bad('S3 boot-script is not in SMRAM')
             self.logger.log('[*] Reading S3 boot-script from memory..')
-            script_all = self.cs.hals.Memory.read_physical_mem(bootscript_pa, 0x100000)
+            script_all = self.cs.hals.memory.read_physical_mem(bootscript_pa, 0x100000)
             self.logger.log('[*] Decoding S3 boot-script opcodes..')
             script_entries = parse_script(script_all, False)
             dispatch_opcodes_ok = self.check_dispatch_opcodes(script_entries)
@@ -196,7 +196,7 @@ class s3bootscript(BaseModule):
         if len(module_argv) > 0:
             script_pa = int(module_argv[0], 16)
             self.logger.log(f'[*] Using manually assigned S3 Boot-Script table base: 0x{script_pa:016X}')
-        (self.smrambase, self.smramlimit, self.smramsize) = self.cs.hals.CPU.get_SMRAM()
+        (self.smrambase, self.smramlimit, self.smramsize) = self.cs.hals.cpu.get_SMRAM()
         if (self.smrambase is not None) and (self.smramlimit is not None):
             self.logger.log(f'[*] SMRAM: Base = 0x{self.smrambase:016X}, Limit = 0x{self.smramlimit:016X}, Size = 0x{self.smramsize:08X}')
 

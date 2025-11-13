@@ -391,4 +391,4 @@ class MMIO(hal_base.HALBase):
                 is_valid = bar_reg.is_all_field_value(1, bar_en_field)
         return is_valid
 
-haldata = {"arch": [hal_base.HALBase.MfgIds.Any], 'name': ['MMIO']}
+haldata = {"arch": [hal_base.HALBase.MfgIds.Any], 'name': {'mmio': "MMIO"}}

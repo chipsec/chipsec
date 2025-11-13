@@ -90,11 +90,11 @@ class sgx_check(BaseModule):
         elif not self.cs.register.has_field('IA32_FEATURE_CONTROL', 'SGX_GLOBAL_EN'):
             self.logger.log_important('IA32_FEATURE_CONTROL.SGX_GLOBAL_EN not defined for platform.  Skipping module.')
         else:
-            for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
+            for tid in range(self.cs.hals.msr.get_cpu_thread_count()):
                 status = self.helper.set_affinity(tid)
                 if status == -1:
                     self.logger.log_verbose(f'[*] Failed to set affinity to CPU{tid:d}')
-                (_, r_ebx, _, _) = self.cs.hals.CPU.cpuid(0x07, 0x00)
+                (_, r_ebx, _, _) = self.cs.hals.cpu.cpuid(0x07, 0x00)
                 if r_ebx & BIT2:
                     self.logger.log_verbose(f'[*] CPU{tid:d}: does support SGX')
                     sgx_cpu_support = True
@@ -163,11 +163,11 @@ class sgx_check(BaseModule):
             sgx1_instr_support = False
             sgx2_instr_support = False
             self.logger.log('\n[*] Verifying if SGX instructions are supported')
-            for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
+            for tid in range(self.cs.hals.msr.get_cpu_thread_count()):
                 status = self.helper.set_affinity(tid)
                 if status == -1:
                     self.logger.log_verbose(f'[*] Failed to set affinity to CPU{tid:d}')
-                (r_eax, _, _, _) = self.cs.hals.CPU.cpuid(0x012, 0x00)
+                (r_eax, _, _, _) = self.cs.hals.cpu.cpuid(0x012, 0x00)
                 if r_eax & BIT0:
                     self.logger.log_verbose(f'[*] CPU{tid:d} SGX-1 instructions are supported')
                     sgx1_instr_support = True
@@ -379,7 +379,7 @@ class sgx_check(BaseModule):
             self.uniform = True
             self.locked = True
             self.check_uncore_vals = self.cs.register.is_defined('PRMRR_UNCORE_PHYBASE') and self.cs.register.is_defined('PRMRR_UNCORE_MASK')
-            for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
+            for tid in range(self.cs.hals.msr.get_cpu_thread_count()):
                 self.valid_config_obj = self.cs.register.get_instance_by_name('PRMRR_VALID_CONFIG', tid)
                 if self.valid_config_obj:
                     self.valid_config_new = self.valid_config_obj.read()

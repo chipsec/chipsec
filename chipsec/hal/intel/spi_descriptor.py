@@ -246,4 +246,4 @@ class SpiDescriptor(HALBase):
         self.logger.log('########################################################')
 
 
-haldata = {"arch": [HALBase.MfgIds.Intel], 'name': ['SpiDescriptor']}
+haldata = {"arch": [HALBase.MfgIds.Intel], 'name': {'spidescriptor': "SpiDescriptor"}}
