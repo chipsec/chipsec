@@ -336,6 +336,8 @@ class Cfg:
         self.scope = {None: ''}
         self.parsers = []
         self.detection_dictionary = {}
+        self.loaded_parsers = False
+        self.loaded_platform_info = False
 
         # Legacy properties for backward compatibility
         self.XML_CONFIG_LOADED = False
@@ -757,6 +759,13 @@ class Cfg:
     ###
     # Config loading functions
     ###
+
+    def load(self):
+        if not self.loaded_parsers:
+            self.load_parsers()
+        if not self.loaded_platform_info:
+            self.load_platform_info()
+
     def load_parsers(self):
         parser_path = os.path.join(get_main_dir(), 'chipsec', 'cfg', 'parsers')
         if not os.path.isdir(parser_path):
@@ -783,6 +792,7 @@ class Cfg:
                     continue
                 parser_obj.startup()
                 self.parsers.append(parser_obj)
+        self.loaded_parsers = True
 
     def add_extra_configs(self, path, filename=None, loadnow=False):
         config_path = os.path.join(get_main_dir(), 'chipsec', 'cfg', path)
@@ -822,12 +832,12 @@ class Cfg:
                         if not data:
                             continue
                         self._update_supported_platforms(fxml, data)
-
         # Create platform global data
         for cc in self.proc_codes:
             globals()[f'CHIPSET_CODE_{cc.upper()}'] = cc.upper()
         for pc in self.pch_codes:
             globals()[f'PCH_CODE_{pc[4:].upper()}'] = pc.upper()
+        self.loaded_platform_info = True
 
     def get_dev_from_bdf_000(self):
         try:
@@ -925,6 +935,26 @@ class Cfg:
             )
         if 'devices' in self.platform_xml_files:
             self.load_list.extend(self.platform_xml_files['devices'])
+
+    def get_supported_platforms(self):
+        seen = set()
+        self.load()
+        for vid in self.proc_dictionary:
+            for did in self.proc_dictionary[vid]:
+                for sku in self.proc_dictionary[vid][did]:
+                    if sku['code'] not in seen:
+                        yield (sku['code'])
+                        seen.add(sku['code'])
+
+    def get_supported_pchs(self):
+        seen = set()
+        self.load()
+        for vid in self.pch_dictionary:
+            for did in self.pch_dictionary[vid]:
+                for sku in self.pch_dictionary[vid][did]:
+                    if sku['code'] not in seen:
+                        yield (sku['code'])
+                        seen.add(sku['code'])
 
     def load_platform_config(self):
         sec_load_list = []

@@ -150,8 +150,7 @@ class Chipset:
         else:
             self.load_helper(NoneHelper())
 
-        self.Cfg.load_parsers()
-        self.Cfg.load_platform_info()
+        self.Cfg.load()
 
         if load_config:
             self.init_cfg_bus()
