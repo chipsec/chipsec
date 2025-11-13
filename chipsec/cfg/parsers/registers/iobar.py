@@ -165,7 +165,7 @@ class IOBARRegisters(BaseConfigRegisterHelper):
             return
         try:
             _cs = cs()
-            (self.bar_base, self.bar_size) = _cs.hals.IOBAR.get_IO_BAR_base_address(self.bar, self.get_instance())
+            (self.bar_base, self.bar_size) = _cs.hals.iobar.get_IO_BAR_base_address(self.bar, self.get_instance())
             self.io_port = self.bar_base + self.offset
         except Exception as e:
             raise IOBARRegisterError(f"Failed to resolve BAR {self.bar} for register {self.name}: {e}") from e
@@ -233,7 +233,7 @@ class IOBARRegisters(BaseConfigRegisterHelper):
                 raise IOBARRegisterError(f"Invalid I/O port for register {self.name}: {self.get_effective_port_hex()}")
 
             _cs = cs()
-            self.value = _cs.hals.Io.read(self.io_port, self.size)
+            self.value = _cs.hals.io.read(self.io_port, self.size)
             self.logger.log_debug('done reading')
 
             return self.value
@@ -260,7 +260,7 @@ class IOBARRegisters(BaseConfigRegisterHelper):
                 raise IOBARRegisterError(f"Invalid I/O port for register {self.name}: {self.get_effective_port_hex()}")
 
             _cs = cs()
-            _cs.hals.Io.write(self.io_port, value, self.size)
+            _cs.hals.io.write(self.io_port, value, self.size)
             self.value = value
 
         except Exception as e:

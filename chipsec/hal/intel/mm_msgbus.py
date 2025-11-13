@@ -92,13 +92,13 @@ class MMMsgBus(hal_base.HALBase):
             None if the base address cannot be determined.
         """
         try:
-            mmio_addr = self.cs.hals.MMIO.get_MMIO_BAR_base_address('8086.P2SBC.SBREGBAR')[0]
+            mmio_addr = self.cs.hals.mmio.get_MMIO_BAR_base_address('8086.P2SBC.SBREGBAR')[0]
             return mmio_addr
         except MMIOBarConfigError:
             self.logger.log_hal('Failed to read MMIO BAR base address for 8086.P2SBC.SBREGBAR')
         self.logger.log_hal('Attempting to unhide and read MMIO BAR base address for 8086.P2SBC.SBREGBAR')
         self.__unhide_p2sb()
-        mmio_addr = self.cs.hals.MMIO.get_MMIO_BAR_base_address('8086.P2SBC.SBREGBAR')[0]
+        mmio_addr = self.cs.hals.mmio.get_MMIO_BAR_base_address('8086.P2SBC.SBREGBAR')[0]
         self.__hide_p2sb()
         return mmio_addr
 
@@ -112,7 +112,7 @@ class MMMsgBus(hal_base.HALBase):
             int: The value read from the register.
         """
         mmio_addr = self.get_sbreg_base_address()
-        reg_val = self.cs.hals.MMIO.read_MMIO_reg_dword(mmio_addr, ((port & 0xFF) << 16) | (register & 0xFFFF))
+        reg_val = self.cs.hals.mmio.read_MMIO_reg_dword(mmio_addr, ((port & 0xFF) << 16) | (register & 0xFFFF))
         return reg_val
 
     def write(self, port: int, register: int, data: int) -> Optional[int]:
@@ -126,8 +126,8 @@ class MMMsgBus(hal_base.HALBase):
             Optional[int]: The value written to the register, or None if the write operation fails.
         """
         mmio_addr = self.get_sbreg_base_address()
-        reg_val = self.cs.hals.MMIO.write_MMIO_reg_dword(mmio_addr, ((port & 0xFF) << 16) | (register & 0xFFFF), data)
+        reg_val = self.cs.hals.mmio.write_MMIO_reg_dword(mmio_addr, ((port & 0xFF) << 16) | (register & 0xFFFF), data)
         return reg_val
 
 
-haldata = {"arch": [hal_base.HALBase.MfgIds.Intel], 'name': ['MMMsgBus']}
+haldata = {"arch": [hal_base.HALBase.MfgIds.Intel], 'name': {'mmmsgbus': "MMMsgBus"}}

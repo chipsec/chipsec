@@ -216,11 +216,11 @@ class MMIORegisters(BaseConfigRegisterHelper):
 
         try:
             if self.bar:
-                self.bar_base, self.bar_size = self.cs.hals.MMIO.get_MMIO_BAR_base_address(
+                self.bar_base, self.bar_size = self.cs.hals.mmio.get_MMIO_BAR_base_address(
                     self.bar, self.get_instance()
                 )
             elif self.range:
-                mem_range_def = self.cs.hals.MemRange.get_def(self.range)
+                mem_range_def = self.cs.hals.memrange.get_def(self.range)
                 if mem_range_def:
                     if mem_range_def.access == 'mmio':
                         self.bar_size = mem_range_def.size
@@ -249,7 +249,7 @@ class MMIORegisters(BaseConfigRegisterHelper):
         try:
             self.logger.log_debug(f'reading {self.name}')
             self.populate_base_address()
-            self.value = self.cs.hals.MMIO.read_MMIO_reg(self.bar_base, self.offset, self.size)
+            self.value = self.cs.hals.mmio.read_MMIO_reg(self.bar_base, self.offset, self.size)
             self.logger.log_debug('done reading')
             return self.value
         except Exception as e:
@@ -268,7 +268,7 @@ class MMIORegisters(BaseConfigRegisterHelper):
         try:
             self.logger.log_debug(f'writing 0x{value:X} to {self.name}')
             self.populate_base_address()
-            self.cs.hals.MMIO.write_MMIO_reg(self.bar_base, self.offset, value, self.size)
+            self.cs.hals.mmio.write_MMIO_reg(self.bar_base, self.offset, value, self.size)
             self.value = value
         except Exception as e:
             raise MMIORegisterError(f"Failed to write to MMIO register {self.name}: {e}") from e
@@ -297,6 +297,6 @@ class MMIORegisters(BaseConfigRegisterHelper):
 
             self.logger.log_debug(f'writing subset 0x{value:X} to {self.name} at offset {offset}, size {size}')
             self.populate_base_address()
-            self.cs.hals.MMIO.write_MMIO_reg(self.bar_base, self.offset + offset, value, size)
+            self.cs.hals.mmio.write_MMIO_reg(self.bar_base, self.offset + offset, value, size)
         except Exception as e:
             raise MMIORegisterError(f"Failed to write subset to MMIO register {self.name}: {e}") from e

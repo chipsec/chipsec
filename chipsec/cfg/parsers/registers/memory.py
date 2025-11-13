@@ -196,9 +196,9 @@ class MEMORYRegisters(BaseConfigRegisterHelper):
             _cs = cs()
 
             if self.access == 'dram':
-                self.value = _cs.hals.MemRange.read(self.address + self.offset, self.size)
+                self.value = _cs.hals.memrange.read(self.address + self.offset, self.size)
             elif self.access == 'mmio':
-                self.value = _cs.hals.MMIO.read_MMIO_reg(self.address, self.offset, self.size)
+                self.value = _cs.hals.mmio.read_MMIO_reg(self.address, self.offset, self.size)
             else:
                 raise MemoryRegisterError(f"Unsupported access method: {self.access}")
 
@@ -221,9 +221,9 @@ class MEMORYRegisters(BaseConfigRegisterHelper):
             _cs = cs()
 
             if self.access == 'dram':
-                _cs.hals.Memory.write_physical_mem(self.address + self.offset, self.size, value)
+                _cs.hals.memory.write_physical_mem(self.address + self.offset, self.size, value)
             elif self.access == 'mmio':
-                _cs.hals.MMIO.write_MMIO_reg(self.address, self.offset, value, self.size, None)
+                _cs.hals.mmio.write_MMIO_reg(self.address, self.offset, value, self.size, None)
             else:
                 raise MemoryRegisterError(f"Unsupported access method: {self.access}")
 

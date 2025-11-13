@@ -83,7 +83,7 @@ class spd_wd(BaseModule):
 
     def check_spd_wd(self) -> int:
         try:
-            _spd = self.cs.hals.SPD
+            _spd = self.cs.hals.spd
         except BaseException as msg:
             self.logger.log_error(msg)
             self.result.setStatusBit(self.result.status.INFORMATION)

@@ -59,7 +59,7 @@ class cet(BaseModule):
         return False
 
     def get_cpuid_value(self) -> None:
-        (_, _, self.cpuid_7_0__ecx_val, _) = self.cs.hals.CPU.cpuid(7, 0)
+        (_, _, self.cpuid_7_0__ecx_val, _) = self.cs.hals.cpu.cpuid(7, 0)
 
     def support_shadow(self) -> bool:
         if self.cpuid_7_0__ecx_val is None:

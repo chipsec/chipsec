@@ -304,9 +304,9 @@ class SMBusCommand(BaseCommand):
 
     def configure(self):
         if self.is_mmio:
-            self._smbus = self.cs.hals.SMBusMMIO
+            self._smbus = self.cs.hals.smbusmmio
         else:
-            self._smbus = self.cs.hals.SMBus
+            self._smbus = self.cs.hals.smbus
         self._smbus.set_i2c_mode(self.is_i2c)
         self._smbus.enable()
         return True
