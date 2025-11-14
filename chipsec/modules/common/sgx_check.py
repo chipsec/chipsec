@@ -112,9 +112,9 @@ class sgx_check(BaseModule):
         self.logger.log('[*] Verifying IA32_FEATURE_CONTROL MSR is configured')
         fc_reg_list = self.cs.register.get_list_by_name('IA32_FEATURE_CONTROL')
         fc_reg_list.read()
-        bios_feature_control_enable = fc_reg_list.is_all_field_value(1, 'SGX_GLOBAL_EN')
+        self.bios_feature_control_enable = fc_reg_list.is_all_field_value(1, 'SGX_GLOBAL_EN')
 
-        if bios_feature_control_enable:
+        if self.bios_feature_control_enable:
             self.logger.log_good('Intel SGX is Enabled in BIOS')
         else:
             self.logger.log_important('Intel SGX is not enabled in BIOS')
@@ -159,7 +159,7 @@ class sgx_check(BaseModule):
         else:
             self.check_prmrr_values()
 
-        if bios_feature_control_enable and locked:
+        if self.bios_feature_control_enable and locked:
             sgx1_instr_support = False
             sgx2_instr_support = False
             self.logger.log('\n[*] Verifying if SGX instructions are supported')
@@ -194,7 +194,7 @@ class sgx_check(BaseModule):
         self.logger.log('\n[*] Verifying if SGX is available to use')
         if sgx_ok and prmrr_enable and self.prmrr.uniform:
             self.logger.log_good('Intel SGX is available to use')
-        elif (not sgx_ok) and (not bios_feature_control_enable) and prmrr_enable and self.prmrr.uniform:
+        elif (not sgx_ok) and (not self.bios_feature_control_enable) and prmrr_enable and self.prmrr.uniform:
             self.logger.log_important('Intel SGX instructions disabled by firmware')
             self.result.setStatusBit(self.result.status.FEATURE_DISABLED)
             if self.res == ModuleResult.PASSED:
@@ -314,6 +314,9 @@ class sgx_check(BaseModule):
                 self.logger.log(f'[*]      PRMRR uncore mask valid: 0x{self.prmrr.uncore_mask_vld:d}')
                 if self.prmrr.mask_vld == 0x1:
                     self.logger.log_good('Mcheck marked PRMRR address as valid')
+                elif not self.bios_feature_control_enable:
+                    self.logger.log_warning('Mcheck marked PRMRR address as invalid, but SGX is disabled in BIOS')
+                    self.res = ModuleResult.WARNING
                 else:
                     self.logger.log_bad('Mcheck marked PRMRR address as invalid')
                     self.res = ModuleResult.FAILED
