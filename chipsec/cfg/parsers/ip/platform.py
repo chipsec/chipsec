@@ -136,6 +136,7 @@ class RegisterList:
         Raises:
             RegisterNotFoundError: If register not found
         """
+        register_name = register_name.upper()
         if register_name in self.register_list:
             return ObjList(self.__getattribute__(register_name))
         else:
@@ -210,6 +211,7 @@ class Platform(Recursable):
         Raises:
             PlatformConfigError: If vendor not found
         """
+        vendor_name = vendor_name.upper()
         if vendor_name in self.vendor_list:
             return self.__getattribute__(f'_{vendor_name}')
         else:
@@ -287,7 +289,7 @@ class Platform(Recursable):
         if not scope:
             raise ScopeNotFoundError(f'Scope {scope} on obj {obj} was not found')
 
-        root_scope = scope.pop(0)
+        root_scope = scope.pop(0).upper()
         next_level = obj._get_next_level(root_scope)
 
         if len(scope) == 0:
@@ -337,7 +339,7 @@ class Platform(Recursable):
         if not scope:
             raise ScopeNotFoundError(f'Scope {scope} on objs: {objs} was not found')
 
-        root_scope = scope.pop(0)
+        root_scope = scope.pop(0).upper()
         next_level_list = []
         for obj in objs:
             next_level_list.extend(obj.get_next_levels(root_scope))
@@ -394,7 +396,7 @@ class Platform(Recursable):
         if not scope:
             raise ScopeNotFoundError(f'Scope {scope} on obj {obj} was not found')
 
-        root_scope = scope.pop(0)
+        root_scope = scope.pop(0).upper()
         if len(scope) == 0:
             return obj.get_register(root_scope)
         else:
@@ -446,7 +448,7 @@ class Platform(Recursable):
         if not scope:
             raise ScopeNotFoundError(f'Scope {scope} on objs: {objs} was not found')
 
-        root_scope = scope.pop(0)
+        root_scope = scope.pop(0).upper()
         next_level_list = []
         if len(scope) == 0:
             for obj in objs:
@@ -506,9 +508,11 @@ class Vendor(Recursable):
         Raises:
             PlatformConfigError: If IP not found
         """
+        ip_name = ip_name.upper()
         if ip_name in self.ip_list:
             return self.__getattribute__(ip_name)
         else:
+            breakpoint()
             raise PlatformConfigError(f'Device: {ip_name} not found in Vendor: {self.name}')
 
     def _get_next_level_list(self) -> List[str]:
@@ -576,6 +580,7 @@ class IP(Recursable, RegisterList):
         Raises:
             BARNotFoundError: If BAR not found
         """
+        bar_name = bar_name.upper()
         if bar_name in self.bar_list:
             return self.__getattribute__(f'{bar_name}_')
         else:
