@@ -297,7 +297,7 @@ class DALHelper(Helper):
         rebx = self.base.threads[ie_thread].cpuid_ebx(eax, ecx)
         recx = self.base.threads[ie_thread].cpuid_ecx(eax, ecx)
         redx = self.base.threads[ie_thread].cpuid_edx(eax, ecx)
-        return (reax, rebx, recx, redx)
+        return (reax.ToUInt32(), rebx.ToUInt32(), recx.ToUInt32(), redx.ToUInt32())
 
     def get_descriptor_table(self, cpu_thread_id, desc_table_code):
         raise UnimplementedAPIError('get_descriptor_table')
