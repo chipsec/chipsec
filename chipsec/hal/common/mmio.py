@@ -252,10 +252,10 @@ class MMIO(hal_base.HALBase):
                 mmioaddr <<= bar.mmio_align
             base += mmioaddr
 
-        if bar.limit_register and bar.limit_field and bar.limit_align:
+        if bar.limit_register and bar.limit_field and bar.limit_align and instance is not None:
             limit_field = bar.limit_field
             limit_bar = bar.limit_register
-            lim_reg = self.cs.Cfg.get_register_obj(limit_bar, instance)
+            lim_reg = self.cs.register.get_instance_by_name(limit_bar, instance)
             limit = lim_reg.read_field(limit_field)
             if bar.limit_align:
                 limit_align = bar.limit_align
@@ -276,7 +276,7 @@ class MMIO(hal_base.HALBase):
         if size == 0:
             size = DEFAULT_MMIO_BAR_SIZE
         self.logger.log_hal('[mmio] {}: 0x{:016X} (size = 0x{:X})'.format(bar_name, base, size))
-        if base == 0:
+        if base == 0 and bar.fixed_address is None:
             self.logger.log_hal('[mmio] Base address was determined to be 0.')
             raise CSReadError('[mmio] Base address was determined to be 0')
 
@@ -387,7 +387,7 @@ class MMIO(hal_base.HALBase):
         if bar.register:
             if bar.valid:
                 bar_en_field = bar.valid
-                bar_reg = self.cs.Cfg.register.get_list_by_name(bar.register).filter_by_instance(instance)
+                bar_reg = self.cs.register.get_list_by_name(bar.register).filter_by_instance(instance)
                 is_valid = bar_reg.is_all_field_value(1, bar_en_field)
         return is_valid
 
