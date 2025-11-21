@@ -169,7 +169,7 @@ class SPI(hal_base.HALBase):
     def get_SPI_MMIO_base(self) -> int:
         spi_base = 0
         if self.mmio.is_MMIO_BAR_defined('8086.SPI.SPIBAR'):
-            (spi_base, _) = self.mmio.get_MMIO_BAR_base_address('8086.SPI.SPIBAR')
+            (spi_base, _) = self.mmio.get_MMIO_BAR_base_address('8086.SPI.SPIBAR', self.instance)
         else:
             self.logger.log_hal('[spi] get_SPI_MMIO_base(): SPIBAR not defined. Returning spi_base = 0.')
         self.logger.log_hal(f'[spi] SPI MMIO base: 0x{spi_base:016X} (assuming below 4GB)')
@@ -717,6 +717,7 @@ class SPI(hal_base.HALBase):
     #
 
     def get_SPI_JEDEC_ID(self) -> int:
+
         if self.hsfs.has_field('FCYCLE'):
             self.check_hardware_sequencing()
 

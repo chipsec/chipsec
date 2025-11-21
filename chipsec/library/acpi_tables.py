@@ -1738,7 +1738,7 @@ class HEST (ACPI_TABLE):
             title = 'Generic Hardware Error Source Version 2'
             readAckReg_str = self.parseAddress(table_content[64:76])
             readAckPresv = struct.unpack('<Q', table_content[76:84])[0]
-            readAckWr = struct.unpack('<Q', table_content[84:88])[0]
+            readAckWr = struct.unpack('<Q', table_content[84:92])[0]
             extra_str = f'''
     Read Ack Register - {readAckReg_str}
     Read Ack Preserve                             : 0x{readAckPresv:016X}
