@@ -126,7 +126,7 @@ class uefivar_fuzz(BaseModule):
 
         # Init fuzzing primitives
         name_prim = prim.string(value=_NAME, max_len=BOUND_STR)
-        attrib_prim = prim.dword(value=_ATTRIB)  # i think the attrib field is 4 bytes large?
+        attrib_prim = prim.dword(value=_ATTRIB)  # the attrib field is 4 bytes large
         data_prim = prim.random_data(value=_DATA, min_length=0, max_length=BOUND_INT)
 
         help_text = False
@@ -197,10 +197,10 @@ class uefivar_fuzz(BaseModule):
 
                 if FUZZ_ATTRIB:
                     if attrib_prim.mutate():
-                        _ATTRIB = attrib_prim.render()
+                        _ATTRIB = attrib_prim.value
                     else:
                         attrib_prim = prim.dword(value=_ATTRIB)
-                        _ATTRIB = attrib_prim.render()
+                        _ATTRIB = attrib_prim.value
 
                 if FUZZ_DATA:
                     if data_prim.mutate():
