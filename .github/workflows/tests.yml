@@ -12,11 +12,10 @@ jobs:
       fail-fast: false
       matrix:
         distro:
-          - {name: "alpine", tag: "3.18", variant: "-lts", image_prefix: "docker.io/library/"}
-          - {name: "alpine", tag: "3.17", variant: "-lts", image_prefix: "docker.io/library/"}
-          - {name: "alpine", tag: "3.16", variant: "-lts", image_prefix: "docker.io/library/"}
-          - {name: "alpine", tag: "3.15", variant: "-lts", image_prefix: "docker.io/library/"}
-          - {name: "alpine", tag: "3.14", variant: "-lts", image_prefix: "docker.io/library/"}
+          - {name: "alpine", tag: "3.23", variant: "-lts", image_prefix: "docker.io/library/"}
+          - {name: "alpine", tag: "3.22", variant: "-lts", image_prefix: "docker.io/library/"}
+          - {name: "alpine", tag: "3.21", variant: "-lts", image_prefix: "docker.io/library/"}
+          - {name: "alpine", tag: "3.20", variant: "-lts", image_prefix: "docker.io/library/"}
           # - {name: "archlinux", tag: "latest", image_prefix: "docker.io/library/"}
           - {name: "archlinux", tag: "latest", variant: "-lts", image_prefix: "docker.io/library/"}
           # - {name: "archlinux", tag: "latest", variant: "-zen", image_prefix: "docker.io/library/"}
