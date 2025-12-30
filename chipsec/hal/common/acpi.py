@@ -532,7 +532,7 @@ class ACPI(HALBase):
             if 'BERT' in signature:
                 BootRegionLen = struct.unpack('<L', contents[0:4])[0]
                 BootRegionAddr = struct.unpack('<Q', contents[4:12])[0]
-                bootRegion = self.cs.hals.memory.read_physical_mem(BootRegionAddr, BootRegionLen)
+                bootRegion = self.cs.hals.Memory.read_physical_mem(BootRegionAddr, BootRegionLen)
                 table = (ACPI_TABLES[signature])(bootRegion)
             elif 'NFIT' in signature:
                 table = (ACPI_TABLES[signature])(header)
@@ -541,5 +541,85 @@ class ACPI(HALBase):
             table.parse(contents)
         return table
 
+    # ========================================================================
+    # ACPI OperationRegion Analysis
+    # ========================================================================
 
-haldata = {"arch":[HALBase.MfgIds.Any], 'name': {'acpi': "ACPI"}}
+    def list_operation_regions(self, include_ssdt: bool = True, include_crs: bool = True) -> List[Dict]:
+        """
+        Extract all OperationRegion definitions and optionally _CRS resource descriptors from DSDT/SSDTs.
+        
+        Args:
+            include_ssdt: Include SSDT tables (default True)
+            include_crs: Include _CRS method resource descriptors (default True)
+        
+        Returns:
+            List of dicts: [{name, space_type, space_type_name, base, length, source}, ...]
+            where source is "OperationRegion" or "CRS Descriptor"
+        """
+        from chipsec.library.acpi_aml_parser import parse_operation_regions, CRSResourceParser
+        
+        regions = []
+        tables_to_parse = []
+        aml_tables = []  # Keep track of AML content for CRS extraction
+        
+        # Add DSDT
+        try:
+            if ACPI_TABLE_SIG_DSDT in self.tableList:
+                dsdt_tables = self.get_ACPI_table(ACPI_TABLE_SIG_DSDT)
+                if dsdt_tables:
+                    for dsdt_header, dsdt_content in dsdt_tables:
+                        full_table = dsdt_header + dsdt_content
+                        tables_to_parse.append(full_table)
+                        aml_tables.append(dsdt_content)
+        except Exception as e:
+            logger().log_warning(f"[acpi] Error reading DSDT: {e}")
+        
+        # Add SSDTs if requested
+        if include_ssdt:
+            try:
+                if ACPI_TABLE_SIG_SSDT in self.tableList:
+                    ssdt_tables = self.get_ACPI_table(ACPI_TABLE_SIG_SSDT)
+                    if ssdt_tables:
+                        for ssdt_header, ssdt_content in ssdt_tables:
+                            full_table = ssdt_header + ssdt_content
+                            tables_to_parse.append(full_table)
+                            aml_tables.append(ssdt_content)
+            except Exception as e:
+                logger().log_warning(f"[acpi] Error reading SSDTs: {e}")
+        
+        if not tables_to_parse:
+            return regions
+        
+        # Parse OperationRegion definitions
+        regions = parse_operation_regions(tables_to_parse)
+        
+        # Extract _CRS resource descriptors if enabled
+        if include_crs and aml_tables:
+            try:
+                for aml_content in aml_tables:
+                    # Extract _CRS buffer from each AML table
+                    crs_buffer = CRSResourceParser.extract_crs_buffer(aml_content)
+                    if crs_buffer:
+                        # Decode resource descriptors
+                        resources = CRSResourceParser.decode_crs_buffer(crs_buffer)
+                        for res in resources:
+                            if 'address' in res:
+                                # Convert CRS resource to region dict format
+                                crs_region = {
+                                    'name': f"CRS_{res.get('type', 'Unknown')}_{res['address']:08X}",
+                                    'space_type': 0 if res.get('type', '').startswith('Memory') else 1,
+                                    'space_type_name': 'SystemMemory' if res.get('type', '').startswith('Memory') else 'SystemIO',
+                                    'base': res['address'],
+                                    'length': res['size'],
+                                    'source': 'CRS Descriptor'
+                                }
+                                regions.append(crs_region)
+            except Exception as e:
+                logger().log_warning(f"[acpi] Error extracting _CRS resources: {e}")
+        
+        return regions
+
+
+
+haldata = {"arch":[HALBase.MfgIds.Any], 'name': ['ACPI']}
