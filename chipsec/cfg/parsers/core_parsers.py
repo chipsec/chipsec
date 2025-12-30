@@ -299,6 +299,81 @@ class CoreConfigRegisters(BaseConfigParser):
     def _make_ip_name(self, stage_data):
         return '.'.join([stage_data.vid_str, stage_data.dev_name])
 
+    def _make_full_reg_name_for_context(self, stage_data, reg_attr, reg_name):
+        """Build fully-qualified register name, including BAR for MMIO/IOBAR.
+
+        Falls back to default VID.Device.Register for other types.
+        """
+        try:
+            rtype = reg_attr.get('type') if isinstance(reg_attr, dict) else None
+        except Exception:
+            rtype = None
+
+        if rtype in ['mmio', 'iobar'] and isinstance(reg_attr, dict) and 'bar' in reg_attr and reg_attr['bar']:
+            return '.'.join([reg_attr['bar'], reg_name])
+        return self._make_reg_name(stage_data, reg_name)
+
+    def _resolve_lockedby(self, stage_data, reg_attr, cur_reg_name, lockedby_str):
+        """Resolve a possibly-relative lockedby reference to fully-qualified form.
+
+        Rules:
+        - If already fully-qualified (VID.Device.[BAR.]Reg.Field), return as-is (3 dots).
+        - If two-part Reg.Field:
+          - For MMIO/IOBAR, assume same BAR as current register.
+          - Heuristic: if Reg starts with 'MSR_', bind to MSR device (VID.MSR.Reg.Field).
+          - Otherwise, bind to current device (VID.Device.Reg.Field).
+        - If three-part Device.Reg.Field:
+          - If Device == 'MSR', bind to VID.MSR.Reg.Field.
+          - If MMIO/IOBAR and Device == current device, inject BAR (VID.Device.BAR.Reg.Field).
+          - Else, bind to VID.Device.Reg.Field.
+        - If one-part Field: treat as current register's field.
+        """
+        if not isinstance(lockedby_str, str) or not lockedby_str:
+            return None
+
+        dot_count = lockedby_str.count('.')
+        vid = stage_data.vid_str
+        cur_dev = self._get_parent_name(stage_data)
+
+        # Already fully qualified
+        if dot_count == 3:
+            return lockedby_str
+
+        # Helper: BAR prefix if mmio/iobar
+        use_bar = isinstance(reg_attr, dict) and reg_attr.get('type') in ['mmio', 'iobar'] and 'bar' in reg_attr and reg_attr['bar']
+        bar_prefix = reg_attr['bar'] if use_bar else None
+
+        parts = lockedby_str.split('.')
+
+        if dot_count == 0:
+            # Field within current register
+            if use_bar:
+                return '.'.join([bar_prefix, cur_reg_name, parts[0]])
+            return '.'.join([vid, cur_dev, cur_reg_name, parts[0]])
+
+        if dot_count == 1:
+            # Reg.Field
+            reg, field = parts
+            # Heuristic for MSR cross-device references
+            if reg.upper().startswith('MSR_'):
+                return '.'.join([vid, 'MSR', reg, field])
+            if use_bar:
+                return '.'.join([bar_prefix, reg, field])
+            return '.'.join([vid, cur_dev, reg, field])
+
+        if dot_count == 2:
+            # Device.Reg.Field
+            dev, reg, field = parts
+            if dev == 'MSR':
+                return '.'.join([vid, 'MSR', reg, field])
+            if use_bar and dev == cur_dev:
+                return '.'.join([bar_prefix, reg, field])
+            return '.'.join([vid, dev, reg, field])
+
+        # Invalid format
+        self.logger.log_debug(f"[*] Invalid locked by reference: {lockedby_str}")
+        return None
+
     def _get_parent_name(self, stage_data):
         if hasattr(stage_data, "component") and stage_data.component is not None:
             return stage_data.component
@@ -375,15 +450,9 @@ class CoreConfigRegisters(BaseConfigParser):
 
                 # Locked by attributes need to be handled here due to embedding information in field data
                 if 'lockedby' in field_attr:
-                    if field_attr['lockedby'].count('.') == 3:
-                        lockedby = field_attr['lockedby']
-                    elif field_attr['lockedby'].count('.') <= 1:
-                        lockedby = self._make_reg_name(stage_data, field_attr['lockedby'])
-                    else:
-                        self.logger.log_debug(f"[*] Invalid locked by reference: {field_attr['lockedby']}")
-                        lockedby = None
+                    lockedby = self._resolve_lockedby(stage_data, reg_attr, reg_name, field_attr['lockedby'])
                     if lockedby:
-                        lreg = self._make_reg_name(stage_data, reg_name, False)
+                        lreg = self._make_full_reg_name_for_context(stage_data, reg_attr, reg_name)
                         if lockedby in self.cfg.LOCKEDBY[stage_data.vid_str]:
                             self.cfg.LOCKEDBY[stage_data.vid_str][lockedby].append((lreg, field_name))
                         else:
@@ -496,7 +565,38 @@ class CoreConfigRegisters(BaseConfigParser):
     def handle_locks(self, et_node, stage_data):
         for node in et_node.iter('lock'):
             attrs = _config_convert_data(node)
-            attrs['register'] = self._make_reg_name(stage_data, attrs['register'])
+            # Prefer BAR-aware fully qualified register names where available
+            parent = self._get_parent_name(stage_data)
+            regs = []
+            if (stage_data.vid_str in self.cfg.REGISTERS and
+                    parent in self.cfg.REGISTERS[stage_data.vid_str] and
+                    attrs['register'] in self.cfg.REGISTERS[stage_data.vid_str][parent]):
+                regs.extend(self.cfg.REGISTERS[stage_data.vid_str][parent][attrs['register']])
+            else:
+                self.logger.log_debug(
+                    f"[LOCK] Register '{attrs['register']}' not found in REGISTERS"
+                    f"[{stage_data.vid_str}][{parent}]. Available: "
+                    f"{list(self.cfg.REGISTERS.get(stage_data.vid_str, {}).get(parent, {}).keys())}"
+                )
+
+            if regs:
+                reg0 = regs[0]
+                # MMIO/IOBAR registers carry a 'bar' attribute on the helper
+                reg_type_name = reg0.__class__.__name__.lower()
+                self.logger.log_debug(
+                    f"[LOCK] Found {len(regs)} reg(s) for '{attrs['register']}' "
+                    f"type='{reg_type_name}' bar={getattr(reg0, 'bar', None)}"
+                )
+                if hasattr(reg0, 'bar') and reg0.bar and ('mmio' in reg_type_name or 'iobar' in reg_type_name):
+                    attrs['register'] = '.'.join([reg0.bar, attrs['register']])
+                    self.logger.log_debug(f"[LOCK] Using BAR-aware name: {attrs['register']}")
+                else:
+                    attrs['register'] = self._make_reg_name(stage_data, attrs['register'])
+                    self.logger.log_debug(f"[LOCK] Using standard name: {attrs['register']}")
+            else:
+                attrs['register'] = self._make_reg_name(stage_data, attrs['register'])
+                self.logger.log_debug(f"[LOCK] No register found, using standard name: {attrs['register']}")
+
             dest_name = attrs['register']
             if 'field' in attrs:
                 dest_name = '.'.join([dest_name, attrs['field']])
@@ -511,6 +611,11 @@ class CoreConfigRegisters(BaseConfigParser):
                 retval.append(lock_attr[val])
             else:
                 retval.append(None)
+        # Validate that we have at least register and field
+        if retval[0] is None:
+            self.logger.log_debug(f"[LOCK] Warning: lock missing 'register': {lock_attr}")
+        if retval[1] is None:
+            self.logger.log_debug(f"[LOCK] Warning: lock missing 'field': {lock_attr}")
         return retval
 
 

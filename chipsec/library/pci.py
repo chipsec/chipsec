@@ -268,12 +268,24 @@ class ECEntry:
         self.ver = get_bits(value, 16, 4)
         self.id = get_bits(value, 0, 16)
 
+    def __str__(self) -> str:
+        from chipsec.library.pci import ecIDs
+        return (f"Extended Capability at 0x{self.off:03X}: "
+                f"ID=0x{self.id:04X} ({ecIDs.get(self.id, 'Reserved')}), "
+                f"Version=0x{self.ver:X}, Next=0x{self.next:03X}")
+
 
 class VSECEntry:
     def __init__(self, value):
         self.size = get_bits(value, 20, 12)
         self.rev = get_bits(value, 16, 4)
         self.id = get_bits(value, 0, 16)
+
+    def __str__(self) -> str:
+        return (f"VSEC Entry: "
+                f"ID=0x{self.id:04X}, "
+                f"Revision=0x{self.rev:X}, "
+                f"Size=0x{self.size:03X}")
 
 
 def print_pci_extended_capability(ecentries: List[ECEntry]) -> None:

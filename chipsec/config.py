@@ -749,12 +749,19 @@ class Cfg:
                 self.logger.log_debug(f'[-] File not found: {fxml.xml_file}')
                 continue
             for config_root in self._get_config_iter(fxml):
-                parser_name = self._get_sec_parser_name(config_root, stage)
-                tag_handlers = cfg_handlers[parser_name] if parser_name in cfg_handlers else []
-                for tag in tag_handlers:
-                    self.logger.log_debug(f'[*] Loading {tag} data...')
-                    for node in config_root.iter(tag):
-                        tag_handlers[tag](node, fxml)
+                # Use all handlers for this stage unless the config explicitly selects one
+                if 'custom_parser' in config_root.attrib:
+                    handlers_to_run = [(config_root.attrib['custom_parser'], cfg_handlers.get(config_root.attrib['custom_parser'], {}))]
+                else:
+                    handlers_to_run = list(cfg_handlers.items())
+
+                for parser_name, tag_handlers in handlers_to_run:
+                    if not tag_handlers:
+                        continue
+                    for tag in tag_handlers:
+                        self.logger.log_debug(f'[*] Loading {tag} data...')
+                        for node in config_root.iter(tag):
+                            tag_handlers[tag](node, fxml)
 
     ###
     # Config loading functions

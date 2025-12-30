@@ -266,12 +266,14 @@ class MMIORegisters(BaseConfigRegisterHelper):
             MMIORegisterError: If write operation fails
         """
         try:
-            self.logger.log_debug(f'writing 0x{value:X} to {self.name}')
+            reg_name = self.name if self.name else "UNKNOWN"
+            self.logger.log_debug(f'writing 0x{value:X} to {reg_name}')
             self.populate_base_address()
             self.cs.hals.mmio.write_MMIO_reg(self.bar_base, self.offset, value, self.size)
             self.value = value
         except Exception as e:
-            raise MMIORegisterError(f"Failed to write to MMIO register {self.name}: {e}") from e
+            reg_name = self.name if self.name else "UNKNOWN"
+            raise MMIORegisterError(f"Failed to write to MMIO register {reg_name}: {e}") from e
 
     def write_subset(self, value: int, size: int, offset: int = 0) -> None:
         """

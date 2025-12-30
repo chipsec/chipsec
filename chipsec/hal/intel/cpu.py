@@ -102,7 +102,7 @@ class CPU(hal_base.HALBase):
 
     # determine number of logical processors in the core
     def get_number_threads_from_APIC_table(self) -> int:
-        _acpi = self.cs.hals.acpi
+        _acpi = self.cs.hals.ACPI
         dACPIID = {}
         for apic in _acpi.get_parse_ACPI_table(acpi.ACPI_TABLE_SIG_APIC):  # (table_header, APIC_object, table_header_blob, table_blob)
             _, APIC_object, _, _ = apic
@@ -172,8 +172,8 @@ class CPU(hal_base.HALBase):
     def get_TSEG(self) -> Tuple[int, int, int]:
         if self.cs.is_server():
             # tseg register has base and limit
-            tseg_base = self.cs.register.get_list_by_name('8086.MEMMAP_VTD.TSEG').read_field('base', True)[0]
-            tseg_limit = self.cs.register.get_list_by_name('8086.MEMMAP_VTD.TSEG').read_field('limit', True)[0]
+            tseg_base = self.cs.register.get_list_by_name('8086.MEMMAP_VTD.TSEG_BASE').read_field('base', True)[0]
+            tseg_limit = self.cs.register.get_list_by_name('8086.MEMMAP_VTD.TSEG_LIMIT').read_field('limit', True)[0]
             tseg_limit += 0xFFFFF
         else:
             # TSEG base is in TSEGMB, TSEG limit is BGSM - 1
@@ -231,10 +231,10 @@ class CPU(hal_base.HALBase):
             logger().log_error('could not dump page tables')
 
     def dump_page_tables_all(self) -> None:
-        for tid in range(self.cs.hals.msr.get_cpu_thread_count()):
+        for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
             cr3 = self.read_cr(tid, 3)
             logger().log_hal(f'[cpu{tid:d}] found paging hierarchy base (CR3): 0x{cr3:08X}')
             self.dump_page_tables(cr3)
 
 
-haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': {'cpu': "CPU"}}
+haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': ['CPU']}
