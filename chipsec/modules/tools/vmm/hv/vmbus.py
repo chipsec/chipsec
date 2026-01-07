@@ -28,7 +28,7 @@ import time
 import chipsec_util
 from struct import *
 from random import *
-from chipsec.modules.tools.vmm.common import *
+from chipsec.library.intel.vmm_common import *
 from chipsec.modules.tools.vmm.hv.define import *
 from chipsec.library.logger import *
 from chipsec.library.file import *

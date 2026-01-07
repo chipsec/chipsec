@@ -35,7 +35,7 @@ from struct import pack, unpack
 from chipsec.library.defines import DD
 from chipsec.library.returncode import ModuleResult
 from chipsec.module_common import BaseModule, CPU
-from chipsec.modules.tools.vmm.common import overwrite, session_logger
+from chipsec.library.intel.vmm_common import overwrite, session_logger
 from chipsec.modules.tools.vmm.hv.define import HV_KBD_GUID, VMBUS_DATA_PACKET_FLAG_COMPLETION_REQUESTED, vm_pkt
 from chipsec.modules.tools.vmm.hv.vmbus import RingBuffer, VMBusDiscovery
 

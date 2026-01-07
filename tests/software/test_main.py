@@ -40,7 +40,7 @@ class TestChipsecMain(unittest.TestCase):
 
     def test_read_files_in_tool_folder(self):
         res = module_helper.enumerate_modules()
-        expected = ['tools.wsmt', 'tools.cpu.sinkhole', 'tools.secureboot.te', 'tools.smm.rogue_mmio_bar', 'tools.smm.smm_ptr', 'tools.uefi.reputation', 'tools.uefi.s3script_modify', 'tools.uefi.scan_blocked', 'tools.uefi.scan_image', 'tools.uefi.uefivar_fuzz', 'tools.vmm.common', 'tools.vmm.cpuid_fuzz', 'tools.vmm.ept_finder', 'tools.vmm.hypercallfuzz', 'tools.vmm.iofuzz', 'tools.vmm.msr_fuzz', 'tools.vmm.pcie_fuzz', 'tools.vmm.pcie_overlap_fuzz', 'tools.vmm.venom', 'tools.vmm.hv.define', 'tools.vmm.hv.hypercall', 'tools.vmm.hv.hypercallfuzz', 'tools.vmm.hv.synth_dev', 'tools.vmm.hv.synth_kbd', 'tools.vmm.hv.vmbus', 'tools.vmm.hv.vmbusfuzz', 'tools.vmm.vbox.vbox_crash_apicbase', 'tools.vmm.xen.define', 'tools.vmm.xen.hypercall', 'tools.vmm.xen.hypercallfuzz', 'tools.vmm.xen.xsa188']
+        expected = ['tools.wsmt', 'tools.cpu.sinkhole', 'tools.secureboot.te', 'tools.smm.rogue_mmio_bar', 'tools.smm.smm_ptr', 'tools.uefi.reputation', 'tools.uefi.s3script_modify', 'tools.uefi.scan_blocked', 'tools.uefi.scan_image', 'tools.uefi.uefivar_fuzz', 'tools.vmm.cpuid_fuzz', 'tools.vmm.ept_finder', 'tools.vmm.hypercallfuzz', 'tools.vmm.iofuzz', 'tools.vmm.msr_fuzz', 'tools.vmm.pcie_fuzz', 'tools.vmm.pcie_overlap_fuzz', 'tools.vmm.venom', 'tools.vmm.hv.define', 'tools.vmm.hv.hypercall', 'tools.vmm.hv.hypercallfuzz', 'tools.vmm.hv.synth_dev', 'tools.vmm.hv.synth_kbd', 'tools.vmm.hv.vmbus', 'tools.vmm.hv.vmbusfuzz', 'tools.vmm.vbox.vbox_crash_apicbase', 'tools.vmm.xen.define', 'tools.vmm.xen.hypercall', 'tools.vmm.xen.hypercallfuzz', 'tools.vmm.xen.xsa188']
         for exp in expected:
             self.assertIn(exp, res)
 
