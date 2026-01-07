@@ -51,7 +51,7 @@ import traceback
 from struct import pack
 from random import getrandbits, choice
 from chipsec.library.returncode import ModuleResult
-from chipsec.modules.tools.vmm.common import session_logger, overwrite, get_int_arg
+from chipsec.library.intel.vmm_common import session_logger, overwrite, get_int_arg
 from chipsec.modules.tools.vmm.hv.vmbus import VMBusDiscovery, HyperV, RingBuffer
 from chipsec.module_common import CPU
 

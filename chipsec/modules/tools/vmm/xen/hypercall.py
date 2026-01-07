@@ -27,7 +27,7 @@ import collections
 from chipsec.modules.tools.vmm.xen.define import *
 from chipsec.hal.common.vmm import *
 from chipsec.module_common import *
-from chipsec.modules.tools.vmm.common import *
+from chipsec.library.intel.vmm_common import *
 
 SM_RANGE = {'masks': [0x00000000000000FF]}
 MD_RANGE = {'masks': [0x000000000000FFFF]}

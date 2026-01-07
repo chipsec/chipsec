@@ -40,7 +40,7 @@ import traceback
 from struct import pack
 from chipsec.library.returncode import ModuleResult
 from chipsec.module_common import BaseModule, CPU
-from chipsec.modules.tools.vmm.common import session_logger, get_int_arg
+from chipsec.library.intel.vmm_common import session_logger, get_int_arg
 from chipsec.modules.tools.vmm.hv.define import VMBUS_DATA_PACKET_FLAG_COMPLETION_REQUESTED, vm_pkt
 from chipsec.modules.tools.vmm.hv.vmbus import RingBuffer, VMBusDiscovery
 

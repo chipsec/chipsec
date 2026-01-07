@@ -30,7 +30,7 @@ import chipsec_util
 from random import *
 from struct import *
 from chipsec.modules.tools.vmm.hv.define import *
-from chipsec.modules.tools.vmm.common import *
+from chipsec.library.intel.vmm_common import *
 from chipsec.library.logger import *
 from chipsec.library.file import *
 from chipsec.module_common import *
