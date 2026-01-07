@@ -79,26 +79,51 @@ class IOMMUCommand(BaseCommand):
         parser.parse_args(self.argv, namespace=self)
 
     def iommu_list(self) -> None:
-        self.logger.log("[CHIPSEC] Enumerating supported IOMMU engine names:")
-        self.logger.log(f'{list(iommu.IOMMU_ENGINES.keys())}')
-        self.logger.log_important('\nNote: These are the IOMMU engine names supported by iommu_cmd.')
-        self.logger.log_important('It does not mean they are supported/enabled in the current platform.')
+        """List discovered IOMMU engines from DMAR table."""
+        self.logger.log("[CHIPSEC] Discovering IOMMU engines from DMAR table:")
+        try:
+            _iommu = iommu.IOMMU(self.cs)
+            _iommu.initialize()
+            engine_desc = _iommu.get_engine_descriptions()
+            if engine_desc:
+                self.logger.log(f'\nDiscovered {len(engine_desc)} VT-d engines:')
+                for eng, base, label in engine_desc:
+                    suffix = f' [{label}]' if label else ''
+                    self.logger.log(f'  {eng}: 0x{base:016X}{suffix}')
+                if _iommu.rmrrs:
+                    self.logger.log(f'RMRR entries             : {len(_iommu.rmrrs)}')
+                    for line in _iommu.describe_rmrr():
+                        self.logger.log_verbose(line)
+                if _iommu.atsrs:
+                    self.logger.log(f'ATSR entries             : {len(_iommu.atsrs)}')
+                    for line in _iommu.describe_atsr():
+                        self.logger.log_verbose(line)
+            else:
+                self.logger.log('\nNo VT-d engines discovered in DMAR table.')
+        except Exception as e:
+            self.logger.log_error(f'Failed to discover engines: {e}')
 
     def iommu_engine(self, cmd) -> None:
         try:
             _iommu = iommu.IOMMU(self.cs)
+            _iommu.initialize()
         except IOMMUError as msg:
             self.logger.log(msg)
             return
 
         if self.engine:
-            if self.engine in iommu.IOMMU_ENGINES.keys():
+            discovered = _iommu.get_discovered_engines()
+            if self.engine in discovered:
                 _iommu_engines = [self.engine]
             else:
-                self.logger.log_error(f'IOMMU name \'{self.engine}\' not recognized. Run \'iommu list\' command for supported IOMMU names')
+                self.logger.log_error(f'IOMMU name \'{self.engine}\' not recognized.')
+                self.logger.log(f'Discovered engines: {discovered}')
                 return
         else:
-            _iommu_engines = iommu.IOMMU_ENGINES.keys()
+            _iommu_engines = _iommu.get_discovered_engines()
+            if not _iommu_engines:
+                self.logger.log('No IOMMU engines discovered; nothing to do.')
+                return
 
         if 'config' == cmd:
             try:
