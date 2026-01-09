@@ -213,7 +213,7 @@ class MMCFGRegisters(BaseConfigRegisterHelper):
                 )
 
             _cs = cs()
-            self.value = _cs.hals.MMCFG.read_mmcfg_reg(
+            self.value = _cs.hals.mmcfg.read_mmcfg_reg(
                 self.pci.bus, self.pci.dev, self.pci.fun, self.offset, self.size
             )
             return self.value
@@ -241,7 +241,7 @@ class MMCFGRegisters(BaseConfigRegisterHelper):
                 )
 
             _cs = cs()
-            _cs.hals.MMCFG.write_mmcfg_reg(
+            _cs.hals.mmcfg.write_mmcfg_reg(
                 self.pci.bus, self.pci.dev, self.pci.fun, self.offset, self.size, value
             )
             self.value = value
