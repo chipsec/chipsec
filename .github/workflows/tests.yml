@@ -37,6 +37,8 @@ jobs:
         egress-policy: audit
 
     - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      with:
+        persist-credentials: false
 
     - name: Install Alpine dependencies
       if: matrix.distro.name == 'alpine'
@@ -174,6 +176,8 @@ jobs:
         egress-policy: audit
 
     - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      with:
+        persist-credentials: false
 
     - name: Set up Python ${{ matrix.versions.python }}
       uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
@@ -249,6 +253,8 @@ jobs:
         python-version: ${{ matrix.versions.python }}
 
     - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      with:
+        persist-credentials: false
 
     - name: Patch chipsec_main to return true even when some module failed
       run: |
@@ -296,7 +302,9 @@ jobs:
 
     - name: Run Python pytest
       run: |
-        python -m pytest --cov . --cov-report=term-missing --cov-fail-under="${{ env.CODE_COVERAGE_REQ }}"
+        python -m pytest --cov . --cov-report=term-missing --cov-fail-under="${COV_REQ}"
+      env:
+        COV_REQ: ${{ env.CODE_COVERAGE_REQ }}
         
     - name: Run xml cfg checker
       run: |
