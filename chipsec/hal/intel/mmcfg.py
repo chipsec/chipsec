@@ -153,10 +153,9 @@ class MMCFG(hal_base.HALBase):
         """
         pciexbar, pciexbar_sz = self.get_MMCFG_base_address(bus)
         pciexbar_off = (bus * 32 * 8 + dev * 8 + fun) * 0x1000 + off
-        value = self.cs.hals.mmio.read_MMIO_reg(pciexbar, pciexbar_off, size, pciexbar_sz)
-        self.logger.log_hal(f"[mmcfg] Reading MMCFG register at bus {bus}, device {dev}, function {fun}, offset 0x{off:X}")
-        self.logger.log_hal("[mmcfg] reading {:02d}:{:02d}.{:d} + 0x{:02X} (MMCFG + 0x{:08X}): 0x{:08X}".format(
-            bus, dev, fun, off, pciexbar_off, value))
+        value = self.cs.hals.MMIO.read_MMIO_reg(pciexbar, pciexbar_off, size, pciexbar_sz)
+        self.logger.log_hal(f"[mmcfg] Reading MMCFG register at bus 0x{bus:X}, device 0x{dev:X}, function 0x{fun:X}, offset 0x{off:X}")
+        self.logger.log_hal(f"[mmcfg]     (MMCFG + 0x{pciexbar_off:08X}): 0x{value:08X}")
         if 1 == size:
             return (value & 0xFF)
         elif 2 == size:
@@ -182,10 +181,9 @@ class MMCFG(hal_base.HALBase):
             mask = 0xFFFF
         else:
             mask = 0xFFFFFFFF
-        self.cs.hals.mmio.write_MMIO_reg(pciexbar, pciexbar_off, (value & mask), size)
-        self.logger.log_hal(f"[mmcfg] Writing value 0x{value:X} to MMCFG register at bus {bus}, device {dev}, function {fun}, offset 0x{off:X}")
-        self.logger.log_hal("[mmcfg] writing {:02d}:{:02d}.{:d} + 0x{:02X} (MMCFG + 0x{:08X}): 0x{:08X}".format(
-            bus, dev, fun, off, pciexbar_off, value))
+        self.cs.hals.MMIO.write_MMIO_reg(pciexbar, pciexbar_off, (value & mask), size)
+        self.logger.log_hal(f"[mmcfg] Writing value 0x{value:X} to MMCFG register at bus 0x{bus:X}, device 0x{dev:X}, function 0x{fun:X}, offset 0x{off:X}")
+        self.logger.log_hal(f"[mmcfg]     (MMCFG + 0x{pciexbar_off:08X}): 0x{value:08X}")
         return True
 
     def get_extended_capabilities(self, bus: int, dev: int, fun: int) -> List[ECEntry]:
@@ -207,7 +205,7 @@ class MMCFG(hal_base.HALBase):
                 self.logger.log_hal(f"[mmcfg] Error reading extended capability at offset 0x{off:X}: {e}")
                 break
         if not retcap:
-            self.logger.log_hal(f"[mmcfg] No extended capabilities found for {bus}:{dev}.{fun}")
+            self.logger.log_hal(f"[mmcfg] No extended capabilities found for {bus:X}:{dev:X}.{fun:X}")
         return retcap
 
     def get_vsec(self, bus: int, dev: int, fun: int, ecoff: int) -> VSECEntry:
