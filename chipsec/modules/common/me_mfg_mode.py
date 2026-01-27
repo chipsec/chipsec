@@ -122,15 +122,20 @@ class me_mfg_mode(BaseModule):
 
     def check_me_mfg_mode(self) -> int:
         me_mfg_mode_res = ModuleResult.FAILED
-        me_hfs_reg = self.cs.register.get_list_by_name('HFS')
+        me_hfs_reg = self.cs.register.get_list_by_name('HFS').filter_with_field('MFG_MODE')
         me_hfs_reg.read_and_verbose_print()
 
-        if me_hfs_reg.is_all_field_value(0, 'MFG_MODE'):
-            me_mfg_mode_res = ModuleResult.PASSED
-            self.logger.log_passed('ME is not in Manufacturing Mode')
+        if me_hfs_reg:
+            if me_hfs_reg.is_all_field_value(0, 'MFG_MODE'):
+                me_mfg_mode_res = ModuleResult.PASSED
+                self.logger.log_passed('ME is not in Manufacturing Mode')
+            else:
+                self.logger.log_failed('ME is in Manufacturing Mode')
+                self.result.setStatusBit(self.result.status.POTENTIALLY_VULNERABLE)
         else:
-            self.logger.log_failed('ME is in Manufacturing Mode')
-            self.result.setStatusBit(self.result.status.POTENTIALLY_VULNERABLE)
+            self.logger.log_warning('ME HFS register cannot be found.')
+            self.result.setStatusBit(self.result.status.REGISTER_NOT_DEFINED)
+            me_mfg_mode_res = ModuleResult.WARNING
 
         return self.result.getReturnCode(me_mfg_mode_res)
 
