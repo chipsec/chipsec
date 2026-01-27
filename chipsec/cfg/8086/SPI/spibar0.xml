@@ -77,34 +77,34 @@
         </register>
 
         <register name="PR0" type="mmio" bar="SPIBAR" offset="0x84" size="4" desc="Protected Range 0">
-            <field name="PRB" bit="0"  size="15"/>
-            <field name="RPE" bit="15" size="1"/>
-            <field name="PRL" bit="16" size="15"/>
-            <field name="WPE" bit="31" size="1"/>
+            <field name="PRB" bit="0"  size="15" desc="Protected Range Base"/>
+            <field name="RPE" bit="15" size="1"  desc="Read Protection Enabled"/>
+            <field name="PRL" bit="16" size="15" desc="Protected Range Limit"/>
+            <field name="WPE" bit="31" size="1"  desc="Write Protection Enabled"/>
         </register>
         <register name="PR1" type="mmio" bar="SPIBAR" offset="0x88" size="4" desc="Protected Range 1">
-            <field name="PRB" bit="0"  size="15"/>
-            <field name="RPE" bit="15" size="1"/>
-            <field name="PRL" bit="16" size="15"/>
-            <field name="WPE" bit="31" size="1"/>
+            <field name="PRB" bit="0"  size="15" desc="Protected Range Base"/>
+            <field name="RPE" bit="15" size="1"  desc="Read Protection Enabled"/>
+            <field name="PRL" bit="16" size="15" desc="Protected Range Limit"/>
+            <field name="WPE" bit="31" size="1"  desc="Write Protection Enabled"/>
         </register>
         <register name="PR2" type="mmio" bar="SPIBAR" offset="0x8C" size="4" desc="Protected Range 2">
-            <field name="PRB" bit="0"  size="15"/>
-            <field name="RPE" bit="15" size="1"/>
-            <field name="PRL" bit="16" size="15"/>
-            <field name="WPE" bit="31" size="1"/>
+            <field name="PRB" bit="0"  size="15" desc="Protected Range Base"/>
+            <field name="RPE" bit="15" size="1"  desc="Read Protection Enabled"/>
+            <field name="PRL" bit="16" size="15" desc="Protected Range Limit"/>
+            <field name="WPE" bit="31" size="1"  desc="Write Protection Enabled"/>
         </register>
         <register name="PR3" type="mmio" bar="SPIBAR" offset="0x90" size="4" desc="Protected Range 3">
-            <field name="PRB" bit="0"  size="15"/>
-            <field name="RPE" bit="15" size="1"/>
-            <field name="PRL" bit="16" size="15"/>
-            <field name="WPE" bit="31" size="1"/>
+            <field name="PRB" bit="0"  size="15" desc="Protected Range Base"/>
+            <field name="RPE" bit="15" size="1"  desc="Read Protection Enabled"/>
+            <field name="PRL" bit="16" size="15" desc="Protected Range Limit"/>
+            <field name="WPE" bit="31" size="1"  desc="Write Protection Enabled"/>
         </register>
         <register name="PR4" type="mmio" bar="SPIBAR" offset="0x94" size="4" desc="Protected Range 4">
-            <field name="PRB" bit="0"  size="15"/>
-            <field name="RPE" bit="15" size="1"/>
-            <field name="PRL" bit="16" size="15"/>
-            <field name="WPE" bit="31" size="1"/>
+            <field name="PRB" bit="0"  size="15" desc="Protected Range Base"/>
+            <field name="RPE" bit="15" size="1"  desc="Read Protection Enabled"/>
+            <field name="PRL" bit="16" size="15" desc="Protected Range Limit"/>
+            <field name="WPE" bit="31" size="1"  desc="Write Protection Enabled"/>
         </register>
         <register name="FDOC" type="mmio" bar="SPIBAR" offset="0xB4" size="4" desc="Flash Descriptor Observability Control Register">
             <field name="FDSI" bit="2"  size="10" desc="Flash Descriptor Section Index"/>
@@ -113,7 +113,7 @@
         <register name="FDOD" type="mmio" bar="SPIBAR" offset="0xB8" size="4" desc="Flash Descriptor Observability Data Register">
             <field name="FDSD" bit="0"  size="32" desc="Flash Descriptor Section Data"/>
         </register>
-        <register name="LVSCC" type="mmio" bar="SPIBAR" offset="0xC4" size="4" desc="Vendor Specific Component Capabilities">
+        <register name="LVSCC" type="mmio" bar="SPIBAR" offset="0xC4" size="4" desc="Lower Vendor Specific Component Capabilities">
             <field name="WG"                 bit="2"  size="1" desc="Write Granularity"/>
             <field name="WSR"                bit="3"  size="1" desc="Write Status Required"/>
             <field name="WEWS"               bit="4"  size="1" desc="Write Enable on Write Status"/>
@@ -129,7 +129,7 @@
             <field name="VCL"                bit="30" size="1" desc="Vendor Component Lock"/>
             <field name="CPPTV"              bit="31" size="1" desc="Component Property Parameter Table Valid"/>
         </register>
-        <register name="UVSCC" type="mmio" bar="SPIBAR" offset="0xC8" size="4" desc="Vendor Specific Component Capabilities">
+        <register name="UVSCC" type="mmio" bar="SPIBAR" offset="0xC8" size="4" desc="Upper Vendor Specific Component Capabilities">
             <field name="WG"                 bit="2"  size="1" desc="Write Granularity"/>
             <field name="WSR"                bit="3"  size="1" desc="Write Status Required"/>
             <field name="WEWS"               bit="4"  size="1" desc="Write Enable on Write Status"/>
@@ -149,6 +149,7 @@
         <register name="BIOS_PTDATA" type="mmio" bar="SPIBAR" offset="0xD0" size="4" desc="Parameter Table Data"/>
     </registers>
     <controls>
-        <control name="FlashLockDown"          register="HSFS"  field="FLOCKDN"  desc="Flash Configuration Lock-Down"/>
+        <control name="FlashLockDown"     register="HSFS" field="FLOCKDN" desc="Flash Configuration Lock-Down"/>
+        <control name="SpiWriteStatusDis" register="HSFS" field="WRSDIS"  desc="Write Status Disable"/>
     </controls>
 </configuration>
