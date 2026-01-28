@@ -23,7 +23,10 @@ import platform
 import struct
 from typing import Dict, List
 
-from chipsec.hal.uefi_fv import EFI_SECTION_ZLIB_AMD_HEADER_FORMAT, EFI_SECTION_ZLIB_AMD_HEADER_LENGTH
+from chipsec.library.uefi.fv import (
+    EFI_SECTION_BROTLI_HEADER_FORMAT, EFI_SECTION_BROTLI_HEADER_LENGTH, EFI_SECTION_BROTLI_PARAM_LGWIN,
+    EFI_SECTION_ZLIB_AMD_HEADER_FORMAT, EFI_SECTION_ZLIB_AMD_HEADER_LENGTH
+)
 from chipsec.library.logger import logger
 
 modules: Dict[str, bool] = {}
@@ -170,7 +173,9 @@ class UefiCompression:
                 logger().log_hal(f'Cannot decompress GZIP data: {error}')
         elif compression_type == COMPRESSION_TYPE_BROTLI and modules['brotli']:
             try:
-                data = brotli.decompress(compressed_data)
+                data = brotli.decompress(compressed_data[EFI_SECTION_BROTLI_HEADER_LENGTH:])
+                if len(data) != struct.unpack_from(EFI_SECTION_BROTLI_HEADER_FORMAT, compressed_data)[0]:
+                    raise ValueError('Could not validate decompressed BROTLI data length')
             except Exception as error:
                 logger().log_hal(f'Cannot decompress BROTLI data: {error}')
 
@@ -249,7 +254,11 @@ class UefiCompression:
                 logger().log_hal(f'Cannot compress GZIP data: {error}')
         elif compression_type == COMPRESSION_TYPE_BROTLI and modules['brotli']:
             try:
-                data = brotli.compress(uncompressed_data)
+                brotli_header_data: bytes = struct.pack(
+                    EFI_SECTION_BROTLI_HEADER_FORMAT, len(uncompressed_data), 1 << (EFI_SECTION_BROTLI_PARAM_LGWIN + 2)
+                )
+
+                data = brotli_header_data + brotli.compress(uncompressed_data)
             except brotli.error as error:
                 logger().log_hal(f'Cannot compress BROTLI data: {error}')
 
