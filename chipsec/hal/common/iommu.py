@@ -77,12 +77,12 @@ class IOMMU(hal_base.HALBase):
         """
         try:
             # Check if DMAR table exists
-            if not self.cs.hals.ACPI.is_ACPI_table_present('DMAR'):
+            if not self.cs.hals.acpi.is_ACPI_table_present('DMAR'):
                 self.logger.log_warning("[IOMMU] DMAR table not present")
                 return
             
             # Get raw DMAR table bytes
-            dmar_tables = self.cs.hals.ACPI.get_ACPI_table('DMAR')
+            dmar_tables = self.cs.hals.acpi.get_ACPI_table('DMAR')
             if not dmar_tables or len(dmar_tables) == 0:
                 self.logger.log_warning("[IOMMU] Could not read DMAR table")
                 return
@@ -334,7 +334,7 @@ class IOMMU(hal_base.HALBase):
             raise IOMMUError(f"[IOMMU] Engine {engine_name} not found")
         
         addr = self.iommu_config.compute_reg_address(reg, base)
-        return self.cs.hals.MMIO.read_MMIO_reg(addr, 0, reg.size)
+        return self.cs.hals.mmio.read_MMIO_reg(addr, 0, reg.size)
     
     def write_IOMMU_reg(self, engine_name: str, reg_name: str, value: int) -> None:
         """
@@ -360,7 +360,7 @@ class IOMMU(hal_base.HALBase):
             raise IOMMUError(f"[IOMMU] Engine {engine_name} not found")
         
         addr = self.iommu_config.compute_reg_address(reg, base)
-        self.cs.hals.MMIO.write_MMIO_reg(addr, 0, value, reg.size)
+        self.cs.hals.mmio.write_MMIO_reg(addr, 0, value, reg.size)
     
     def is_IOMMU_Engine_Enabled(self, iommu_engine: str) -> bool:
         """Check if VT-d engine is enabled (base address is non-zero)."""
@@ -508,4 +508,4 @@ class IOMMU(hal_base.HALBase):
         raise IOMMUError(f'IOMMUError: unknown IOMMU engine {iommu_engine}')
 
 
-haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': ['IOMMU']}
+haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': {'iommu': "IOMMU"}}
