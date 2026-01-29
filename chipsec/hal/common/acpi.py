@@ -532,7 +532,7 @@ class ACPI(HALBase):
             if 'BERT' in signature:
                 BootRegionLen = struct.unpack('<L', contents[0:4])[0]
                 BootRegionAddr = struct.unpack('<Q', contents[4:12])[0]
-                bootRegion = self.cs.hals.Memory.read_physical_mem(BootRegionAddr, BootRegionLen)
+                bootRegion = self.cs.hals.memory.read_physical_mem(BootRegionAddr, BootRegionLen)
                 table = (ACPI_TABLES[signature])(bootRegion)
             elif 'NFIT' in signature:
                 table = (ACPI_TABLES[signature])(header)
@@ -622,4 +622,4 @@ class ACPI(HALBase):
 
 
 
-haldata = {"arch":[HALBase.MfgIds.Any], 'name': ['ACPI']}
+haldata = {"arch":[HALBase.MfgIds.Any], 'name': {'acpi':'ACPI'}}
