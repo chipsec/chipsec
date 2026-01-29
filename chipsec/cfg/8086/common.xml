@@ -550,6 +550,9 @@ Common (default) XML platform configuration file
     <register name="SMBUS_HST_D1" type="iobar" bar="SMBUS_BASE" offset="0x06" size="1" desc="SMBus Host Data 1">
       <field name="Data"         bit="0" size="8" desc="Data1" />
     </register>
+    <register name="SMBUS_HST_BD" type="iobar" bar="SMBUS_BASE" offset="0x07" size="1" desc="SMBus Host Block Data">
+      <field name="BlockData"    bit="0" size="8" desc="Block Data" />
+    </register>
 
     <!-- CPU Model Specific Registers (MSR) -->
     <register name="IA32_MSR_CORE_THREAD_COUNT" type="msr" msr="0x35" desc="Core Thread Count">
