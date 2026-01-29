@@ -235,8 +235,8 @@ class TestHalCpu(unittest.TestCase):
 
     def test_hal_cpu_get_TSEG_is_server_true_cmd(self):
         mock_self = Mock()
-        reg_call_1 = call('8086.MEMMAP_VTD.TSEG')
-        reg_call_2 = call('8086.MEMMAP_VTD.TSEG')
+        reg_call_1 = call('8086.MEMMAP_VTD.TSEG_BASE')
+        reg_call_2 = call('8086.MEMMAP_VTD.TSEG_LIMIT')
         field_call_1 = call('base', True)
         field_call_2 = call('limit', True)
         mock_self.cs.register.get_list_by_name().read_field.side_effect = [[0x88400000], [0x88700000]]
