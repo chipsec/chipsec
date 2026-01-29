@@ -102,7 +102,7 @@ class CPU(hal_base.HALBase):
 
     # determine number of logical processors in the core
     def get_number_threads_from_APIC_table(self) -> int:
-        _acpi = self.cs.hals.ACPI
+        _acpi = self.cs.hals.acpi
         dACPIID = {}
         for apic in _acpi.get_parse_ACPI_table(acpi.ACPI_TABLE_SIG_APIC):  # (table_header, APIC_object, table_header_blob, table_blob)
             _, APIC_object, _, _ = apic
@@ -231,10 +231,10 @@ class CPU(hal_base.HALBase):
             logger().log_error('could not dump page tables')
 
     def dump_page_tables_all(self) -> None:
-        for tid in range(self.cs.hals.Msr.get_cpu_thread_count()):
+        for tid in range(self.cs.hals.msr.get_cpu_thread_count()):
             cr3 = self.read_cr(tid, 3)
             logger().log_hal(f'[cpu{tid:d}] found paging hierarchy base (CR3): 0x{cr3:08X}')
             self.dump_page_tables(cr3)
 
 
-haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': ['CPU']}
+haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': {'cpu': "CPU"}}
