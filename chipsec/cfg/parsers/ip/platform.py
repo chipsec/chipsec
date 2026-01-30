@@ -512,7 +512,6 @@ class Vendor(Recursable):
         if ip_name in self.ip_list:
             return self.__getattribute__(ip_name)
         else:
-            breakpoint()
             raise PlatformConfigError(f'Device: {ip_name} not found in Vendor: {self.name}')
 
     def _get_next_level_list(self) -> List[str]:
