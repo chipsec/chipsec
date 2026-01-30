@@ -159,7 +159,7 @@ class RegisterList:
         reg_name = register_name.replace('*', '.*')
 
         for reg in self.register_list:
-            if match(reg_name, reg):
+            if match(f'^{reg_name}$', reg):
                 registers.extend(self.get_register(reg))
 
         # if registers:
