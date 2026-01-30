@@ -186,7 +186,9 @@ class Register:
         Returns:
             List of register objects matching the name
         """
-        return self.cs.Cfg.get_reglist(reg_name).filter_enabled()
+        reglist = self.cs.Cfg.get_reglist(reg_name).filter_enabled()
+        logger().log_verbose(f" Got reg list: {', '.join([reg.name for reg in reglist])}")
+        return reglist
 
     def get_list_by_name_without_scope(self, reg_name: str) -> 'ObjList':
         """
