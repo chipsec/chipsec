@@ -622,4 +622,4 @@ class ACPI(HALBase):
 
 
 
-haldata = {"arch":[HALBase.MfgIds.Any], 'name': {'acpi':'ACPI'}}
+haldata = {"arch": [HALBase.MfgIds.Any], 'name': {'acpi': 'ACPI'}}
