@@ -153,7 +153,7 @@ class MMCFG(hal_base.HALBase):
         """
         pciexbar, pciexbar_sz = self.get_MMCFG_base_address(bus)
         pciexbar_off = (bus * 32 * 8 + dev * 8 + fun) * 0x1000 + off
-        value = self.cs.hals.MMIO.read_MMIO_reg(pciexbar, pciexbar_off, size, pciexbar_sz)
+        value = self.cs.hals.mmio.read_MMIO_reg(pciexbar, pciexbar_off, size, pciexbar_sz)
         self.logger.log_hal(f"[mmcfg] Reading MMCFG register at bus 0x{bus:X}, device 0x{dev:X}, function 0x{fun:X}, offset 0x{off:X}")
         self.logger.log_hal(f"[mmcfg]     (MMCFG + 0x{pciexbar_off:08X}): 0x{value:08X}")
         if 1 == size:
@@ -181,7 +181,7 @@ class MMCFG(hal_base.HALBase):
             mask = 0xFFFF
         else:
             mask = 0xFFFFFFFF
-        self.cs.hals.MMIO.write_MMIO_reg(pciexbar, pciexbar_off, (value & mask), size)
+        self.cs.hals.mmio.write_MMIO_reg(pciexbar, pciexbar_off, (value & mask), size)
         self.logger.log_hal(f"[mmcfg] Writing value 0x{value:X} to MMCFG register at bus 0x{bus:X}, device 0x{dev:X}, function 0x{fun:X}, offset 0x{off:X}")
         self.logger.log_hal(f"[mmcfg]     (MMCFG + 0x{pciexbar_off:08X}): 0x{value:08X}")
         return True
