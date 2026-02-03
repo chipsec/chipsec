@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<configuration platform="PCH_7XX">
+<!--
+CHIPSEC: Platform Security Assessment Framework
+Copyright (c) 2026, Intel Corporation
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; Version 2.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+Contact information:
+chipsec@intel.com
+-->
+
+<!--
+XML configuration file for Intel 700 Series Chipset Family Platform Controller Hub
+
+https://cdrdv2.intel.com/v1/dl/getContent/743835 Datasheet Volume 1 
+https://cdrdv2.intel.com/v1/dl/getContent/743845 Datasheet Volume 2
+
+* Intel 700 Series Chipset Family On-Package Platform Controller Hub Datasheet 626817
+-->
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Information                          -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <info>
+    <sku did="0x7A8A" name="W790" code="PCH_7XX" longname="Intel W790 PCH" />
+    <sku did="0x7A04" name="Z790" code="PCH_7XX" longname="Intel Z790 PCH" />
+    <sku did="0x7A05" name="H770" code="PCH_7XX" longname="Intel H770 PCH" />
+    <sku did="0x7A06" name="B760" code="PCH_7XX" longname="Intel B760 PCH" />
+    <sku did="0x7A0D" name="WM790" code="PCH_7XX" longname="Intel WM790 PCH" />
+    <sku did="0x7A0C" name="HM770" code="PCH_7XX" longname="Intel HM770 PCH" />
+    <sku did="0x7A14" name="C262" code="PCH_7XX" longname="Intel C262 PCH" />
+    <sku did="0x7A13" name="C266" code="PCH_7XX" longname="Intel C266 PCH" />
+    <sku did="0x7A00-0x7A1F" name="7xx" code="PCH_7XX" longname="Intel 700 PCH" />
+  </info>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Integrated devices                   -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <pci>
+    <device name="P2SBC" vid="0x8086" did="0x7A20" config="P2SB.p2sbc1.xml" > <!-- Need to verify fixed address for PCH700 -->
+       <subcomponent type="mmiobar" name="SBREGBAR" register="SBREG_BAR" base_field="RBA" size="0x1000000" fixed_address="0xFD000000" desc="Sideband Register Access BAR"/>
+    </device>
+    <device name="PMC" vid="0x8086" did="0x7A21" config="PMC.pmc-pch5xx.xml" >
+      <subcomponent type="mmiobar" name="PWRMBASE" register="PWRMBASE" base_field="BA" size="0x1000" fixed_address="0xFE000000" desc="Power Management Register Range" config="MMIO.pwrm0.xml" /> <!-- Need to verify fixed address for PCH700 -->
+      <subcomponent type="iobar"   name="ABASE"    register="ABASE"    base_field="BA" size="0x100"  fixed_address="0x1800"     desc="ACPI Base Address" config="IO.acpi0.xml" />
+      <subcomponent type="iobar"   name="PMBASE"   register="ABASE"    base_field="BA" size="0x100"  fixed_address="0x1800"     desc="ACPI Base Address" config="IO.acpi0.xml" />
+    </device>
+    <device name="HDA"     vid="0x8086" did="0x7A50-0x7A57" />
+    <device name="SMBUS"   vid="0x8086" did="0x7A23" config="SMBUS.smbus1.xml" />
+    <device name="SPI"     vid="0x8086" did="0x7A24" config="SPI.spi0.xml" >
+      <subcomponent type="mmiobar" name="SPIBAR" register="SPIBAR0" base_field="MEMBAR" size="0x1000" desc="SPI mmio Range" config="SPI.spibar0.xml" />
+    </device>
+
+    <device name="MEI1" vid="0x8086" did="0x7A68" config="ME.mei0.xml" />
+    <device name="I2C" vid="0x8086" did="0x7A4C-0x7A4F,0x7A7C-0x7A7D" config="I2C.i2c.xml"/>
+    <device name="SATA" vid="0x8086" did="0x7A62" config="SATA.sata0.xml">
+      <subcomponent type="mmiobar" name="ABAR" register="ABAR" base_field="BA" size="0x1000" desc="ABAR mmio Range on SATA" config="SATA.abar0.xml" />
+    </device>
+
+    <device name="PCIE" vid="0x8086" did="0x7A30-0x7A4B" config="PCIE.pcie.xml"/>
+
+  </pci>
+
+  <io>
+    <definition name="IO" port="0xCF9" config="IO.io0.xml" />
+  </io>
+
+  <mm_msgbus>
+    <definition name="RTC" port="0xC3" config="RTC.rtc0.xml" />
+  </mm_msgbus>
+
+</configuration>
