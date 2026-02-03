@@ -1,0 +1,113 @@
+<?xml version="1.0"?>
+<configuration platform="RPL" req_pch="True"> 
+<!--
+CHIPSEC: Platform Security Assessment Framework
+Copyright (c) 2026, Intel Corporation
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; Version 2.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+Contact information:
+chipsec@intel.com
+-->
+
+<!--
+XML configuration file for Raptor Lake based platforms
+
+http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.html
+
+* 13th/14th Generation Intel(R) Core Processor Family Datasheet
+http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.html
+https://cdrdv2.intel.com/v1/dl/getContent/743844
+https://edc.intel.com/content/www/us/en/design/publications/13th-generation-core-processor-datasheet-volume-2-of-2/Chapter-1%20RPL-P%20Datasheet/
+
+* Intel(R) 600 Series Chipset Family on-package Platform Controller Hub (PCH)
+
+-->
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Information                          -->
+  <!--                                      -->
+  <!-- #################################### -->
+
+
+
+<info family="core" detection_value="0xB0671,0xB06A2,0xB06A3,0xB06F2,0xB06F5">
+        <sku did="0xA700" name="Raptor Lake" code="RPL" longname="RPL-S 8+16"/>
+        <sku did="0xA703" name="Raptor Lake" code="RPL" longname="RPL-S 8+8"/>
+        <sku did="0xA704" name="Raptor Lake" code="RPL" longname="RPL-S 6+8"/>
+        <sku did="0xA705" name="Raptor Lake" code="RPL" longname="RPL-S 6+4"/>
+        <sku did="0x4640" name="Raptor Lake" code="RPL" longname="RPL-S 6+8"/>
+        <sku did="0x4648" name="Raptor Lake" code="RPL" longname="RPL-S 6+4"/>
+        <sku did="0x4630" name="Raptor Lake" code="RPL" longname="RPL-S 4+0"/>
+        <sku did="0x4740" name="Raptor Lake" code="RPL" longname="RPL-S 8+12"/>
+        <sku did="0x4610" name="Raptor Lake" code="RPL" longname="RPL-S 2+0"/>
+        <sku did="0xA702" name="Raptor Lake" code="RPL" longname="RPL-HX 8+16"/>
+        <sku did="0xA729" name="Raptor Lake" code="RPL" longname="RPL-HX 8+12"/>
+        <sku did="0xA728" name="Raptor Lake" code="RPL" longname="RPL-HX 8+8"/>
+        <sku did="0xA72A" name="Raptor Lake" code="RPL" longname="RPL-HX 6+8"/>
+        <sku did="0xA719" name="Raptor Lake" code="RPL" longname="RPL-HX 6+4"/>
+        <sku did="0x4637" name="Raptor Lake" code="RPL" longname="RPL-HX 8+8"/>
+        <sku did="0x463B" name="Raptor Lake" code="RPL" longname="RPL-HX 6+8"/>
+        <sku did="0x4647" name="Raptor Lake" code="RPL" longname="RPL-HX 6+4"/>
+        <sku did="0xA706" name="Raptor Lake" code="RPL" longname="RPL-H/P/PX 6+8"/>
+        <sku did="0xA707" name="Raptor Lake" code="RPL" longname="RPL-H/P 4+8"/>
+        <sku did="0xA715" name="Raptor Lake" code="RPL" longname="RPL-H 6+4"/>
+        <sku did="0xA716" name="Raptor Lake" code="RPL" longname="RPL-H 4+4"/>
+        <sku did="0xA709" name="Raptor Lake" code="RPL" longname="RPL-P 6+8"/>
+        <sku did="0xA70A" name="Raptor Lake" code="RPL" longname="RPL-P 4+8"/>
+        <sku did="0xA708" name="Raptor Lake" code="RPL" longname="RPL-U 2+8"/>
+        <sku did="0xA71B" name="Raptor Lake" code="RPL" longname="RPL-U 2+4"/>
+        <sku did="0xA71C" name="Raptor Lake" code="RPL" longname="RPL-U 1+4"/>
+        <sku did="0xA711" name="Raptor Lake" code="RPL" longname="RPL-E 8+0"/>
+        <sku did="0xA712" name="Raptor Lake" code="RPL" longname="RPL-E 6+0"/>
+        <sku did="0xA713" name="Raptor Lake" code="RPL" longname="RPL-E 4+0"/>
+  </info>
+
+
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Integrated devices                   -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <pci>
+    <device name="HOSTCTL" bus="0x00" dev="0x00" fun="0" did="0x4610,0x4630-0x464F,0x4740,0xA700-0xA72F" config="HOSTCTL.hostctl13gen.xml" >
+      <subcomponent type="mmiobar" name="MCHBAR" register="MCHBAR" base_field="MCHBAR" size="0x20000" enable_bit="0" desc="Host Memory Mapped Register Range" config="MMIO.mmio13gen.xml" />
+      <subcomponent type="mmiobar" name="MCHBARMC1" register="MCHBAR" base_field="MCHBAR" offset="0x10000" size="0x20000" enable_bit="0" desc="Host Memory Mapped Register Range" config="MMIO.mmio13gen.xml" />
+      <subcomponent type="mmiobar" name="VTBAR" register="MCHBAR.VTBAR" base_field="BASE" size="0x8000" enable_bit="0" desc="VTD Register Range" config="IOMMU.iommu.xml" />
+      <subcomponent type="mmiobar" name="GFXVTBAR" register="MCHBAR.GFXVTBAR" base_field="BASE" size="0x8000" enable_bit="0" desc="GFXVTD Register Range" config="IOMMU.iommu.xml" />
+    </device>
+
+    <device name="IGD"     vid="0x8086" did="0x4680-0x4682,0x4692,0x4693,0xA780-0xA78B,0xA7A0-0xA7AB" config="IGD.igd0.xml" />
+    
+  </pci>
+
+  <msr>
+    <definition name="MSR" config="MSR.msr2.xml" />
+  </msr>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Memory ranges                        -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <memory>
+    <range name="TPM" access="mmio" address="0xFED40000" limit="0xFED4FFFF" config="TPM.tpm12.xml" />
+    <range name="TXT" access="mmio" address="0xFED30000" limit="0xFED4FFFF" config="TPM.txt.xml" />
+  </memory>
+
+  
+
+</configuration>

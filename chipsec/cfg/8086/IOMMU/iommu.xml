@@ -108,9 +108,8 @@ XML configuration file for Intel Virtualization Technology for Directed I/O (VT-
       <field name="CIRG" bit="61" size="2"  desc="Context Invalidation Request Granularity"/>
       <field name="ICC"  bit="63" size="1"  desc="Invalidate Context-Cache"/>
     </register>
-    <!-- TODO: variable/relative register offsets -->
-    <register name="IVA"   type="mmio" offset="0x0" size="8" desc="Invalidate Address"/>
-    <register name="IOTLB" type="mmio" offset="0x8" size="8" desc="IOTLB Invalidate"/>
+    
+
     <register name="FSTS" type="mmio" offset="0x34" size="4" desc="Fault Status">
       <field name="PFO" bit="0" size="1" desc="Primary Fault Overflow"/>
       <field name="PPF" bit="1" size="1" desc="Primary Pending Fault"/>
@@ -138,8 +137,6 @@ XML configuration file for Intel Virtualization Technology for Directed I/O (VT-
     <register name="FEUADDR" type="mmio" offset="0x44" size="4" desc="Fault Event Upper Address">
       <field name="MUA" bit="0" size="32" desc="Message Upper Address"/>
     </register>
-    <register name="FRCDL" type="mmio" offset="0x0" size="8" desc="Fault Recording (Low)"/>
-    <register name="FRCDH" type="mmio" offset="0x8" size="8" desc="Fault Recording (High)"/>
     <register name="AFL" type="mmio" offset="0x58" size="8" desc="Advanced Fault Log">
       <field name="R"   bit="0" size="9"  desc="Reserved"/>
       <field name="FLS" bit="9" size="3"  desc="Fault Log Size"/>
@@ -183,6 +180,12 @@ XML configuration file for Intel Virtualization Technology for Directed I/O (VT-
       <field name="EIME" bit="11" size="1"  desc="Extended Interrupt Mode Enable"/>
       <field name="IRTA" bit="12" size="52" desc="Interrupt Remapping Table Address"/>
     </register>
+
+    <!-- TODO: variable/relative register offsets -->
+    <register name="FRCDL" type="mmio" offset="0x400" size="8" desc="Fault Recording (Low)"/>
+    <register name="FRCDH" type="mmio" offset="0x408" size="8" desc="Fault Recording (High)"/>
+    <register name="IVA"   type="mmio" offset="0x500" size="8" desc="Invalidate Address"/>
+    <register name="IOTLB" type="mmio" offset="0x508" size="8" desc="IOTLB Invalidate"/>
 
   </registers>
 
