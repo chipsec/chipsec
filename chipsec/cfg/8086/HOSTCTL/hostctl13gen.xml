@@ -1,0 +1,177 @@
+<?xml version="1.0"?>
+<configuration>
+<!--
+CHIPSEC: Platform Security Assessment Framework
+Copyright (c) 2026, Intel Corporation
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; Version 2.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+Contact information:
+chipsec@intel.com
+-->
+  <mmio>
+    <bar name="PXPEPBAR" register="PXPEPBAR" base_field="PXPEPBAR" size="0x1000" enable_bit="0" desc="PCI Express Egress Port Register Range"/>
+    <bar name="MCHBAR"   register="MCHBAR"   base_field="MCHBAR"   size="0x8000" enable_bit="0" desc="Host Memory Mapped Register Range"/>
+    <bar name="MMCFG"    register="PCIEXBAR" base_field="PXPEPBAR" size="0x1000" enable_bit="0" desc="PCI Express Register Range"/>
+    <bar name="DMIBAR"   register="DMIBAR"   base_field="DMIBAR"   size="0x1000" enable_bit="0" desc="Root Complex Register Range"/>
+    <!-- VT-d BARs -->
+    <bar name="VTBAR"    register="VTBAR"    base_field="Base" size="0x1000" enable_field="Enable" desc="Intel VT-d Register Register Range"/>
+    <bar name="GFXVTBAR" register="GFXVTBAR" base_field="Base" size="0x1000" enable_field="Enable" desc="Intel Processor Graphics VT-d Register Range"/>
+  </mmio>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Configuration registers              -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <registers>
+  <!-- Host Controller -->
+    <register name="VID" type="pcicfg" offset="0x0"  size="2" desc="Vendor ID"/>
+    <register name="DID" type="pcicfg" offset="0x2"  size="2" desc="Device ID"/>
+
+    <register name="PXPEPBAR" type="pcicfg" offset="0x40" size="8" desc="PCI Express Egress Port Base Address">
+      <field name="PXPEPBAR"   bit="12" size="30" desc="Base Address for PCI Express Egress Port MMIO configuration space"/>
+      <field name="PXPEPBAREN" bit="0"  size="1"  desc="Enabled/Disabled"/>
+    </register>
+
+    <register name="MCHBAR" type="pcicfg" offset="0x48" size="8" desc="MCH Base Address">
+      <field name="MCHBAR"   bit="17" size="25" desc="Base Address for Host Memory Mapped configuration space"/>
+      <field name="MCHBAREN" bit="0"  size="1"  desc="Enabled/Disabled"/>
+    </register>
+
+    <register name="GGC" type="pcicfg" offset="0x50" size="2" desc="Graphics Control">
+        <field name="GMS"     bit="8" size="8" desc="GMS" />
+        <field name="GGMS"    bit="6" size="2" desc="GGMS" />
+        <field name="VAMEN"   bit="2" size="1" desc="VAMEN" />
+        <field name="IVD"     bit="1" size="1" desc="IVD" />
+        <field name="GGCLOCK" bit="0" size="1" desc="GGC Lock"/>
+    </register>
+
+    <register name="PAVPC" type="pcicfg" offset="0x58" size="4" desc="PAVP Control">
+        <field name="PCMBASE"   bit="20" size="12" desc="PCMBASE" />
+        <field name="ASMFEN"    bit="6"  size="1"  desc="ASMF Method Enable" />
+        <field name="OVTATTACK" bit="4"  size="1"  desc="Override Unsolicited Connection State Attack and Terminate" />
+        <field name="HVYMODSEL" bit="3"  size="1"  desc="HVY mode selection" />
+        <field name="PAVPLCK"   bit="2"  size="1"  desc="PAVP Lock" />
+        <field name="PAVPE"     bit="1"  size="1"  desc="PAVP Enable" />
+        <field name="PCME"      bit="0"  size="1"  desc="PCM Enable" />
+    </register>
+
+    <register name="DPR" type="pcicfg" offset="0x5C" size="4" desc="DMA Protected Region">
+        <field name="TOPOFDPR" bit="20" size="12" desc="Top of DPR" />
+        <field name="DPRSIZE"  bit="4"  size="8"  desc="DPR Size" />
+        <field name="EPM"      bit="2"  size="1"  desc="DPR Enable" />
+        <field name="PRS"      bit="1"  size="1"  desc="DPR Status" />
+        <field name="LOCK"     bit="0"  size="1"  desc="DPR Lock" />
+    </register>
+
+    <register name="PCIEXBAR" type="pcicfg" offset="0x60" size="8" desc="PCIe MMCFG Base Address">
+      <field name="PXPEPBAR"   bit="31" size="11" desc="Bits 41 to 31 of the base address for PCI Express enhanced configuration space"/>
+      <field name="ADMSK1024"  bit="30" size="1"  desc="Part of BA or Mask"/>
+      <field name="ADMSK512"   bit="29" size="1"  desc="Part of BA or Mask"/>
+      <field name="ADMSK256"   bit="28" size="1"  desc="Part of BA or Mask"/>
+      <field name="ADMSK128"   bit="27" size="1"  desc="Part of BA or Mask"/>
+      <field name="ADMSK64"    bit="26" size="1"  desc="Part of BA or Mask"/>
+      <field name="LENGTH"     bit="1"  size="3"  desc="Length of the Region"/>
+      <field name="PCIEXBAREN" bit="0"  size="1"  desc="Enabled/Disabled"/>
+    </register>
+
+    <register name="DMIBAR" type="pcicfg" offset="0x68" size="8" desc="DMI Base Address">
+      <field name="DMIBAR"   bit="12" size="30" desc="Base Address for DMI configuration space"/>
+      <field name="DMIBAREN" bit="0"  size="1"  desc="Enabled/Disabled"/>
+    </register>
+
+    <register name="PAM0" type="pcicfg" offset="0x80" size="1" desc="Programmable Attribute Map 0">
+      <field name="HIENABLE" bit="4" size="2" desc="Controls the steering of read and write cycles that address the BIOS area"/>
+      <field name="LOCK"     bit="0" size="1" desc="Lock field for PAM*"/>
+    </register>
+
+    <register name="PAM1" type="pcicfg" offset="0x81" size="1" desc="Programmable Attribute Map 1">
+      <field name="HIENABLE" bit="4" size="2" desc="Controls the steering of read and write cycles that address the BIOS area"/>
+      <field name="LOENABLE" bit="0" size="2" desc="Controls the steering of read and write cycles that address the BIOS area"/>
+    </register>
+
+    <register name="PAM2" type="pcicfg" offset="0x82" size="1" desc="Programmable Attribute Map 2">
+      <field name="HIENABLE" bit="4" size="2" desc="Controls the steering of read and write cycles that address the BIOS area"/>
+      <field name="LOENABLE" bit="0" size="2" desc="Controls the steering of read and write cycles that address the BIOS area"/>
+    </register>
+
+    <register name="PAM3" type="pcicfg" offset="0x83" size="1" desc="Programmable Attribute Map 3">
+      <field name="HIENABLE" bit="4" size="2" desc="Controls the steering of read and write cycles that address the BIOS area"/>
+      <field name="LOENABLE" bit="0" size="2" desc="Controls the steering of read and write cycles that address the BIOS area"/>
+    </register>
+
+    <register name="PAM4" type="pcicfg" offset="0x84" size="1" desc="Programmable Attribute Map 4">
+      <field name="HIENABLE" bit="4" size="2" desc="Controls the steering of read and write cycles that address the BIOS area"/>
+      <field name="LOENABLE" bit="0" size="2" desc="Controls the steering of read and write cycles that address the BIOS area"/>
+    </register>
+
+    <register name="PAM5" type="pcicfg" offset="0x85" size="1" desc="Programmable Attribute Map 5">
+      <field name="HIENABLE" bit="4" size="2" desc="Controls the steering of read and write cycles that address the BIOS area"/>
+      <field name="LOENABLE" bit="0" size="2" desc="Controls the steering of read and write cycles that address the BIOS area"/>
+    </register>
+
+    <register name="PAM6" type="pcicfg" offset="0x86" size="1" desc="Programmable Attribute Map 6">
+      <field name="HIENABLE" bit="4" size="2" desc="Controls the steering of read and write cycles that address the BIOS area"/>
+      <field name="LOENABLE" bit="0" size="2" desc="Controls the steering of read and write cycles that address the BIOS area"/>
+    </register>
+
+    <register name="LAC" type="pcicfg" offset="0x87" size="1" desc="Legacy Access Control"/>
+
+    <register name="TOM" type="pcicfg" offset="0xA0" size="8" desc="Top of Memory">
+      <field name="TOM"  bit="20" size="22" desc="Top of Memory"/>
+      <field name="LOCK" bit="0"  size="1"  desc="Lock"/>
+    </register>
+
+    <register name="TOUUD" type="pcicfg" offset="0xA8" size="8" desc="Top of Upper Usable DRAM">
+      <field name="TOUUD" bit="20" size="22" desc="Top of Upper Usable DRAM"/>
+      <field name="LOCK"  bit="0"  size="1" desc="Lock"/>
+    </register>
+
+    <register name="BDSM" type="pcicfg" offset="0xB0" size="4" desc="Base of Graphics Stolen Memory">
+      <field name="BDSM" bit="20" size="12" desc="Base Address of Stolen DRAM memory"/>
+      <field name="LOCK" bit="0"  size="1"  desc="Lock"/>
+    </register>
+
+    <register name="BGSM" type="pcicfg" offset="0xB4" size="4" desc="Base of GTT Stolen Memory">
+      <field name="BGSM" bit="20" size="12" desc="Base of GTT Stolen Memory"/>
+      <field name="LOCK" bit="0"  size="1"  desc="Lock"/>
+    </register>
+
+    <register name="TSEGMB" type="pcicfg" offset="0xB8" size="4" desc="TSEG Memory Base">
+      <field name="TSEGMB" bit="20" size="12" desc="TSEG Memory Base"/>
+      <field name="LOCK"   bit="0"  size="1"  desc="Lock"/>
+    </register>
+
+    <register name="TOLUD" type="pcicfg" offset="0xBC" size="4" desc="Top of Low Usable DRAM">
+      <field name="TOLUD" bit="20" size="12" desc="Top of Lower Usable DRAM"/>
+      <field name="LOCK"  bit="0"  size="1"  desc="Lock"/>
+    </register>
+
+    <register name="SKPD" type="pcicfg" offset="0xDC" size="4" desc="Scratchpad Data"/>
+
+    <register name="CAPID0_A" type="pcicfg" offset="0xE4" size="4" desc="Capabilities A">
+      <field name="VTDD" bit="23" size="1" desc="Enable/Disable VTd"/>
+    </register>
+
+    <register name="CAPID0_B" type="pcicfg" offset="0xE8" size="4" desc="Capabilities B"/>
+
+  </registers>
+
+    <controls>
+        <control name="TSEGBaseLock"           register="TSEGMB"      field="LOCK"               desc="TSEG Base Lock"/>
+        <control name="TSEGLimitLock"          register="BGSM"        field="LOCK"               desc="TSEG Limit Lock"/>
+    </controls>
+
+</configuration>
