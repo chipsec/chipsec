@@ -1,10 +1,6 @@
 <?xml version="1.0"?>
 <configuration>
 
-    <mmio>
-        <bar name="SBREGBAR" register="SBREG_BAR" base_field="RBA" size="0x1000000" fixed_address="0xFD000000" desc="Sideband Register Access BAR"/>
-    </mmio>
-
     <!-- #################################### -->
     <!--                                      -->
     <!-- Configuration registers              -->
