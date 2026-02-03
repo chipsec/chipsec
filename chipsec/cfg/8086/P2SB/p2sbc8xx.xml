@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<configuration>
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- Configuration registers              -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <registers>
+        <register name="SBREG_BAR" type="pcicfg" offset="0x10" size="8" desc="Sideband Register Access BAR">
+            <field name="RBA" bit="28" size="36" desc="Register Base Address"/>
+        </register>
+    </registers>
+
+</configuration>
