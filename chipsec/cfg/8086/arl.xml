@@ -1,0 +1,109 @@
+<?xml version="1.0"?>
+<configuration platform="ARL"> 
+<!--
+CHIPSEC: Platform Security Assessment Framework
+Copyright (c) 2026, Intel Corporation
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; Version 2.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+Contact information:
+chipsec@intel.com
+-->
+
+<!--
+XML configuration file for Arrow Lake based platforms
+
+http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.html
+
+* Intel(R) Core Ultera Series 200 Processor Family Datasheet
+http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.html
+https://cdrdv2.intel.com/v1/dl/getContent/832586
+https://edc.intel.com/content/www/us/en/design/publications/core-ultra-200s-series-processors-datasheet-volume-2-of-2/
+
+
+-->
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Information                          -->
+  <!--                                      -->
+  <!-- #################################### -->
+
+
+
+  <info family="core" detection_value="0xC0662">
+    <sku did="0x7D1A" name="Arrow Lake" code="ARL" longname="Arrow Lake S 8-16" />
+    <sku did="0x7D1B" name="Arrow Lake" code="ARL" longname="Arrow Lake S 8-12" />
+    <sku did="0x7D2A" name="Arrow Lake" code="ARL" longname="Arrow Lake S 6-8" />
+    <sku did="0x7D35" name="Arrow Lake" code="ARL" longname="Arrow Lake S 6-4" />
+    <sku did="0x7D1C" name="Arrow Lake" code="ARL" longname="Arrow Lake HX 8-16" />
+    <sku did="0x7D2D" name="Arrow Lake" code="ARL" longname="Arrow Lake HX 8-12" />
+    <sku did="0x7D2F" name="Arrow Lake" code="ARL" longname="Arrow Lake HX 6-8" />
+  </info>
+
+
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Integrated devices                   -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <pci>
+    <device name="HOSTCTL" bus="0x00" dev="0x00" fun="0" did="0x7D1A-0x7D1C,0x7D2A-0x7D2F,0x7D35" config="HOSTCTL.hostctl13gen.xml" >
+      <subcomponent type="mmiobar" name="MCHBAR" register="MCHBAR" base_field="MCHBAR" size="0x20000" enable_bit="0" desc="Host Memory Mapped Register Range" config="MMIO.mmio13gen.xml" />
+      <subcomponent type="mmiobar" name="MCHBARMC1" register="MCHBAR" base_field="MCHBAR" offset="0x10000" size="0x20000" enable_bit="0" desc="Host Memory Mapped Register Range" config="MMIO.mmio13gen.xml" />
+      <subcomponent type="mmiobar" name="VTBAR" register="MCHBAR.VTBAR" base_field="BASE" size="0x8000" enable_bit="0" desc="VTD Register Range" config="IOMMU.iommu.xml" />
+      <subcomponent type="mmiobar" name="GFXVTBAR" register="MCHBAR.GFXVTBAR" base_field="BASE" size="0x8000" enable_bit="0" desc="GFXVTD Register Range" config="IOMMU.iommu.xml" />
+    </device>
+
+    <device name="IGD"     vid="0x8086" did="0x7D67" config="IGD.igd0.xml" />
+
+
+    <!-- IOE -->
+    <device name="P2SBC" vid="0x8086" did="0x7EC8" config="P2SB.p2sbc8xx.xml" >
+      <subcomponent type="mmiobar" name="SBREGBAR" register="SBREG_BAR" base_field="RBA" size="0x1000000" fixed_address="0x5FF0000000" desc="Sideband Register Access BAR"/>
+    </device>
+    <device name="PMC" vid="0x8086" did="0x7ECE" config="PMC.pmc-pch8xx.xml" >
+      <subcomponent type="mmiobar" name="PWRMBASE" register="PWRMBASE" base_field="BA" size="0x1000" fixed_address="0xFE000000" desc="Power Management Register Range" config="MMIO.pwrm0.xml" />
+      <subcomponent type="iobar"   name="ABASE"    register="ABASE"    base_field="BA" size="0x100"  fixed_address="0x1800"     desc="ACPI Base Address" config="IO.acpi0.xml" />
+      <subcomponent type="iobar"   name="PMBASE"   register="ABASE"    base_field="BA" size="0x100"  fixed_address="0x1800"     desc="ACPI Base Address" config="IO.acpi0.xml" />
+    </device>
+    <device name="SMBUS"   vid="0x8086" did="0xAE22" config="SMBUS.smbus1.xml" />
+    <device name="SPI"     vid="0x8086" did="0xAE23" config="SPI.spi0.xml" >
+      <subcomponent type="mmiobar" name="SPIBAR" register="SPIBAR0" base_field="MEMBAR" size="0x1000" desc="SPI mmio Range" config="SPI.spibar0.xml" />
+    </device>
+
+    <device name="MEI1" vid="0x8086" did="0xAE70" config="ME.mei0.xml" />
+
+    <device name="PCIE" vid="0x8086" did="0xAE4D-0xAE4F,0x7ECA-0x7ECC" config="PCIE.pcie.xml"/>
+    
+  </pci>
+
+  <msr>
+    <definition name="MSR" config="MSR.msr2.xml" />
+  </msr>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Memory ranges                        -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <memory>
+    <range name="TPM" access="mmio" address="0xFED40000" limit="0xFED4FFFF" config="TPM.tpm12.xml" />
+    <range name="TXT" access="mmio" address="0xFED30000" limit="0xFED4FFFF" config="TPM.txt.xml" />
+  </memory>
+
+  
+
+</configuration>

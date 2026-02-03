@@ -1,0 +1,82 @@
+<?xml version="1.0"?>
+<configuration platform="PCH_8XX">
+<!--
+CHIPSEC: Platform Security Assessment Framework
+Copyright (c) 2026, Intel Corporation
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; Version 2.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+Contact information:
+chipsec@intel.com
+-->
+
+<!--
+XML configuration file for Intel 700 Series Chipset Family Platform Controller Hub
+
+https://cdrdv2.intel.com/v1/dl/getContent/833778 Datasheet Volume 1 
+https://edc.intel.com/content/www/us/en/design/publications/800-series-chipset-family-platform-controller-hub-pch-volume-2/ Datasheet Volume 2
+
+* Intel 700 Series Chipset Family On-Package Platform Controller Hub Datasheet 626817
+-->
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Information                          -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <info>
+    <sku did="0x7F07" name="H810" code="PCH_8XX" longname="Intel H810 PCH" />
+    <sku did="0x7F06" name="B860" code="PCH_8XX" longname="Intel B860 PCH" />
+    <sku did="0x7F03" name="Q870" code="PCH_8XX" longname="Intel Q870 PCH" />
+    <sku did="0x7F04" name="Z890" code="PCH_8XX" longname="Intel Z890 PCH" />
+    <sku did="0x7F0D" name="WM880" code="PCH_8XX" longname="Intel WM880 PCH" />
+    <sku did="0x7F0C" name="HM870" code="PCH_8XX" longname="Intel HM870 PCH" />
+    <sku did="0x7F08" name="W880" code="PCH_8XX" longname="Intel W880 PCH" />
+    <sku did="0x7F00-0x7F1F" name="8xx" code="PCH_8XX" longname="Intel 800 PCH" />
+  </info>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Integrated devices                   -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <pci>
+    <device name="P2SBC" vid="0x8086" did="0x7F20" config="P2SB.p2sbc8xx.xml" >
+      <subcomponent type="mmiobar" name="SBREGBAR" register="SBREG_BAR" base_field="RBA" size="0x1000000" fixed_address="0x5FF0000000" desc="Sideband Register Access BAR"/>
+    </device>
+    <device name="PMC" vid="0x8086" did="0x7F21" config="PMC.pmc-pch8xx.xml" >
+      <subcomponent type="mmiobar" name="PWRMBASE" register="PWRMBASE" base_field="BA" size="0x1000" fixed_address="0xFE000000" desc="Power Management Register Range" config="MMIO.pwrm0.xml" />
+      <subcomponent type="iobar"   name="ABASE"    register="ABASE"    base_field="BA" size="0x100"  fixed_address="0x1800"     desc="ACPI Base Address" config="IO.acpi0.xml" />
+      <subcomponent type="iobar"   name="PMBASE"   register="ABASE"    base_field="BA" size="0x100"  fixed_address="0x1800"     desc="ACPI Base Address" config="IO.acpi0.xml" />
+    </device>
+    <device name="SMBUS"   vid="0x8086" did="0x7F23" config="SMBUS.smbus1.xml" />
+    <device name="SPI"     vid="0x8086" did="0x7F24" config="SPI.spi0.xml" >
+      <subcomponent type="mmiobar" name="SPIBAR" register="SPIBAR0" base_field="MEMBAR" size="0x1000" desc="SPI mmio Range" config="SPI.spibar0.xml" />
+    </device>
+
+    <device name="MEI1" vid="0x8086" did="0x7F68" config="ME.mei0.xml" />
+    <device name="I2C" vid="0x8086" did="0x7F4C-0x7F4F,0x7F79-0x7F7B" config="I2C.i2c.xml"/>
+    <device name="SATA" vid="0x8086" did="0x7F62,0x7F66" config="SATA.sata0.xml">
+      <subcomponent type="mmiobar" name="ABAR" register="ABAR" base_field="BA" size="0x1000" desc="ABAR mmio Range on SATA" config="SATA.abar0.xml" />
+    </device>
+
+    <device name="PCIE" vid="0x8086" did="0x7F30-0x7F47" config="PCIE.pcie.xml"/>
+  </pci>
+
+  <io>
+    <definition name="IO" port="0xCF9" config="IO.io0.xml" />
+  </io>
+
+
+</configuration>
