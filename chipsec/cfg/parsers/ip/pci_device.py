@@ -294,6 +294,10 @@ class PCIConfig(GenericConfig):
                 return inst
         return None
 
+    def is_enabled(self) -> bool:
+        """Check if any PCI instance is enabled."""
+        return bool(self.get_enabled_instances())
+    
     def validate_pci_config(self) -> bool:
         """
         Validate PCI-specific configuration.
