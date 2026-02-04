@@ -27,6 +27,7 @@ in the CHIPSEC framework, including PCI devices and I/O spaces.
 
 from typing import Any, List, Optional, Tuple
 from chipsec.cfg.parsers.ip.pci_device import PCIConfig
+from chipsec.library.register import ObjList
 
 
 class Device:
@@ -66,18 +67,31 @@ class Device:
 
     def get_list_by_name(self, device_name: str) -> List[Any]:
         """
-        Get list of device objects by name.
+        Get list of enabled device objects by name.
+        
+        Args:
+            device_name: Name of the device to retrieve objects for
+            
+        Returns:
+            List of enabled device objects matching the name
+        """
+        objList = self._get_defined_list(device_name)
+        return objList.filter_enabled()
+    
+    def _get_defined_list(self, device_name: str) -> List[Any]:
+        """
+        Get list of all defined device objects by name.
 
         Args:
             device_name: Name of the device to retrieve objects for
 
         Returns:
-            List of device objects matching the name
+            List of all defined device objects matching the name
         """
         devices = self.cs.Cfg.get_objlist(device_name)
-        objlist = []
+        objlist = ObjList()
         [objlist.extend(ip.obj) for ip in devices]
-        return objlist 
+        return objlist
 
     def is_defined(self, device_name: str) -> bool:
         """
@@ -89,7 +103,7 @@ class Device:
         Returns:
             True if device is defined, False otherwise
         """
-        return len(self.get_list_by_name(device_name)) > 0
+        return len(self._get_defined_list(device_name)) > 0
 
     def get_bus(self, device_name: str) -> List[int]:
         """
