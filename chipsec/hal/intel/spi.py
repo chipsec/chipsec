@@ -51,7 +51,7 @@ from chipsec.library.file import write_file, read_file
 from chipsec.library.logger import print_buffer_bytes
 from chipsec.hal import hal_base
 from chipsec.library.spi_jedec_ids import JEDEC_ID
-from chipsec.library.exceptions import SpiRuntimeError
+from chipsec.library.exceptions import SpiRuntimeError, HALInitializationError
 from chipsec.library.intel.spi import SPI_REGION, SPI_FLA_SHIFT, SPI_FLA_PAGE_MASK, SPI_REGION_NAMES, SPI_REGION_tuple, print_SPI_Flash_Regions
 
 SPI_READ_WRITE_MAX_DBC = 64
