@@ -484,12 +484,12 @@ class BaseConfigRegisterHelper(BaseConfigHelper):
     def set_value(self, value: int) -> None:
         self.value = value
 
-    def set_field(self, field_name: str, field_value: int) -> int:
+    def set_field(self, field_name: str, field_value: int, preserve_field_position: Optional[bool] = False) -> int:
         field_name = field_name.upper()
         field_attrs = self.fields[field_name]
         bit = field_attrs['bit']
         size = field_attrs['size']
-        self.value = set_bits(bit, size, self.value, field_value)
+        self.value = set_bits(bit, size, self.value, field_value, preserve_field_position)
         return self.value
 
     def get_field(
@@ -526,13 +526,13 @@ class BaseConfigRegisterHelper(BaseConfigHelper):
         return mask
 
     def write_field(
-        self, field_name: str, field_value: int, update_value: bool = False
+        self, field_name: str, field_value: int, update_value: bool = False, preserve_field_position: Optional[bool] = False
     ) -> None:
         if update_value or self.value is None:
             if self.value is None:
                 self.logger.log_debug(f'Value is None for {self.name}. Reading value')
             self.read()
-        new_value = self.set_field(field_name, field_value)
+        new_value = self.set_field(field_name, field_value, preserve_field_position)
         self.write(new_value)
 
     def read_field(
