@@ -1,0 +1,104 @@
+{
+  "read_pci_reg": {
+    "(0,31,4,0,4)": [
+      "2636414086"
+    ],
+    "(0,31,4,32,4)": [
+      "61184"
+    ]
+  },
+  "read_io_port": {
+    "(61184,1)": [
+      "0",
+      "2",
+      "130",
+      "130",
+      "130",
+      "130",
+      "130",
+      "130"
+    ]
+  },
+  "write_io_port": {
+    "(61184,255,1)": [
+      "True",
+      "True"
+    ],
+    "(61188,0,1)": [
+      "True"
+    ],
+    "(61186,0,1)": [
+      "True"
+    ],
+    "(61186,20,1)": [
+      "True"
+    ],
+    "(61189,5,1)": [
+      "True"
+    ],
+    "(61189,1,1)": [
+      "True"
+    ],
+    "(61189,2,1)": [
+      "True"
+    ],
+    "(61189,3,1)": [
+      "True"
+    ],
+    "(61189,4,1)": [
+      "True"
+    ],
+    "(61189,5,1)": [
+      "True"
+    ],
+    "(61184,128,1)": [
+      "True",
+      "True",
+      "True",
+      "True",
+      "True",
+      "True"
+    ],
+    "(61188,160,1)": [
+      "True"
+    ]
+  },
+  "read_pci_reg_word": {},
+  "read_pci_reg_byte": {},
+  "read_pci_reg_dword": {},
+  "write_pci_reg": {},
+  "write_pci_reg_word": {},
+  "write_pci_reg_byte": {},
+  "write_pci_reg_dword": {},
+  "load_ucode_update": {},
+  "get_affinity": {},
+  "set_affinity": {},
+  "alloc_mmio": {},
+  "set_mem": {},
+  "va2pa": {},
+  "alloc_phys_mem": {},
+  "free_phys_mem": {},
+  "map_io_space": {},
+  "read_phys_mem": {},
+  "write_phys_mem": {},
+  "read_mmio_reg": {},
+  "write_mmio_reg": {},
+  "read_msr": {},
+  "write_msr": {},
+  "get_descriptor_table": {},
+  "read_cr": {},
+  "write_cr": {},
+  "hypercall": {},
+  "cpuid": {},
+  "send_sw_smi": {},
+  "read_mmcfg_reg": {},
+  "write_mmcfg_reg": {},
+  "msgbus_send_read_message": {},
+  "msgbus_send_write_message": {},
+  "msgbus_send_message": {},
+  "get_efi_variable": {},
+  "set_efi_variable": {},
+  "delete_efi_variable": {},
+  "list_efi_variable": {},
+  "retpoline_enabled": {}
+}
