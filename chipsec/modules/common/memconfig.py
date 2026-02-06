@@ -94,6 +94,10 @@ class memconfig(BaseModule):
                 self.logger.log_important(f'{reg}.{self.memmap_registers[reg]} not defined for platform.  Skipping register.')
                 continue
             reglist = self.cs.register.get_list_by_name(reg)
+            if not reglist:
+                all_locked = False
+                self.logger.log_important(f'{reg} register not found. Unable to verify lock state.')
+                continue
             description = reglist[0].desc
             reglist.read_and_verbose_print()
             if reglist.is_all_field_value(1, self.memmap_registers[reg]):

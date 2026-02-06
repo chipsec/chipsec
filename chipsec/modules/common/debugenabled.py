@@ -77,6 +77,9 @@ class debugenabled(BaseModule):
         self.logger.log('')
         self.logger.log('[*] Checking DCI register status')
         ectrl = self.cs.register.get_list_by_name('ECTRL')
+        if not ectrl:
+            self.logger.log_important('ECTRL register not found. Skipping DCI check.')
+            return ModuleResult.WARNING
         ectrl.read_and_verbose_print()
         hdcien_mask = ectrl[0].get_field_mask('ENABLE', True)
 
@@ -95,6 +98,9 @@ class debugenabled(BaseModule):
         self.logger.log('[*] Checking IA32_DEBUG_INTERFACE MSR status')
         TestFail = ModuleResult.PASSED
         dbg_regs = self.cs.register.get_list_by_name('IA32_DEBUG_INTERFACE')
+        if not dbg_regs:
+            self.logger.log_important('IA32_DEBUG_INTERFACE MSR not found. Skipping CPU debug enable check.')
+            return ModuleResult.WARNING
         dbg_regs.read_and_verbose_print()
 
 
