@@ -205,7 +205,7 @@ class SMBus(hal_base.HALBase):
             self.cs.register.write(self.smb_reg_status, 0xFF)
             return []
 
-        buffer = bytearray([0xff * size])
+        buffer = bytearray([0xff]) *size
         for i in range(size):
             if not self._wait_for_byte_done():
                 self.cs.register.write(self.smb_reg_status, 0xFF)
