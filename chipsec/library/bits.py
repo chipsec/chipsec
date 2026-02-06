@@ -126,8 +126,11 @@ def get_bits(value: int, field_bit: int, size: int, preserve_field_position: Opt
     
 
 
-def set_bits(bit: int, size: int, initial_value: int, value: int) -> int:
+def set_bits(bit: int, size: int, initial_value: int, value: int, preserve_field_position: Optional[bool] = False) -> int:
     field_mask = make_mask(size)
     new_value = initial_value & ~(field_mask << bit)
-    new_value |= ((value & field_mask) << bit)
+    if preserve_field_position:
+        new_value |= (value & (field_mask << bit))
+    else:
+        new_value |= ((value & field_mask) << bit)
     return new_value

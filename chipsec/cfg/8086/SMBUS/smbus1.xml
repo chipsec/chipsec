@@ -80,6 +80,9 @@
         <register name="HST_D1" type="iobar" bar="SMBUS_BASE" offset="0x06" size="1" desc="SMBus Host Data 1">
             <field name="Data"         bit="0" size="8" desc="Data1" />
         </register>
+        <register name="HST_BLOCK_DB" type="iobar" bar="SMBUS_BASE" offset="0x07" size="1" desc="SMBus Host Block Data">
+            <field name="BDTA"         bit="0" size="8" desc="Block Data" />
+        </register>
 
         <!-- PCH TCOBASE (SMBus TCO) I/O registers -->
         <register name="TCO1_CNT" type="iobar" bar="TCOBASE" offset="0x8" size="2" desc="TCO1 Control">
