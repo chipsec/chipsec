@@ -217,3 +217,105 @@ class TestSMBUS(unittest.TestCase):
         mock_cs.register.read_field.return_value = 1
         buffer = bytes([1])
         self.assertTrue(smbus_hal.write_range(1, 2, buffer))
+
+    def test__wait_for_byte_done_pass(self):
+        mock_cs = MagicMock()
+        smbus_hal = SMBus(mock_cs)
+        mock_cs.register.read.return_value = 0x100
+        mock_cs.register.get_field.return_value = 1
+        self.assertTrue(smbus_hal._wait_for_byte_done())
+
+    def test__wait_for_byte_done_fail(self):
+        mock_cs = MagicMock()
+        smbus_hal = SMBus(mock_cs)
+        mock_cs.register.read.return_value = 0x100
+        mock_cs.register.get_field.return_value = 0
+        self.assertFalse(smbus_hal._wait_for_byte_done())
+        self.assertEqual(smbus_hal.cs.register.read.call_count, SMBUS_POLL_COUNT)
+
+    def test_read_block_pass(self):
+        mock_cs = MagicMock()
+        smbus_hal = SMBus(mock_cs)
+        smbus_hal.logger = MagicMock()
+        size = 4
+        test_data = [0x12, 0x34, 0x56, 0x78]
+        # _wait_for_cycle: [busy, intr, failed]
+        mock_cs.register.get_field.side_effect = [0, 1, 0] + [1] * size
+        mock_cs.register.read_field.side_effect = [size] + test_data
+        result = smbus_hal.read_block(0x50, 0x10)
+        self.assertEqual(len(result), size)
+        self.assertEqual(list(result), test_data)
+
+    def test_read_block_fail_cycle(self):
+        mock_cs = MagicMock()
+        smbus_hal = SMBus(mock_cs)
+        smbus_hal.logger = MagicMock()
+        smbus_hal.logger.HAL = True
+        # _wait_for_cycle fails
+        mock_cs.register.get_field.side_effect = [1, 1, 1]
+        result = smbus_hal.read_block(0x50, 0x10)
+        self.assertEqual(result, [])
+
+    def test_read_block_fail_byte(self):
+        mock_cs = MagicMock()
+        smbus_hal = SMBus(mock_cs)
+        smbus_hal.logger = MagicMock()
+        size = 4
+        # _wait_for_cycle succeeds: [busy, intr, failed]
+        # _wait_for_byte_done succeeds once, then fails on second byte
+        mock_cs.register.get_field.side_effect = [0, 1, 0, 1] + [0] * SMBUS_POLL_COUNT
+        mock_cs.register.read_field.side_effect = [size, 0x12]
+        mock_cs.register.read.return_value = 0x100
+        result = smbus_hal.read_block(0x50, 0x10)
+        self.assertEqual(result, [])
+
+    def test_read_block_empty_size(self):
+        mock_cs = MagicMock()
+        smbus_hal = SMBus(mock_cs)
+        smbus_hal.logger = MagicMock()
+        # _wait_for_cycle succeeds, but size is 0
+        mock_cs.register.get_field.side_effect = [0, 1, 0]
+        mock_cs.register.read_field.return_value = 0
+        result = smbus_hal.read_block(0x50, 0x10)
+        self.assertEqual(result, [])
+
+    def test_write_block_pass(self):
+        mock_cs = MagicMock()
+        smbus_hal = SMBus(mock_cs)
+        smbus_hal.logger = MagicMock()
+        smbus_hal.logger.HAL = True
+        test_data = bytearray([0x12, 0x34, 0x56, 0x78])
+        # _wait_for_cycle succeeds: [busy, intr, failed]
+        # _wait_for_byte_done succeeds for each byte after first
+        mock_cs.register.get_field.side_effect = [0, 1, 0] + [1] * (len(test_data) - 1) + [1]
+        mock_cs.register.read.return_value = 0x100
+        result = smbus_hal.write_block(0x50, 0x10, test_data)
+        self.assertTrue(result)
+
+    def test_write_block_fail_cycle(self):
+        mock_cs = MagicMock()
+        smbus_hal = SMBus(mock_cs)
+        smbus_hal.logger = MagicMock()
+        test_data = bytearray([0x12, 0x34, 0x56, 0x78])
+        # _wait_for_cycle fails
+        mock_cs.register.get_field.side_effect = [1, 1, 1]
+        result = smbus_hal.write_block(0x50, 0x10, test_data)
+        self.assertFalse(result)
+
+    def test_write_block_fail_byte(self):
+        mock_cs = MagicMock()
+        smbus_hal = SMBus(mock_cs)
+        smbus_hal.logger = MagicMock()
+        test_data = bytearray([0x12, 0x34, 0x56, 0x78])
+        # _wait_for_cycle succeeds, but _wait_for_byte_done fails on second byte
+        mock_cs.register.get_field.side_effect = [0, 1, 0] + [0] * SMBUS_POLL_COUNT
+        mock_cs.register.read.return_value = 0x100
+        result = smbus_hal.write_block(0x50, 0x10, test_data)
+        self.assertFalse(result)
+
+    def test_write_block_empty(self):
+        mock_cs = MagicMock()
+        smbus_hal = SMBus(mock_cs)
+        test_data = bytearray([])
+        result = smbus_hal.write_block(0x50, 0x10, test_data)
+        self.assertFalse(result)
