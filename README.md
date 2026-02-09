@@ -1,70 +1,92 @@
-# Upcoming Requirement: Signed Commits Starting Q3 2025
+# Branch Migration Guide
 
-Dear contributors,
-To enhance the security and integrity of our codebase, we will begin requiring signed commits for all contributions starting in Quarter 3 of 2025.
+## ⚠️ Important Notice
 
-What This Means for You
-Beginning in Q3 2025, all commits to this repository must be GPG, SSH, or S/MIME-signed and verified. Unsigned or unverified commits will be rejected during the review or merge process.
+The `main` branch is **no longer the default branch** and is **no longer actively maintained**. This repository has migrated to a new default branch structure.
 
-Why Signed Commits?
-Signed commits help ensure that contributions are verifiably made by trusted individuals and have not been tampered with, aligning with best practices in secure software development.
+---
 
-How to Prepare
-If you haven’t already, please set up commit signing in your Git configuration. Here's how:
-[GitHub: Signing commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits)
-We encourage you to start signing your commits now so you're fully prepared by the time the policy takes effect.
-Thank you for helping us maintain a secure and trustworthy development environment!
+## Migrating to the New Default Branch (`chipsec2`)
 
-— Chipsec Team
+If you have a local repository pointing to the old `main` branch, follow these steps to update:
 
-CHIPSEC: Platform Security Assessment Framework
-===============================================
+### If your remote is `origin` (default)
 
-[![Build Status](https://github.com/chipsec/chipsec/actions/workflows/tests.yml/badge.svg?query=branch%3Amain)](https://github.com/chipsec/chipsec/actions/workflows/tests.yml?query=branch%3Amain)
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8259/badge)](https://www.bestpractices.dev/projects/8259)
+#### 1. Fetch the latest branch information
+```bash
+git fetch origin
+```
 
-CHIPSEC is a framework for analyzing the security of PC platforms including hardware, system firmware (BIOS/UEFI), and platform components. It includes a security test suite, tools for accessing various low level interfaces, and forensic capabilities. It can be run on Windows, Linux, and UEFI shell. Instructions for installing and using CHIPSEC can be found in the [manual](chipsec-manual.pdf).
+#### 2. Switch to the new default branch
+```bash
+git checkout chipsec2
+```
 
-NOTE: This software is for security testing purposes. Use at your own risk. Read [WARNING.txt](chipsec/WARNING.txt) before using.
+#### 3. Update your local tracking branch (optional but recommended)
+```bash
+git branch -u origin/chipsec2
+```
 
-First version of CHIPSEC was released in March 2014:
-[Announcement at CanSecWest 2014](https://www.c7zero.info/stuff/Platform%20Firmware%20Security%20Assessment%20wCHIPSEC-csw14-final.pdf)
+#### 4. Update your remote HEAD reference (if cloning fresh)
+```bash
+git remote set-head origin --auto
+```
 
-Recent presentation on how to use CHIPSEC to find vulnerabilities in firmware, hypervisors and hardware configuration, explore low level system assets and even detect firmware implants:
-[Exploring Your System Deeper](https://www.slideshare.net/CanSecWest/csw2017-bazhaniuk-exploringyoursystemdeeperupdated)
+### If your remote is `upstream` (forked repository)
 
-Release Convention
-------------------
+If you're working with a forked repository where `origin` points to your fork and `upstream` points to the main chipsec repository, use these commands instead:
 
-  * CHIPSEC uses a major.minor.patch release version number
-  * Changes to the arguments or calling conventions will be held for a minor version update
+#### 1. Fetch the latest branch information from upstream
+```bash
+git fetch upstream
+```
 
+#### 2. Switch to the new default branch
+```bash
+git checkout chipsec2
+```
 
-Projects That Include CHIPSEC
------------------------------
- 
- * [ArchStrike](https://archstrike.org)
- 
- * [BlackArch Linux](https://www.blackarch.org/index.html)
+#### 3. Update your local tracking branch (optional but recommended)
+```bash
+git branch -u upstream/chipsec2
+```
 
- * [Linux UEFI Validation (LUV) (Archived)](https://github.com/intel/luv-yocto)
+#### 4. Update your remote HEAD reference (if cloning fresh)
+```bash
+git remote set-head upstream --auto
+```
 
-Contact Us
-----------
+#### 5. Keep your fork synchronized
+```bash
+git push origin chipsec2
+```
 
-For any questions or suggestions please contact us at: chipsec@intel.com
+---
 
-Discord:
+## Legacy Support (`chipsec1` branch)
 
- * [CHIPSEC Discord Server](https://discord.gg/NvxdPe8RKt)
+If you require support for **older Intel platforms**, use the `chipsec1` branch:
 
-Twitter:
+- **Client Platforms:** Pre-ADL (pre-12th Gen Core)
+- **Server Platforms:** Pre-SPR (pre-3rd Gen Xeon Scalable)
 
- * For CHIPSEC release alerts: Follow us at [CHIPSEC Release](https://twitter.com/ChipsecR)
- * For general CHIPSEC info: Follow [CHIPSEC](https://twitter.com/Chipsec)
+To switch to the legacy branch:
+```bash
+git checkout chipsec1
+```
 
-Mailing list:
+---
 
- * [CHIPSEC discussion list on kernel.org (oe-chipsec)](https://subspace.kernel.org/lists.linux.dev.html?highlight=oe-chipsec)
+## Summary of Branches
 
-For AMD related questions or suggestions please contact Gabriel Kerneis at: Gabriel.Kerneis@ssi.gouv.fr
+| Branch | Status | Use Case |
+|--------|--------|----------|
+| `chipsec2` | ✅ **Active (Default)** | Current development, ADL and newer platforms |
+| `chipsec1` | ⚠️ Legacy Support | Pre-ADL client and pre-SPR server platforms, not activly maintined (only urgent changes.) |
+| `main` | ❌ Deprecated | No longer maintained; do not use |
+
+---
+
+## Need Help?
+
+For more information on platform support and updates, please refer to the main repository documentation or contact chipsec@intel.com

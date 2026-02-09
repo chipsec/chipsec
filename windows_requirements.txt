@@ -1,5 +1,0 @@
-pywin32
-setuptools >= 62.4.0
-brotli >=1.0.9
-pycryptodome
-pylint
