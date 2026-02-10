@@ -70,7 +70,16 @@ class ConversionRules:
             int_list_keys={'bus'},
             str_list_keys={'config'},
             range_list_keys=range_list_keys,
-            case_insensitive_keys={'name'}
+            case_insensitive_keys={
+                'name',
+                'base_field',
+                'baseh_field',
+                'limit_field',
+                'enable_field',
+                'valid',
+                'valid_field',
+                'base_addr',
+            }
         )
     
     def set_did_as_range(self):

@@ -211,7 +211,7 @@ class MMIO(hal_base.HALBase):
                         continue
                     try:
                         reg_mask = bar_reg.get_field_mask(base_field, preserve)
-                    except CSReadError:
+                    except (CSReadError, AttributeError):
                         continue
                     break
             if not preserve:
@@ -227,12 +227,12 @@ class MMIO(hal_base.HALBase):
                     base_field = bar.baseh_field
                     try:
                         baseh = bar_reg.read_field(base_field, preserve)
-                    except CSReadError:
+                    except (CSReadError, AttributeError):
                         self.logger.log_hal('[mmio] Unable to determine MMIO Base registerh.  Using Base = 0x0')
                         baseh = 0
                     try:
                         reg_maskh = bar_reg.get_field_mask(base_field, preserve)
-                    except CSReadError:
+                    except (CSReadError, AttributeError):
                         self.logger.log_hal('[mmio] Unable to determine MMIO Mask registerh.  Using Mask = 0xFFFF')
                         reg_maskh = 0xFFFF
             if not preserve:
@@ -243,7 +243,7 @@ class MMIO(hal_base.HALBase):
         if bar.registertype and bar.registertype == 'dynamic':
             try:
                 dynbase = self.read_MMIO_reg(base, 0)
-            except CSReadError:
+            except (CSReadError, AttributeError):
                 self.logger.log_hal('[mmio] Unable to determine MMIO Base.  Using Base = 0x0')
                 dynbase = 0x0
             base = dynbase
