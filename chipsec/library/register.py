@@ -332,6 +332,7 @@ class Register:
 
     def has_field(self, reg_name: str, field_name: str) -> bool:
         """Checks if the register has specific field"""
+        field_name = field_name.upper()
         try:
             reg_defs = self.cs.Cfg.get_reglist(reg_name)
         except RegisterNotFoundError:
@@ -517,6 +518,7 @@ class BaseConfigRegisterHelper(BaseConfigHelper):
     def get_field_mask(
         self, reg_field: str, preserve_field_position: Optional[bool] = False
     ) -> int:
+        reg_field = reg_field.upper()
         field_attrs = self.fields[reg_field]
         mask_start = 0
         size = field_attrs['size']
