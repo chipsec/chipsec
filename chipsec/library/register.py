@@ -216,28 +216,44 @@ class Register:
         if hasattr(self.cs.Cfg, 'platform') and self.cs.Cfg.platform:
             # Log diagnostic info at debug level
             platform = self.cs.Cfg.platform
-            if hasattr(platform, 'vendors') and platform.vendors:
-                vendor_count = len(platform.vendors)
+            if hasattr(platform, 'vendor_list') and platform.vendor_list:
+                vendor_count = len(platform.vendor_list)
                 logger().log_debug(f"Searching {vendor_count} vendors in platform structure")
 
                 # Search through all vendor/device combinations
-                for vendor_id in platform.vendors:
-                    vendor = platform.vendors[vendor_id]
+                for vendor_id in platform.vendor_list:
+                    vendor = platform.get_vendor(vendor_id)
 
                     # Check if vendor.devices exists
-                    if hasattr(vendor, 'devices') and vendor.devices:
-                        for device_id in vendor.devices:
-                            device = vendor.devices[device_id]
+                    if hasattr(vendor, 'ip_list') and vendor.ip_list:
+                        for ip_id in vendor.ip_list:
+                            ip = vendor.get_ip(ip_id)
 
+                            if hasattr(ip, 'bar_list') and ip.bar_list:
+                                for bar_id in ip.bar_list:
+                                    # Check for registers
+                                    bar = ip.get_bar(bar_id)
+                                    has_registers = (hasattr(bar, 'register_list') and
+                                                    bar.register_list)
+
+                                    if has_registers and reg_name in bar.register_list:
+                                        # Found the register, add all instances
+                                        reg_objects = bar.register_list[reg_name]
+                                        logger().log_debug(
+                                            f"Found register {reg_name} in {vendor_id}.{ip_id}.{bar_id}")
+                                        if isinstance(reg_objects, list):
+                                            result_list.extend(reg_objects)
+                                        else:
+                                            result_list.append(reg_objects) 
                             # Check for registers
-                            has_registers = (hasattr(device, 'registers') and
-                                            device.registers is not None)
+                            has_registers = (hasattr(ip, 'register_list') and
+                                            ip.register_list)
 
-                            if has_registers and reg_name in device.registers:
+                            if has_registers and reg_name in ip.register_list:
                                 # Found the register, add all instances
-                                reg_objects = device.registers[reg_name]
+                                reg_objects = ip.register_list[reg_name]
                                 logger().log_debug(
-                                    f"Found register {reg_name} in {vendor_id}.{device_id}")
+                                    f"Found register {reg_name} in {vendor_id}.{ip_id}")
 
                                 if isinstance(reg_objects, list):
                                     result_list.extend(reg_objects)
@@ -337,12 +353,10 @@ class Register:
             reg_defs = self.cs.Cfg.get_reglist(reg_name)
         except RegisterNotFoundError:
             return False
-        for reg_def in reg_defs:
-            try:
-                return field_name in reg_def.fields
-            except KeyError:
-                return False
-        return False
+        try:
+            return bool(reg_defs) and all([field_name in reg_def.fields for reg_def in reg_defs])
+        except KeyError:
+            return False
 
     def get_match(self, name: str) -> List[str]:
         """

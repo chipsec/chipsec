@@ -390,8 +390,9 @@ class CoreParserHelper:
             device_dest = dest[vid_str][bar_attr['device']]
 
             # Handle existing configuration
-            if bar_name in device_dest and 'config' in bar_attr:
-                device_dest[bar_name].add_config(bar_attr['config'])
+            if bar_name in device_dest:
+                if 'config' in bar_attr:
+                    device_dest[bar_name].add_config(bar_attr['config'])
             else:
                 # Create new bar object
                 pci_config = self.cfg.CONFIG_PCI
