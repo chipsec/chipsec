@@ -11,6 +11,10 @@
             <field name="SCIS"    bit="0" size="3" desc="SCI IRQ Select"/>
         </register>
         <register name="PM_CFG" type="mmio" bar="PWRMBASE" offset="0x1818" size="4" desc="Power Management Configuration Reg 1"/>
+        <register name="ETR3" type="mmio" bar="PWRMBASE" offset="0x1048" size="4" desc="Extended Test Mode Register 3">
+            <field name="CF9GR" bit="20" size="1" desc="CF9h Global Reset"/>
+            <field name="CF9LOCK" bit="31" size="1" desc="CF9h Lock"/>
+        </register>
     </registers>
     
     <controls>

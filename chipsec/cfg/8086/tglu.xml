@@ -49,7 +49,9 @@ http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.
   <!--                                      -->
   <!-- #################################### -->
   <pci>
-    <device name="HOSTCTL" bus="0x0" dev="0x00" fun="0" did="0x9A14" config="HOSTCTL.hostctl11gen.xml"/>
+    <device name="HOSTCTL" bus="0x0" dev="0x00" fun="0" did="0x9A14" config="HOSTCTL.hostctl11gen.xml">
+      <subcomponent type="mmiobar" name="MCHBAR" register="MCHBAR" base_field="MCHBAR" size="0x8000" enable_bit="0" config="MMIO.mmio0.xml" />
+    </device>
     <!-- <device name="HOSTCTL" bus="0x0" dev="0x00" fun="0" config="IOMMU.iommu.xml"/> -->
     <device name="IGD"     bus="0x0" dev="0x02" fun="0" config="IGD.igd0.xml"/>
     <device name="MEI1"    bus="0x0" dev="0x16" fun="0" config="ME.mei0.xml" />
