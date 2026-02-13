@@ -190,6 +190,26 @@ class Register:
         logger().log_verbose(f" Got reg list: {', '.join([reg.name for reg in reglist])}")
         return reglist
 
+    def _get_matching_registers(self, current_obj: 'Recursable', reg_name: str) -> 'ObjList':
+        """
+        Recursively get all register objects from the current object
+
+        Args:            
+            current_obj: The current object to search for registers
+            reg_name: Name of the register
+
+        Returns:
+            List of register objects matching the name found in the current object and its children
+        """
+        matched_regs = ObjList()
+        if hasattr(current_obj, 'get_next_levels'):
+            next_obj_list = current_obj.get_next_levels('*')
+            for next_obj in next_obj_list:
+                    matched_regs.extend(self._get_matching_registers(next_obj, reg_name))
+        if hasattr(current_obj, 'get_register_matches'):
+            matched_regs.extend(current_obj.get_register_matches(reg_name))
+        return matched_regs
+
     def get_list_by_name_without_scope(self, reg_name: str) -> 'ObjList':
         """
         Get register list without scope prefix.
@@ -212,108 +232,13 @@ class Register:
             logger().log_warning("Configuration not initialized")
             return result_list
 
-        # Use the platform structure to search across all vendors and devices
+        # Use the platform structure to search across all vendors, IPs and BARs
         if hasattr(self.cs.Cfg, 'platform') and self.cs.Cfg.platform:
             # Log diagnostic info at debug level
-            platform = self.cs.Cfg.platform
-            if hasattr(platform, 'vendor_list') and platform.vendor_list:
-                vendor_count = len(platform.vendor_list)
-                logger().log_debug(f"Searching {vendor_count} vendors in platform structure")
-
-                # Search through all vendor/device combinations
-                for vendor_id in platform.vendor_list:
-                    vendor = platform.get_vendor(vendor_id)
-
-                    # Check if vendor.devices exists
-                    if hasattr(vendor, 'ip_list') and vendor.ip_list:
-                        for ip_id in vendor.ip_list:
-                            ip = vendor.get_ip(ip_id)
-
-                            if hasattr(ip, 'bar_list') and ip.bar_list:
-                                for bar_id in ip.bar_list:
-                                    # Check for registers
-                                    bar = ip.get_bar(bar_id)
-                                    has_registers = (hasattr(bar, 'register_list') and
-                                                    bar.register_list)
-
-                                    if has_registers and reg_name in bar.register_list:
-                                        # Found the register, add all instances
-                                        reg_objects = bar.register_list[reg_name]
-                                        logger().log_debug(
-                                            f"Found register {reg_name} in {vendor_id}.{ip_id}.{bar_id}")
-                                        if isinstance(reg_objects, list):
-                                            result_list.extend(reg_objects)
-                                        else:
-                                            result_list.append(reg_objects) 
-                            # Check for registers
-                            has_registers = (hasattr(ip, 'register_list') and
-                                            ip.register_list)
-
-                            if has_registers and reg_name in ip.register_list:
-                                # Found the register, add all instances
-                                reg_objects = ip.register_list[reg_name]
-                                logger().log_debug(
-                                    f"Found register {reg_name} in {vendor_id}.{ip_id}")
-
-                                if isinstance(reg_objects, list):
-                                    result_list.extend(reg_objects)
-                                else:
-                                    result_list.append(reg_objects)
-            else:
-                logger().log_debug("No vendors in platform structure")
+            plat_obj = self.cs.Cfg.platform
+            result_list = self._get_matching_registers(plat_obj, reg_name)
         else:
             logger().log_debug("Platform structure not available")
-
-        # If no results found in platform structure, try fallback methods
-        if not result_list:
-            logger().log_debug(
-                f"No results found for {reg_name} in platform structure, trying fallbacks")
-
-            # Try different fallback approaches
-            try:
-                # First try direct wildcard approach
-                fallback_result = self.cs.Cfg.get_reglist('*.*.' + reg_name)
-                if fallback_result:
-                    logger().log_debug(
-                        f"Found {len(fallback_result)} results with '*.*.' fallback")
-                    result_list.extend(fallback_result)
-            except Exception as e:
-                logger().log_debug(f"First fallback failed: {str(e)}")
-
-                try:
-                    # Second approach: more flexible wildcard pattern
-                    fallback_result = self.cs.Cfg.get_reglist('*.' + reg_name)
-                    if fallback_result:
-                        logger().log_debug(
-                            f"Found {len(fallback_result)} results with '*.' fallback")
-                        result_list.extend(fallback_result)
-                except Exception as e2:
-                    logger().log_debug(f"Second fallback failed: {str(e2)}")
-
-                    try:
-                        # Legacy approach: check REGISTERS structure directly
-                        if hasattr(self.cs.Cfg, 'REGISTERS'):
-                            possible_regs = []
-
-                            # Search through legacy REGISTERS structure
-                            for vid in self.cs.Cfg.REGISTERS.keys():
-                                for dev in self.cs.Cfg.REGISTERS[vid].keys():
-                                    if reg_name in self.cs.Cfg.REGISTERS[vid][dev]:
-                                        reg_path = f"{vid}.{dev}.{reg_name}"
-                                        possible_regs.append(reg_path)
-
-                            # Get register objects for each path found
-                            for reg_path in possible_regs:
-                                try:
-                                    reg_objs = self.cs.Cfg.get_reglist(reg_path)
-                                    logger().log_debug(
-                                        f"Found register via legacy lookup: {reg_path}")
-                                    result_list.extend(reg_objs)
-                                except Exception:
-                                    # Ignore errors for individual registers
-                                    pass
-                    except Exception as e3:
-                        logger().log_debug(f"All fallbacks failed: {str(e3)}")
 
         # Log summary
         if result_list:

@@ -608,7 +608,7 @@ class IP(Recursable, RegisterList):
             raise PlatformConfigError(f'Next Level: {bar_id} not found in IP: {self.name}')
 
 
-class Bar(Recursable, RegisterList):
+class Bar(RegisterList):
     """
     BAR (Base Address Register) configuration container.
 
@@ -628,25 +628,3 @@ class Bar(Recursable, RegisterList):
         RegisterList.__init__(self)
         self.name = name
         self.obj = barobj
-
-    def _get_next_level_list(self) -> List[str]:
-        """Get list of register names."""
-        return list(self.register_list.keys())
-
-    def _get_next_level(self, register_id: str) -> ObjList:
-        """
-        Get next level object (register) by ID.
-
-        Args:
-            register_id: Register identifier
-
-        Returns:
-            Register object list
-
-        Raises:
-            PlatformConfigError: If register not found
-        """
-        if register_id in self.register_list.keys():
-            return self.get_register(register_id)
-        else:
-            raise PlatformConfigError(f'Register: {register_id} not found in BAR: {self.name}')
