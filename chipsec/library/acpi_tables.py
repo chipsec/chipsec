@@ -867,16 +867,16 @@ class XSDT (ACPI_TABLE):
     def parse(self, table_content: bytes) -> None:
         if not table_content:
             raise ValueError("XSDT table content cannot be empty")
-        
+
         if len(table_content) % ACPI_POINTER_SIZE_64 != 0:
             logger().log_warning(
                 f"XSDT table content length {len(table_content)} "
                 f"is not a multiple of {ACPI_POINTER_SIZE_64}")
-        
+
         num_of_tables = len(table_content) // ACPI_POINTER_SIZE_64
         if num_of_tables > 0:
             self.Entries = struct.unpack(
-                f'={num_of_tables:d}Q', 
+                f'={num_of_tables:d}Q',
                 table_content[:num_of_tables * ACPI_POINTER_SIZE_64])
         else:
             self.Entries = ()
@@ -904,12 +904,12 @@ class RSDT (ACPI_TABLE):
     def parse(self, table_content: bytes) -> None:
         if not table_content:
             raise ValueError("RSDT table content cannot be empty")
-        
+
         if len(table_content) % 4 != 0:
             logger().log_warning(
                 f"RSDT table content length {len(table_content)} "
                 f"is not a multiple of 4")
-        
+
         num_of_tables = len(table_content) // 4
         if num_of_tables > 0:
             self.Entries = struct.unpack(
@@ -944,12 +944,12 @@ class FADT (ACPI_TABLE):
     def parse(self, table_content: bytes) -> None:
         if not table_content:
             raise ValueError("FADT table content cannot be empty")
-        
+
         if len(table_content) < FADT_MIN_SIZE:
             raise ValueError(
                 f"FADT table content too short: {len(table_content)} < "
                 f"{FADT_MIN_SIZE}")
-        
+
         self.dsdt = struct.unpack(
             '<I', table_content[FADT_DSDT_OFFSET:FADT_DSDT_OFFSET + 4])[0]
         self.smi = struct.unpack(
@@ -960,7 +960,7 @@ class FADT (ACPI_TABLE):
         self.acpi_disable = struct.unpack(
             'B', table_content[FADT_ACPI_DISABLE_OFFSET:
                               FADT_ACPI_DISABLE_OFFSET + 1])[0]
-        
+
         if len(table_content) >= FADT_X_DSDT_MIN_SIZE:
             self.x_dsdt = struct.unpack(
                 '<Q', table_content[FADT_X_DSDT_OFFSET:
@@ -1195,7 +1195,7 @@ Generic Error Status Block
         return f"""
 ------------------------------------------------------------------
   Boot Region Length                                : {self.BootRegionLen:d}
-  Boot Region Address	                            : 0x{self.BootRegionAddr:016X}
+  Boot Region Address                               : 0x{self.BootRegionAddr:016X}
   Boot Region - {self.BootRegion}
 """
 
@@ -1593,7 +1593,7 @@ class HEST (ACPI_TABLE):
 
         self.result_str += f"""
     {title}
-    Source ID         				  : 0x{sourceID:04X}
+    Source ID                         : 0x{sourceID:04X}
     Reserved                                      : 0x{reserved1:04X}
     Flags                                         : 0x{flags:02X}{flags_str}
       FIRMWARE_FIRST                              : {firmware_first} - {firmware_first_str}
@@ -2006,10 +2006,10 @@ class NFIT (ACPI_TABLE):
         else:
             cap1_str = 'Platform does not ensure the entire CPU store data path is flushed to persistent memory on system power loss'
         if cap2 == 2:
-            cap2_str = 'Platform provides mehanisms to automatically flush outstanding write data from the memory controller to persistent memory in the event of power loss'
+            cap2_str = 'Platform provides mechanisms to automatically flush outstanding write data from the memory controller to persistent memory in the event of power loss'
         else:
             if cap1 == 1:
-                cap2_str = 'Platform does not provides mehanisms to automatically flush outstanding write data from the memory controller to persistent memory in the event of power loss'
+                cap2_str = 'Platform does not provides mechanisms to automatically flush outstanding write data from the memory controller to persistent memory in the event of power loss'
             else:
                 cap2_str = 'This should be set to 1 - Platform does not support'
         if cap3 == 4:
@@ -2356,7 +2356,7 @@ class NFIT (ACPI_TABLE):
 
     def __str__(self) -> str:
         return self.results
-        
+
 
 ########################################################################################################
 #
