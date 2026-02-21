@@ -201,7 +201,6 @@ class DevConfig(BaseConfigParser):
                 continue
             dev_name = node_attr['name']
             if dev_name not in dest[vid_str]:
-                print(dest, cfg_obj)
                 new_obj = cfg_obj(copy.deepcopy(node_attr))
                 dest[vid_str][dev_name] = new_obj
                 self._add_ip(vid_str, dev_name, new_obj)
@@ -538,8 +537,9 @@ class CoreConfigRegisters(BaseConfigParser):
         if 'tmp' not in regattr.keys():
             return self.create_register_object(objtype, regattr, [None])
         for instance in regattr['tmp'].values():
-            regattr['instance'] = instance
-            reg_obj.append(objtype(regattr, instance))
+            regattr_copy = copy.deepcopy(regattr)
+            regattr_copy['instance'] = instance
+            reg_obj.append(objtype(regattr_copy, instance))
         return reg_obj if reg_obj else None
 
     def handle_controls(self, et_node, stage_data):
