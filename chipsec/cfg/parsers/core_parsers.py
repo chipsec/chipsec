@@ -525,8 +525,9 @@ class CoreConfigRegisters(BaseConfigParser):
     def create_register_object(self, objtype, regattr, instance_list):
         reg_obj = []
         for instance in instance_list:
-            regattr['instance'] = instance
-            reg_obj.append(objtype(regattr))
+            regattr_copy = copy.deepcopy(regattr)
+            regattr_copy['instance'] = instance
+            reg_obj.append(objtype(regattr_copy))
         return reg_obj
 
     def create_register_object_bar(self, objtype, regattr):
