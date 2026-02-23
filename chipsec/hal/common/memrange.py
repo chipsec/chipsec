@@ -53,7 +53,6 @@ class MemRange(HALBase):
         self.logger.log_hal(f'[mem] 0x{phys_address:016X}')
         return self.helper.read_phys_mem(phys_address, length)
 
-
     def write(self, phys_address: int, length: int, buf: bytes) -> int:
         if self.logger.HAL:
             self.logger.log(f'[mem] buffer len = 0x{length:X} to PA = 0x{phys_address:016X}')
@@ -65,6 +64,9 @@ class MemRange(HALBase):
         ranges = self.cs.Cfg.get_objlist(range_name)
         if ranges:
             return ranges[0]
+        for vid in self.cs.Cfg.MEMORY_RANGES:
+            if range_name in self.cs.Cfg.MEMORY_RANGES[vid]:
+                return self.cs.Cfg.MEMORY_RANGES[vid][range_name]
         return None
 
 
