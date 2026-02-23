@@ -233,6 +233,21 @@ class Platform(Recursable):
         self.vendor_list.remove(vendor.name)
         self.__delattr__(f'_{vendor.name}')
 
+    def get_register_matches(self, register_name: str) -> ObjList:
+        """Search all vendors for registers matching the given name pattern.
+
+        Args:
+            register_name: Register name pattern (supports wildcards)
+
+        Returns:
+            ObjList containing matching registers from all vendors
+        """
+        registers = ObjList()
+        for vendor_name in self.vendor_list:
+            vendor = self.get_vendor(vendor_name)
+            registers.extend(vendor.get_register_matches(register_name))
+        return registers
+
     def _get_next_level_list(self) -> List[str]:
         """Get list of vendor names."""
         return self.vendor_list
@@ -514,6 +529,24 @@ class Vendor(Recursable):
         else:
             raise PlatformConfigError(f'Device: {ip_name} not found in Vendor: {self.name}')
 
+    def get_register_matches(self, register_name: str) -> ObjList:
+        """Search all IPs and BARs for registers matching the given name pattern.
+
+        Args:
+            register_name: Register name pattern (supports wildcards)
+
+        Returns:
+            ObjList containing matching registers from all IPs and BARs
+        """
+        registers = ObjList()
+        for ip_name in self.ip_list:
+            ip = self.get_ip(ip_name)
+            registers.extend(ip.get_register_matches(register_name))
+            for bar_name in ip.bar_list:
+                bar = ip.get_bar(bar_name)
+                registers.extend(bar.get_register_matches(register_name))
+        return registers
+
     def _get_next_level_list(self) -> List[str]:
         """Get list of IP names."""
         return self.ip_list
@@ -608,7 +641,7 @@ class IP(Recursable, RegisterList):
             raise PlatformConfigError(f'Next Level: {bar_id} not found in IP: {self.name}')
 
 
-class Bar(RegisterList):
+class Bar(Recursable, RegisterList):
     """
     BAR (Base Address Register) configuration container.
 
@@ -628,3 +661,25 @@ class Bar(RegisterList):
         RegisterList.__init__(self)
         self.name = name
         self.obj = barobj
+
+    def _get_next_level_list(self) -> List[str]:
+        """Get list of register names."""
+        return list(self.register_list.keys())
+
+    def _get_next_level(self, register_id: str) -> ObjList:
+        """
+        Get next level object (register) by ID.
+
+        Args:
+            register_id: Register identifier
+
+        Returns:
+            Register object list
+
+        Raises:
+            PlatformConfigError: If register not found
+        """
+        if register_id in self.register_list.keys():
+            return self.get_register(register_id)
+        else:
+            raise PlatformConfigError(f'Register: {register_id} not found in BAR: {self.name}')
