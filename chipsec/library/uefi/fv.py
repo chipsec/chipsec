@@ -90,6 +90,12 @@ FILE_TYPE_NAMES = {
     0xF0: 'FV_FFS_PAD'
 }
 
+# PI spec Vol III Table 3: OEM file types 0xC0-0xDF, Debug/test types 0xE0-0xEF
+for _i in range(0xC0, 0xE0):
+    FILE_TYPE_NAMES[_i] = f'FV_OEM_{_i:02X}'
+for _i in range(0xE0, 0xF0):
+    FILE_TYPE_NAMES[_i] = f'FV_DEBUG_{_i:02X}'
+
 EFI_SECTION_ALL = 0x00
 EFI_SECTION_COMPRESSION = 0x01
 EFI_SECTION_GUID_DEFINED = 0x02
@@ -103,6 +109,7 @@ EFI_SECTION_COMPATIBILITY16 = 0x16
 EFI_SECTION_FIRMWARE_VOLUME_IMAGE = 0x17
 EFI_SECTION_FREEFORM_SUBTYPE_GUID = 0x18
 EFI_SECTION_RAW = 0x19
+EFI_SECTION_DISPOSABLE = 0x1A
 EFI_SECTION_PEI_DEPEX = 0x1B
 EFI_SECTION_MM_DEPEX = 0x1C
 
@@ -120,6 +127,7 @@ SECTION_NAMES = {
     0x17: 'S_FV_IMAGE',
     0x18: 'S_FREEFORM_SUBTYPE_GUID',
     0x19: 'S_RAW',
+    0x1A: 'S_DISPOSABLE',
     0x1B: 'S_PEI_DEPEX',
     0x1C: 'S_MM_DEPEX'
 }
@@ -327,6 +335,10 @@ class EFI_FILE(EFI_MODULE):
     def __str__(self) -> str:
         schecksum = f'{self.Checksum:04X}h ({self.CalcSum:04X}h) *** checksum mismatch ***' if self.CalcSum != self.Checksum else f'{self.Checksum:04X}h'
         _s = f'\n{self.indent}+{self.Offset:08X}h {self.name()}\n{self.indent}Type {self.Type:02X}h, Attr {self.Attributes:08X}h, State {self.State:02X}h, Size {self.Size:06X}h, Checksum {schecksum}'
+        if self.UD:
+            _s += ' [DELETED/MARKED_FOR_UPDATE]'
+        if self.Name == EFI_FFS_VOLUME_TOP_FILE_GUID:
+            _s += ' [VTF - Volume Top File]'
         _s += (super(EFI_FILE, self).__str__() + '\n')
         return bytestostring(_s)
 
