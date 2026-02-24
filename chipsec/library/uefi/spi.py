@@ -82,7 +82,7 @@ type2ext = {EFI_SECTION_PE32: 'pe32', EFI_SECTION_TE: 'te', EFI_SECTION_PIC: 'pi
 # Calculate hashes for all FVs, FW files and sections (PE/COFF or TE executables)
 # and write them on the file system
 #
-WRITE_ALL_HASHES = False
+WRITE_ALL_HASHES = os.environ.get('CHIPSEC_WRITE_ALL_HASHES', '') != ''
 
 # Import ACPI table signatures from existing library (used for RAW section labeling)
 try:
