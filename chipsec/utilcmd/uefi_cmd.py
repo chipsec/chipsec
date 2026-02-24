@@ -206,7 +206,7 @@ class UEFICommand(BaseCommand):
     def var_write(self):
         self.logger.log("[CHIPSEC] writing EFI variable Name='{}' GUID={{{}}} from '{}' via Variable API..".format(self.name, self.guid, self.filename))
         status = self._uefi.set_EFI_variable_from_file(self.name, self.guid, self.filename)
-        self.logger.log("[CHIPSEC] status: {}".format(EFI_STATUS_DICT[status]))
+        self.logger.log("[CHIPSEC] status: {}".format(EFI_STATUS_DICT.get(status, f'UNKNOWN(0x{status:X})')))
         if status == 0:
             self.logger.log("[CHIPSEC] writing EFI variable was successful")
         else:
@@ -215,7 +215,7 @@ class UEFICommand(BaseCommand):
     def var_delete(self):
         self.logger.log("[CHIPSEC] Deleting EFI variable Name='{}' GUID={{{}}} via Variable API..".format(self.name, self.guid))
         status = self._uefi.delete_EFI_variable(self.name, self.guid)
-        self.logger.log("Returned {}".format(EFI_STATUS_DICT[status]))
+        self.logger.log("Returned {}".format(EFI_STATUS_DICT.get(status, f'UNKNOWN(0x{status:X})')))
         if status == 0:
             self.logger.log("[CHIPSEC] deleting EFI variable was successful")
         else:
