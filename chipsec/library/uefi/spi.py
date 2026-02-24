@@ -66,6 +66,7 @@ from chipsec.library.uefi.fv import EFI_COMPRESSION_SECTION, EFI_COMPRESSION_SEC
 from chipsec.library.uefi.fv import EFI_GUIDED_SECTION_TIANO, EFI_GUIDED_SECTION_BROTLI, EFI_GUIDED_SECTION_LZMAF86
 from chipsec.library.uefi.fv import EFI_GUIDED_SECTION_LZMA, EFI_GUIDED_SECTION_LZMA_HP, EFI_GUIDED_SECTION_LZMA_MS
 from chipsec.library.uefi.fv import EFI_GUIDED_SECTION_GZIP, EFI_GUIDED_SECTION_ZLIB_AMD1, EFI_GUIDED_SECTION_ZLIB_AMD2
+from chipsec.library.uefi.fv import EFI_CAPSULE_HEADER_FMT, EFI_CAPSULE_HEADER_SIZE, EFI_CAPSULE_GUIDS
 
 CMD_UEFI_FILE_REMOVE = 0
 CMD_UEFI_FILE_INSERT_BEFORE = 1
@@ -603,6 +604,28 @@ class UUIDEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
+def strip_capsule_header(data: bytes) -> bytes:
+    """Strip UEFI capsule header(s) if present (UEFI Spec Section 8.5).
+
+    Handles nested capsules by iterating until no more capsule headers are found.
+    Returns the unwrapped payload.
+    """
+    while len(data) >= EFI_CAPSULE_HEADER_SIZE:
+        guid_raw, hdr_size, flags, img_size = struct.unpack(EFI_CAPSULE_HEADER_FMT, data[:EFI_CAPSULE_HEADER_SIZE])
+        capsule_guid = UUID(bytes_le=guid_raw)
+        if capsule_guid not in EFI_CAPSULE_GUIDS:
+            break
+        # Validate header fields
+        if hdr_size < EFI_CAPSULE_HEADER_SIZE or hdr_size > len(data):
+            logger().log_warning(f'[uefi] Capsule header size 0x{hdr_size:X} invalid, skipping capsule strip')
+            break
+        if img_size > len(data):
+            logger().log_warning(f'[uefi] Capsule image size 0x{img_size:X} exceeds data (0x{len(data):X}), using available data')
+        logger().log_hal(f'[uefi] Stripping capsule header: GUID={{{capsule_guid}}}, HeaderSize=0x{hdr_size:X}, Flags=0x{flags:08X}, ImageSize=0x{img_size:X}')
+        data = data[hdr_size:]
+    return data
+
+
 def parse_uefi_region_from_file(filename: str, fwtype: Optional[str], outpath: Optional[str] = None, filetype: List[int] = []) -> None:
     # Create an output folder to dump EFI module tree
     if outpath is None:
@@ -612,6 +635,9 @@ def parse_uefi_region_from_file(filename: str, fwtype: Optional[str], outpath: O
 
     # Read UEFI image binary to parse
     rom = read_file(filename)
+
+    # Pre-processing: strip capsule headers
+    rom = strip_capsule_header(rom)
 
     # Parse UEFI image binary and build a tree hierarchy of EFI modules
     tree = build_efi_model(rom, fwtype)
@@ -643,6 +669,8 @@ def decode_uefi_region(pth: str, fname: str, fwtype: Optional[str], filetype: Li
     # Decoding EFI Variables NVRAM
     logger().log_hal("[spi_uefi] Decoding UEFI NVRAM...")
     region_data = read_file(fname)
+    # Apply same pre-processing as FV decode path
+    region_data = strip_capsule_header(region_data)
     if fwtype is None:
         fwtype = identify_EFI_NVRAM(region_data)
         if fwtype is None:
