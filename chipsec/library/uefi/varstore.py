@@ -101,61 +101,120 @@ VARIABLE_SIGNATURE_VSS = VARIABLE_DATA_SIGNATURE
 SIGNATURE_LIST = "<16sIII"
 SIGNATURE_LIST_size = struct.calcsize(SIGNATURE_LIST)
 
-
-def parse_sha256(data):
-    return
-
-
-def parse_rsa2048(data):
-    return
-
-
-def parse_rsa2048_sha256(data):
-    return
+# Optional dependency: cryptography provides detailed X.509/PKCS7 parsing.
+# Falls back to basic hex-digest logging when unavailable.
+try:
+    from cryptography import x509
+    from cryptography.hazmat.primitives.serialization import pkcs7 as pkcs7_mod
+    from cryptography.hazmat.primitives.asymmetric import rsa as rsa_mod
+    HAS_CRYPTOGRAPHY = True
+except ImportError:
+    HAS_CRYPTOGRAPHY = False
 
 
-def parse_sha1(data):
-    return
+def _log_sig(msg: str) -> None:
+    """Log a signature parsing result via the chipsec logger."""
+    logger().log(f'    [sig] {msg}')
 
 
-def parse_rsa2048_sha1(data):
-    return
+def parse_sha256(data: bytes) -> None:
+    _log_sig(f'SHA-256 digest: {data.hex()}')
 
 
-def parse_x509(data):
-    return
+def parse_rsa2048(data: bytes) -> None:
+    if len(data) >= 0x100:
+        _log_sig(f'RSA-2048 public key ({len(data)} bytes), modulus: {data[:0x100].hex()[:32]}...')
+    else:
+        _log_sig(f'RSA-2048 data ({len(data)} bytes)')
 
 
-def parse_sha224(data):
-    return
+def parse_rsa2048_sha256(data: bytes) -> None:
+    if len(data) >= 0x100:
+        _log_sig(f'RSA-2048 key + SHA-256 ({len(data)} bytes), modulus: {data[:0x100].hex()[:32]}...')
+    else:
+        _log_sig(f'RSA-2048/SHA-256 data ({len(data)} bytes)')
 
 
-def parse_sha384(data):
-    return
+def parse_sha1(data: bytes) -> None:
+    _log_sig(f'SHA-1 digest: {data.hex()}')
 
 
-def parse_sha512(data):
-    return
+def parse_rsa2048_sha1(data: bytes) -> None:
+    if len(data) >= 0x100:
+        _log_sig(f'RSA-2048 key + SHA-1 ({len(data)} bytes), modulus: {data[:0x100].hex()[:32]}...')
+    else:
+        _log_sig(f'RSA-2048/SHA-1 data ({len(data)} bytes)')
 
 
-def parse_x509_sha256(data):
-    return
+def parse_x509(data: bytes) -> None:
+    if HAS_CRYPTOGRAPHY:
+        try:
+            cert = x509.load_der_x509_certificate(data)
+            _log_sig(f'X.509 Subject : {cert.subject.rfc4514_string()}')
+            _log_sig(f'X.509 Issuer  : {cert.issuer.rfc4514_string()}')
+            _log_sig(f'X.509 Serial  : {cert.serial_number}')
+            _log_sig(f'X.509 Valid   : {cert.not_valid_before_utc} - {cert.not_valid_after_utc}')
+        except Exception as e:
+            _log_sig(f'X.509 parse error: {repr(e)}, raw size: {len(data)} bytes')
+    else:
+        _log_sig(f'X.509 certificate ({len(data)} bytes) [install cryptography for details]')
 
 
-def parse_x509_sha384(data):
-    return
+def parse_sha224(data: bytes) -> None:
+    _log_sig(f'SHA-224 digest: {data.hex()}')
 
 
-def parse_x509_sha512(data):
-    return
+def parse_sha384(data: bytes) -> None:
+    _log_sig(f'SHA-384 digest: {data.hex()}')
 
 
-def parse_external(data):
-    return
+def parse_sha512(data: bytes) -> None:
+    _log_sig(f'SHA-512 digest: {data.hex()}')
 
 
-def parse_pkcs7(data):
-    return
+def parse_x509_sha256(data: bytes) -> None:
+    if len(data) >= 0x20:
+        _log_sig(f'X.509/SHA-256 TBS hash: {data[:0x20].hex()}')
+        if len(data) > 0x20 and HAS_CRYPTOGRAPHY:
+            parse_x509(data[0x20:])
+    else:
+        _log_sig(f'X.509/SHA-256 data ({len(data)} bytes)')
+
+
+def parse_x509_sha384(data: bytes) -> None:
+    if len(data) >= 0x30:
+        _log_sig(f'X.509/SHA-384 TBS hash: {data[:0x30].hex()}')
+        if len(data) > 0x30 and HAS_CRYPTOGRAPHY:
+            parse_x509(data[0x30:])
+    else:
+        _log_sig(f'X.509/SHA-384 data ({len(data)} bytes)')
+
+
+def parse_x509_sha512(data: bytes) -> None:
+    if len(data) >= 0x40:
+        _log_sig(f'X.509/SHA-512 TBS hash: {data[:0x40].hex()}')
+        if len(data) > 0x40 and HAS_CRYPTOGRAPHY:
+            parse_x509(data[0x40:])
+    else:
+        _log_sig(f'X.509/SHA-512 data ({len(data)} bytes)')
+
+
+def parse_external(data: bytes) -> None:
+    _log_sig(f'External management signature ({len(data)} bytes)')
+
+
+def parse_pkcs7(data: bytes) -> None:
+    if HAS_CRYPTOGRAPHY:
+        try:
+            certs = pkcs7_mod.load_der_pkcs7_certificates(data)
+            _log_sig(f'PKCS#7 contains {len(certs)} certificate(s)')
+            for i, cert in enumerate(certs):
+                _log_sig(f'  [{i}] Subject: {cert.subject.rfc4514_string()}')
+                _log_sig(f'  [{i}] Issuer : {cert.issuer.rfc4514_string()}')
+        except Exception as e:
+            _log_sig(f'PKCS#7 parse error: {repr(e)}, raw size: {len(data)} bytes')
+    else:
+        _log_sig(f'PKCS#7 signed data ({len(data)} bytes) [install cryptography for details]')
 
 
 sig_types: Dict[str, Tuple[str, Callable, int, str]] = {
@@ -467,43 +526,6 @@ def getEFIvariables_UEFI_AUTH(nvram_buf: bytes) -> Dict[str, List[EfiVariableTyp
     return _getEFIvariables_VSS(nvram_buf, FWType.EFI_FW_TYPE_VSS_AUTH)
 
 
-'''
-def getEFIvariables_UEFI_Ex( nvram_buf, auth = False ):
-    dof = 0
-    length = len(nvram_buf)
-    storen = 0
-    variables = dict()
-    while ((dof+UEFI_VARIABLE_STORE_HEADER_SIZE) < length):
-        store_start = dof
-        StoreGuid0, StoreGuid1, StoreGuid2, StoreGuid03, Size, Format, State, R0, R1 = \
-            struct.unpack(UEFI_VARIABLE_STORE_HEADER, nvram_buf[dof:dof + UEFI_VARIABLE_STORE_HEADER_SIZE])
-        dof = align(dof + UEFI_VARIABLE_STORE_HEADER_SIZE, 4)
-        if ((Format != VARIABLE_STORE_FORMATTED) or (State != VARIABLE_STORE_HEALTHY)):
-            break
-        if ((store_start + Size) >= length): break
-        while ((dof + EFI_VARIABLE_HEADER_SIZE) <= (store_start + Size)):
-            StartId, State, R0, Attributes, Auth, NameSize, DataSize, VendorGuid0, VendorGuid1, VendorGuid2, VendorGuid3 = \
-                struct.unpack(EFI_VARIABLE_HEADER, nvram_buf[dof:dof+EFI_VARIABLE_HEADER_SIZE]);
-            if (StartId != VARIABLE_DATA): break
-            dof += EFI_VARIABLE_HEADER_SIZE
-            if ((State == 0xff) and (DataSize == 0xffffffff) and (NameSize == 0xffffffff) and (Attributes == 0xffffffff)):
-                NameSize = 0
-                DataSize = 0
-                # just skip variable with empty name and data for now
-            else:
-                guid = guid_str(VendorGuid0, VendorGuid1, VendorGuid2, VendorGuid3)
-                Name = nvram_buf[dof:dof+NameSize]
-                NameStr = unicode(Name, "utf-16-le").split('\x00')[0]
-                VarData = nvram_buf[dof+NameSize:dof+NameSize+DataSize]
-                if NameStr not in variables.keys():
-                    variables[NameStr] = []
-                #                          off, buf,  hdr,  data,    guid, attrs
-                variables[NameStr].append((dof, None, None, VarData, guid, Attributes))
-            dof = align(dof+NameSize+DataSize, 4)
-        dof = store_start + Size
-        storen += 1
-    return variables
-'''
 ##################################################################################################
 #
 # Platform/Vendor Specific EFI NVRAM Parsing Functions
