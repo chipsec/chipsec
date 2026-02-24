@@ -352,9 +352,9 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
                 pass
         elif sec.Type == EFI_SECTION_GUID_DEFINED:
             if len(sec.Image) < sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:
-                logger().log_warning("EFI Section seems to be malformed")
+                logger().log_warning(f'GUID-defined section at offset 0x{sec.Offset:08X} is malformed (size 0x{len(sec.Image):X} < required 0x{sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:X})')
                 if len(sec.Image) < sec.HeaderSize + EFI_GUID_SIZE:
-                    logger().log_warning("Creating fake GUID of 0000-00-00-0000000")
+                    logger().log_warning(f'Section at offset 0x{sec.Offset:08X}: insufficient data for GUID, using zeroed GUID')
                     guid0 = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
                 else:
                     guid0 = struct.unpack(EFI_GUID_FMT, sec.Image[sec.HeaderSize:sec.HeaderSize + EFI_GUID_SIZE])[0]
@@ -362,8 +362,7 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
             else:
                 guid0, sec.DataOffset, sec.Attributes = struct.unpack(EFI_GUID_DEFINED_SECTION, sec.Image[sec.HeaderSize:sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size])
             if not isinstance(guid0, bytes):
-                logger().log_warning("GUID is corrupted")
-                logger().log_warning("Creating fake GUID of 0000-00-00-0000000")
+                logger().log_warning(f'Section at offset 0x{sec.Offset:08X}: GUID field is corrupted (non-bytes), using zeroed GUID')
                 guid0 = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 
             sec.Guid = UUID(bytes_le=guid0)
@@ -606,7 +605,7 @@ def build_efi_tree(data: bytes, fwtype: Optional[str]) -> List['EFI_MODULE']:
             try:
                 fv.NVRAMType = identify_EFI_NVRAM(fv.Image) if fwtype is None else fwtype
             except Exception:
-                logger().log_warning(f"Couldn't identify NVRAM in FV {{{fv.Guid}}}")
+                logger().log_warning(f"Couldn't identify NVRAM format in FV {{{fv.Guid}}} at offset 0x{fv.Offset:08X}")
             fwbin = build_efi_file_tree(fv.Image, fwtype)
             for i in fwbin:
                 fv.children.append(i)
@@ -618,7 +617,7 @@ def build_efi_tree(data: bytes, fwtype: Optional[str]) -> List['EFI_MODULE']:
 
         else:
             # Unknown FV GUID — attempt FFS parse anyway since FV header format is universal
-            logger().log_warning(f'Unknown FV GUID {{{fv.Guid}}}, attempting FFS parse')
+            logger().log_warning(f'Unknown FV GUID {{{fv.Guid}}} at offset 0x{fv.Offset:08X}, attempting FFS parse')
             fwbin = build_efi_file_tree(fv.Image, fwtype)
             for i in fwbin:
                 fv.children.append(i)
@@ -824,7 +823,7 @@ def save_efi_tree(modules: List['EFI_MODULE'],
                         else:
                             raise Exception("NVRAM type cannot be None")
                     except Exception:
-                        logger().log_warning(f"Couldn't extract NVRAM in {{{m.Guid}}} using type '{m.NVRAMType}'")
+                        logger().log_warning(f"Couldn't extract NVRAM in {{{m.Guid}}} at offset 0x{m.Offset:08X} using type '{m.NVRAMType}'")
 
         # save children modules
         if len(m.children) > 0:
@@ -982,7 +981,7 @@ def save_efi_tree_filetype(modules: List['EFI_MODULE'],
                         else:
                             raise Exception("NVRAM type cannot be None")
                     except Exception:
-                        logger().log_warning(f"Couldn't extract NVRAM in {{{m.Guid}}} using type '{m.NVRAMType}'")
+                        logger().log_warning(f"Couldn't extract NVRAM in {{{m.Guid}}} at offset 0x{m.Offset:08X} using type '{m.NVRAMType}'")
         # save children modules
         if len(m.children) > 0:
             md["children"] = save_efi_tree_filetype(m.children, m, mod_dir_path, lvl + 1, filetype, save, lst_lines=lst_lines)
