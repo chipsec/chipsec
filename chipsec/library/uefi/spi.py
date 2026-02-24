@@ -247,10 +247,10 @@ def _parse_pe_te_metadata(sec_type: int, data: bytes) -> Optional[str]:
     return None
 
 
-def decompress_section_data(section_dir_path: str, sec_fs_name: str, compressed_data: bytes, compression_type: int) -> bytes:
+def decompress_section_data(sec_fs_name: str, compressed_data: bytes, compression_type: int) -> bytes:
+    """Decompress a firmware file section's data using the specified compression type."""
     uefi_uc = UefiCompression()
-    uncompressed_name = os.path.join(section_dir_path, sec_fs_name)
-    logger().log_hal(f'[uefi] Decompressing EFI binary (type = 0x{compression_type:X})\n       {uncompressed_name} ->\n')
+    logger().log_hal(f'[uefi] Decompressing EFI binary (type = 0x{compression_type:X})\n       {sec_fs_name} ->\n')
     uncompressed_image = uefi_uc.decompress_efi_binary(compressed_data, compression_type)
     return uncompressed_image
 
@@ -328,6 +328,7 @@ def modify_uefi_region(data: bytes, command: int, guid: UUID, uefi_file: bytes =
 
 
 def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset: int, polarity: bool) -> List[EFI_SECTION]:
+    """Recursively parse firmware file sections, decompressing as needed, into a tree of EFI_SECTION objects."""
     sections: List[EFI_SECTION] = []
     secn = 0
 
@@ -374,26 +375,26 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
                               EFI_GUIDED_SECTION_ZLIB_AMD1, EFI_GUIDED_SECTION_ZLIB_AMD2, EFI_GUIDED_SECTION_TIANO,
                               EFI_GUIDED_SECTION_ZSTD]:
                 if sec.Guid in [EFI_GUIDED_SECTION_LZMA, EFI_GUIDED_SECTION_LZMA_HP, EFI_GUIDED_SECTION_LZMA_MS]:
-                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_LZMA)
+                    d = decompress_section_data(sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_LZMA)
                 elif sec.Guid == EFI_GUIDED_SECTION_LZMAF86:
-                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_LZMAF86)
+                    d = decompress_section_data(sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_LZMAF86)
                 elif sec.Guid == EFI_GUIDED_SECTION_BROTLI:
-                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_BROTLI)
+                    d = decompress_section_data(sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_BROTLI)
                 elif sec.Guid == EFI_GUIDED_SECTION_GZIP:
-                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_GZIP)
+                    d = decompress_section_data(sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_GZIP)
                 elif sec.Guid in [EFI_GUIDED_SECTION_ZLIB_AMD1, EFI_GUIDED_SECTION_ZLIB_AMD2]:
-                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_ZLIB_AMD)
+                    d = decompress_section_data(sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_ZLIB_AMD)
                 elif sec.Guid == EFI_GUIDED_SECTION_TIANO:
-                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_EFI_STANDARD)
+                    d = decompress_section_data(sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_EFI_STANDARD)
                 elif sec.Guid == EFI_GUIDED_SECTION_ZSTD:
-                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_ZSTD)
+                    d = decompress_section_data(sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_ZSTD)
                 else:
                     d = b''
 
                 if not d:
                     sec.Comments = "Unable to decompress image"
 
-                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN)
+                    d = decompress_section_data(sec_fs_name, sec.Image[sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN)
 
                 if d:
                     sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
@@ -432,7 +433,7 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
                     if vendor_payload:
                         # Try common compression algorithms on the payload
                         for comp_type in [COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_EFI_STANDARD, COMPRESSION_TYPE_LZMAF86]:
-                            d = decompress_section_data('', sec_fs_name, vendor_payload, comp_type)
+                            d = decompress_section_data(sec_fs_name, vendor_payload, comp_type)
                             if d:
                                 break
                     if d:
@@ -452,13 +453,13 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
                 d = compressed_data
             elif _comp_type == 0x01:
                 # EFI_STANDARD_COMPRESSION: try standard EFI decompression first
-                d = decompress_section_data("", sec_fs_name, compressed_data, COMPRESSION_TYPE_EFI_STANDARD)
+                d = decompress_section_data(sec_fs_name, compressed_data, COMPRESSION_TYPE_EFI_STANDARD)
             else:
                 d = b''
             # If spec-directed decompression failed, fall back to brute-force
             if not d:
                 for mct in COMPRESSION_TYPES_ALGORITHMS:
-                    d = decompress_section_data("", sec_fs_name, compressed_data, mct)
+                    d = decompress_section_data(sec_fs_name, compressed_data, mct)
                     if d:
                         break
             if d:
@@ -635,6 +636,7 @@ def build_efi_tree(data: bytes, fwtype: Optional[str]) -> List['EFI_MODULE']:
 #
 def find_efi_modules(data: bytes, fwtype: Optional[str], polarity: bool, data_size: Optional[int] = None,
                      data_start: Optional[int] = None) -> List['EFI_MODULE']:
+    """Find EFI modules by trying FV, FFS file, and section parsers in succession."""
     data_len: int = len(data) if data_size is None else data_size
     data_off: int = 0 if data_start is None else data_start
     brute_force: str = os.environ.get('CHIPSEC_HAL_FIND_EFI_MODULES_BRUTE_FORCE', '')
@@ -656,6 +658,7 @@ def find_efi_modules(data: bytes, fwtype: Optional[str], polarity: bool, data_si
 # File GUID and UI string are then used when searching for EFI files and executable sections
 #
 def update_efi_tree(modules: List['EFI_MODULE'], parent_guid: Optional[UUID] = None) -> str:
+    """Propagate file GUIDs down and UI strings up through the parsed EFI module tree."""
     ui_string = ''
     for m in modules:
         if type(m) is EFI_FILE:
@@ -775,6 +778,7 @@ def save_efi_tree(modules: List['EFI_MODULE'],
                   filetype: List[int] = [],
                   lst_lines: Optional[List[str]] = None
                   ) -> List[Dict[str, Any]]:
+    """Save EFI module tree to filesystem, extract NVRAM, and return JSON-serializable metadata."""
     mod_dir_path = path
     modules_arr = []
     modn = 0
@@ -814,9 +818,13 @@ def save_efi_tree(modules: List['EFI_MODULE'],
                 if m.isNVRAM:
                     try:
                         if m.NVRAMType and (parent is not None):
-                            # @TODO: technically, NVRAM image should be m.Image but
-                            # getNVstore_xxx functions expect FV than a FW file within FV
-                            # so for EFI_FILE type of module using parent's Image as NVRAM
+                            # getNVstore_NVAR / getNVstore_EFI / getNVstore_EVSA call
+                            # NextFwVolume() to locate the NVRAM store, so they need a
+                            # buffer that contains a full FV header (_FVH signature).
+                            # EFI_FILE.Image is just the FFS file (header+body) with no
+                            # FV header, so we pass the parent FV image instead.  VSS-type
+                            # getNVstore functions only do flat signature scans and would
+                            # work with either buffer, but using parent.Image is harmless.
                             nvram = parent.Image if (type(m) is EFI_FILE and type(parent) is EFI_FV) else m.Image
                             file_path = os.path.join(mod_dir_path, 'NVRAM')
                             nvram_lines: List[str] = []
