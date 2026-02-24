@@ -129,6 +129,11 @@ EFI_SECTIONS_EXE = [EFI_SECTION_PE32, EFI_SECTION_TE, EFI_SECTION_PIC, EFI_SECTI
 EFI_FIRMWARE_VOLUME_HEADER = "<16s16sQIIHHHBB"
 EFI_FIRMWARE_VOLUME_HEADER_size = struct.calcsize(EFI_FIRMWARE_VOLUME_HEADER)
 EFI_FV_BLOCK_MAP_ENTRY = "<II"
+
+# PI spec Vol III, Section 3.2.1 - EFI_FIRMWARE_VOLUME_EXT_HEADER
+EFI_FIRMWARE_VOLUME_EXT_HEADER = "<16sI"
+EFI_FIRMWARE_VOLUME_EXT_HEADER_size = struct.calcsize(EFI_FIRMWARE_VOLUME_EXT_HEADER)
+
 EFI_FFS_FILE_HEADER = "<16sHBB3sB"
 EFI_FFS_FILE_HEADER2 = "<16sHBB3sBQ"
 EFI_COMMON_SECTION_HEADER = "<3sB"
@@ -136,6 +141,14 @@ EFI_COMPRESSION_SECTION = "<IB"
 EFI_COMPRESSION_SECTION_size = struct.calcsize(EFI_COMPRESSION_SECTION)
 EFI_GUID_DEFINED_SECTION = "<16sHH"
 EFI_GUID_DEFINED_SECTION_size = struct.calcsize(EFI_GUID_DEFINED_SECTION)
+
+# PI spec Vol III, Section 2.4.1.4 - EFI_SECTION_VERSION has BuildNumber (UINT16) after common header
+EFI_VERSION_SECTION = "<H"
+EFI_VERSION_SECTION_size = struct.calcsize(EFI_VERSION_SECTION)
+
+# PI spec Vol III, Section 2.4.1.8 - EFI_FREEFORM_SUBTYPE_GUID_SECTION has SubTypeGuid after common header
+EFI_FREEFORM_SUBTYPE_GUID_SECTION = "<16s"
+EFI_FREEFORM_SUBTYPE_GUID_SECTION_size = struct.calcsize(EFI_FREEFORM_SUBTYPE_GUID_SECTION)
 EFI_SECTION_BROTLI_PARAM_LGWIN = 20
 EFI_SECTION_BROTLI_HEADER_FORMAT = '<QQ'
 EFI_SECTION_BROTLI_HEADER_LENGTH = struct.calcsize(EFI_SECTION_BROTLI_HEADER_FORMAT)
@@ -172,6 +185,59 @@ EFI_GUIDED_SECTION_ZLIB_AMD2 = UUID('991EFAC0-E260-416B-A4B8-3B153072B804')
 FIRMWARE_VOLUME_GUID = UUID("24400798-3807-4A42-B413-A1ECEE205DD8")
 VOLUME_SECTION_GUID = UUID("367AE684-335D-4671-A16D-899DBFEA6B88")
 EFI_FFS_VOLUME_TOP_FILE_GUID = UUID("1BA0062E-C779-4582-8566-336AE8F78F09")
+
+# PI spec Vol III - Dependency Expression Opcodes (Section 2.4.1.3, 10.6, 13.1)
+DEPEX_OPCODE_PUSH = 0x00
+DEPEX_OPCODE_AND = 0x01
+DEPEX_OPCODE_OR = 0x02
+DEPEX_OPCODE_NOT = 0x03
+DEPEX_OPCODE_TRUE = 0x04
+DEPEX_OPCODE_FALSE = 0x05
+DEPEX_OPCODE_END = 0x06
+DEPEX_OPCODE_SOR = 0x07
+DEPEX_OPCODE_BEFORE = 0x08
+DEPEX_OPCODE_AFTER = 0x09
+
+DEPEX_OPCODE_NAMES = {
+    DEPEX_OPCODE_PUSH: 'PUSH',
+    DEPEX_OPCODE_AND: 'AND',
+    DEPEX_OPCODE_OR: 'OR',
+    DEPEX_OPCODE_NOT: 'NOT',
+    DEPEX_OPCODE_TRUE: 'TRUE',
+    DEPEX_OPCODE_FALSE: 'FALSE',
+    DEPEX_OPCODE_END: 'END',
+    DEPEX_OPCODE_SOR: 'SOR',
+    DEPEX_OPCODE_BEFORE: 'BEFORE',
+    DEPEX_OPCODE_AFTER: 'AFTER',
+}
+
+
+def decode_depex(data: bytes) -> str:
+    """Decode a dependency expression (DEPEX) section into human-readable form.
+
+    Per PI spec Vol III: PEI (Section 10.6), DXE (Section 2.4.1.3), MM (Section 13.1)
+    """
+    result = []
+    offset = 0
+    while offset < len(data):
+        opcode = data[offset]
+        offset += 1
+        if opcode in (DEPEX_OPCODE_PUSH, DEPEX_OPCODE_BEFORE, DEPEX_OPCODE_AFTER):
+            if offset + 16 > len(data):
+                result.append(f'{DEPEX_OPCODE_NAMES.get(opcode, f"UNKNOWN(0x{opcode:02X})")} <TRUNCATED>')
+                break
+            guid = UUID(bytes_le=data[offset:offset + 16])
+            result.append(f'{DEPEX_OPCODE_NAMES[opcode]} {{{guid}}}')
+            offset += 16
+        elif opcode in DEPEX_OPCODE_NAMES:
+            result.append(DEPEX_OPCODE_NAMES[opcode])
+            if opcode == DEPEX_OPCODE_END:
+                break
+        else:
+            result.append(f'UNKNOWN(0x{opcode:02X})')
+            break
+    return ' '.join(result)
+
 
 DEF_INDENT = "    "
 
@@ -228,17 +294,21 @@ class EFI_MODULE:
 
 
 class EFI_FV(EFI_MODULE):
-    def __init__(self, Offset: int, Guid: UUID, Size: int, Attributes: int, HeaderSize: int, Checksum: int, ExtHeaderOffset: int, Image: bytes, CalcSum: int):
+    def __init__(self, Offset: int, Guid: UUID, Size: int, Attributes: int, HeaderSize: int, Checksum: int, ExtHeaderOffset: int, Image: bytes, CalcSum: int,
+                 FvNameGuid: Optional[UUID] = None):
         super(EFI_FV, self).__init__(Offset, Guid, HeaderSize, Attributes, Image)
         self.Size = Size
         self.Checksum = Checksum
         self.ExtHeaderOffset = ExtHeaderOffset
         self.CalcSum = CalcSum
+        self.FvNameGuid = FvNameGuid  # FV Name GUID from extended header (PI spec Vol III, Section 3.2.1)
 
     def __str__(self) -> str:
         schecksum = f'{self.Checksum:04X}h ({self.CalcSum:04X}h) *** checksum mismatch ***' if self.CalcSum != self.Checksum else f'{self.Checksum:04X}h'
         _s = f'\n{self.indent}{type(self).__name__} +{self.Offset:08X}h {{{self.Guid}}}: '
         _s += f"Size {self.Size:08X}h, Attr {self.Attributes:08X}h, HdrSize {self.HeaderSize:04X}h, ExtHdrOffset {self.ExtHeaderOffset:08X}h, Checksum {schecksum}"
+        if self.FvNameGuid:
+            _s += f", FvName {{{self.FvNameGuid}}}"
         _s += super(EFI_FV, self).__str__()
         return bytestostring(_s)
 
@@ -369,7 +439,20 @@ def NextFwVolume(buffer: bytes, off: int = 0, last_fv_size: int = 0) -> Optional
         FsGuid = UUID(bytes_le=FileSystemGuid0)
         FvImage = buffer[fof:fof + FvLength]
         if ValidateFwVolumeHeader(FsGuid, FvLength, HeaderLength, ExtHeaderOffset, Reserved, len(FvImage), CalcSum, Checksum):
-            return EFI_FV(fof, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, FvImage, CalcSum)
+            # Parse the FV extended header if present (PI spec Vol III, Section 3.2.1)
+            fv_name_guid = None
+            actual_header_size = HeaderLength
+            if ExtHeaderOffset != 0 and (fof + ExtHeaderOffset + EFI_FIRMWARE_VOLUME_EXT_HEADER_size) <= len(buffer):
+                ext_hdr_data = FvImage[ExtHeaderOffset:ExtHeaderOffset + EFI_FIRMWARE_VOLUME_EXT_HEADER_size]
+                if len(ext_hdr_data) == EFI_FIRMWARE_VOLUME_EXT_HEADER_size:
+                    fv_name_guid_raw, ext_hdr_size = struct.unpack(EFI_FIRMWARE_VOLUME_EXT_HEADER, ext_hdr_data)
+                    fv_name_guid = UUID(bytes_le=fv_name_guid_raw)
+                    # Per EDK2: first file starts at max(HeaderLength, align8(ExtHeaderOffset + ExtHeaderSize))
+                    ext_end = align(ExtHeaderOffset + ext_hdr_size, 8)
+                    if ext_end > actual_header_size:
+                        actual_header_size = ext_end
+                        logger().log_hal(f'[uefi] FV extended header extends past HeaderLength: file start adjusted to 0x{actual_header_size:X}')
+            return EFI_FV(fof, FsGuid, FvLength, Attributes, actual_header_size, Checksum, ExtHeaderOffset, FvImage, CalcSum, fv_name_guid)
         else:
             fof += 0x2C
     return None
@@ -414,7 +497,16 @@ def GetFvHeader(buffer: bytes, off: int = 0) -> Tuple[int, int, int]:
     if size >= 0x40000000 or size == 0:
         logger().log_hal("ERROR: Volume is corrupted")
         return (0, 0, 0)
-    return (size, HeaderLength, Attributes)
+    # Compute actual file start offset accounting for extended header (PI spec Vol III, Section 3.2.1)
+    file_start = HeaderLength
+    if ExtHeaderOffset != 0 and (off + ExtHeaderOffset + EFI_FIRMWARE_VOLUME_EXT_HEADER_size) <= len(buffer):
+        ext_data = buffer[off + ExtHeaderOffset:off + ExtHeaderOffset + EFI_FIRMWARE_VOLUME_EXT_HEADER_size]
+        if len(ext_data) == EFI_FIRMWARE_VOLUME_EXT_HEADER_size:
+            _, ext_hdr_size = struct.unpack(EFI_FIRMWARE_VOLUME_EXT_HEADER, ext_data)
+            ext_end = align(ExtHeaderOffset + ext_hdr_size, 8)
+            if ext_end > file_start:
+                file_start = ext_end
+    return (size, file_start, Attributes)
 
 
 def NextFwFile(FvImage: bytes, FvLength: int, fof: int, polarity: bool) -> Optional[EFI_FILE]:
@@ -445,8 +537,8 @@ def NextFwFile(FvImage: bytes, FvLength: int, fof: int, polarity: bool) -> Optio
             header_size = struct.calcsize(EFI_FFS_FILE_HEADER)
 
         # Get File size
-        if Attributes & FFS_ATTRIB_LARGE_FILE and len(FvImage) > fof + struct.calcsize(EFI_FFS_FILE_HEADER2):
-            fsize = struct.unpack("Q", FvImage[fof + file_header_size:fof + file_header_size + struct.calcsize("Q")])[0]
+        if Attributes & FFS_ATTRIB_LARGE_FILE and len(FvImage) > cur_offset + struct.calcsize(EFI_FFS_FILE_HEADER2):
+            fsize = struct.unpack("Q", FvImage[cur_offset + file_header_size:cur_offset + file_header_size + struct.calcsize("Q")])[0]
             fsize &= 0xFFFFFFFF
         if fsize == 0 or fsize > FvLength - cur_offset:
             fsize = get_3b_size(Size)

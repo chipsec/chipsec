@@ -45,23 +45,27 @@ if TYPE_CHECKING:
 from chipsec.library.logger import logger
 from chipsec.library.file import write_file, read_file
 from chipsec.library.uefi.compression import COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_EFI_STANDARD, COMPRESSION_TYPES_ALGORITHMS, COMPRESSION_TYPE_UNKNOWN, COMPRESSION_TYPE_LZMAF86
+from chipsec.library.uefi.compression import COMPRESSION_TYPE_BROTLI, COMPRESSION_TYPE_GZIP, COMPRESSION_TYPE_ZLIB_AMD
+from chipsec.library.uefi.compression import UefiCompression
 from chipsec.library.uefi.common import bit_set, EFI_GUID_SIZE, EFI_GUID_FMT
 from chipsec.library.uefi.platform import FWType, fw_types, EFI_NVRAM_GUIDS, EFI_PLATFORM_FS_GUIDS, NVAR_NVRAM_FS_FILE
 from chipsec.library.uefi.varstore import identify_EFI_NVRAM, parse_EFI_variables
 from chipsec.library.uefi.fv import EFI_SECTION_PE32, EFI_SECTION_TE, EFI_SECTION_PIC, EFI_SECTION_COMPATIBILITY16, EFI_FIRMWARE_FILE_SYSTEM2_GUID
-from chipsec.library.uefi.fv import EFI_FIRMWARE_FILE_SYSTEM_GUID, EFI_SECTIONS_EXE, EFI_SECTION_USER_INTERFACE, EFI_SECTION_GUID_DEFINED
+from chipsec.library.uefi.fv import EFI_FIRMWARE_FILE_SYSTEM_GUID, EFI_FIRMWARE_FILE_SYSTEM3_GUID, EFI_SECTIONS_EXE, EFI_SECTION_USER_INTERFACE, EFI_SECTION_GUID_DEFINED
 from chipsec.library.uefi.fv import EFI_GUID_DEFINED_SECTION, EFI_GUID_DEFINED_SECTION_size, NextFwFile, NextFwFileSection, NextFwVolume, GetFvHeader
 from chipsec.library.uefi.fv import EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID
 from chipsec.library.uefi.fv import EFI_CERT_TYPE_RSA_2048_SHA256_GUID, EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size, EFI_SECTION, EFI_FV, EFI_FILE
 from chipsec.library.uefi.fv import EFI_FIRMWARE_CONTENTS_SIGNED_GUID, WIN_CERT_TYPE_EFI_GUID, WIN_CERTIFICATE_size, WIN_CERTIFICATE
+from chipsec.library.uefi.fv import WIN_CERT_TYPE_PKCS_SIGNED_DATA, WIN_CERT_TYPE_EFI_PKCS115
 from chipsec.library.uefi.fv import EFI_SECTION_COMPRESSION, EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_SECTION_RAW, SECTION_NAMES, DEF_INDENT
+from chipsec.library.uefi.fv import EFI_SECTION_DXE_DEPEX, EFI_SECTION_PEI_DEPEX, EFI_SECTION_MM_DEPEX, decode_depex
+from chipsec.library.uefi.fv import EFI_SECTION_VERSION, EFI_VERSION_SECTION, EFI_VERSION_SECTION_size
+from chipsec.library.uefi.fv import EFI_SECTION_FREEFORM_SUBTYPE_GUID, EFI_FREEFORM_SUBTYPE_GUID_SECTION, EFI_FREEFORM_SUBTYPE_GUID_SECTION_size
 from chipsec.library.uefi.fv import FILE_TYPE_NAMES, EFI_FS_GUIDS, EFI_FILE_HEADER_INVALID, EFI_FILE_HEADER_VALID, EFI_FILE_HEADER_CONSTRUCTION
-from chipsec.library.uefi.fv import EFI_COMPRESSION_SECTION_size, EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_FFS_PAD, EFI_FVB2_ERASE_POLARITY, EFI_FV_FILETYPE_RAW
+from chipsec.library.uefi.fv import EFI_COMPRESSION_SECTION, EFI_COMPRESSION_SECTION_size, EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_FFS_PAD, EFI_FVB2_ERASE_POLARITY, EFI_FV_FILETYPE_RAW
 from chipsec.library.uefi.fv import EFI_GUIDED_SECTION_TIANO, EFI_GUIDED_SECTION_BROTLI, EFI_GUIDED_SECTION_LZMAF86
 from chipsec.library.uefi.fv import EFI_GUIDED_SECTION_LZMA, EFI_GUIDED_SECTION_LZMA_HP, EFI_GUIDED_SECTION_LZMA_MS
 from chipsec.library.uefi.fv import EFI_GUIDED_SECTION_GZIP, EFI_GUIDED_SECTION_ZLIB_AMD1, EFI_GUIDED_SECTION_ZLIB_AMD2
-from chipsec.library.uefi.compression import COMPRESSION_TYPE_BROTLI, COMPRESSION_TYPE_GZIP, COMPRESSION_TYPE_ZLIB_AMD
-from chipsec.library.uefi.compression import UefiCompression
 
 CMD_UEFI_FILE_REMOVE = 0
 CMD_UEFI_FILE_INSERT_BEFORE = 1
@@ -98,7 +102,7 @@ def modify_uefi_region(data: bytes, command: int, guid: UUID, uefi_file: bytes =
     while fv is not None:
         FvLengthChange = 0
         polarity = bit_set(fv.Attributes, EFI_FVB2_ERASE_POLARITY)
-        if ((fv.Guid == EFI_FIRMWARE_FILE_SYSTEM2_GUID) or (fv.Guid == EFI_FIRMWARE_FILE_SYSTEM_GUID)):
+        if fv.Guid in (EFI_FIRMWARE_FILE_SYSTEM_GUID, EFI_FIRMWARE_FILE_SYSTEM2_GUID, EFI_FIRMWARE_FILE_SYSTEM3_GUID):
             fwbin = NextFwFile(fv.Image, fv.Size, fv.HeaderSize, polarity)
             while fwbin is not None:
                 next_offset = fwbin.Size + fwbin.Offset
@@ -242,12 +246,25 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
                 sec.children = build_efi_model(sec.Image[sec.HeaderSize:], fwtype)
 
         elif sec.Type == EFI_SECTION_COMPRESSION:
-            for mct in COMPRESSION_TYPES_ALGORITHMS:
-                d = decompress_section_data("", sec_fs_name, sec.Image[sec.HeaderSize + EFI_COMPRESSION_SECTION_size:], mct)
-                if d:
-                    sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
-                if sec.children:
-                    break
+            compressed_data = sec.Image[sec.HeaderSize + EFI_COMPRESSION_SECTION_size:]
+            # Parse the CompressionType field from the EFI_COMPRESSION_SECTION header (PI spec Vol III, Section 2.4.1.2)
+            _uncomp_size, _comp_type = struct.unpack(EFI_COMPRESSION_SECTION, sec.Image[sec.HeaderSize:sec.HeaderSize + EFI_COMPRESSION_SECTION_size])
+            if _comp_type == 0x00:
+                # EFI_NOT_COMPRESSED: data is not compressed
+                d = compressed_data
+            elif _comp_type == 0x01:
+                # EFI_STANDARD_COMPRESSION: try standard EFI decompression first
+                d = decompress_section_data("", sec_fs_name, compressed_data, COMPRESSION_TYPE_EFI_STANDARD)
+            else:
+                d = b''
+            # If spec-directed decompression failed, fall back to brute-force
+            if not d:
+                for mct in COMPRESSION_TYPES_ALGORITHMS:
+                    d = decompress_section_data("", sec_fs_name, compressed_data, mct)
+                    if d:
+                        break
+            if d:
+                sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
 
         elif sec.Type == EFI_SECTION_FIRMWARE_VOLUME_IMAGE:
             children = build_efi_file_tree(sec.Image[sec.HeaderSize:], fwtype)
@@ -256,6 +273,37 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
 
         elif sec.Type == EFI_SECTION_RAW:
             sec.children = build_efi_model(sec.Image[sec.HeaderSize:], fwtype)
+
+        elif sec.Type in (EFI_SECTION_DXE_DEPEX, EFI_SECTION_PEI_DEPEX, EFI_SECTION_MM_DEPEX):
+            # Decode dependency expression opcodes (PI spec Vol III)
+            depex_data = sec.Image[sec.HeaderSize:]
+            if depex_data:
+                sec.Comments = decode_depex(depex_data)
+
+        elif sec.Type == EFI_SECTION_VERSION:
+            # Parse BuildNumber (UINT16) after common header (PI spec Vol III, Section 2.4.1.4)
+            ver_start = sec.HeaderSize
+            if len(sec.Image) >= ver_start + EFI_VERSION_SECTION_size:
+                build_number = struct.unpack(EFI_VERSION_SECTION, sec.Image[ver_start:ver_start + EFI_VERSION_SECTION_size])[0]
+                # Version string follows BuildNumber as null-terminated UCS-2
+                ver_string = ''
+                try:
+                    ver_string = sec.Image[ver_start + EFI_VERSION_SECTION_size:].decode('utf-16-le').rstrip('\x00')
+                except (UnicodeDecodeError, Exception):
+                    pass
+                sec.Comments = f'BuildNumber={build_number}'
+                if ver_string:
+                    sec.Comments += f' Version="{ver_string}"'
+
+        elif sec.Type == EFI_SECTION_FREEFORM_SUBTYPE_GUID:
+            # Parse SubTypeGuid after common header (PI spec Vol III, Section 2.4.1.8)
+            guid_start = sec.HeaderSize
+            if len(sec.Image) >= guid_start + EFI_FREEFORM_SUBTYPE_GUID_SECTION_size:
+                subtype_guid_raw = struct.unpack(EFI_FREEFORM_SUBTYPE_GUID_SECTION, sec.Image[guid_start:guid_start + EFI_FREEFORM_SUBTYPE_GUID_SECTION_size])[0]
+                sec.Guid = UUID(bytes_le=subtype_guid_raw)
+                sec.Comments = f'SubTypeGuid={{{sec.Guid}}}'
+                # Attempt to recurse into the data after the SubTypeGuid
+                sec.children = build_efi_model(sec.Image[guid_start + EFI_FREEFORM_SUBTYPE_GUID_SECTION_size:], fwtype)
 
         elif sec.Type not in SECTION_NAMES.keys():
             sec.children = build_efi_model(sec.Image[sec.HeaderSize:], fwtype)
