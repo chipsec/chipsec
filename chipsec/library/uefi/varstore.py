@@ -1229,14 +1229,14 @@ def decode_EFI_variables(efi_vars: Dict[str, List[EfiVariableType]], nvram_pth: 
             n = n + 1
 
 
-def identify_EFI_NVRAM(buffer: bytes) -> str:
+def identify_EFI_NVRAM(buffer: bytes) -> Optional[str]:
     b = buffer
     for fw_type in fw_types:
         if EFI_VAR_DICT[fw_type]['func_getnvstore']:
             (offset, _, _) = EFI_VAR_DICT[fw_type]['func_getnvstore'](b)
             if offset != -1:
                 return fw_type
-    return ''
+    return None
 
 
 def parse_EFI_variables(fname: str, rom: bytes, authvars: bool, _fw_type: Optional[str] = None, lst_lines: Optional[List[str]] = None) -> bool:
