@@ -248,13 +248,13 @@ class UEFICommand(BaseCommand):
             self.logger.log_important("[CHIPSEC] Could not enumerate EFI Variables. You can try using the `var-list-spi` subcommand. Exit..")
             return
         self.logger.log("[CHIPSEC] Decoding EFI Variables..")
-        _orig_logname = self.logger.LOG_FILE_NAME
-        self.logger.set_log_file('efi_variables.lst', False)
         nvram_pth = 'efi_variables.dir'
         if not os.path.exists(nvram_pth):
             os.makedirs(nvram_pth)
-        decode_EFI_variables(efi_vars, nvram_pth)
-        self.logger.set_log_file(_orig_logname)
+        lst_lines = []
+        decode_EFI_variables(efi_vars, nvram_pth, lst_lines=lst_lines)
+        if lst_lines:
+            write_file('efi_variables.lst', '\n'.join(lst_lines))
         self.logger.log("[CHIPSEC] Variables are in efi_variables.lst log and efi_variables.dir directory")
 
     def var_list_spi(self):
@@ -264,13 +264,13 @@ class UEFICommand(BaseCommand):
             self.logger.log("[CHIPSEC] Could not enumerate EFI Variables (Legacy OS?). Exit..")
             return
         self.logger.log("[CHIPSEC] Decoding EFI Variables..")
-        _orig_logname = self.logger.LOG_FILE_NAME
-        self.logger.set_log_file('efi_variables.lst', False)
         nvram_pth = 'efi_variables.dir'
         if not os.path.exists(nvram_pth):
             os.makedirs(nvram_pth)
-        decode_EFI_variables(efi_vars, nvram_pth)
-        self.logger.set_log_file(_orig_logname)
+        lst_lines = []
+        decode_EFI_variables(efi_vars, nvram_pth, lst_lines=lst_lines)
+        if lst_lines:
+            write_file('efi_variables.lst', '\n'.join(lst_lines))
         self.logger.log("[CHIPSEC] Variables are in efi_variables.lst log and efi_variables.dir directory")
 
     def var_find(self):
@@ -318,10 +318,10 @@ class UEFICommand(BaseCommand):
             self.logger.log_error("Unrecognized EFI NVRAM type '{}'".format(self.fwtype))
             return
 
-        _orig_logname = self.logger.LOG_FILE_NAME
-        self.logger.set_log_file((self.romfilename + '.nv.lst'), False)
-        parse_EFI_variables(self.romfilename, rom, authvars, self.fwtype)
-        self.logger.set_log_file(_orig_logname)
+        nvram_lines = []
+        parse_EFI_variables(self.romfilename, rom, authvars, self.fwtype, lst_lines=nvram_lines)
+        if nvram_lines:
+            write_file(self.romfilename + '.nv.lst', '\n'.join(nvram_lines))
 
     def nvram_auth(self):
         authvars = 1
@@ -335,10 +335,10 @@ class UEFICommand(BaseCommand):
             self.logger.log_error("Unrecognized EFI NVRAM type '{}'".format(self.fwtype))
             return
 
-        _orig_logname = self.logger.LOG_FILE_NAME
-        self.logger.set_log_file((self.romfilename + '.nv.lst'), False)
-        parse_EFI_variables(self.romfilename, rom, authvars, self.fwtype)
-        self.logger.set_log_file(_orig_logname)
+        nvram_lines = []
+        parse_EFI_variables(self.romfilename, rom, authvars, self.fwtype, lst_lines=nvram_lines)
+        if nvram_lines:
+            write_file(self.romfilename + '.nv.lst', '\n'.join(nvram_lines))
 
     def decode(self):
         if not os.path.exists(self.filename):
@@ -346,9 +346,7 @@ class UEFICommand(BaseCommand):
             self.ExitCode = ExitCode.ERROR
             return
 
-        self.logger.log(f"[CHIPSEC] Parsing EFI volumes from '{self.filename}'..")
-        _orig_logname = self.logger.LOG_FILE_NAME
-        self.logger.set_log_file(self.filename + '.UEFI.lst', False)
+        self.logger.log("[CHIPSEC] Parsing EFI volumes from '{}'..".format(self.filename))
         cur_dir = self.cs.os_helper.getcwd()
         ftypes = []
         inv_filetypes = {v: k for k, v in FILE_TYPE_NAMES.items()}
@@ -360,11 +358,7 @@ class UEFICommand(BaseCommand):
                 else:
                     self.logger.log_warning("Unknown file type '{}'. Valid types: {}".format(
                         mtype, list(FILE_TYPE_NAMES.values())))
-        if not decode_uefi_region(cur_dir, self.filename, self.fwtype, ftypes):
-            self.ExitCode = ExitCode.ERROR
-        self.logger.set_log_file(_orig_logname)
-        if self.ExitCode == ExitCode.ERROR:
-            self.logger.log_error(f"Could not parse EFI firmware volumes from '{self.filename}'")
+        decode_uefi_region(cur_dir, self.filename, self.fwtype, ftypes)
 
     def keys(self):
         if not os.path.exists(self.filename):
