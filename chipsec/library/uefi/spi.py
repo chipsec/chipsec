@@ -45,7 +45,7 @@ if TYPE_CHECKING:
 from chipsec.library.logger import logger
 from chipsec.library.file import write_file, read_file
 from chipsec.library.uefi.compression import COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_EFI_STANDARD, COMPRESSION_TYPES_ALGORITHMS, COMPRESSION_TYPE_UNKNOWN, COMPRESSION_TYPE_LZMAF86
-from chipsec.library.uefi.compression import COMPRESSION_TYPE_BROTLI, COMPRESSION_TYPE_GZIP, COMPRESSION_TYPE_ZLIB_AMD
+from chipsec.library.uefi.compression import COMPRESSION_TYPE_BROTLI, COMPRESSION_TYPE_GZIP, COMPRESSION_TYPE_ZLIB_AMD, COMPRESSION_TYPE_ZSTD
 from chipsec.library.uefi.compression import UefiCompression
 from chipsec.library.uefi.common import bit_set, EFI_GUID_SIZE, EFI_GUID_FMT
 from chipsec.library.uefi.platform import FWType, fw_types, EFI_NVRAM_GUIDS, EFI_PLATFORM_FS_GUIDS, NVAR_NVRAM_FS_FILE
@@ -66,8 +66,11 @@ from chipsec.library.uefi.fv import EFI_COMPRESSION_SECTION, EFI_COMPRESSION_SEC
 from chipsec.library.uefi.fv import EFI_GUIDED_SECTION_TIANO, EFI_GUIDED_SECTION_BROTLI, EFI_GUIDED_SECTION_LZMAF86
 from chipsec.library.uefi.fv import EFI_GUIDED_SECTION_LZMA, EFI_GUIDED_SECTION_LZMA_HP, EFI_GUIDED_SECTION_LZMA_MS
 from chipsec.library.uefi.fv import EFI_GUIDED_SECTION_GZIP, EFI_GUIDED_SECTION_ZLIB_AMD1, EFI_GUIDED_SECTION_ZLIB_AMD2
+from chipsec.library.uefi.fv import EFI_GUIDED_SECTION_ZSTD
 from chipsec.library.uefi.fv import EFI_GUIDED_SECTION_AMI_SIGNED, EFI_GUIDED_SECTION_PHOENIX
 from chipsec.library.uefi.fv import EFI_CAPSULE_HEADER_FMT, EFI_CAPSULE_HEADER_SIZE, EFI_CAPSULE_GUIDS
+from chipsec.library.uefi.fv import EFI_FTW_GUIDS
+from chipsec.library.uefi.fv import EFI_APRIORI_GUIDS, EFI_PEI_APRIORI_FILE_GUID
 
 CMD_UEFI_FILE_REMOVE = 0
 CMD_UEFI_FILE_INSERT_BEFORE = 1
@@ -369,7 +372,8 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
                 sec.children = build_efi_modules_tree(fwtype, sec.Image[sec.DataOffset:], Size - sec.DataOffset, 0, polarity)
             elif sec.Guid in [EFI_GUIDED_SECTION_LZMA, EFI_GUIDED_SECTION_LZMA_HP, EFI_GUIDED_SECTION_LZMA_MS,
                               EFI_GUIDED_SECTION_LZMAF86, EFI_GUIDED_SECTION_BROTLI, EFI_GUIDED_SECTION_GZIP,
-                              EFI_GUIDED_SECTION_ZLIB_AMD1, EFI_GUIDED_SECTION_ZLIB_AMD2, EFI_GUIDED_SECTION_TIANO]:
+                              EFI_GUIDED_SECTION_ZLIB_AMD1, EFI_GUIDED_SECTION_ZLIB_AMD2, EFI_GUIDED_SECTION_TIANO,
+                              EFI_GUIDED_SECTION_ZSTD]:
                 if sec.Guid in [EFI_GUIDED_SECTION_LZMA, EFI_GUIDED_SECTION_LZMA_HP, EFI_GUIDED_SECTION_LZMA_MS]:
                     d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_LZMA)
                 elif sec.Guid == EFI_GUIDED_SECTION_LZMAF86:
@@ -382,6 +386,8 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
                     d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_ZLIB_AMD)
                 elif sec.Guid == EFI_GUIDED_SECTION_TIANO:
                     d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_EFI_STANDARD)
+                elif sec.Guid == EFI_GUIDED_SECTION_ZSTD:
+                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_ZSTD)
                 else:
                     d = b''
 
@@ -605,6 +611,11 @@ def build_efi_tree(data: bytes, fwtype: Optional[str]) -> List['EFI_MODULE']:
             for i in fwbin:
                 fv.children.append(i)
 
+        # Detect Fault Tolerant Write (FTW) working/spare blocks
+        elif fv.Guid in EFI_FTW_GUIDS:
+            fv.isNVRAM = True
+            fv.NVRAMType = 'FTW'
+
         else:
             # Unknown FV GUID — attempt FFS parse anyway since FV header format is universal
             logger().log_warning(f'Unknown FV GUID {{{fv.Guid}}}, attempting FFS parse')
@@ -659,6 +670,18 @@ def update_efi_tree(modules: List['EFI_MODULE'], parent_guid: Optional[UUID] = N
                 for m1 in modules:
                     m1.ui_string = m.ui_string
                 ui_string = m.ui_string
+            # Decode Apriori file content: RAW section inside PEI/DXE Apriori files
+            # contains a flat array of 16-byte GUIDs specifying dispatch order
+            elif m.Type == EFI_SECTION_RAW and parent_guid in EFI_APRIORI_GUIDS:
+                raw_data = m.Image[m.HeaderSize:]
+                num_guids = len(raw_data) // 16
+                if num_guids > 0 and len(raw_data) >= 16:
+                    phase = 'PEI' if parent_guid == EFI_PEI_APRIORI_FILE_GUID else 'DXE'
+                    guid_list = []
+                    for i in range(num_guids):
+                        g = UUID(bytes_le=raw_data[i * 16:(i + 1) * 16])
+                        guid_list.append(f'{{{g}}}')
+                    m.Comments = f'{phase} Apriori ({num_guids} entries): ' + ', '.join(guid_list)
         # update parent file's GUID in all children nodes
         if len(m.children) > 0:
             ui_string = update_efi_tree(m.children, parent_guid)
@@ -929,6 +952,16 @@ def save_efi_tree_filetype(modules: List['EFI_MODULE'],
                 mod_dir_path = f'{mod_path}.dir'
                 if not os.path.exists(mod_dir_path):
                     os.makedirs(mod_dir_path)
+                if m.isNVRAM:
+                    try:
+                        if m.NVRAMType and (parent is not None):
+                            nvram = parent.Image if (type(m) is EFI_FILE and type(parent) is EFI_FV) else m.Image
+                            file_path = os.path.join(mod_dir_path, 'NVRAM')
+                            parse_EFI_variables(file_path, nvram, False, m.NVRAMType)
+                        else:
+                            raise Exception("NVRAM type cannot be None")
+                    except Exception:
+                        logger().log_warning(f"Couldn't extract NVRAM in {{{m.Guid}}} using type '{m.NVRAMType}'")
         # save children modules
         if len(m.children) > 0:
             md["children"] = save_efi_tree_filetype(m.children, m, mod_dir_path, lvl + 1, filetype, save)
