@@ -190,6 +190,11 @@ EFI_GUIDED_SECTION_TIANO = UUID('A31280AD-481E-41B6-95E8-127F4C984779')
 EFI_GUIDED_SECTION_ZLIB_AMD1 = UUID('CE3233F5-2CD6-4D87-9152-4A238BB6D1C4')
 EFI_GUIDED_SECTION_ZLIB_AMD2 = UUID('991EFAC0-E260-416B-A4B8-3B153072B804')
 
+# Vendor-proprietary GUID-defined sections (signed/compressed wrappers)
+EFI_GUIDED_SECTION_AMI_SIGNED = UUID('3049C727-2C23-4EC4-8CC0-1DCFA3428358')  # AMI Aptio signed section
+EFI_GUIDED_SECTION_PHOENIX = UUID('5A537A18-83C6-4E91-86C1-CA5A4C3E48A7')     # Phoenix proprietary
+EFI_GUIDED_SECTION_INSYDE_SIGNED = UUID('0F9D89E8-9259-4F76-A5AF-0C89E34023DF')  # Insyde signed (same as EFI_FIRMWARE_CONTENTS_SIGNED_GUID)
+
 FIRMWARE_VOLUME_GUID = UUID("24400798-3807-4A42-B413-A1ECEE205DD8")
 VOLUME_SECTION_GUID = UUID("367AE684-335D-4671-A16D-899DBFEA6B88")
 EFI_FFS_VOLUME_TOP_FILE_GUID = UUID("1BA0062E-C779-4582-8566-336AE8F78F09")
@@ -481,6 +486,7 @@ def NextFwVolume(buffer: bytes, off: int = 0, last_fv_size: int = 0) -> Optional
                         logger().log_hal(f'[uefi] FV extended header extends past HeaderLength: file start adjusted to 0x{actual_header_size:X}')
             return EFI_FV(fof, FsGuid, FvLength, Attributes, actual_header_size, Checksum, ExtHeaderOffset, FvImage, CalcSum, fv_name_guid)
         else:
+            logger().log_hal(f'Candidate FV header at offset 0x{fof:08X} GUID={{{FsGuid}}} failed validation, skipping')
             fof += 0x2C
     return None
 
@@ -572,7 +578,7 @@ def NextFwFile(FvImage: bytes, FvLength: int, fof: int, polarity: bool) -> Optio
 
         # Validate fsize is a legal value
         if fsize == 0 or fsize > FvLength - cur_offset:
-            logger().log_hal("WARNING: Unable to get correct file size for NextFwFile corrupt header information")
+            logger().log_hal(f'Corrupt FFS file header at offset 0x{cur_offset:08X} (invalid size 0x{fsize:X}), skipping')
             break
         # Get next_offset
         update_or_deleted = (bit_set(State, EFI_FILE_MARKED_FOR_UPDATE, polarity)) or (bit_set(State, EFI_FILE_DELETED, polarity))
@@ -614,6 +620,7 @@ def NextFwFileSection(sections: bytes, ssize: int, sof: int, polarity: bool) -> 
         else:
             sec_name = f'S_UNKNOWN_{Type:02X}'
         if (Size == 0xffffff and Type == 0xff) or (Size == 0):
+            logger().log_hal(f'Skipping invalid section at offset 0x{curr_offset:08X} (Size=0x{Size:X}, Type=0x{Type:02X})')
             curr_offset = align(curr_offset + 4, 4)
             continue
         sec_body = sections[curr_offset:curr_offset + Size]
