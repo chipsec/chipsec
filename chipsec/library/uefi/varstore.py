@@ -38,7 +38,7 @@ from typing import Dict, Tuple, List, Optional, Any, Union
 
 from chipsec.library import defines
 from chipsec.library.file import read_file, write_file
-from chipsec.library.logger import logger, print_buffer_bytes
+from chipsec.library.logger import logger, print_buffer_bytes, dump_buffer_bytes
 from chipsec.library.types import EfiVariableType
 from chipsec.library.uefi.common import EFI_GUID_FMT, EFI_GUID_SIZE, EFI_GUID_STR, bit_set, get_3b_size
 from chipsec.library.uefi.platform import FWType, NVAR_NVRAM_FS_FILE, NVRAM_ATTR_VLD, NVRAM_ATTR_DATA, NVRAM_ATTR_GUID, NVRAM_ATTR_DESC_ASCII, NVRAM_ATTR_EXTHDR, NVRAM_ATTR_RT
@@ -1204,9 +1204,12 @@ EFI_VAR_DICT: Dict[str, Dict[str, Any]] = {
 }
 
 
-def decode_EFI_variables(efi_vars: Dict[str, List[EfiVariableType]], nvram_pth: str) -> None:
-    # print decoded and sorted EFI variables into a log file
-    print_sorted_EFI_variables(efi_vars)
+def decode_EFI_variables(efi_vars: Dict[str, List[EfiVariableType]], nvram_pth: str, lst_lines: Optional[List[str]] = None) -> None:
+    # Format decoded and sorted EFI variables
+    if lst_lines is not None:
+        lst_lines.extend(format_sorted_EFI_variables(efi_vars))
+    else:
+        print_sorted_EFI_variables(efi_vars)
     # write each EFI variable into its own binary file
     for name in efi_vars.keys():
         n = 0
@@ -1236,14 +1239,20 @@ def identify_EFI_NVRAM(buffer: bytes) -> str:
     return ''
 
 
-def parse_EFI_variables(fname: str, rom: bytes, authvars: bool, _fw_type: Optional[str] = None) -> bool:
+def parse_EFI_variables(fname: str, rom: bytes, authvars: bool, _fw_type: Optional[str] = None, lst_lines: Optional[List[str]] = None) -> bool:
+    def _out(msg: str) -> None:
+        if lst_lines is not None:
+            lst_lines.append(msg)
+        else:
+            logger().log(msg)
+
     if (_fw_type in fw_types) and (_fw_type is not None):
-        logger().log(f'[uefi] Using FW type (NVRAM format): {_fw_type}')
+        _out(f'[uefi] Using FW type (NVRAM format): {_fw_type}')
     else:
         logger().log_error(f"Unrecognized FW type '{_fw_type}' (NVRAM format) '{_fw_type}'.")
         return False
 
-    logger().log('[uefi] Searching for NVRAM in the binary..')
+    _out('[uefi] Searching for NVRAM in the binary..')
     efi_vars_store = find_EFI_variable_store(rom, _fw_type)
     if efi_vars_store:
         nvram_fname = f'{fname}.nvram.bin'
@@ -1251,9 +1260,9 @@ def parse_EFI_variables(fname: str, rom: bytes, authvars: bool, _fw_type: Option
         nvram_pth = f'{fname}.nvram.dir'
         if not os.path.exists(nvram_pth):
             os.makedirs(nvram_pth)
-        logger().log('[uefi] Extracting EFI Variables in the NVRAM..')
+        _out('[uefi] Extracting EFI Variables in the NVRAM..')
         efi_vars = EFI_VAR_DICT[_fw_type]['func_getefivariables'](efi_vars_store)
-        decode_EFI_variables(efi_vars, nvram_pth)
+        decode_EFI_variables(efi_vars, nvram_pth, lst_lines=lst_lines)
     else:
         logger().log_error('Did not find NVRAM')
         return False
@@ -1308,6 +1317,63 @@ VAR_ADDED = 0x7f  # Variable has been completely added
 
 def IS_VARIABLE_STATE(_c: int, _Mask: int) -> bool:
     return ((((~_c) & 0xFF) & ((~_Mask) & 0xFF)) != 0)
+
+
+def format_efi_variable(offset: int, var_buf: bytes, var_header: 'EfiTableType', var_name: str, var_data: bytes, var_guid: str, var_attrib: int) -> str:
+    """Format an EFI variable as a human-readable string (artifact output)."""
+    lines: List[str] = []
+    lines.append('')
+    lines.append('--------------------------------')
+    lines.append(f'EFI Variable (offset = 0x{offset:X}):')
+    lines.append('--------------------------------')
+    lines.append(f'Name      : {var_name}')
+    lines.append(f'Guid      : {var_guid}')
+
+    if var_header:
+        if 'State' in var_header._fields:
+            state = getattr(var_header, 'State')
+            state_str = 'State     :'
+            if IS_VARIABLE_STATE(state, VAR_IN_DELETED_TRANSITION):
+                state_str = f'{state_str} IN_DELETED_TRANSITION +'
+            if IS_VARIABLE_STATE(state, VAR_DELETED):
+                state_str = f'{state_str} DELETED +'
+            if IS_VARIABLE_STATE(state, VAR_ADDED):
+                state_str = f'{state_str} ADDED +'
+            lines.append(state_str)
+
+        if logger().VERBOSE:
+            if var_header.__str__:
+                lines.append(str(var_header))
+            else:
+                decoded_header = FWType.EFI_FW_TYPE_UEFI.upper()
+                lines.append(f'Decoded Header ({decoded_header}):')
+                for attr in var_header._fields:
+                    attr_str = f'{attr:<16}'
+                    attr_value = getattr(var_header, attr)
+                    lines.append(f'{attr_str} = {attr_value:X}')
+
+    attr_str = (f'Attributes: 0x{var_attrib:X} ( {get_attr_string(var_attrib)} )')
+    lines.append(attr_str)
+    lines.append('Data:')
+    lines.append(dump_buffer_bytes(var_data))
+
+    if logger().VERBOSE:
+        lines.append('Full Contents:')
+        if var_buf is not None:
+            lines.append(dump_buffer_bytes(var_buf))
+
+    return '\n'.join(lines)
+
+
+def format_sorted_EFI_variables(variables: Dict[str, List['EfiVariableType']]) -> List[str]:
+    """Format all EFI variables as a list of strings (artifact output)."""
+    lines: List[str] = []
+    sorted_names = sorted(variables.keys())
+    rec: Tuple[int, bytes, EfiTableType, bytes, str, int]
+    for name in sorted_names:
+        for rec in variables[name]:
+            lines.append(format_efi_variable(rec[0], rec[1], rec[2], name, rec[3], rec[4], rec[5]))
+    return lines
 
 
 def print_efi_variable(offset: int, var_buf: bytes, var_header: 'EfiTableType', var_name: str, var_data: bytes, var_guid: str, var_attrib: int) -> None:
