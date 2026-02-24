@@ -53,7 +53,7 @@ from chipsec.library.uefi.varstore import identify_EFI_NVRAM, parse_EFI_variable
 from chipsec.library.uefi.fv import EFI_SECTION_PE32, EFI_SECTION_TE, EFI_SECTION_PIC, EFI_SECTION_COMPATIBILITY16, EFI_FIRMWARE_FILE_SYSTEM2_GUID
 from chipsec.library.uefi.fv import EFI_FIRMWARE_FILE_SYSTEM_GUID, EFI_FIRMWARE_FILE_SYSTEM3_GUID, EFI_SECTIONS_EXE, EFI_SECTION_USER_INTERFACE, EFI_SECTION_GUID_DEFINED
 from chipsec.library.uefi.fv import EFI_GUID_DEFINED_SECTION, EFI_GUID_DEFINED_SECTION_size, NextFwFile, NextFwFileSection, NextFwVolume, GetFvHeader
-from chipsec.library.uefi.fv import EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID
+from chipsec.library.uefi.fv import EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID, FvChecksum16
 from chipsec.library.uefi.fv import EFI_CERT_TYPE_RSA_2048_SHA256_GUID, EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size, EFI_SECTION, EFI_FV, EFI_FILE
 from chipsec.library.uefi.fv import EFI_FIRMWARE_CONTENTS_SIGNED_GUID, WIN_CERT_TYPE_EFI_GUID, WIN_CERTIFICATE_size, WIN_CERTIFICATE
 from chipsec.library.uefi.fv import WIN_CERT_TYPE_PKCS_SIGNED_DATA, WIN_CERT_TYPE_EFI_PKCS115
@@ -66,6 +66,7 @@ from chipsec.library.uefi.fv import EFI_COMPRESSION_SECTION, EFI_COMPRESSION_SEC
 from chipsec.library.uefi.fv import EFI_GUIDED_SECTION_TIANO, EFI_GUIDED_SECTION_BROTLI, EFI_GUIDED_SECTION_LZMAF86
 from chipsec.library.uefi.fv import EFI_GUIDED_SECTION_LZMA, EFI_GUIDED_SECTION_LZMA_HP, EFI_GUIDED_SECTION_LZMA_MS
 from chipsec.library.uefi.fv import EFI_GUIDED_SECTION_GZIP, EFI_GUIDED_SECTION_ZLIB_AMD1, EFI_GUIDED_SECTION_ZLIB_AMD2
+from chipsec.library.uefi.fv import EFI_GUIDED_SECTION_AMI_SIGNED, EFI_GUIDED_SECTION_PHOENIX
 from chipsec.library.uefi.fv import EFI_CAPSULE_HEADER_FMT, EFI_CAPSULE_HEADER_SIZE, EFI_CAPSULE_GUIDS
 
 CMD_UEFI_FILE_REMOVE = 0
@@ -80,6 +81,167 @@ type2ext = {EFI_SECTION_PE32: 'pe32', EFI_SECTION_TE: 'te', EFI_SECTION_PIC: 'pi
 # and write them on the file system
 #
 WRITE_ALL_HASHES = False
+
+# Import ACPI table signatures from existing library (used for RAW section labeling)
+try:
+    from chipsec.hal.common.acpi import ACPI_TABLES as _ACPI_TABLES
+    ACPI_TABLE_SIGNATURES = {sig.encode('ascii') for sig in _ACPI_TABLES}
+except ImportError:
+    ACPI_TABLE_SIGNATURES = set()
+
+# PE/TE machine type names
+PE_MACHINE_TYPES = {
+    0x014C: 'I386',
+    0x0200: 'IA64',
+    0x8664: 'X64',
+    0x01C0: 'ARMTHUMB_MIXED',
+    0x01C2: 'ARM',
+    0xAA64: 'AARCH64',
+    0x5064: 'RISCV64',
+    0x5032: 'RISCV32',
+    0x5128: 'RISCV128',
+    0x0EBC: 'EBC',
+}
+
+# PE Optional Header subsystem types
+PE_SUBSYSTEM_TYPES = {
+    10: 'EFI_APPLICATION',
+    11: 'EFI_BOOT_SERVICE_DRIVER',
+    12: 'EFI_RUNTIME_DRIVER',
+    13: 'EFI_ROM',
+}
+
+
+def _identify_microcode(data: bytes) -> Optional[str]:
+    """Detect Intel CPU microcode header in data and return a comment string.
+
+    Intel microcode header (48 bytes):
+      Offset 0x00: Header Version (UINT32) — always 0x00000001
+      Offset 0x04: Update Revision (UINT32)
+      Offset 0x08: Date (UINT32 BCD: MMDDYYYY)
+      Offset 0x0C: CPUID Signature (UINT32)
+      Offset 0x10: Checksum (UINT32)
+      Offset 0x14: Loader Revision (UINT32)
+      Offset 0x18: Processor Flags (UINT32)
+      Offset 0x1C: Data Size (UINT32) — 0 means 2000 bytes
+      Offset 0x20: Total Size (UINT32) — 0 means 2048 bytes
+    """
+    if len(data) < 48:
+        return None
+    hdr_ver, update_rev, date_bcd, cpuid_sig = struct.unpack_from('<IIII', data, 0)
+    if hdr_ver != 0x00000001:
+        return None
+    # Validate CPUID: family >= 4 (bits 11:8)
+    family = (cpuid_sig >> 8) & 0xF
+    if family < 4 and cpuid_sig != 0:
+        return None
+    # Validate BCD date
+    month = (date_bcd >> 24) & 0xFF
+    day = (date_bcd >> 16) & 0xFF
+    year = date_bcd & 0xFFFF
+    if month == 0 or month > 0x12 or day == 0 or day > 0x31:
+        return None
+    total_size = struct.unpack_from('<I', data, 0x20)[0]
+    if total_size == 0:
+        total_size = 2048
+    if total_size > len(data) or total_size < 48:
+        return None
+    return (f'Intel Microcode: CPUID=0x{cpuid_sig:08X}, Rev=0x{update_rev:08X}, '
+            f'Date={month:02X}/{day:02X}/{year:04X}, Size=0x{total_size:X}')
+
+
+def _identify_acpi_table(data: bytes) -> Optional[str]:
+    """Detect ACPI table header in data and return a comment string.
+
+    ACPI table header (36 bytes):
+      Offset 0x00: Signature (4 bytes ASCII)
+      Offset 0x04: Length (UINT32)
+      Offset 0x08: Revision (UINT8)
+      Offset 0x09: Checksum (UINT8)
+      Offset 0x0A: OEM ID (6 bytes)
+      Offset 0x10: OEM Table ID (8 bytes)
+    """
+    if len(data) < 36:
+        return None
+    sig = data[0:4]
+    if sig not in ACPI_TABLE_SIGNATURES:
+        return None
+    length = struct.unpack_from('<I', data, 4)[0]
+    if length < 36 or length > len(data):
+        return None
+    revision = data[8]
+    try:
+        oem_id = data[0x0A:0x10].decode('ascii', errors='replace').rstrip('\x00 ')
+        oem_table_id = data[0x10:0x18].decode('ascii', errors='replace').rstrip('\x00 ')
+    except Exception:
+        oem_id = '?'
+        oem_table_id = '?'
+    return (f'ACPI {sig.decode("ascii")}: Rev={revision}, Length=0x{length:X}, '
+            f'OemId="{oem_id}", OemTableId="{oem_table_id}"')
+
+
+def _parse_pe_te_metadata(sec_type: int, data: bytes) -> Optional[str]:
+    """Parse PE32/PE32+ or TE executable header and return a metadata comment string."""
+    if len(data) < 2:
+        return None
+
+    sig = data[0:2]
+    if sig == b'VZ' and sec_type == EFI_SECTION_TE:
+        # Terse Executable header (40 bytes)
+        # Offset 0: Signature (VZ), 2: Machine, 4: NumberOfSections
+        # 6: Subsystem, 8: StrippedSize, 12: AddressOfEntryPoint
+        # 16: BaseOfCode, 20: ImageBase (UINT64)
+        if len(data) < 40:
+            return None
+        machine, num_sections, subsystem = struct.unpack_from('<HBxBx', data, 2)
+        # Re-read properly from the TE header structure
+        machine = struct.unpack_from('<H', data, 2)[0]
+        num_sections = struct.unpack_from('<B', data, 4)[0]
+        subsystem = struct.unpack_from('<B', data, 5)[0]
+        entry_point = struct.unpack_from('<I', data, 8)[0]
+        machine_name = PE_MACHINE_TYPES.get(machine, f'0x{machine:04X}')
+        subsys_name = PE_SUBSYSTEM_TYPES.get(subsystem, f'0x{subsystem:02X}')
+        return f'TE: Machine={machine_name}, Subsystem={subsys_name}, EntryPoint=0x{entry_point:X}, Sections={num_sections}'
+
+    elif sig == b'MZ' and sec_type in (EFI_SECTION_PE32, EFI_SECTION_PIC, EFI_SECTION_COMPATIBILITY16):
+        # PE32/PE32+: MZ header -> PE signature offset at 0x3C
+        if len(data) < 0x40:
+            return None
+        pe_offset = struct.unpack_from('<I', data, 0x3C)[0]
+        if pe_offset + 24 > len(data):
+            return None
+        pe_sig = data[pe_offset:pe_offset + 4]
+        if pe_sig != b'PE\x00\x00':
+            return None
+        # COFF header at pe_offset + 4
+        coff_off = pe_offset + 4
+        if coff_off + 20 > len(data):
+            return None
+        machine, num_sections = struct.unpack_from('<HH', data, coff_off)
+        size_of_opt_hdr = struct.unpack_from('<H', data, coff_off + 16)[0]
+        opt_off = coff_off + 20
+        if opt_off + size_of_opt_hdr > len(data) or size_of_opt_hdr < 24:
+            machine_name = PE_MACHINE_TYPES.get(machine, f'0x{machine:04X}')
+            return f'PE: Machine={machine_name}, Sections={num_sections}'
+        # Optional header magic: 0x10B = PE32, 0x20B = PE32+
+        opt_magic = struct.unpack_from('<H', data, opt_off)[0]
+        if opt_magic == 0x20B and size_of_opt_hdr >= 112:  # PE32+
+            entry_point = struct.unpack_from('<I', data, opt_off + 16)[0]
+            image_size = struct.unpack_from('<I', data, opt_off + 56)[0]
+            subsystem = struct.unpack_from('<H', data, opt_off + 68)[0]
+        elif opt_magic == 0x10B and size_of_opt_hdr >= 96:  # PE32
+            entry_point = struct.unpack_from('<I', data, opt_off + 16)[0]
+            image_size = struct.unpack_from('<I', data, opt_off + 56)[0]
+            subsystem = struct.unpack_from('<H', data, opt_off + 68)[0]
+        else:
+            machine_name = PE_MACHINE_TYPES.get(machine, f'0x{machine:04X}')
+            return f'PE: Machine={machine_name}, Sections={num_sections}'
+        machine_name = PE_MACHINE_TYPES.get(machine, f'0x{machine:04X}')
+        subsys_name = PE_SUBSYSTEM_TYPES.get(subsystem, f'0x{subsystem:02X}')
+        pe_type = 'PE32+' if opt_magic == 0x20B else 'PE32'
+        return f'{pe_type}: Machine={machine_name}, Subsystem={subsys_name}, EntryPoint=0x{entry_point:X}, ImageSize=0x{image_size:X}'
+
+    return None
 
 
 def decompress_section_data(section_dir_path: str, sec_fs_name: str, compressed_data: bytes, compression_type: int) -> bytes:
@@ -140,15 +302,23 @@ def modify_uefi_region(data: bytes, command: int, guid: UUID, uefi_file: bytes =
             else:
                 data = data[:FvEndOffset] + (abs(FvLengthChange) * b'\xFF') + data[FvEndOffset:]
 
-            FvLengthChange = 0
+            # Recalculate FV header FvLength and checksum after modification
+            if FvLengthChange != 0:
+                FvOffset = fv.Offset
+                FvHeaderLength = fv.HeaderSize
+                OldFvLength = fv.Size
+                NewFvLength = OldFvLength + FvLengthChange
+                logger().log(f'Rebuilding FV header at offset 0x{FvOffset:08X}: FvLength 0x{OldFvLength:X} -> 0x{NewFvLength:X}')
+                FvHeader = bytearray(data[FvOffset:FvOffset + FvHeaderLength])
+                # Update FvLength (UINT64 at offset 0x20)
+                struct.pack_into('<Q', FvHeader, 0x20, NewFvLength)
+                # Zero out checksum field (UINT16 at offset 0x32) before recalculating
+                struct.pack_into('<H', FvHeader, 0x32, 0)
+                NewChecksum = FvChecksum16(bytes(FvHeader))
+                struct.pack_into('<H', FvHeader, 0x32, NewChecksum)
+                data = data[:FvOffset] + bytes(FvHeader) + data[FvOffset + FvHeaderLength:]
 
-            # if FvLengthChange != 0:
-            #    logger().log( "Rebuilding Firmware Volume with GUID={} at offset={:08X}".format(FsGuid, FvOffset) )
-            #    FvHeader = data[FvOffset: FvOffset + FvHeaderLength]
-            #    FvHeader = FvHeader[:0x20] + struct.pack('<Q', FvLength) + FvHeader[0x28:]
-            #    NewChecksum = FvChecksum16(FvHeader[:0x32] + '\x00\x00' + FvHeader[0x34:])
-            #    FvHeader = FvHeader[:0x32] + struct.pack('<H', NewChecksum) + FvHeader[0x34:]
-            #    data = data[:FvOffset] + FvHeader + data[FvOffset + FvHeaderLength:]
+            FvLengthChange = 0
 
         fv = NextFwVolume(data, fv.Offset, fv.Size)
     return data
@@ -167,6 +337,10 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
         if sec.Type in EFI_SECTIONS_EXE:
             # "leaf" executable section: update hashes and check against match criteria
             sec.calc_hashes(sec.HeaderSize)
+            exe_data = sec.Image[sec.HeaderSize:]
+            pe_te_info = _parse_pe_te_metadata(sec.Type, exe_data)
+            if pe_te_info:
+                sec.Comments = pe_te_info
         elif sec.Type == EFI_SECTION_USER_INTERFACE:
             # "leaf" UI section: update section's UI name
             try:
@@ -244,7 +418,25 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
                 if len(sec.Image) > offset:
                     sec.children = build_efi_modules_tree(fwtype, sec.Image[offset:], len(sec.Image[offset:]), 0, polarity)
             else:
-                sec.children = build_efi_model(sec.Image[sec.HeaderSize:], fwtype)
+                # Vendor-proprietary GUID-defined sections: strip vendor header and try decompression
+                if sec.Guid in (EFI_GUIDED_SECTION_AMI_SIGNED, EFI_GUIDED_SECTION_PHOENIX):
+                    sec.Comments = f'Vendor signed/wrapped section GUID={{{sec.Guid}}}'
+                    # Try to decompress from DataOffset (skipping vendor header)
+                    vendor_payload = sec.Image[sec.DataOffset:]
+                    d = b''
+                    if vendor_payload:
+                        # Try common compression algorithms on the payload
+                        for comp_type in [COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_EFI_STANDARD, COMPRESSION_TYPE_LZMAF86]:
+                            d = decompress_section_data('', sec_fs_name, vendor_payload, comp_type)
+                            if d:
+                                break
+                    if d:
+                        sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
+                    else:
+                        # Fall back to recursive scan of raw payload
+                        sec.children = build_efi_model(vendor_payload, fwtype)
+                else:
+                    sec.children = build_efi_model(sec.Image[sec.HeaderSize:], fwtype)
 
         elif sec.Type == EFI_SECTION_COMPRESSION:
             compressed_data = sec.Image[sec.HeaderSize + EFI_COMPRESSION_SECTION_size:]
@@ -273,7 +465,17 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
                 sec.children = children
 
         elif sec.Type == EFI_SECTION_RAW:
-            sec.children = build_efi_model(sec.Image[sec.HeaderSize:], fwtype)
+            raw_data = sec.Image[sec.HeaderSize:]
+            # Detect Intel CPU microcode update header
+            ucode_info = _identify_microcode(raw_data)
+            if ucode_info:
+                sec.Comments = ucode_info
+            else:
+                # Detect ACPI table header signature
+                acpi_info = _identify_acpi_table(raw_data)
+                if acpi_info:
+                    sec.Comments = acpi_info
+            sec.children = build_efi_model(raw_data, fwtype)
 
         elif sec.Type in (EFI_SECTION_DXE_DEPEX, EFI_SECTION_PEI_DEPEX, EFI_SECTION_MM_DEPEX):
             # Decode dependency expression opcodes (PI spec Vol III)
@@ -399,6 +601,13 @@ def build_efi_tree(data: bytes, fwtype: Optional[str]) -> List['EFI_MODULE']:
                 fv.NVRAMType = identify_EFI_NVRAM(fv.Image) if fwtype is None else fwtype
             except Exception:
                 logger().log_warning(f"Couldn't identify NVRAM in FV {{{fv.Guid}}}")
+            fwbin = build_efi_file_tree(fv.Image, fwtype)
+            for i in fwbin:
+                fv.children.append(i)
+
+        else:
+            # Unknown FV GUID — attempt FFS parse anyway since FV header format is universal
+            logger().log_warning(f'Unknown FV GUID {{{fv.Guid}}}, attempting FFS parse')
             fwbin = build_efi_file_tree(fv.Image, fwtype)
             for i in fwbin:
                 fv.children.append(i)
