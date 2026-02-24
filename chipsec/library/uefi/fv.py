@@ -760,7 +760,3 @@ def assemble_uefi_section(image: bytes, uncomressed_size: int, compression_type:
 def assemble_uefi_raw(image: bytes) -> bytes:
     """Assemble a UEFI raw section from image data, with 8-byte alignment padding."""
     return align_image(struct.pack('<L', ((len(image) + 4) & 0x00FFFFFF) + (EFI_SECTION_RAW << 24)) + image)
-
-
-def DecodeSection(SecType, SecBody, SecHeaderSize) -> None:
-    pass
