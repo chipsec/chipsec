@@ -177,6 +177,7 @@ sig_types: Dict[str, Tuple[str, Callable, int, str]] = {
 
 
 def parse_sb_db(db: bytes, decode_dir: str) -> List[bytes]:
+    """Parse a Secure Boot signature database (db/dbx) and extract individual certificates."""
     entries = []
     dof = 0
     nsig = 0
