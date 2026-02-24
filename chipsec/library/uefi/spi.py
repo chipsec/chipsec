@@ -604,8 +604,8 @@ def build_efi_tree(data: bytes, fwtype: Optional[str]) -> List['EFI_MODULE']:
             fv.isNVRAM = True
             try:
                 fv.NVRAMType = identify_EFI_NVRAM(fv.Image) if fwtype is None else fwtype
-            except Exception:
-                logger().log_warning(f"Couldn't identify NVRAM format in FV {{{fv.Guid}}} at offset 0x{fv.Offset:08X}")
+            except Exception as e:
+                logger().log_warning(f"Couldn't identify NVRAM format in FV {{{fv.Guid}}} at offset 0x{fv.Offset:08X}: {e!r}")
             fwbin = build_efi_file_tree(fv.Image, fwtype)
             for i in fwbin:
                 fv.children.append(i)
@@ -772,19 +772,24 @@ def save_efi_tree(modules: List['EFI_MODULE'],
                   path: str = '',
                   save_log: bool = True,
                   lvl: int = 0,
+                  filetype: List[int] = [],
                   lst_lines: Optional[List[str]] = None
                   ) -> List[Dict[str, Any]]:
-    mod_dir_path = ''
+    mod_dir_path = path
     modules_arr = []
     modn = 0
     for m in modules:
         md: Dict[str, Any] = {}
         m.indent = DEF_INDENT * lvl
+
+        # Log this module (when filetype filter is active, only log matching EFI_FILE entries)
         if save_log:
-            if lst_lines is not None:
-                lst_lines.append(str(m))
-            else:
-                logger().log(str(m))
+            should_log = not filetype or (isinstance(m, EFI_FILE) and m.Type in filetype)
+            if should_log:
+                if lst_lines is not None:
+                    lst_lines.append(str(m))
+                else:
+                    logger().log(str(m))
 
         # extract all non-function non-None members of EFI_MODULE objects
         attrs = [a for a in dir(m) if not callable(getattr(m, a)) and not a.startswith("__") and (getattr(m, a) is not None)]
@@ -822,12 +827,12 @@ def save_efi_tree(modules: List['EFI_MODULE'],
                                     lst_lines.extend(nvram_lines)
                         else:
                             raise Exception("NVRAM type cannot be None")
-                    except Exception:
-                        logger().log_warning(f"Couldn't extract NVRAM in {{{m.Guid}}} at offset 0x{m.Offset:08X} using type '{m.NVRAMType}'")
+                    except Exception as e:
+                        logger().log_warning(f"Couldn't extract NVRAM in {{{m.Guid}}} at offset 0x{m.Offset:08X} using type '{m.NVRAMType}': {e!r}")
 
         # save children modules
         if len(m.children) > 0:
-            md["children"] = save_efi_tree(m.children, m, save_modules, mod_dir_path, save_log, lvl + 1, lst_lines=lst_lines)
+            md["children"] = save_efi_tree(m.children, m, save_modules, mod_dir_path, save_log, lvl + 1, filetype=filetype, lst_lines=lst_lines)
         else:
             del md["children"]
 
@@ -884,10 +889,7 @@ def parse_uefi_region_from_file(filename: str, fwtype: Optional[str], outpath: O
 
     # Save entire EFI module hierarchy on a file-system and export into JSON
     lst_lines: List[str] = []
-    if filetype:
-        tree_json = save_efi_tree_filetype(tree, path=outpath, filetype=filetype, lst_lines=lst_lines)
-    else:
-        tree_json = save_efi_tree(tree, path=outpath, lst_lines=lst_lines)
+    tree_json = save_efi_tree(tree, path=outpath, filetype=filetype, lst_lines=lst_lines)
     write_file(f'{filename}.UEFI.json', json.dumps(tree_json, indent=2, separators=(',', ': '), cls=UUIDEncoder))
     if lst_lines:
         write_file(f'{filename}.UEFI.lst', '\n'.join(lst_lines))
@@ -927,68 +929,3 @@ def decode_uefi_region(pth: str, fname: str, fwtype: Optional[str], filetype: Li
     parse_EFI_variables(nvram_fname, region_data, False, fwtype, lst_lines=nvram_lines)
     if nvram_lines:
         write_file(f'{nvram_fname}.nvram.lst', '\n'.join(nvram_lines))
-
-
-def save_efi_tree_filetype(modules: List['EFI_MODULE'],
-                           parent: Optional['EFI_MODULE'] = None,
-                           path: str = '',
-                           lvl: int = 0,
-                           filetype: List[int] = [],
-                           save: bool = True,
-                           lst_lines: Optional[List[str]] = None
-                           ) -> List[Dict[str, Any]]:
-    mod_dir_path = path
-    modules_arr = []
-    modn = 0
-    for m in modules:
-        md: Dict[str, Any] = {}
-        m.indent = DEF_INDENT * lvl
-        if (isinstance(m, EFI_FILE) and m.Type in filetype) and save:
-            if lst_lines is not None:
-                lst_lines.append(str(m))
-            else:
-                logger().log(str(m))
-
-        # extract all non-function non-None members of EFI_MODULE objects
-        attrs = [a for a in dir(m) if not callable(getattr(m, a)) and not a.startswith("__") and (getattr(m, a) is not None)]
-        for a in attrs:
-            md[a] = getattr(m, a)
-        md["class"] = type(m).__name__
-        # remove extra attributes
-        for f in ["Image", "indent"]:
-            del md[f]
-
-        # save EFI module image, make sub-directory for children
-        if (isinstance(m, EFI_FILE) and m.Type in filetype) or save:
-            mod_path = dump_efi_module(m, parent, modn, path)
-            try:
-                md["file_path"] = os.path.relpath(mod_path[4:] if mod_path.startswith("\\\\?\\") else mod_path)
-            except Exception:
-                md["file_path"] = mod_path.split(os.sep)[-1]
-            if m.isNVRAM or len(m.children) > 0:
-                mod_dir_path = f'{mod_path}.dir'
-                if not os.path.exists(mod_dir_path):
-                    os.makedirs(mod_dir_path)
-                if m.isNVRAM:
-                    try:
-                        if m.NVRAMType and (parent is not None):
-                            nvram = parent.Image if (type(m) is EFI_FILE and type(parent) is EFI_FV) else m.Image
-                            file_path = os.path.join(mod_dir_path, 'NVRAM')
-                            nvram_lines: List[str] = []
-                            parse_EFI_variables(file_path, nvram, False, m.NVRAMType, lst_lines=nvram_lines)
-                            if nvram_lines:
-                                write_file(f'{file_path}.nvram.lst', '\n'.join(nvram_lines))
-                        else:
-                            raise Exception("NVRAM type cannot be None")
-                    except Exception:
-                        logger().log_warning(f"Couldn't extract NVRAM in {{{m.Guid}}} at offset 0x{m.Offset:08X} using type '{m.NVRAMType}'")
-        # save children modules
-        if len(m.children) > 0:
-            md["children"] = save_efi_tree_filetype(m.children, m, mod_dir_path, lvl + 1, filetype, save, lst_lines=lst_lines)
-        else:
-            del md["children"]
-
-        modules_arr.append(md)
-        modn += 1
-
-    return modules_arr

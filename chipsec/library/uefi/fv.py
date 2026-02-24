@@ -435,8 +435,8 @@ class EFI_SECTION(EFI_MODULE):
 
 def FvSum8(buffer: bytes) -> int:
     sum8 = 0
-    for b in bytestostring(buffer):
-        sum8 = (sum8 + ord(b)) & 0xff
+    for b in buffer:
+        sum8 = (sum8 + b) & 0xff
     return sum8
 
 
@@ -446,13 +446,10 @@ def FvChecksum8(buffer: bytes) -> int:
 
 def FvSum16(buffer: bytes) -> int:
     sum16 = 0
-    buffer_str = bytestostring(buffer)
     blen = len(buffer) // 2
-    i = 0
-    while i < blen:
-        el16 = ord(buffer_str[2 * i]) | (ord(buffer_str[2 * i + 1]) << 8)
+    for i in range(blen):
+        el16 = buffer[2 * i] | (buffer[2 * i + 1] << 8)
         sum16 = (sum16 + el16) & 0xffff
-        i = i + 1
     return sum16
 
 
@@ -487,7 +484,7 @@ def NextFwVolume(buffer: bytes, off: int = 0, last_fv_size: int = 0) -> Optional
     fof = off if last_fv_size == 0 else off + max(last_fv_size, EFI_FIRMWARE_VOLUME_HEADER_size)
     size = len(buffer)
     while (fof + EFI_FIRMWARE_VOLUME_HEADER_size) < size:
-        fof = bytestostring(buffer).find("_FVH", fof)
+        fof = buffer.find(b"_FVH", fof)
         if fof == -1 or size - fof < EFI_FIRMWARE_VOLUME_HEADER_size:
             break
         elif fof < 0x28:
