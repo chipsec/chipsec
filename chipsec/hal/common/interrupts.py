@@ -191,7 +191,7 @@ MdeModulePkg/Core/PiSmmCore/PiSmmCorePrivateData.h
         BufferSize_offset = CommBuffer_offset + 8
         ReturnStatus_offset = BufferSize_offset + 8
 
-        self.hals.memorymem.write_physical_mem(smmc + CommBuffer_offset, 8, struct.pack("Q", payload_loc))
+        self.cs.hals.memory.write_physical_mem(smmc + CommBuffer_offset, 8, struct.pack("Q", payload_loc))
         self.cs.hals.memory.write_physical_mem(smmc + BufferSize_offset, 8, struct.pack("Q", len(data_hdr)))
         self.cs.hals.memory.write_physical_mem(payload_loc, len(data_hdr), data_hdr)
 
