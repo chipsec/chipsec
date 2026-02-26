@@ -32,7 +32,6 @@ from chipsec.hal import hal_base
 from chipsec.hal.intel.spi import SPI
 from chipsec.library.intel.spi import BIOS
 from chipsec.library.uefi.common import EFI_VENDOR_TABLE, EFI_VENDOR_TABLE_SIZE, EFI_VENDOR_TABLE_FORMAT, EFI_TABLE_HEADER_SIZE, EFI_TABLE_HEADER, EFI_TABLES, MAX_EFI_TABLE_SIZE
-from chipsec.library.uefi.common import EFI_REVISIONS
 from chipsec.library.uefi.common import EFI_TABLE_HEADER_FMT, EFI_SYSTEM_TABLE_SIGNATURE, EFI_RUNTIME_SERVICES_SIGNATURE, EFI_BOOT_SERVICES_SIGNATURE
 from chipsec.library.uefi.common import EFI_DXE_SERVICES_TABLE_SIGNATURE, EFI_CONFIGURATION_TABLE
 from chipsec.library.uefi.sleep_states import ACPI_VARIABLE_SET_STRUCT_SIZE, S3_BOOTSCRIPT_VARIABLES, parse_script
@@ -86,13 +85,13 @@ class UEFI(hal_base.HALBase):
         self.logger.log_hal(f'[uefi] Reading from SPI: 0x0-0x{spi_size:X}')
         return self.read_EFI_variables_from_SPI(0, spi_size)
 
-    def read_EFI_variables_from_rom(self, rom: bytes) -> bytes:
+    def read_EFI_variables_from_rom(self, rom: bytes) -> Optional[Dict[str, List['EfiVariableType']]]:
         self.logger.log_hal('[uefi] Looking for variables in SPI dump')
-        efi_var_store = find_EFI_variable_store(rom, 'nvar')
+        efi_var_store = find_EFI_variable_store(rom, self._FWType)
         if efi_var_store:
-            efi_vars = EFI_VAR_DICT['nvar']['func_getefivariables'](efi_var_store)
+            efi_vars = EFI_VAR_DICT[self._FWType]['func_getefivariables'](efi_var_store)
             return efi_vars
-        return efi_var_store
+        return None
 
     def read_EFI_variables_from_SPI(self, BIOS_region_base: int, BIOS_region_size: int) -> bytes:
         self.init_spi_hal()
@@ -286,7 +285,10 @@ class UEFI(hal_base.HALBase):
                 # do some sanity checks on the header
                 is_reserved = table_header.Reserved != 0
                 is_bad_crc = table_header.CRC32 == 0
-                is_not_table_rev = table_header.Revision not in EFI_REVISIONS
+                # Accept any revision with EFI major version 1 or 2 (covers old EFI 1.02 through future UEFI specs)
+                _rev_major = table_header.Revision >> 16
+                _rev_minor = table_header.Revision & 0xFFFF
+                is_not_table_rev = not (_rev_major in (1, 2) and _rev_minor <= 999)
                 is_not_correct_size = table_header.HeaderSize > MAX_EFI_TABLE_SIZE
                 if is_reserved or is_bad_crc or is_not_table_rev or is_not_correct_size:
                     logger().log_hal(f"[uefi] Found '{table_sig}' at 0x{table_pa:016X} but doesn't look like an actual table. Keep searching...")
@@ -357,7 +359,7 @@ class UEFI(hal_base.HALBase):
         else:
             logger().log_hal('[uefi] EFI Configuration Table (No entries found)')
 
-        found = ect_pa is not None
+        found = (ect_pa is not None) and (ect_pa != 0)
         if found and (est is not None):
             ect_buf = self.cs.hals.memory.read_physical_mem(ect_pa, EFI_VENDOR_TABLE_SIZE * est.NumberOfTableEntries)
             ect = EFI_CONFIGURATION_TABLE()
