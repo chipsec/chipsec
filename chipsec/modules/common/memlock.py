@@ -104,4 +104,3 @@ class memlock(BaseModule):
             self.res = ModuleResult.PASSED
 
         return self.result.getReturnCode(self.res)
-

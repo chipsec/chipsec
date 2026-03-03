@@ -83,7 +83,7 @@ class smm_code_chk(BaseModule):
         self.smm_fc_reg.print()
         enabled = self.smm_fc_reg.is_all_field_value(1, 'SMM_CODE_CHK_EN')
         locked = self.smm_fc_reg.is_all_field_value(1, 'LOCK')
-        
+
         if enabled:
             if locked:
                 res = ModuleResult.PASSED
@@ -102,7 +102,7 @@ class smm_code_chk(BaseModule):
         return res
 
     def check_SMM_Code_Chk_En(self) -> int:
-        
+
         res = self._check_SMM_Code_Chk_En()
 
         if res == ModuleResult.FAILED:

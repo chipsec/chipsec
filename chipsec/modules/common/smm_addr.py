@@ -22,7 +22,7 @@
 """
 CPU SMM Addr
 
-This module checks to see that SMMMask has Tseg and Aseg programmed correctly.  It also verifies that CPU access to SMM 
+This module checks to see that SMMMask has Tseg and Aseg programmed correctly.  It also verifies that CPU access to SMM
 is blocked while not in SMM.
 
 Usage:
@@ -166,7 +166,7 @@ class smm_addr(BaseModule):
         else:
             res = ModuleResult.PASSED
             self.logger.log_passed("SMMask protection against cache attack is properly configured")
-        
+
         res = ModuleResult.PASSED
 
         return self.result.getReturnCode(res)

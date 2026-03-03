@@ -122,8 +122,8 @@ def get_bits(value: int, field_bit: int, size: int, preserve_field_position: Opt
         return value & (field_mask << field_bit)
     else:
         return (value >> field_bit) & field_mask
-    
-    
+
+
 
 
 def set_bits(bit: int, size: int, initial_value: int, value: int, preserve_field_position: Optional[bool] = False) -> int:

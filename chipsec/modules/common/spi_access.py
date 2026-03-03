@@ -82,7 +82,7 @@ class spi_access(BaseModule):
 
             if not fdv:
                 self.logger.log("[*] Flash Descriptor Valid bit is not set")
-       
+
             if brwa & (1 << PLATFORM_DATA):
                 self.logger.log("[*] Software has write access to Platform Data region in SPI flash (it's platform specific)")
 

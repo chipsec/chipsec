@@ -36,7 +36,7 @@ from chipsec.command import BaseCommand, toLoad
 
 class CONFIGCommand(BaseCommand):
     """Command to display configuration information."""
-    
+
     # Initialize command
     def __init__(self, argv, cs):
         """Initialize the command with base class and set options."""
@@ -90,7 +90,7 @@ class CONFIGCommand(BaseCommand):
         if self.config == "SCOPE":
             self.scope_details()
             return
-            
+
         if self.config == "ALL":
             # Exclude SCOPE from all_options when processing ALL
             config = [x for x in self.all_options if x != "SCOPE"]
@@ -98,17 +98,17 @@ class CONFIGCommand(BaseCommand):
             self.scope_details()
         else:
             config = [self.config]
-            
+
         for mconfig in config:
             if mconfig in self.skip_list:
                 continue
-                
+
             try:
                 cfg = getattr(self.cs.Cfg, mconfig)
             except AttributeError:
                 self.logger.log(f"\n{mconfig} - Not available")
                 continue
-                
+
             self.logger.log(f"\n{mconfig}")
             for vid in cfg.keys():
                 self.logger.log(f"{vid}:")
@@ -140,7 +140,7 @@ class CONFIGCommand(BaseCommand):
                         self.logger.log(
                             f'\t{name} - {self.msr_details(cfg[vid][name])}'
                         )
-                        
+
                     if (self.child_details and
                             mconfig not in ["CONFIG_PCI_RAW"]):
                         if mconfig not in ["MMIO_BARS", "IO_BARS"]:
@@ -172,53 +172,53 @@ class CONFIGCommand(BaseCommand):
                 ret = (f"access: {regi.get('access', 'N/A')}, "
                        f"address: {regi.get('address', 'N/A')}, "
                        f"size: {regi.get('size', 'N/A')}")
-                
+
                 # Add configuration if available
                 if 'config' in regi:
                     ret += f", config: {regi['config']}"
-                
+
                 # BEGIN: Extended MMIO Functionality
                 # Display extended MMIO attributes if available
                 if 'base_ref' in regi:
                     ret += f", base_ref: {regi['base_ref']}"
                     if 'base_value' in regi:
                         ret += f" (0x{regi['base_value']:x})"
-                        
+
                 if 'ip_ref' in regi:
                     ret += f", ip_ref: {regi['ip_ref']}"
                     if 'ip_value' in regi:
                         ret += f" (0x{regi['ip_value']:x})"
-                        
+
                 if 'scope' in regi:
                     ret += f", scope: {regi['scope']}"
                 # END: Extended MMIO Functionality
-                
+
             else:
                 # Fall back to attribute access if it's an object
                 ret = (f"access: {getattr(regi, 'access', 'N/A')}, "
                        f"address: {getattr(regi, 'address', 'N/A')}, "
                        f"size: {getattr(regi, 'size', 'N/A')}")
-                
+
                 # Add configuration if available
                 if hasattr(regi, 'config'):
                     ret += f", config: {regi.config}"
-                
+
                 # BEGIN: Extended MMIO Functionality
                 # Display extended MMIO attributes if available
                 if hasattr(regi, 'base_ref') and regi.base_ref:
                     ret += f", base_ref: {regi.base_ref}"
                     if hasattr(regi, 'base_value') and regi.base_value:
                         ret += f" (0x{regi.base_value:x})"
-                        
+
                 if hasattr(regi, 'ip_ref') and regi.ip_ref:
                     ret += f", ip_ref: {regi.ip_ref}"
                     if hasattr(regi, 'ip_value') and regi.ip_value:
                         ret += f" (0x{regi.ip_value:x})"
-                        
+
                 if hasattr(regi, 'scope') and regi.scope:
                     ret += f", scope: {regi.scope}"
                 # END: Extended MMIO Functionality
-                
+
         except (KeyError, AttributeError):
             # In case of any error, just return the string representation
             ret = str(regi)
@@ -267,7 +267,7 @@ class CONFIGCommand(BaseCommand):
         elif regi['type'] == 'memory':
             ret = f"access: {regi['access']}, offset: {regi['offset']}, " \
                   f"size: {regi['size']}"
-            
+
         # Add field information if available
         try:
             if isinstance(regi, (list, tuple)) and len(regi) > 0:
@@ -281,7 +281,7 @@ class CONFIGCommand(BaseCommand):
         except (IndexError, AttributeError, TypeError):
             # Silently ignore errors when accessing fields
             pass
-                
+
         return ret
 
     def pci_details(self, regi):
@@ -324,10 +324,10 @@ class CONFIGCommand(BaseCommand):
         for mconfig in config:
             if mconfig in ["CONTROLS", "LOCKS", "LOCKEDBY"]:
                 continue
-                
+
             cfg = getattr(self.cs.Cfg, mconfig)
             self.logger.log(f"\t{mconfig}:")
-            
+
             if mconfig == "IMA_REGISTERS":
                 if vid in cfg and dev in cfg[vid]:
                     for name in cfg[vid][dev].keys():
@@ -344,7 +344,7 @@ class CONFIGCommand(BaseCommand):
                 except KeyError:
                     pass
         self.logger.log("")
-        
+
     def control_details(self):
         """Display control details."""
         self.logger.log("\nCONTROLS")
@@ -371,40 +371,40 @@ class CONFIGCommand(BaseCommand):
     def scope_details(self):
         """Display the contents of the scope manager."""
         self.logger.log("\nSCOPE MANAGER")
-        
+
         # Display parent keys
         self.logger.log("\nParent Keys:")
         for key in self.cs.Cfg.scope_manager.parent_keys:
             self.logger.log(f"\t{key}")
-            
+
         # Display child keys
         self.logger.log("\nChild Keys:")
         for key in self.cs.Cfg.scope_manager.child_keys:
             self.logger.log(f"\t{key}")
-            
+
         # Display current scope
         self.logger.log("\nCurrent Scope:")
         for scope_key, scope_value in self.cs.Cfg.scope.items():
             key_name = scope_key if scope_key is not None else "DEFAULT"
             self.logger.log(f"\t{key_name}: {scope_value}")
-            
+
         # BEGIN: Extended MMIO Functionality
         # Display memory bases if available
         if hasattr(self.cs.Cfg, 'memory_bases') and self.cs.Cfg.memory_bases:
             self.logger.log("\nMemory Bases:")
             for base_name, base_value in self.cs.Cfg.memory_bases.items():
                 self.logger.log(f"\t{base_name}: 0x{base_value:x}")
-                
+
         # Display IP addresses if available
         if hasattr(self.cs.Cfg, 'ip_addresses') and self.cs.Cfg.ip_addresses:
             self.logger.log("\nIP Addresses:")
             for ip_name, ip_value in self.cs.Cfg.ip_addresses.items():
                 self.logger.log(f"\t{ip_name}: 0x{ip_value:x}")
         # END: Extended MMIO Functionality
-            
+
         # Display available scopes in the configuration
         self.logger.log("\nAvailable Configuration Items:")
-        
+
         # Go through parent keys and display available items
         for parent_key in self.cs.Cfg.scope_manager.parent_keys:
             if hasattr(self.cs.Cfg, parent_key):

@@ -61,7 +61,7 @@ class Hals:
         for i in self._available_hals:
             a_hals += i['name']
         return a_hals
-    
+
     def list_loadable_hals(self) -> list:
         loadable_list = []
         if not self._available_hals:
@@ -92,7 +92,7 @@ class Hals:
                 hal['priority'] = 1
                 selected_hals.append(hal)
             elif name in hal['name'].keys() and self.is_any_mfgid_in_haldata(hal):
-                hal['priority'] = 2 
+                hal['priority'] = 2
                 selected_hals.append(hal)
 
         if not selected_hals:
@@ -102,7 +102,7 @@ class Hals:
 
     def is_mfgid_in_haldata(self, haldata: List) -> bool:
         return any(self.cs.Cfg.mfgid in subl.value for subl in haldata['arch'])
-    
+
     def is_any_mfgid_in_haldata(self, haldata: List) -> bool:
         return HALBase.MfgIds.Any in haldata['arch']
 

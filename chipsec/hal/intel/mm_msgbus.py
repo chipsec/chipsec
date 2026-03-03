@@ -51,7 +51,7 @@ class MMMsgBus(hal_base.HALBase):
             bool: True if the P2SB device was hidden, False if it was not.
         """
         return self.__write_to_p2sb(1)
-    
+
     def __unhide_p2sb(self) -> bool:
         """
         Unhide the P2SB device by writing to the HIDE field in the P2SBC register.
@@ -59,7 +59,7 @@ class MMMsgBus(hal_base.HALBase):
             bool: True if the P2SB device was unhidden, False if it was not.
         """
         return self.__write_to_p2sb(0)
-    
+
     def __write_to_p2sb(self, value: int) -> bool:
         """
         Hide or unhide the P2SB device by writing to the HIDE field in the P2SBC register.
@@ -84,7 +84,7 @@ class MMMsgBus(hal_base.HALBase):
         except MMIOBarConfigError as e:
             self.logger.log_hal(f"Failed to write to P2SB register {self.p2sbHide['reg']}: {e}")
         return hidden
-    
+
     def get_sbreg_base_address(self) -> int:
         """
         Get the base address of the SBREG MMIO BAR.

@@ -45,14 +45,14 @@ class CpuId(hal_base.HALBase):
     def get_proc_info(self):
         (eax, _, _, _) = self.cpuid(0x01, 0x00)
         return eax
-    
+
     def get_mfgid(self) -> str:
         (_,ebx, ecx, edx) = self.cpuid(0x00, 0x00)
         mfg_barray = ebx.to_bytes(4, byteorder) + edx.to_bytes(4, byteorder) + ecx.to_bytes(4, byteorder)
         return bytestostring(unpack('<12s', mfg_barray)[0])
-    
 
-        
-        
+
+
+
 
 haldata = {"arch":[hal_base.HALBase.MfgIds.Any], 'name': {'cpuid': "CpuId"}}
