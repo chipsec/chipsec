@@ -194,7 +194,7 @@ class Register:
         """
         Recursively get all register objects from the current object
 
-        Args:            
+        Args:
             current_obj: The current object to search for registers
             reg_name: Name of the register
 
@@ -622,7 +622,7 @@ class ObjList(list):
 
     def filter_with_field(self, field: str) -> 'ObjList':
         return ObjList([inst for inst in self if inst.has_field(field)])
-    
+
     def filter_with_fields(self, fields: List[str]) -> 'ObjList':
         return ObjList([inst for inst in self if inst.has_all_fields(fields)])
 

@@ -81,14 +81,14 @@ class ConversionRules:
                 'base_addr',
             }
         )
-    
+
     def set_did_as_range(self):
         """Set 'did' attribute to be treated as a range."""
         if 'did' in self.int_keys:
             self.int_keys.discard('did')
             self.range_list_keys.add('did')
         return self
-    
+
     def set_did_as_int(self):
         """Set 'did' attribute to be treated as an integer."""
         if 'did' not in self.int_keys:

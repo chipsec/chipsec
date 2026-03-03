@@ -89,19 +89,19 @@ class Io(HALBase):
 
     def read_port_byte(self, io_port: int) -> int:
         return self.read(io_port, 1)
-    
+
     def read_port_word(self, io_port: int) -> int:
         return self.read(io_port, 2)
-    
+
     def read_port_dword(self, io_port: int) -> int:
         return self.read(io_port, 4)
-    
+
     def write_port_byte(self, io_port: int, value: int) -> int:
         return self.write(io_port, value, 1)
-    
+
     def write_port_word(self, io_port: int, value: int) -> int:
         return self.write(io_port, value, 2)
-    
+
     def write_port_dword(self, io_port: int, value: int) -> int:
         return self.write(io_port, value, 4)
 

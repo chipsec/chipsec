@@ -57,7 +57,7 @@ class ACPICommand(BaseCommand):
     def parse_arguments(self) -> None:
         parser = ArgumentParser(usage=__doc__)
         subparsers = parser.add_subparsers()
-        
+
         parser_list = subparsers.add_parser('list')
         parser_list.set_defaults(func=self.acpi_list)
 
@@ -65,13 +65,13 @@ class ACPICommand(BaseCommand):
         parser_table.add_argument('-f', '--file', dest='_file', help='Read from file', action='store_true')
         parser_table.add_argument('_name', metavar='table|filename', nargs=1, help="table to list")
         parser_table.set_defaults(func=self.acpi_table)
-        
+
         parser_mmio = subparsers.add_parser('mmio-regions')
-        parser_mmio.add_argument('--space', dest='_space', default='systemmemory', 
+        parser_mmio.add_argument('--space', dest='_space', default='systemmemory',
                                 help='Filter by space type: systemmemory, systemio, all (default: systemmemory)')
         parser_mmio.add_argument('--json', dest='_json', action='store_true', help='Output as JSON')
         parser_mmio.set_defaults(func=self.acpi_mmio_regions)
-        
+
         parser.parse_args(self.argv, namespace=self)
 
     def set_up(self) -> None:
@@ -97,13 +97,13 @@ class ACPICommand(BaseCommand):
         """List ACPI OperationRegion definitions."""
         space_filter = getattr(self, '_space', 'systemmemory').lower()
         use_json = getattr(self, '_json', False)
-        
+
         regions = self._acpi.list_operation_regions()
-        
+
         if not regions:
             self.logger.log('[CHIPSEC] No OperationRegions found in DSDT/SSDTs')
             return
-        
+
         # Filter by space type
         filtered = []
         if space_filter == 'all':
@@ -117,13 +117,13 @@ class ACPICommand(BaseCommand):
             }
             target_space = space_map.get(space_filter, 'SystemMemory')
             filtered = [r for r in regions if r['space_type_name'] == target_space]
-        
+
         if not filtered:
             self.logger.log(f'[CHIPSEC] No {space_filter} regions found')
             return
-        
+
         self.logger.log(f'[CHIPSEC] Found {len(filtered)} {space_filter} OperationRegions')
-        
+
         if use_json:
             import json
             self.logger.log(json.dumps(filtered, indent=2, default=str))
@@ -133,16 +133,16 @@ class ACPICommand(BaseCommand):
             self.logger.log('=' * 90)
             self.logger.log(f"{'NAME':<16} {'SPACE':<18} {'BASE':>12} {'SIZE':>12} {'END':>12}")
             self.logger.log('-' * 90)
-            
+
             for region in sorted(filtered, key=lambda x: x['base']):
                 name = region['name'][:15]
                 space = region['space_type_name'][:17]
                 base = region['base']
                 length = region['length']
                 end = base + length - 1
-                
+
                 self.logger.log(f"{name:<16} {space:<18} 0x{base:010X} 0x{length:010X} 0x{end:010X}")
-            
+
             self.logger.log('=' * 90)
 
 

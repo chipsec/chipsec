@@ -427,7 +427,7 @@ class s3script_modify(BaseModule):
             self.logger.log(examples_str)
             self.result.setStatusBit(self.result.status.UNSUPPORTED_FEATURE)
             return self.result.getReturnCode(ModuleResult.ERROR)
-        
+
         self.result.setStatusBit(self.result.status.VERIFY)
 
         if sts:
@@ -435,5 +435,5 @@ class s3script_modify(BaseModule):
             self.res = ModuleResult.PASSED
         else:
             self.res = ModuleResult.FAILED
-        
+
         return self.result.getReturnCode(self.res)

@@ -151,7 +151,7 @@ class synth_kbd(BaseModule):
             self.logger.log('\n\n')
             self.logger.log_bad(traceback.format_exc())
             self.logger.log('\n\n')
-            
+
         finally:
             vb.vmbus_close(relid)
             vb.vmbus_teardown_gpadl(relid, vb.ringbuffers[relid].gpadl)

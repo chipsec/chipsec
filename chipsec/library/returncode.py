@@ -167,7 +167,7 @@ def getModuleResultName(res, using_return_codes) -> str:
         result_mask = 0xFFFFFFFF00000000
         status = [ReturnCode.status.SUCCESS.value[0], ReturnCode.status.INFORMATION.value[0], ReturnCode.status.NOT_APPLICABLE.value[0]]
         if ((res & result_mask) >> 32) in status:
-            resultName = 'Passed' 
+            resultName = 'Passed'
         elif ((res & result_mask) >> 32) == ReturnCode.status.ARCHIVED.value[0]:
             resultName = 'Archived'
         else:

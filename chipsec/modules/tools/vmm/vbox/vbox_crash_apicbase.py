@@ -68,7 +68,7 @@ class vbox_crash_apicbase(BaseModule):
                 apicbase_msr.write(apicbase_msr.value)
             except HWAccessViolationError:
                 self.logger.log('System blocked write attempt.')
-            
+
         # If we are here, then we are fine ;)
         self.logger.log_passed("VMM/Host OS didn't crash (not vulnerable)")
         self.result.setStatusBit(self.result.status.SUCCESS)

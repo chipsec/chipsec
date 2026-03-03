@@ -134,7 +134,7 @@ class remap(BaseModule):
             self.logger.log_bad('  Not all addresses are 1MB aligned')
 
         self.logger.log('[*] Checking if memory remap configuration is locked..')
-        
+
         is_ia_untrusted_set = (ia_untrusted_reg.is_all_field_value(1, 'IA_UNTRUSTED'))
         remap_ok = remap_ok and is_ia_untrusted_set
         if is_ia_untrusted_set:
@@ -184,18 +184,18 @@ class remap(BaseModule):
 
     def check_remap_base_and_limit(self, remapbase_regs: list, remaplimit_regs: list, touud: int, is_warning: bool, remap_ok: bool) -> Tuple[bool, bool]:
         bars = set([reg.bar for reg in remapbase_regs])
-        
+
         for bar in bars:
             remapbase_reg = [reg for reg in remapbase_regs if reg.bar == bar]
             remaplimit_reg = [reg for reg in remaplimit_regs if reg.bar == bar]
-        
+
             if len(remapbase_reg) == len(remaplimit_reg) == 1:
                 remapbase_reg = remapbase_reg[0]
                 remaplimit_reg = remaplimit_reg[0]
-            
+
             remapbase = remapbase_reg.get_field('REMAPBASE')
             remaplimit = remaplimit_reg.get_field('REMAPLMT')
-            
+
             if remapbase == remaplimit:
                 self.logger.log('[!]   Memory Remap status is Unknown')
                 is_warning = True

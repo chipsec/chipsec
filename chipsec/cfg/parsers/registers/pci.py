@@ -198,7 +198,7 @@ class PCIRegisters(BaseConfigRegisterHelper):
             reg_val_str = f'0x{self.value:0{self.size * 2}X}'
         else:
             reg_val_str = self.value
-        
+
         b = f'{self.pci.bus:02x}' if self.pci.bus is not None else self.pci.bus
         d = f'{self.pci.dev:02x}' if self.pci.dev is not None else self.pci.dev
         f = f'{self.pci.fun:x}' if self.pci.fun is not None else self.pci.fun

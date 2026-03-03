@@ -76,7 +76,7 @@ class sinkhole(BaseModule):
             return True
 
     def check_LAPIC_SMRR_overlap(self):
-        
+
         smrr_physbase_msr = self.cs.register.get_instance_by_name('IA32_SMRR_PHYSBASE', 0)
         apic_base_msr = self.cs.register.get_instance_by_name('IA32_APIC_BASE', 0)
         self.logger.log(smrr_physbase_msr)
@@ -129,5 +129,5 @@ class sinkhole(BaseModule):
             self.logger.log_important('CPU does not support SMRR range protection of SMRAM.  Skipping module.')
             self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
             self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
-        
+
         return self.res

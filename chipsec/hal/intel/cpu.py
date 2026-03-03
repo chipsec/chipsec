@@ -214,7 +214,7 @@ class CPU(hal_base.HALBase):
         mtrrcap_msr_reg = self.cs.register.get_list_by_name('8086.MSR.MTRRCAP')
         mtrrcap_msr_reg.read_and_hal_print()
         return mtrrcap_msr_reg.is_any_field_value(1, 'SMRR')
-        
+
     #
     # Dump CPU page tables at specified physical base of paging-directory hierarchy (CR3)
     #

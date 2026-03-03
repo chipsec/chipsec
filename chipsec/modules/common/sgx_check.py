@@ -453,4 +453,3 @@ class sgx_check(BaseModule):
             self.logger.log_failed('One or more SGX checks failed')
 
         return self.result.getReturnCode(self.res)
-

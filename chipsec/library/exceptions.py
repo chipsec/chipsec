@@ -29,11 +29,11 @@ class UninitializedRegisterError (RuntimeError):
 
 
 class ScopeNotFoundError(RuntimeError):
-    pass 
+    pass
 
 
 class NonRegisterInScopeError(RuntimeError):
-    pass 
+    pass
 
 
 # Register/Device/Lock/Control Objs

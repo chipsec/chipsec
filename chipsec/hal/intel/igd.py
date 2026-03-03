@@ -222,7 +222,7 @@ class IGD(hal_base.HALBase):
         self.write_GGTT_PTE(pte_num, pte_orig)
 
         return buffer
-    
+
     def display_igd_pci_info(self) -> None:
         igd_list = self.cs.device.get_list_by_name('8086.IGD')
         for vid, did, rid, instance in self.cs.hals.pci.get_viddidrid_from_device_list(igd_list):

@@ -49,7 +49,7 @@ class IOMMUParser(BaseConfigParser):
     def access_handler(self, et_node, stage_data) -> None:
         """
         Parse 'register' elements from IOMMU XML files.
-        
+
         Args:
             et_node: ElementTree node containing register definitions
             stage_data: Stage processing context (unused)
@@ -61,17 +61,17 @@ class IOMMUParser(BaseConfigParser):
             child.attrib['fields'] = reg_fields
             self.cfg.IOMMU_REGS.append(self._convert_register_data(child.attrib))
 
-    def _convert_data(self, xml_node: Dict[str, str], entries: List[str], 
+    def _convert_data(self, xml_node: Dict[str, str], entries: List[str],
                       int_fields: List[str], hex_fields: List[str]) -> Dict[str, Union[str, int, None]]:
         """
         Convert XML node attributes to typed dictionary.
-        
+
         Args:
             xml_node: Raw XML attributes dict
             entries: List of expected attribute names
             int_fields: Fields to parse as decimal integers
             hex_fields: Fields to parse as hex integers
-        
+
         Returns:
             Dictionary with typed values
         """
@@ -95,10 +95,10 @@ class IOMMUParser(BaseConfigParser):
     def _convert_register_data(self, xml_node: Dict[str, str]) -> iommuentry:
         """
         Convert XML register node to iommuentry namedtuple.
-        
+
         Args:
             xml_node: XML attributes dict with fields list
-        
+
         Returns:
             iommuentry object
         """
@@ -106,16 +106,16 @@ class IOMMUParser(BaseConfigParser):
         int_fields = ['size']
         hex_fields = ['offset', 'default']
         tmp = self._convert_data(xml_node, entries, int_fields, hex_fields)
-        return iommuentry(tmp['name'], tmp['type'], tmp['size'], tmp['offset'], 
+        return iommuentry(tmp['name'], tmp['type'], tmp['size'], tmp['offset'],
                          tmp['default'], tmp['desc'], tmp['fields'])
 
     def _convert_field_data(self, xml_node: Dict[str, str]) -> fieldentry:
         """
         Convert XML field node to fieldentry namedtuple.
-        
+
         Args:
             xml_node: XML attributes dict for field
-        
+
         Returns:
             fieldentry object
         """
@@ -123,7 +123,7 @@ class IOMMUParser(BaseConfigParser):
         int_fields = ['size', 'bit']
         hex_fields = ['default']
         tmp = self._convert_data(xml_node, entries, int_fields, hex_fields)
-        return fieldentry(tmp['name'], tmp['bit'], tmp['size'], tmp['access'], 
+        return fieldentry(tmp['name'], tmp['bit'], tmp['size'], tmp['access'],
                          tmp['default'], tmp['desc'])
 
 
@@ -132,11 +132,11 @@ class IOMMUCommands(BaseConfigHelper):
     Configuration helper for IOMMU registers - manages register lookup and address binding.
     Similar to TPMICommands but for VT-d engines discovered via DMAR.
     """
-    
+
     def __init__(self, cfg_obj):
         """
         Initialize IOMMUCommands with parsed register definitions.
-        
+
         Args:
             cfg_obj: Configuration object containing IOMMU_REGS
         """
@@ -147,10 +147,10 @@ class IOMMUCommands(BaseConfigHelper):
     def get_reg(self, name: str) -> Optional[iommuentry]:
         """
         Get register definition by name.
-        
+
         Args:
             name: Register name (e.g., 'VER', 'CAP', 'GSTS')
-        
+
         Returns:
             iommuentry object or None if not found
         """
@@ -166,7 +166,7 @@ class IOMMUCommands(BaseConfigHelper):
     def set_engine_bases(self, bases: Dict[str, int]) -> None:
         """
         Set discovered VT-d engine base addresses from DMAR parsing.
-        
+
         Args:
             bases: Dictionary mapping engine_name -> MMIO base address
                    e.g., {'VTD0': 0xC3FE0000, 'VTD1': 0xC3FF0000, ...}
@@ -180,10 +180,10 @@ class IOMMUCommands(BaseConfigHelper):
     def get_engine_base(self, engine_name: str) -> Optional[int]:
         """
         Get base address for specific engine.
-        
+
         Args:
             engine_name: Engine identifier (e.g., 'VTD0')
-        
+
         Returns:
             Base address or None if engine not found
         """
@@ -192,11 +192,11 @@ class IOMMUCommands(BaseConfigHelper):
     def compute_reg_address(self, reg: iommuentry, engine_base: int) -> int:
         """
         Compute final MMIO address for register on specific engine.
-        
+
         Args:
             reg: Register definition with offset
             engine_base: VT-d engine MMIO base address
-        
+
         Returns:
             Final address = engine_base + reg.offset
         """
