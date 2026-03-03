@@ -48,7 +48,7 @@ from typing import Dict, List, Optional, Union
 
 
 class CPUCommand(BaseCommand):
-    
+
     def requirements(self) -> toLoad:
         return toLoad.All
 

@@ -548,21 +548,21 @@ class ACPI(HALBase):
     def list_operation_regions(self, include_ssdt: bool = True, include_crs: bool = True) -> List[Dict]:
         """
         Extract all OperationRegion definitions and optionally _CRS resource descriptors from DSDT/SSDTs.
-        
+
         Args:
             include_ssdt: Include SSDT tables (default True)
             include_crs: Include _CRS method resource descriptors (default True)
-        
+
         Returns:
             List of dicts: [{name, space_type, space_type_name, base, length, source}, ...]
             where source is "OperationRegion" or "CRS Descriptor"
         """
         from chipsec.library.acpi_aml_parser import parse_operation_regions, CRSResourceParser
-        
+
         regions = []
         tables_to_parse = []
         aml_tables = []  # Keep track of AML content for CRS extraction
-        
+
         # Add DSDT
         try:
             if ACPI_TABLE_SIG_DSDT in self.tableList:
@@ -574,7 +574,7 @@ class ACPI(HALBase):
                         aml_tables.append(dsdt_content)
         except Exception as e:
             logger().log_warning(f"[acpi] Error reading DSDT: {e}")
-        
+
         # Add SSDTs if requested
         if include_ssdt:
             try:
@@ -587,13 +587,13 @@ class ACPI(HALBase):
                             aml_tables.append(ssdt_content)
             except Exception as e:
                 logger().log_warning(f"[acpi] Error reading SSDTs: {e}")
-        
+
         if not tables_to_parse:
             return regions
-        
+
         # Parse OperationRegion definitions
         regions = parse_operation_regions(tables_to_parse)
-        
+
         # Extract _CRS resource descriptors if enabled
         if include_crs and aml_tables:
             try:
@@ -617,7 +617,7 @@ class ACPI(HALBase):
                                 regions.append(crs_region)
             except Exception as e:
                 logger().log_warning(f"[acpi] Error extracting _CRS resources: {e}")
-        
+
         return regions
 
 

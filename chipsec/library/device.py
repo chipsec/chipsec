@@ -68,16 +68,16 @@ class Device:
     def get_list_by_name(self, device_name: str) -> List[Any]:
         """
         Get list of enabled device objects by name.
-        
+
         Args:
             device_name: Name of the device to retrieve objects for
-            
+
         Returns:
             List of enabled device objects matching the name
         """
         objList = self._get_defined_list(device_name)
         return objList.filter_enabled()
-    
+
     def _get_defined_list(self, device_name: str) -> List[Any]:
         """
         Get list of all defined device objects by name.

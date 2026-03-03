@@ -48,17 +48,17 @@ class IOMMU(hal_base.HALBase):
         """
         if self.initialized:
             return
-        
+
         # Discover VT-d engines from DMAR DRHD structures
         self._discover_vtd_engines()
-        
+
         # Load register definitions from XML
         self._load_iommu_configs()
-        
+
         # Bind discovered bases to config
         if self.iommu_config:
             self.iommu_config.set_engine_bases(self.engines)
-        
+
         self.initialized = True
         self.logger.log_hal(f"[IOMMU] Initialized with {len(self.engines)} VT-d engines")
 
@@ -66,7 +66,7 @@ class IOMMU(hal_base.HALBase):
         """
         Discover VT-d engine MMIO base addresses from DMAR ACPI table.
         Direct binary parsing like ACPI AML parser - simple and reliable.
-        
+
         DMAR Table Format:
         - Standard ACPI header (36 bytes)
         - Host Address Width (1 byte)
@@ -80,28 +80,28 @@ class IOMMU(hal_base.HALBase):
             if not self.cs.hals.acpi.is_ACPI_table_present('DMAR'):
                 self.logger.log_warning("[IOMMU] DMAR table not present")
                 return
-            
+
             # Get raw DMAR table bytes
             dmar_tables = self.cs.hals.acpi.get_ACPI_table('DMAR')
             if not dmar_tables or len(dmar_tables) == 0:
                 self.logger.log_warning("[IOMMU] Could not read DMAR table")
                 return
-            
+
             # Extract full table: header + body
             dmar_header, dmar_body = dmar_tables[0]
             dmar_data = dmar_header + dmar_body  # Concatenate for full table
-            
+
             if len(dmar_data) < 48:  # Header + minimal DMAR header
                 self.logger.log_warning(f"[IOMMU] DMAR table too short: {len(dmar_data)} bytes")
                 return
-            
+
             self.logger.log_hal(f"[IOMMU] Parsing DMAR table ({len(dmar_data)} bytes)")
-            
+
             # Parse DMAR structures starting at offset 48
             # (36-byte ACPI header + 12-byte DMAR-specific header)
             pos = 48
             engine_idx = 0
-            
+
             while pos + 4 <= len(dmar_data):  # Need at least type/len
                 struct_type = struct.unpack('<H', dmar_data[pos:pos+2])[0]
                 struct_len = struct.unpack('<H', dmar_data[pos+2:pos+4])[0]
@@ -109,7 +109,7 @@ class IOMMU(hal_base.HALBase):
                 if struct_len < 4 or pos + struct_len > len(dmar_data):
                     self.logger.log_hal(f"[IOMMU] Invalid structure at offset {pos}: len={struct_len}")
                     break
-                
+
                 # DRHD structure (Type 0)
                 if struct_type == 0 and struct_len >= 16:
                     flags = dmar_data[pos+4]
@@ -154,14 +154,14 @@ class IOMMU(hal_base.HALBase):
                         'flags': flags,
                         'scopes': scopes
                     })
-                
+
                 pos += struct_len
-            
+
             if not self.engines:
                 self.logger.log_warning("[IOMMU] No DRHD structures found in DMAR")
             else:
                 self.logger.log_hal(f"[IOMMU] Total engines discovered: {len(self.engines)}")
-                
+
         except Exception as e:
             self.logger.log_error(f"[IOMMU] DMAR discovery failed: {e}")
             import traceback
@@ -285,7 +285,7 @@ class IOMMU(hal_base.HALBase):
         try:
             # Try standard extra-config loader
             self.cs.Cfg.add_extra_configs(os.path.join('8086', 'IOMMU'), None, True)
-            
+
             self.iommu_config = IOMMUCommands(self.cs.Cfg)
             reg_count = len(self.iommu_config.regs) if self.iommu_config else 0
             self.logger.log_hal(f"[IOMMU] Loaded {reg_count} register definitions")
@@ -311,35 +311,35 @@ class IOMMU(hal_base.HALBase):
     def read_IOMMU_reg(self, engine_name: str, reg_name: str) -> int:
         """
         Read VT-d register using dynamic address binding.
-        
+
         Args:
             engine_name: Engine identifier (e.g., 'VTD0')
             reg_name: Register name (e.g., 'VER', 'CAP', 'GSTS')
-        
+
         Returns:
             Register value
         """
         if not self.initialized:
             self.initialize()
-        
+
         if not self.iommu_config:
             raise IOMMUError("[IOMMU] Config not loaded")
-        
+
         reg = self.iommu_config.get_reg(reg_name)
         if not reg:
             raise IOMMUError(f"[IOMMU] Register {reg_name} not found")
-        
+
         base = self.engines.get(engine_name)
         if base is None:
             raise IOMMUError(f"[IOMMU] Engine {engine_name} not found")
-        
+
         addr = self.iommu_config.compute_reg_address(reg, base)
         return self.cs.hals.mmio.read_MMIO_reg(addr, 0, reg.size)
-    
+
     def write_IOMMU_reg(self, engine_name: str, reg_name: str, value: int) -> None:
         """
         Write VT-d register using dynamic address binding.
-        
+
         Args:
             engine_name: Engine identifier
             reg_name: Register name
@@ -347,21 +347,21 @@ class IOMMU(hal_base.HALBase):
         """
         if not self.initialized:
             self.initialize()
-        
+
         if not self.iommu_config:
             raise IOMMUError("[IOMMU] Config not loaded")
-        
+
         reg = self.iommu_config.get_reg(reg_name)
         if not reg:
             raise IOMMUError(f"[IOMMU] Register {reg_name} not found")
-        
+
         base = self.engines.get(engine_name)
         if base is None:
             raise IOMMUError(f"[IOMMU] Engine {engine_name} not found")
-        
+
         addr = self.iommu_config.compute_reg_address(reg, base)
         self.cs.hals.mmio.write_MMIO_reg(addr, 0, value, reg.size)
-    
+
     def is_IOMMU_Engine_Enabled(self, iommu_engine: str) -> bool:
         """Check if VT-d engine is enabled (base address is non-zero)."""
         if not self.initialized:
@@ -407,11 +407,11 @@ class IOMMU(hal_base.HALBase):
         """Dump VT-d engine configuration - works with both discovered and legacy engines."""
         if not self.initialized:
             self.initialize()
-        
+
         self.logger.log("==================================================================")
         self.logger.log(f'[iommu] {iommu_engine} IOMMU Engine Configuration')
         self.logger.log("==================================================================")
-        
+
         # Get base address
         try:
             base = self.get_IOMMU_Base_Address(iommu_engine)
@@ -419,13 +419,13 @@ class IOMMU(hal_base.HALBase):
         except IOMMUError as e:
             self.logger.log(f'Error: {e}')
             return
-        
+
         if base == 0:
             self.logger.log("IOMMU engine base address is zero")
             return
-        
+
         self.logger.log("------------------------------------------------------------------")
-        
+
         if iommu_engine in self.engines and self.iommu_config:
             ver = self.read_IOMMU_reg(iommu_engine, 'VER')
             ver_min = ver & 0xF
@@ -486,18 +486,18 @@ class IOMMU(hal_base.HALBase):
         """Dump VT-d page tables - simplified for compatibility."""
         if not self.initialized:
             self.initialize()
-        
+
         self.logger.log(f"[iommu] Page table dumping not yet supported for {iommu_engine}")
 
     def dump_IOMMU_status(self, iommu_engine: str) -> None:
         """Dump VT-d engine status registers."""
         if not self.initialized:
             self.initialize()
-        
+
         self.logger.log('==================================================================')
         self.logger.log(f'[iommu] {iommu_engine} IOMMU Engine Status:')
         self.logger.log('==================================================================')
-        
+
         if iommu_engine in self.engines and self.iommu_config:
             gsts = self.read_IOMMU_reg(iommu_engine, 'GSTS')
             self.logger.log(f'GSTS = 0x{gsts:08X}')

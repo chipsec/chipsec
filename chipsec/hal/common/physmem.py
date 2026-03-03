@@ -169,7 +169,7 @@ class Memory(HALBase):
 
     def get_value_from_bit_def(self, inputValue, fieldStartBit, fieldSize):
         return (inputValue >> fieldStartBit) & self.get_bit_mask(fieldSize)
-    
+
     def get_def(self, range_name: str) -> Dict[str, Any]:
         '''Return address access of a MEM register'''
         ranges = self.cs.Cfg.get_objlist(range_name)

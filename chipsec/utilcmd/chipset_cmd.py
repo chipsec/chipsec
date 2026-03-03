@@ -41,7 +41,7 @@ class PlatformCommand(BaseCommand):
 
     def requirements(self) -> toLoad:
         return toLoad.All
-    
+
     def parse_arguments(self) -> None:
         pass
 

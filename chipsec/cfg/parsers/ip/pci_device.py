@@ -297,7 +297,7 @@ class PCIConfig(GenericConfig):
     def is_enabled(self) -> bool:
         """Check if any PCI instance is enabled."""
         return bool(self.get_enabled_instances())
-    
+
     def validate_pci_config(self) -> bool:
         """
         Validate PCI-specific configuration.
@@ -332,7 +332,7 @@ class PCIConfig(GenericConfig):
             name (str): New name for the configuration. Must be a non-empty string.
 
         Returns:
-            bool: True if the name was successfully updated, False if the name has 
+            bool: True if the name was successfully updated, False if the name has
                   already been set previously.
 
             PCIConfigError: If name is not a string or is empty/whitespace only."""

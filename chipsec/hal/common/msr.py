@@ -63,7 +63,7 @@ class Msr(HALBase):
     def __init__(self, cs):
         super(Msr, self).__init__(cs)
         self.topo = None
-        
+
     # TODO: Move this somewhere else.
     def get_cpu_thread_count(self) -> int:
         if not self.topo:
@@ -78,7 +78,7 @@ class Msr(HALBase):
         core_count = len(self.topo['cores'])
         self.logger.log_hal(f'[Msr] # of cores in Package: {core_count:d}')
         return core_count
-        
+
 
 
 ##########################################################################################################
@@ -92,7 +92,7 @@ class Msr(HALBase):
         (eax, edx) = self.cs.helper.read_msr(cpu_thread_id, msr_addr)
         self.logger.log_hal(f'[cpu{cpu_thread_id:d}] RDMSR( 0x{msr_addr:x} ): EAX = 0x{eax:08X}, EDX = 0x{edx:08X}')
         return (eax, edx)
-    
+
     def read_msr(self, cpu_thread_id: int, msr_addr: int) -> Tuple[int, int]:
         return self.read(cpu_thread_id, msr_addr)
 
@@ -100,7 +100,7 @@ class Msr(HALBase):
         self.cs.helper.write_msr(cpu_thread_id, msr_addr, eax, edx)
         self.logger.log_hal(f'[cpu{cpu_thread_id:d}] WRMSR( 0x{msr_addr:x} ): EAX = 0x{eax:08X}, EDX = 0x{edx:08X}')
         return None
-    
+
     def write_msr(self, cpu_thread_id: int, msr_addr: int, eax: int, edx: int) -> None:
         return self.write(cpu_thread_id, msr_addr, eax, edx)
 

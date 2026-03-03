@@ -19,7 +19,7 @@
 #
 
 """
-Requires the Driver. Lists all available HALs (Hardware Abstraction Layers). 
+Requires the Driver. Lists all available HALs (Hardware Abstraction Layers).
 >>> chipsec_util hals list
 >>> chipsec_util hals listloadable
 >>> chipsec_util hals funcs <hal_name>
@@ -44,7 +44,7 @@ from types import FunctionType as function
 
 
 class HALsCommand(BaseCommand):
-    
+
     def requirements(self) -> toLoad:
         return toLoad.Driver
 
@@ -64,7 +64,7 @@ class HALsCommand(BaseCommand):
     def hals_list(self) -> None:
         self.logger.log("[CHIPSEC] List of HALs:")
         self.logger.log_heading(', '.join(sorted(self.cs.hals.available_hals())))
-    
+
     def hals_list_loadable(self) -> None:
         hal_list = self.cs.hals.list_loadable_hals()
         hal_name_list = []
@@ -85,7 +85,7 @@ class HALsCommand(BaseCommand):
             if type(getattr(hal_class, element)) is function:
                 hal_functions.append(element)
         self.logger.log_heading(', '.join(hal_functions))
-            
+
 
 
 

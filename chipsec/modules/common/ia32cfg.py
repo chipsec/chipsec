@@ -75,7 +75,7 @@ class ia32cfg(BaseModule):
         if feature_cntl_lock.is_any_value(0):
             res = ModuleResult.FAILED
             self.result.setStatusBit(self.result.status.LOCKS)
-                
+
 
         if res == ModuleResult.PASSED:
             self.logger.log_passed('IA32_FEATURE_CONTROL MSR is locked on all logical CPUs')

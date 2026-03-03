@@ -69,7 +69,7 @@ class BaseConfigParser:
 
     def parser_name(self):
         return self.__class__.__name__
-    
+
     def startup(self):
         return None
 

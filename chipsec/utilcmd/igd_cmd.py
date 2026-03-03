@@ -65,7 +65,7 @@ class IgdCommand(BaseCommand):
         parser_info.set_defaults(func=self.print_igd_pci_info)
 
         parser.parse_args(self.argv, namespace=self)
-        
+
 
     def read_dma(self) -> None:
         self.logger.log(f'[CHIPSEC] Reading buffer from memory: PA = 0x{self.address:016X}, len = 0x{self.width:X}..')
