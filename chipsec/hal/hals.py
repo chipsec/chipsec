@@ -109,7 +109,7 @@ class Hals:
     def update_available_hals(self) -> Dict[str, Any]:
         """Determine available HAL modules"""
         hal_base_dir = os.path.join(get_main_dir(), "chipsec", "hal")
-        hal_dirs = [f.name for f in os.scandir(hal_base_dir) if f.is_dir() and '__' not in f.name]
+        hal_dirs = [f for f in os.listdir(hal_base_dir) if os.path.isdir(os.path.join(hal_base_dir, f)) and '__' not in f]
         hals = []
         for hal_dir in hal_dirs:
             hals += ([f'{hal_dir}.{i[:-3]}' for i in os.listdir(os.path.join(hal_base_dir, hal_dir)) if i[-3:] == ".py" and not i[:2] == "__"])
