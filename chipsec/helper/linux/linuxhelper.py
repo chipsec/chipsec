@@ -511,7 +511,7 @@ class LinuxHelper(Helper):
 
         if (status > 0):
             if logger().DEBUG:
-                logger().log_error(f'Reading variable (GET_EFIVAR) did not succeed: {status_dict.get(status, "UNKNOWN")} ({status:d})')
+                logger().log_error(f'Reading variable ({name}:{guid}) did not succeed: {status_dict.get(status, "UNKNOWN")} ({status:d})')
             data = b''
             guid = ''
             attr = 0
