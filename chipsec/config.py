@@ -821,12 +821,12 @@ class Cfg:
 
         # Locate all root configuration files
         cfg_files = []
-        cfg_vids = [f.name for f in os.scandir(cfg_path) if f.is_dir() and is_hex(f.name)]
+        cfg_vids = [f for f in os.listdir(cfg_path) if os.path.isdir(os.path.join(cfg_path,f)) and is_hex(f)]
         for vid_str in cfg_vids:
             root_path = os.path.join(cfg_path, vid_str)
-            cfg_files.extend([config_data(vid_str, None, f.path, None, None)
-                             for f in sorted(os.scandir(root_path), key=lambda x: x.name.lower())
-                             if fnmatch(f.name, '*.xml')])
+            cfg_files.extend([config_data(vid_str, None, os.path.join(root_path,f), None, None)
+                             for f in sorted(os.listdir(root_path), key=lambda x: x.lower())
+                             if fnmatch(f, '*.xml')])
 
         # Process platform info data and generate lookup tables
         for fxml in cfg_files:
