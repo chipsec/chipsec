@@ -335,7 +335,9 @@ class UEFICommand(BaseCommand):
                 if mtype in inv_filetypes.keys():
                     if inv_filetypes[mtype] not in ftypes:
                         ftypes.append(inv_filetypes[mtype])
-                    break
+                else:
+                    self.logger.log_warning("Unknown file type '{}'. Valid types: {}".format(
+                        mtype, list(FILE_TYPE_NAMES.values())))
         decode_uefi_region(cur_dir, self.filename, self.fwtype, ftypes)
         self.logger.set_log_file(_orig_logname)
 
@@ -362,76 +364,76 @@ class UEFICommand(BaseCommand):
             (bootscript_PAs, parsed_scripts) = self._uefi.get_s3_bootscript(True)
 
     def insert_before(self):
-        if get_guid_bin(self.guid) == '':
+        if get_guid_bin(self.guid) == b'':
             self.logger.log_bad('*** Error *** Invalid GUID: {}'.format(self.guid))
             return
 
-        if not os.path.isfile(self.rom_file):
-            self.logger.log_bad('*** Error *** File doesn\'t exist: {}'.format(self.rom_file))
+        if not os.path.isfile(self.filename):
+            self.logger.log_bad('*** Error *** File doesn\'t exist: {}'.format(self.filename))
             return
 
         if not os.path.isfile(self.efi_file):
             self.logger.log_bad('*** Error *** File doesn\'t exist: {}'.format(self.efi_file))
             return
 
-        rom_image = read_file(self.rom_file)
+        rom_image = read_file(self.filename)
         efi_image = read_file(self.efi_file)
-        new_image = modify_uefi_region(rom_image, CMD_UEFI_FILE_INSERT_BEFORE, self.guid, efi_image)
+        new_image = modify_uefi_region(rom_image, CMD_UEFI_FILE_INSERT_BEFORE, uuid.UUID(self.guid), efi_image)
         write_file(self.new_file, new_image)
 
     def insert_after(self):
-        if get_guid_bin(self.guid) == '':
+        if get_guid_bin(self.guid) == b'':
             self.logger.log_bad('*** Error *** Invalid GUID: {}'.format(self.guid))
             return
 
-        if not os.path.isfile(self.rom_file):
-            self.logger.log_bad('*** Error *** File doesn\'t exist: {}'.format(self.rom_file))
+        if not os.path.isfile(self.filename):
+            self.logger.log_bad('*** Error *** File doesn\'t exist: {}'.format(self.filename))
             return
 
         if not os.path.isfile(self.efi_file):
             self.logger.log_bad('*** Error *** File doesn\'t exist: {}'.format(self.efi_file))
             return
 
-        rom_image = read_file(self.rom_file)
+        rom_image = read_file(self.filename)
         efi_image = read_file(self.efi_file)
-        new_image = modify_uefi_region(rom_image, CMD_UEFI_FILE_INSERT_AFTER, self.guid, efi_image)
+        new_image = modify_uefi_region(rom_image, CMD_UEFI_FILE_INSERT_AFTER, uuid.UUID(self.guid), efi_image)
         write_file(self.new_file, new_image)
 
     def replace(self):
-        if get_guid_bin(self.guid) == '':
+        if get_guid_bin(self.guid) == b'':
             self.logger.log_bad('*** Error *** Invalid GUID: {}'.format(self.guid))
             return
 
-        if not os.path.isfile(self.rom_file):
-            self.logger.log_bad('*** Error *** File doesn\'t exist: {}'.format(self.rom_file))
+        if not os.path.isfile(self.filename):
+            self.logger.log_bad('*** Error *** File doesn\'t exist: {}'.format(self.filename))
             return
 
         if not os.path.isfile(self.efi_file):
             self.logger.log_bad('*** Error *** File doesn\'t exist: {}'.format(self.efi_file))
             return
 
-        rom_image = read_file(self.rom_file)
+        rom_image = read_file(self.filename)
         efi_image = read_file(self.efi_file)
-        new_image = modify_uefi_region(rom_image, CMD_UEFI_FILE_REPLACE, self.guid, efi_image)
+        new_image = modify_uefi_region(rom_image, CMD_UEFI_FILE_REPLACE, uuid.UUID(self.guid), efi_image)
         write_file(self.new_file, new_image)
 
     def remove(self):
-        if get_guid_bin(self.guid) == '':
+        if get_guid_bin(self.guid) == b'':
             self.logger.log_bad('*** Error *** Invalid GUID: {}'.format(self.guid))
             return
 
-        if not os.path.isfile(self.rom_file):
-            self.logger.log_bad('*** Error *** File doesn\'t exist: {}'.format(self.rom_file))
+        if not os.path.isfile(self.filename):
+            self.logger.log_bad('*** Error *** File doesn\'t exist: {}'.format(self.filename))
             return
 
-        rom_image = read_file(self.rom_file)
-        new_image = modify_uefi_region(rom_image, CMD_UEFI_FILE_REMOVE, self.guid)
+        rom_image = read_file(self.filename)
+        new_image = modify_uefi_region(rom_image, CMD_UEFI_FILE_REMOVE, uuid.UUID(self.guid))
         write_file(self.new_file, new_image)
 
     def assemble(self):
-        compression = {'none': 0, 'tiano': 1, 'lzma': 2}
+        compression = {'none': 0, 'tiano': 1, 'lzma': 3}
 
-        if get_guid_bin(self.guid) == '':
+        if get_guid_bin(self.guid) == b'':
             self.logger.log_bad('*** Error *** Invalid GUID: {}'.format(self.guid))
             return
 
