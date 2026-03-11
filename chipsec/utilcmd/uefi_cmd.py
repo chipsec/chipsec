@@ -59,6 +59,7 @@ import uuid
 from argparse import ArgumentParser
 
 from chipsec.command import BaseCommand, toLoad
+from chipsec.testcase import ExitCode
 from chipsec.library.uefi.common import EFI_STATUS_DICT
 from chipsec.library.file import write_file, read_file
 from chipsec.library.uefi.spi import decode_uefi_region, modify_uefi_region, compress_image, CMD_UEFI_FILE_REPLACE
@@ -322,6 +323,7 @@ class UEFICommand(BaseCommand):
     def decode(self):
         if not os.path.exists(self.filename):
             self.logger.log_error("Could not find file '{}'".format(self.filename))
+            self.ExitCode = ExitCode.ERROR
             return
 
         self.logger.log("[CHIPSEC] Parsing EFI volumes from '{}'..".format(self.filename))
@@ -336,7 +338,9 @@ class UEFICommand(BaseCommand):
                     if inv_filetypes[mtype] not in ftypes:
                         ftypes.append(inv_filetypes[mtype])
                     break
-        decode_uefi_region(cur_dir, self.filename, self.fwtype, ftypes)
+        if not decode_uefi_region(cur_dir, self.filename, self.fwtype, ftypes):
+            self.logger.log_error("Could not parse EFI firmware volumes from '{}'".format(self.filename))
+            self.ExitCode = ExitCode.ERROR
         self.logger.set_log_file(_orig_logname)
 
     def keys(self):
