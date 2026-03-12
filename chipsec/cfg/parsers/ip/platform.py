@@ -41,6 +41,10 @@ class Recursable:
     This class provides the foundation for hierarchical traversal of platform configurations,
     supporting wildcard matching and recursive object discovery.
     """
+    
+    def __init__(self) -> None:
+        """Initialize Recursable object."""
+        super().__init__()
 
     def _get_next_level_list(self) -> List[str]:
         """
@@ -99,6 +103,20 @@ class Recursable:
         """
         raise NotImplementedError("_get_next_level() not implemented")
 
+    def get_register_matches_recursive(self, register_name: str) -> ObjList:
+        """Recursively collect register matches from this object and all descendants."""
+        registers = ObjList()
+
+        # Include direct register matches for register-bearing nodes.
+        if isinstance(self, RegisterList):
+            registers.extend(RegisterList.get_register_matches(self, register_name))
+
+        # Recurse through all child objects in the hierarchy.
+        for child in self.get_next_levels('*'):
+            registers.extend(child.get_register_matches_recursive(register_name))
+
+        return registers
+
 
 class RegisterList:
     """
@@ -110,6 +128,7 @@ class RegisterList:
 
     def __init__(self) -> None:
         """Initialize empty register list."""
+        super().__init__()
         self.register_list = {}
 
     def add_register(self, register_name: str, register_object: Any) -> None:
@@ -232,6 +251,17 @@ class Platform(Recursable):
 
         self.vendor_list.remove(vendor.name)
         self.__delattr__(f'_{vendor.name}')
+
+    def get_register_matches(self, register_name: str) -> ObjList:
+        """Search this platform hierarchy for registers matching the given name pattern.
+
+        Args:
+            register_name: Register name pattern (supports wildcards)
+
+        Returns:
+            ObjList containing matching registers from all descendants
+        """
+        return self.get_register_matches_recursive(register_name)
 
     def _get_next_level_list(self) -> List[str]:
         """Get list of vendor names."""
@@ -514,6 +544,17 @@ class Vendor(Recursable):
         else:
             raise PlatformConfigError(f'Device: {ip_name} not found in Vendor: {self.name}')
 
+    def get_register_matches(self, register_name: str) -> ObjList:
+        """Search this vendor hierarchy for registers matching the given name pattern.
+
+        Args:
+            register_name: Register name pattern (supports wildcards)
+
+        Returns:
+            ObjList containing matching registers from all descendants
+        """
+        return self.get_register_matches_recursive(register_name)
+
     def _get_next_level_list(self) -> List[str]:
         """Get list of IP names."""
         return self.ip_list
@@ -523,40 +564,20 @@ class Vendor(Recursable):
         return self.get_ip(ip_name)
 
 
-class IP(Recursable, RegisterList):
-    """
-    IP (Intellectual Property) configuration container.
+class BarContainerMixin(Recursable):
+    """Shared BAR container behavior used by both IP and BAR objects."""
 
-    This class manages BAR configurations and registers for a specific IP block,
-    providing hierarchical access to IP-specific components.
-    """
-
-    def __init__(self, name: str, ipobj: Any) -> None:
-        """
-        Initialize IP configuration.
-
-        Args:
-            name: Name of the IP
-            ipobj: IP configuration object
-        """
+    _container_type = 'Unknown'
+    
+    def __init__(self) -> None:
+        """Initialize BAR container."""
         super().__init__()
-        RegisterList.__init__(self)
         self.bar_list = []
-        self.name = name
-        self.obj = ipobj
-
-    def update_obj(self, ipobj: Any) -> None:
-        """
-        Update the object of the IP.
-
-        Args:
-            ipobj: IP configuration object
-        """
-        self.obj = ipobj
 
     def add_bar(self, bar_name: str, barobj: Any) -> None:
         """
-        Add a BAR configuration to the IP.
+            bar_name: Name of the BAR
+        Add a BAR configuration to the current object.
 
         Args:
             bar_name: Name of the BAR
@@ -571,7 +592,6 @@ class IP(Recursable, RegisterList):
         Get a BAR configuration by name.
 
         Args:
-            bar_name: Name of the BAR
 
         Returns:
             BAR configuration object
@@ -605,16 +625,46 @@ class IP(Recursable, RegisterList):
         if bar_id in self._get_next_level_list():
             return self.get_bar(bar_id)
         else:
-            raise PlatformConfigError(f'Next Level: {bar_id} not found in IP: {self.name}')
+            raise PlatformConfigError(f'Next Level: {bar_id} not found in {self._container_type}: {self.name}')
 
 
-class Bar(RegisterList):
+class IP(BarContainerMixin, RegisterList):
+    """
+    IP (Intellectual Property) configuration container.
+
+    This class manages BAR configurations and registers for a specific IP block,
+    providing hierarchical access to IP-specific components.
+    """
+    _container_type = 'IP'
+    def __init__(self, name: str, ipobj: Any) -> None:
+        """
+        Initialize IP configuration.
+
+        Args:
+            name: Name of the IP
+            ipobj: IP configuration object
+        """
+        super().__init__()
+        self.name = name
+        self.obj = ipobj
+
+    def update_obj(self, ipobj: Any) -> None:
+        """
+        Update the object of the IP.
+
+        Args:
+            ipobj: IP configuration object
+        """
+        self.obj = ipobj
+
+class Bar(BarContainerMixin, RegisterList):
     """
     BAR (Base Address Register) configuration container.
 
     This class manages registers within a specific BAR and provides
     hierarchical access to BAR-specific registers.
     """
+    _container_type = 'BAR'
 
     def __init__(self, name: str, barobj: Any) -> None:
         """
@@ -625,6 +675,6 @@ class Bar(RegisterList):
             barobj: BAR configuration object
         """
         super().__init__()
-        RegisterList.__init__(self)
         self.name = name
         self.obj = barobj
+

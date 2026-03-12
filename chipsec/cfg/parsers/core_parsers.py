@@ -201,7 +201,6 @@ class DevConfig(BaseConfigParser):
                 continue
             dev_name = node_attr['name']
             if dev_name not in dest[vid_str]:
-                print(dest, cfg_obj)
                 new_obj = cfg_obj(copy.deepcopy(node_attr))
                 dest[vid_str][dev_name] = new_obj
                 self._add_ip(vid_str, dev_name, new_obj)
@@ -311,6 +310,8 @@ class CoreConfigRegisters(BaseConfigParser):
 
         if rtype in ['mmio', 'iobar'] and isinstance(reg_attr, dict) and 'bar' in reg_attr and reg_attr['bar']:
             return '.'.join([reg_attr['bar'], reg_name])
+        if rtype == 'mmio' and isinstance(reg_attr, dict) and 'range' in reg_attr and reg_attr['range']:
+            return '.'.join([stage_data.vid_str, reg_attr['range'], reg_name])
         return self._make_reg_name(stage_data, reg_name)
 
     def _resolve_lockedby(self, stage_data, reg_attr, cur_reg_name, lockedby_str):
@@ -342,6 +343,9 @@ class CoreConfigRegisters(BaseConfigParser):
         # Helper: BAR prefix if mmio/iobar
         use_bar = isinstance(reg_attr, dict) and reg_attr.get('type') in ['mmio', 'iobar'] and 'bar' in reg_attr and reg_attr['bar']
         bar_prefix = reg_attr['bar'] if use_bar else None
+        use_range = (not use_bar and isinstance(reg_attr, dict) and
+                     reg_attr.get('type') == 'mmio' and 'range' in reg_attr and reg_attr['range'])
+        range_prefix = '.'.join([vid, reg_attr['range']]) if use_range else None
 
         parts = lockedby_str.split('.')
 
@@ -349,6 +353,8 @@ class CoreConfigRegisters(BaseConfigParser):
             # Field within current register
             if use_bar:
                 return '.'.join([bar_prefix, cur_reg_name, parts[0]])
+            if use_range:
+                return '.'.join([range_prefix, cur_reg_name, parts[0]])
             return '.'.join([vid, cur_dev, cur_reg_name, parts[0]])
 
         if dot_count == 1:
@@ -359,6 +365,8 @@ class CoreConfigRegisters(BaseConfigParser):
                 return '.'.join([vid, 'MSR', reg, field])
             if use_bar:
                 return '.'.join([bar_prefix, reg, field])
+            if use_range:
+                return '.'.join([range_prefix, reg, field])
             return '.'.join([vid, cur_dev, reg, field])
 
         if dot_count == 2:
@@ -428,15 +436,19 @@ class CoreConfigRegisters(BaseConfigParser):
                 reg_attr['device'] = stage_data.dev_name
             elif reg_attr['type'] in ['memory']:
                 reg_attr['range'] = stage_data.dev_name
-            elif reg_attr['type'] in ['mmio', 'iobar']:
+            elif reg_attr['type'] in ['mmio', 'iobar'] and not reg_attr.get('range'):
                 try:
                     barname = self._make_reg_name(stage_data, stage_data.dev_name, True)
                     self.cfg.platform.get_obj_from_fullname(barname)
                 except PlatformConfigError:
-                    barname = self._make_reg_name(stage_data, reg_attr['bar'], True)
+                    barname = self._make_reg_name(stage_data, reg_attr.get('bar', stage_data.dev_name), True)
                 reg_attr['bar'] = barname
             if 'size' not in reg_attr:
-                self.logger.log_hal(f'Error missing size within {reg_attr}')
+                # Default size of MSR to 64 bits if not specified
+                if reg_attr['type'] == 'msr':
+                    reg_attr['size'] = 8
+                else:
+                    self.logger.log_hal(f'Error missing size within {reg_attr}')
 
             # Get existing field data
             if reg_name in self.cfg.REGISTERS[stage_data.vid_str][parent_name]:
@@ -475,9 +487,13 @@ class CoreConfigRegisters(BaseConfigParser):
                 elif reg_attr['type'] == 'mmcfg':
                     reg_obj = self.create_register_object_with_pointer(MMCFGRegisters, reg_attr)
                 elif reg_attr['type'] == 'mmio':
-                    parentobj = self.cfg.platform.get_obj_from_fullname(reg_attr['bar'])
-                    reg_attr['full_name'] = '.'.join([reg_attr['bar'], reg_name])
-                    reg_obj = self.create_register_object_bar(MMIORegisters, reg_attr)
+                    if 'range' in reg_attr and reg_attr['range']:
+                        reg_attr['full_name'] = '.'.join([reg_attr['range'], reg_name])
+                        reg_obj = self.create_register_object(MMIORegisters, reg_attr, [None])
+                    else:
+                        parentobj = self.cfg.platform.get_obj_from_fullname(reg_attr['bar'])
+                        reg_attr['full_name'] = '.'.join([reg_attr['bar'], reg_name])
+                        reg_obj = self.create_register_object_bar(MMIORegisters, reg_attr)
                 elif reg_attr['type'] == 'iobar':
                     parentobj = self.cfg.platform.get_obj_from_fullname(reg_attr['bar'])
                     reg_attr['full_name'] = '.'.join([reg_attr['bar'], reg_name])
@@ -525,8 +541,9 @@ class CoreConfigRegisters(BaseConfigParser):
     def create_register_object(self, objtype, regattr, instance_list):
         reg_obj = []
         for instance in instance_list:
-            regattr['instance'] = instance
-            reg_obj.append(objtype(regattr))
+            regattr_copy = copy.deepcopy(regattr)
+            regattr_copy['instance'] = instance
+            reg_obj.append(objtype(regattr_copy))
         return reg_obj
 
     def create_register_object_bar(self, objtype, regattr):
@@ -537,8 +554,9 @@ class CoreConfigRegisters(BaseConfigParser):
         if 'tmp' not in regattr.keys():
             return self.create_register_object(objtype, regattr, [None])
         for instance in regattr['tmp'].values():
-            regattr['instance'] = instance
-            reg_obj.append(objtype(regattr, instance))
+            regattr_copy = copy.deepcopy(regattr)
+            regattr_copy['instance'] = instance
+            reg_obj.append(objtype(regattr_copy, instance))
         return reg_obj if reg_obj else None
 
     def handle_controls(self, et_node, stage_data):
