@@ -596,9 +596,9 @@ def decode_uefi_region(pth: str, fname: str, fwtype: Optional[str], filetype: Li
     # Decoding EFI Variables NVRAM
     logger().log_hal("[spi_uefi] Decoding UEFI NVRAM...")
     region_data = read_file(fname)
-    if fwtype is None:
+    if not fwtype:
         fwtype = identify_EFI_NVRAM(region_data)
-        if fwtype is None:
+        if not fwtype:
             return bool(tree)
     elif fwtype not in fw_types:
         if logger().HAL:
@@ -606,8 +606,8 @@ def decode_uefi_region(pth: str, fname: str, fwtype: Optional[str], filetype: Li
         return bool(tree)
     nvram_fname = os.path.join(bios_pth, (f'nvram_{fwtype}'))
     logger().set_log_file(f'{nvram_fname}.nvram.lst', False)
-    parse_EFI_variables(nvram_fname, region_data, False, fwtype)
-    return True
+    nvram_ok = parse_EFI_variables(nvram_fname, region_data, False, fwtype)
+    return bool(tree) or nvram_ok
 
 
 def save_efi_tree_filetype(modules: List['EFI_MODULE'],
