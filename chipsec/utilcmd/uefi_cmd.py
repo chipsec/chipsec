@@ -339,7 +339,7 @@ class UEFICommand(BaseCommand):
                         ftypes.append(inv_filetypes[mtype])
                     break
         if not decode_uefi_region(cur_dir, self.filename, self.fwtype, ftypes):
-            self.logger.log_error("Could not parse EFI firmware volumes from '{}'".format(self.filename))
+            self.logger.log_error(f"Could not parse EFI firmware volumes from '{self.filename}'")
             self.ExitCode = ExitCode.ERROR
         self.logger.set_log_file(_orig_logname)
 
