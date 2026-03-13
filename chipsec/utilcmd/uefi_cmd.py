@@ -326,7 +326,7 @@ class UEFICommand(BaseCommand):
             self.ExitCode = ExitCode.ERROR
             return
 
-        self.logger.log("[CHIPSEC] Parsing EFI volumes from '{}'..".format(self.filename))
+        self.logger.log(f"[CHIPSEC] Parsing EFI volumes from '{self.filename}'..")
         _orig_logname = self.logger.LOG_FILE_NAME
         self.logger.set_log_file(self.filename + '.UEFI.lst', False)
         cur_dir = self.cs.os_helper.getcwd()
