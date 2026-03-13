@@ -555,7 +555,7 @@ class UUIDEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def parse_uefi_region_from_file(filename: str, fwtype: Optional[str], outpath: Optional[str] = None, filetype: List[int] = []) -> List['EFI_MODULE']:
+def parse_uefi_region_from_file(filename: str, fwtype: Optional[str], outpath: Optional[str] = None, filetype: Optional[List[int]] = None) -> List['EFI_MODULE']:
     # Create an output folder to dump EFI module tree
     if outpath is None:
         outpath = f'{filename}.dir'
@@ -577,7 +577,7 @@ def parse_uefi_region_from_file(filename: str, fwtype: Optional[str], outpath: O
     return tree
 
 
-def decode_uefi_region(pth: str, fname: str, fwtype: Optional[str], filetype: List[int] = []) -> bool:
+def decode_uefi_region(pth: str, fname: str, fwtype: Optional[str], filetype: Optional[List[int]] = None) -> bool:
 
     bios_pth = os.path.join(pth, f'{fname}.dir')
     if not os.path.exists(bios_pth):
