@@ -555,7 +555,7 @@ class UUIDEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def parse_uefi_region_from_file(filename: str, fwtype: Optional[str], outpath: Optional[str] = None, filetype: List[int] = []) -> None:
+def parse_uefi_region_from_file(filename: str, fwtype: Optional[str], outpath: Optional[str] = None, filetype: Optional[List[int]] = None) -> List['EFI_MODULE']:
     # Create an output folder to dump EFI module tree
     if outpath is None:
         outpath = f'{filename}.dir'
@@ -574,9 +574,10 @@ def parse_uefi_region_from_file(filename: str, fwtype: Optional[str], outpath: O
     else:
         tree_json = save_efi_tree(tree, path=outpath)
     write_file(f'{filename}.UEFI.json', json.dumps(tree_json, indent=2, separators=(',', ': '), cls=UUIDEncoder))
+    return tree
 
 
-def decode_uefi_region(pth: str, fname: str, fwtype: Optional[str], filetype: List[int] = []) -> None:
+def decode_uefi_region(pth: str, fname: str, fwtype: Optional[str], filetype: Optional[List[int]] = None) -> bool:
 
     bios_pth = os.path.join(pth, f'{fname}.dir')
     if not os.path.exists(bios_pth):
@@ -587,25 +588,26 @@ def decode_uefi_region(pth: str, fname: str, fwtype: Optional[str], filetype: Li
 
     # Decoding UEFI Firmware Volumes
     logger().log_hal("[spi_uefi] Decoding UEFI firmware volumes...")
-    parse_uefi_region_from_file(fname, fwtype, fv_pth, filetype)
+    tree = parse_uefi_region_from_file(fname, fwtype, fv_pth, filetype)
     # If a specific filetype is wanted, there is no need to check for EFI Variables
     if filetype:
-        return
+        return bool(tree)
 
     # Decoding EFI Variables NVRAM
     logger().log_hal("[spi_uefi] Decoding UEFI NVRAM...")
     region_data = read_file(fname)
-    if fwtype is None:
+    if not fwtype:
         fwtype = identify_EFI_NVRAM(region_data)
-        if fwtype is None:
-            return
+        if not fwtype:
+            return bool(tree)
     elif fwtype not in fw_types:
         if logger().HAL:
             logger().log_error(f'Unrecognized NVRAM type {fwtype}')
-        return
+        return bool(tree)
     nvram_fname = os.path.join(bios_pth, (f'nvram_{fwtype}'))
     logger().set_log_file(f'{nvram_fname}.nvram.lst', False)
-    parse_EFI_variables(nvram_fname, region_data, False, fwtype)
+    nvram_ok = parse_EFI_variables(nvram_fname, region_data, False, fwtype)
+    return bool(tree) or nvram_ok
 
 
 def save_efi_tree_filetype(modules: List['EFI_MODULE'],
