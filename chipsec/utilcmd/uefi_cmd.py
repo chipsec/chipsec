@@ -322,7 +322,7 @@ class UEFICommand(BaseCommand):
 
     def decode(self):
         if not os.path.exists(self.filename):
-            self.logger.log_error("Could not find file '{}'".format(self.filename))
+            self.logger.log_error(f"Could not find file '{self.filename}'")
             self.ExitCode = ExitCode.ERROR
             return
 
