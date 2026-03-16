@@ -5,6 +5,10 @@ KVER	= $(KVERS)
 VMODDIR = $(MODDIR)/$(KVER)
 KSRC	?= $(VMODDIR)/build
 
+# Optional: set to 1 to bypass objtool stack validation on problematic builds.
+# Default is 0 now that assembly stubs are thunked for modern mitigations.
+SKIP_STACK_VALIDATION ?= 0
+
 obj-m += chipsec.o
 chipsec-objs-y := chipsec_km.o
 chipsec-objs-$(CONFIG_X86_32) += i386/cpu.o
@@ -27,10 +31,10 @@ check_kernel_dir:
 	fi
 
 chipsec: check_kernel_dir clean
-	make -C $(KSRC) M=$(CURDIR) modules
+	$(MAKE) -C $(KSRC) M=$(CURDIR) SKIP_STACK_VALIDATION=$(SKIP_STACK_VALIDATION) modules
 
 clean: check_kernel_dir
-	make -C $(KSRC) M=$(CURDIR) clean
+	$(MAKE) -C $(KSRC) M=$(CURDIR) SKIP_STACK_VALIDATION=$(SKIP_STACK_VALIDATION) clean
 
 $(obj)/i386/cpu.o: $(src)/i386/cpu.asm FORCE
 	$(call if_changed,nasm32)

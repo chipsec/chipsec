@@ -41,8 +41,14 @@
  global __swsmi__
  global __swsmi_timed__
 
+ extern __x86_return_thunk
+ extern __x86_indirect_thunk_r11
+
  section .text
 
+%macro RET 0
+    jmp __x86_return_thunk
+%endmacro
 %macro SETCTX_CPUID 0
 	xchg rax, [rdi]
 	xchg rbx, [rdi+0x8]
@@ -65,17 +71,14 @@ __cpuid__:
 	cpuid
 
 	SETCTX_CPUID
-
-	ret
-
+    RET
 ;------------------------------------------------------------------------------
 ; UINT64 _rflags()
 ;------------------------------------------------------------------------------
 _rflags:
     pushfq
     pop rax
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ; void _store_idtr(
 ;   unsigned char *address // rdi
@@ -83,8 +86,7 @@ _rflags:
 ;------------------------------------------------------------------------------
 _store_idtr:
     sidt [rdi]
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ; void _load_idtr(
 ;   unsigned char *address // rdi
@@ -92,8 +94,7 @@ _store_idtr:
 ;------------------------------------------------------------------------------
 _load_idtr:
     lidt [rdi]
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ; void _store_gdtr(
 ;   unsigned char *address // rdi
@@ -101,8 +102,7 @@ _load_idtr:
 ;------------------------------------------------------------------------------
 _store_gdtr: 
     sgdt [rdi]
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ; void _load_gdtr(
 ;   unsigned char *address // rdi
@@ -110,8 +110,7 @@ _store_gdtr:
 ;------------------------------------------------------------------------------
 _load_gdtr: 
     lgdt [rdi]
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ; void _store_ldtr(
 ;   unsigned char *address // rdi
@@ -120,8 +119,7 @@ _load_gdtr:
 _store_ldtr:
     ;sldt fword ptr [rdi]
     sldt [rdi]
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ; void _load_ldtr(
 ;   unsigned char *address // rdi
@@ -129,8 +127,7 @@ _store_ldtr:
 ;------------------------------------------------------------------------------
 _load_ldtr: 
     ;lldt fword ptr [rdi]
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ; void _load_gdt(
 ;   unsigned char *value // rdi
@@ -140,9 +137,7 @@ _load_gdt:
 
     sgdt [rdi]
     lgdt [rdi]
-
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  void _rdmsr( 
 ;    unsigned int msr_num, // rdi
@@ -173,9 +168,7 @@ _rdmsr:
     pop rax
     pop r11
     pop r10
-
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  void _wrmsr(
 ;    unsigned int msr_num, // rdi
@@ -196,8 +189,7 @@ _wrmsr:
 
     pop rcx
     pop rax
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  void
 ;  DisableInterrupts (
@@ -205,8 +197,7 @@ _wrmsr:
 ;------------------------------------------------------------------------------
 DisableInterrupts:
     cli
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  void
 ;  WritePortDword (
@@ -224,8 +215,7 @@ WritePortDword:
 
     pop rdx
     pop rax
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  void
 ;  WritePortWord (
@@ -243,8 +233,7 @@ WritePortWord:
 
     pop rdx
     pop rax
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  void
 ;  WritePortByte (
@@ -262,8 +251,7 @@ WritePortByte:
 
     pop rdx
     pop rax
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  unsigned int
 ;  ReadPortDword (
@@ -278,8 +266,7 @@ ReadPortDword:
     in eax, dx
 
     pop rdx
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  unsigned short
 ;  ReadPortWord (
@@ -294,8 +281,7 @@ ReadPortWord:
     in ax, dx
 
     pop rdx
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  unsigned char
 ;  ReadPortByte (
@@ -310,9 +296,7 @@ ReadPortByte:
     in al, dx
 
     pop rdx
-    ret
-
-
+    RET
 ;------------------------------------------------------------------------------
 ;  void
 ;  WriteHighCMOSByte (
@@ -329,7 +313,7 @@ WriteHighCMOSByte:
     out 73h, al
 
     pop rax
-    ret
+    RET
 ;------------------------------------------------------------------------------
 ;  void
 ;  WriteLowCMOSByte (
@@ -347,8 +331,7 @@ WriteLowCMOSByte:
     out 71h, al
 
     pop rax
-    ret
-
+    RET
 ; @TODO: looks incorrect
 ;------------------------------------------------------------------------------
 ;  void
@@ -368,8 +351,7 @@ SendAPMSMI:
 
     pop rdx
     pop rax
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;This function has one argument: SMI_CTX structure pointer which contain SMI code and data values and 6 regs: rax, rbx, rcx, rdx, rsi, rdi:
 ;    IN       UINT64	smi_code_data (only lower 16 bit used)
@@ -417,9 +399,7 @@ __swsmi__:
     xchg rdx, [r10+020h] ; rdx_value
     xchg rsi, [r10+028h] ; rsi_value
     xchg rdi, [r10+030h] ; rdi_value
-
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;This function has two arguments: SMI_CTX structure pointer which contain SMI code and data values and 6 regs: rax, rbx, rcx, rdx, rsi, rdi:
 ;    IN       UINT64	smi_code_data (only lower 16 bit used)
@@ -498,8 +478,7 @@ __swsmi_timed__:
     xchg rdi, [r10+030h] ; rdi_value
 
     pop r12
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  void
 ;  WritePCIByte (
@@ -524,8 +503,7 @@ WritePCIByte:
     sti
 
     pop rax  
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  void
 ;  WritePCIWord (
@@ -550,8 +528,7 @@ WritePCIWord:
     sti
 
     pop rax  
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  void
 ;  WritePCIDword (
@@ -576,8 +553,7 @@ WritePCIDword:
     sti
 
     pop rax  
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  unsigned char
 ;  ReadPCIByte (
@@ -596,9 +572,7 @@ ReadPCIByte:
     mov rdx, rsi       ; cfg_data_port
     in  al, dx
     sti
-
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  unsigned short
 ;  ReadPCIWord (
@@ -617,9 +591,7 @@ ReadPCIWord:
     mov rdx, rsi       ; cfg_data_port
     in  ax, dx
     sti
-
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  unsigned int
 ;  ReadPCIDword (
@@ -638,54 +610,42 @@ ReadPCIDword:
     mov rdx, rsi       ; cfg_data_port
     in  eax, dx
     sti
-
-    ret
-
+    RET
 ReadCR0:
     xor rax, rax
     mov rax, cr0
-    ret
-
+    RET
 ReadCR2:
     xor rax, rax
     mov rax, cr2
-    ret
-
+    RET
 ReadCR3:
     xor rax, rax
     mov rax, cr3
-    ret
-
+    RET
 ReadCR4:
     xor rax, rax
     mov rax, cr4
-    ret
-
+    RET
 ReadCR8:
     xor rax, rax
     mov rax, cr8
-    ret
-
+    RET
 WriteCR0:
     mov cr0, rdi
-    ret
-
+    RET
 WriteCR2:
     mov cr2, rdi
-    ret
-
+    RET
 WriteCR3:
     mov cr3, rdi
-    ret
-
+    RET
 WriteCR4:
     mov cr4, rdi
-    ret
-
+    RET
 WriteCR8:
     mov cr8, rdi
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  UINT64
 ;  hypercall(
@@ -734,16 +694,15 @@ hypercall:
     mov    rsi, qword [rbp + 28h]
     mov    rax, qword [rbp + 10h]
     mov    rbx, qword [rbp + 18h]
-    call   qword [rbp + 38h]
+    mov    r11, qword [rbp + 38h]
+    call   __x86_indirect_thunk_r11
     pop    rbx
     pop    rbp
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  UINT64 hypercall_page ( )
 ;------------------------------------------------------------------------------
 
 hypercall_page:
     vmcall
-    ret
-
+    RET

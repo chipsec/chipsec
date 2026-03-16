@@ -37,8 +37,14 @@
  global __cpuid__
  global __swsmi__
 
+ extern __x86_return_thunk
+ extern __x86_indirect_thunk_eax
+
  section .text
 
+%macro RET 0
+    jmp __x86_return_thunk
+%endmacro
 %macro SETCTX_CPUID 0
 	xchg ebx, [edi+0x4]
 	xchg ecx, [edi+0x8]
@@ -66,13 +72,10 @@ __cpuid__:
 	SETCTX_CPUID
 
 	pop edi
-
-	ret
-
+    RET
 ; TODO: need to implement
 __swsmi__:
-	ret
-
+    RET
 ;------------------------------------------------------------------------------
 ; void _store_idtr(
 ;   unsigned char *address // eax
@@ -85,9 +88,7 @@ __swsmi__:
     sidt [ecx]
  
     pop ecx
-
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ; void _load_idtr(
 ;   unsigned char *address // eax
@@ -100,9 +101,7 @@ __swsmi__:
     lidt [ecx]
 
     pop ecx
-
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ; void _store_gdtr(
 ;   unsigned char *address // eax
@@ -115,9 +114,7 @@ __swsmi__:
     sgdt [ecx]
 
     pop ecx
-
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ; void _store_ldtr(
 ;   unsigned char *address // eax
@@ -130,9 +127,7 @@ __swsmi__:
     sldt word [ecx]
 
     pop ecx
-
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;    IN UINT32 msr,     //eax
 ;    OUT UINT32* msrlo, //edx
@@ -158,10 +153,7 @@ __swsmi__:
 
     pop esi
     pop ebx
-
-    ret
-
-
+    RET
 ;------------------------------------------------------------------------------
 ;    IN UINT32 msr,   //eax
 ;    IN UINT32 msrlo, //edx
@@ -181,17 +173,14 @@ __swsmi__:
     pop ebx
 
     wrmsr
-    ret
-
-
+    RET
 ;------------------------------------------------------------------------------
 ;UINT32 _eflags()
 ;------------------------------------------------------------------------------
  _eflags:
     pushfd
     pop eax
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  VOID
 ;  WritePortDword (
@@ -202,9 +191,7 @@ __swsmi__:
  WritePortDword:
 
     out dx, eax
-
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  VOID
 ;  WritePortWord (
@@ -214,9 +201,7 @@ __swsmi__:
 ;------------------------------------------------------------------------------
  WritePortWord:
     out dx, ax
-    ret
-
-
+    RET
 ;------------------------------------------------------------------------------
 ;  VOID
 ;  WritePortByte (
@@ -226,9 +211,7 @@ __swsmi__:
 ;------------------------------------------------------------------------------
  WritePortByte:
     out dx, al
-    ret
-
-
+    RET
 ;------------------------------------------------------------------------------
 ;  UINT32
 ;  ReadPortDword (
@@ -244,10 +227,7 @@ __swsmi__:
     in eax, dx
 
     pop edx
-
-    ret
-
-
+    RET
 ;------------------------------------------------------------------------------
 ;  UINT16
 ;  ReadPortWord (
@@ -263,10 +243,7 @@ __swsmi__:
     in ax, dx
 
     pop edx
-
-    ret
-
-
+    RET
 ;------------------------------------------------------------------------------
 ;  UINT8
 ;  ReadPortByte (
@@ -282,9 +259,7 @@ __swsmi__:
     in al, dx
 
     pop edx
-
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  VOID
 ;  WriteHighCMOSByte (
@@ -296,8 +271,7 @@ __swsmi__:
     out 72h, al
     mov eax, edx  ; val
     out 73h, al
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  VOID
 ;  WriteLowCMOSByte (
@@ -310,8 +284,7 @@ __swsmi__:
     out 70h, al
     mov eax, edx  ; val
     out 71h, al
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  VOID
 ;  SendAPMSMI (
@@ -322,9 +295,7 @@ __swsmi__:
  SendAPMSMI:
     mov dx, 0B2h
     out dx, eax
-    ret
-
-
+    RET
 ;------------------------------------------------------------------------------
 ;  VOID
 ;  WritePCIByte (
@@ -343,9 +314,7 @@ __swsmi__:
     mov eax, ecx              ; bytevalue
     pop edx
     out dx, al
-
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  VOID
 ;  WritePCIWord (
@@ -364,9 +333,7 @@ __swsmi__:
     mov eax, ecx              ; wordvalue
     pop edx
     out dx, ax
-
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  VOID
 ;  WritePCIDword (
@@ -385,9 +352,7 @@ __swsmi__:
     mov eax, ecx  ; dwordvalue
     pop edx
     out dx, eax
-    ret
-
-
+    RET
 ;------------------------------------------------------------------------------
 ;  unsigned char
 ;  ReadPCIByte (
@@ -407,9 +372,7 @@ __swsmi__:
     pop edx
     in  al, dx
     sti
-
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  unsigned short
 ;  ReadPCIWord (
@@ -429,9 +392,7 @@ __swsmi__:
     pop edx
     in  ax, dx
     sti
-
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  unsigned int
 ;  ReadPCIDword (
@@ -451,47 +412,36 @@ __swsmi__:
     pop edx
     in  eax, dx
     sti
-
-
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
  ReadCR0:
     xor eax, eax
     mov eax, cr0
-    ret
-
+    RET
  ReadCR2:
     xor eax, eax
     mov eax, cr2
-    ret
-
+    RET
  ReadCR3:
     xor eax, eax
     mov eax, cr3
-    ret
-
+    RET
  ReadCR4:
     xor eax, eax
     mov eax, cr4
-    ret
-
+    RET
  WriteCR0:
     mov cr0, eax
-    ret
-
+    RET
  WriteCR2:
     mov cr2, eax
-    ret
-
+    RET
  WriteCR3:
     mov cr3, eax
-    ret
-
+    RET
  WriteCR4:
     mov cr4, eax
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  UINT32
 ;  hypercall(
@@ -550,18 +500,17 @@ __swsmi__:
     mov    ebx,  dword [ebp + 24h]
     mov    edi,  dword [ebp + 28h]
     mov    esi,  dword [ebp + 2Ch]
-    call   dword [ebp + 34h]
+    mov    eax, dword [ebp + 34h]
+    call   __x86_indirect_thunk_eax
     pop    edi
     pop    esi
     pop    ebx
     pop    ebp
-    ret
-
+    RET
 ;------------------------------------------------------------------------------
 ;  UINT32 hypercall_page ( )
 ;------------------------------------------------------------------------------
 
  hypercall_page:
     vmcall
-    ret
-
+    RET
