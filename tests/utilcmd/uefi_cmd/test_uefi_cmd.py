@@ -48,7 +48,7 @@ class TestUEFIDecodeChipsecUtil(unittest.TestCase):
                 elif os.path.isdir(path):
                     shutil.rmtree(path)
             except OSError as exc:
-                logger().log_error(f"Failed to remove temportary path {path}: {exc}")
+                logger().log_error(f"Failed to remove temporary path {path}: {exc}")
 
     def _make_temp_file(self, content: bytes, suffix: str = ".bin") -> str:
         """Create a temporary file and register it for cleanup."""
