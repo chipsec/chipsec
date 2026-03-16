@@ -27,6 +27,7 @@ import shutil
 import tempfile
 import unittest
 
+from chipsec.library.logger import logger
 from chipsec.library.file import get_main_dir
 from chipsec.testcase import ExitCode
 from tests.utilcmd.run_chipsec_util import setup_run_destroy_util
@@ -46,8 +47,8 @@ class TestUEFIDecodeChipsecUtil(unittest.TestCase):
                     os.remove(path)
                 elif os.path.isdir(path):
                     shutil.rmtree(path)
-            except OSError:
-                pass
+            except OSError as exc:
+                logger().log_error(f"Failed to remove temportary path {path}: {exc}")
 
     def _make_temp_file(self, content: bytes, suffix: str = ".bin") -> str:
         """Create a temporary file and register it for cleanup."""
