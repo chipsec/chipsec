@@ -26,6 +26,7 @@ import os
 import shutil
 import tempfile
 import unittest
+import uuid
 
 from chipsec.library.logger import logger
 from chipsec.library.file import get_main_dir
@@ -77,7 +78,9 @@ class TestUEFIDecodeChipsecUtil(unittest.TestCase):
 
     def test_decode_missing_file_returns_error(self):
         """'uefi decode' must return ExitCode.ERROR when the input file is absent."""
-        missing_path = os.path.join(tempfile.gettempdir(), "chipsec_nonexistent_fw.bin")
+        missing_path = os.path.join(
+            tempfile.gettempdir(), f"chipsec_nonexistent_fw_{uuid.uuid4().hex}.bin"
+        )
         retval = setup_run_destroy_util(
             self.init_replay_file, "uefi", f"decode {missing_path}"
         )
