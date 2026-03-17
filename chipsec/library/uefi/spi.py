@@ -607,7 +607,7 @@ def decode_uefi_region(pth: str, fname: str, fwtype: Optional[str], filetype: Op
     nvram_fname = os.path.join(bios_pth, (f'nvram_{fwtype}'))
     logger().set_log_file(f'{nvram_fname}.nvram.lst', False)
     nvram_ok = parse_EFI_variables(nvram_fname, region_data, False, fwtype)
-    return bool(tree) or nvram_ok
+    return bool(tree) and nvram_ok
 
 
 def save_efi_tree_filetype(modules: List['EFI_MODULE'],
