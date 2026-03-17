@@ -36,7 +36,7 @@ import winerror
 import win32service
 import win32api, win32process, win32security, win32serviceutil, win32file
 from collections import namedtuple
-from ctypes import windll, Structure, pythonapi, py_object,  Array, POINTER
+from ctypes import windll, Structure, pythonapi, py_object,  Array, POINTER, byref
 from ctypes import addressof, sizeof, create_string_buffer, WinError
 from ctypes import c_ulong, c_ushort, c_char_p, c_size_t, c_int, c_uint32, c_wchar_p, c_void_p, c_char
 from typing import Dict, List, Optional, Tuple, AnyStr, TYPE_CHECKING
@@ -319,6 +319,14 @@ class WindowsHelper(Helper):
             self.NtQuerySystemInformation.argtypes = [c_uint32, c_void_p, c_uint32, c_uint32_p]
         except AttributeError as msg:
             logger().log_warning("NtQuerySystemInformation function doesn't seem to exist")
+
+        try:
+            self.GetFirmwareType = kernel32.GetFirmwareType
+            self.GetFirmwareType.restype = c_int
+            self.GetFirmwareType.argtypes = [POINTER(c_uint32)]
+        except AttributeError:
+            if logger().DEBUG:
+                logger().log_warning("GetFirmwareType function doesn't seem to exist")
 
     def __del__(self):
         if self.driver_handle:
@@ -844,6 +852,99 @@ class WindowsHelper(Helper):
         out_buf = self._ioctl(IOCTL_CPUID, in_buf, out_length)
         (eax, ebx, ecx, edx) = struct.unpack('4I', out_buf)
         return (eax, ebx, ecx, edx)
+
+    def _get_system_firmware_table(self, provider_signature: int, table_id: int = 0) -> Optional[bytes]:
+        if self.GetSystemFirmwareTbl is None:
+            return None
+        table_size = self.GetSystemFirmwareTbl(provider_signature, table_id, None, 0)
+        if table_size == 0:
+            return None
+        tBuffer = create_string_buffer(table_size)
+        retVal = self.GetSystemFirmwareTbl(provider_signature, table_id, tBuffer, table_size)
+        if retVal == 0:
+            if logger().DEBUG:
+                logger().log_error(f'GetSystemFirmwareTable(0x{provider_signature:08X}) returned error: {WinError()}')
+            return None
+        return bytes(tBuffer[:retVal])
+
+    def _get_rsmb_table_data(self) -> Optional[bytes]:
+        raw_table = self._get_system_firmware_table(FirmwareTableProviderSignature_RSMB)
+        if raw_table is None:
+            return None
+        header_fmt = '<BBBBI'
+        header_size = struct.calcsize(header_fmt)
+        if len(raw_table) < header_size:
+            return None
+        (_, _, _, _, table_length) = struct.unpack_from(header_fmt, raw_table)
+        table_end = header_size + table_length
+        if len(raw_table) < table_end:
+            return None
+        return raw_table[header_size:table_end]
+
+    def _find_smbios_structure(self, table_data: bytes, struct_type: int) -> Optional[Tuple[bytes, List[str]]]:
+        offset = 0
+        table_len = len(table_data)
+        while offset + 4 <= table_len:
+            entry_type, entry_len = struct.unpack_from('<BB', table_data[offset:offset + 2])
+            if entry_len < 4 or offset + entry_len > table_len:
+                return None
+            strings_start = offset + entry_len
+            strings_end = table_data.find(b'\x00\x00', strings_start)
+            if strings_end == -1:
+                return None
+            strings_blob = table_data[strings_start:strings_end]
+            strings = [s.decode('utf-8', errors='replace') for s in strings_blob.split(b'\x00') if s]
+            if entry_type == struct_type:
+                return (table_data[offset:strings_start], strings)
+            offset = strings_end + 2
+            if entry_type == 127:
+                break
+        return None
+
+    def _get_smbios_string(self, strings: List[str], string_index: int) -> Optional[str]:
+        if string_index == 0 or string_index > len(strings):
+            return None
+        value = strings[string_index - 1].strip()
+        return value or None
+
+    def firmware_vendor(self) -> Optional[str]:
+        table_data = self._get_rsmb_table_data()
+        if table_data is None:
+            return None
+        struct_data = self._find_smbios_structure(table_data, 0)
+        if struct_data is None or len(struct_data[0]) < 6:
+            return None
+        return self._get_smbios_string(struct_data[1], struct_data[0][4])
+
+    def firmware_product(self) -> Optional[str]:
+        table_data = self._get_rsmb_table_data()
+        if table_data is None:
+            return None
+        struct_data = self._find_smbios_structure(table_data, 1)
+        if struct_data is None or len(struct_data[0]) < 7:
+            return None
+        return self._get_smbios_string(struct_data[1], struct_data[0][5])
+
+    def firmware_version(self) -> Optional[str]:
+        table_data = self._get_rsmb_table_data()
+        if table_data is None:
+            return None
+        struct_data = self._find_smbios_structure(table_data, 0)
+        if struct_data is None or len(struct_data[0]) < 6:
+            return None
+        return self._get_smbios_string(struct_data[1], struct_data[0][5])
+
+    def firmware_type(self) -> Optional[str]:
+        if getattr(self, 'GetFirmwareType', None) is None:
+            return None
+        fw_type = c_uint32(0)
+        if self.GetFirmwareType(fw_type) == 0:
+            return None
+        if fw_type.value == 2:
+            return 'BIOS'
+        if fw_type.value == 3:
+            return 'UEFI'
+        return None
 
     def enum_ACPI_tables(self) -> Optional[Array]:
         table_size = 36

@@ -62,6 +62,18 @@ class ReplayHelper(Helper):
     def delete(self) -> bool:
         return True
 
+    def firmware_vendor(self) -> Optional[str]:
+        return self._get_element_eval('firmware_vendor', ())
+
+    def firmware_product(self) -> Optional[str]:
+        return self._get_element_eval('firmware_product', ())
+
+    def firmware_version(self) -> Optional[str]:
+        return self._get_element_eval('firmware_version', ())
+
+    def firmware_type(self) -> Optional[str]:
+        return self._get_element_eval('firmware_type', ())
+
     def _get_element_eval(self, cmd: str, args: Tuple) -> Optional[Any]:
         element = self._get_element(cmd, args)
         if type(element) is str:

@@ -24,11 +24,12 @@ Contains platform identification functions
 import errno
 import traceback
 import json
-from typing import Tuple, Type, Optional
+from typing import Dict, Tuple, Type, Optional
 
 from chipsec.helper.oshelper import helper as os_helper
 from chipsec.helper.basehelper import Helper
 from chipsec.helper.nonehelper import NoneHelper
+from chipsec.hal.common.smbios import SMBIOS, SMBIOS_BIOS_INFO_ENTRY_ID, SMBIOS_SYSTEM_INFO_ENTRY_ID
 from chipsec.hal.hals import Hals  # Hardware abstraction layer
 from chipsec.library.options import Options
 from chipsec.library.exceptions import UnknownChipsetError, OsHelperError
@@ -81,6 +82,7 @@ class Chipset:
         if hasattr(self, 'hals'):
             delattr(self, 'hals')
         self.hals = Hals(self)
+        self._firmware_info: Optional[Dict[str, Optional[str]]] = None
 
     # ###########################################################################
     # Initialization
@@ -392,6 +394,75 @@ class Chipset:
     def clear_scope(self):
         """Clear the current scope for register access."""
         self.Cfg.clear_scope()
+
+    def _get_helper_firmware_info(self) -> Dict[str, Optional[str]]:
+        if self.helper is None:
+            return {'vendor': None, 'product': None, 'version': None, 'type': None}
+        return {
+            'vendor': self.helper.firmware_vendor(),
+            'product': self.helper.firmware_product(),
+            'version': self.helper.firmware_version(),
+            'type': self.helper.firmware_type()
+        }
+
+    def _get_smbios_string(self, string_index: int, strings) -> Optional[str]:
+        if string_index == 0 or strings is None or string_index > len(strings):
+            return None
+        value = strings[string_index - 1].strip()
+        return value or None
+
+    def _get_driver_firmware_info(self) -> Dict[str, Optional[str]]:
+        info = {'vendor': None, 'product': None, 'version': None, 'type': None}
+        smbios = SMBIOS(self)
+        if not smbios.find_smbios_table():
+            return info
+
+        bios_entries = smbios.get_decoded_structs(SMBIOS_BIOS_INFO_ENTRY_ID)
+        if bios_entries:
+            bios_info = bios_entries[0]
+            info['vendor'] = self._get_smbios_string(bios_info.vendor_str, bios_info.strings)
+            info['version'] = self._get_smbios_string(bios_info.version_str, bios_info.strings)
+
+        system_entries = smbios.get_decoded_structs(SMBIOS_SYSTEM_INFO_ENTRY_ID)
+        if system_entries:
+            system_info = system_entries[0]
+            info['product'] = self._get_smbios_string(system_info.product_str, system_info.strings)
+
+        try:
+            found, _, ect, _ = self.hals.uefi.find_EFI_Configuration_Table()
+            info['type'] = 'UEFI' if found and ect is not None else 'BIOS'
+        except Exception:
+            pass
+
+        return info
+
+    def _get_firmware_info(self) -> Dict[str, Optional[str]]:
+        if self._firmware_info is not None:
+            return self._firmware_info
+
+        helper_info = self._get_helper_firmware_info()
+        if self.helper is not None and getattr(self.helper, 'driver_loaded', False):
+            info = self._get_driver_firmware_info()
+            for key, value in helper_info.items():
+                if info[key] is None:
+                    info[key] = value
+        else:
+            info = helper_info
+
+        self._firmware_info = info
+        return info
+
+    def firmware_vendor(self) -> Optional[str]:
+        return self._get_firmware_info()['vendor']
+
+    def firmware_product(self) -> Optional[str]:
+        return self._get_firmware_info()['product']
+
+    def firmware_version(self) -> Optional[str]:
+        return self._get_firmware_info()['version']
+
+    def firmware_type(self) -> Optional[str]:
+        return self._get_firmware_info()['type']
 
 
 # ###############################################################################
