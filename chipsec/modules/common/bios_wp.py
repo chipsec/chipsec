@@ -110,41 +110,36 @@ class bios_wp(BaseModule):
         pr_cover_bios = False
         pr_partial_cover_bios = False
 
-        # areas_to_protect = [(bios_base, bios_limit)]
-        device = self.cs.device.get_list_by_name('8086.SPI')[0]
-        for instance in device.instances.values():
-            self.cs.hals.spi.set_instance(instance)
-            (bios_base, bios_limit, _) = self.cs.hals.spi.get_SPI_region(BIOS)
-            self.logger.log(f'\n[*] Checking instance: {instance}')
-            self.logger.log(f'[*] BIOS Region: Base = 0x{bios_base:08X}, Limit = 0x{bios_limit:08X}')
+        (bios_base, bios_limit, _) = self.cs.hals.spi.get_SPI_region(BIOS)
+        self.logger.log(f'[*] BIOS Region: Base = 0x{bios_base:08X}, Limit = 0x{bios_limit:08X}')
 
-            areas_to_protect = [(bios_base, bios_limit)]
-            SPI_protected_ranges = self.cs.hals.spi.get_SPI_Protected_Ranges()
-            for (base, limit, wpe, _, _, _) in SPI_protected_ranges:
-                if base > limit:
-                    continue
-                if wpe == 1:
-                    areas = areas_to_protect[:]
-                    for area in areas:
-                        (start, end) = area
-                        if (base <= start) and (limit >= start):
-                            if limit >= end:
-                                areas_to_protect.remove(area)
-                            else:
-                                areas_to_protect.remove(area)
-                                area = (limit + 1, end)
-                                areas_to_protect.append(area)
-                        elif (base <= end) and (limit >= end):
-                            if base <= start:
-                                areas_to_protect.remove(area)
-                            else:
-                                areas_to_protect.remove(area)
-                                area = (start, base - 1)
-                                areas_to_protect.append(area)
-                        elif (base > start) and (limit < end):
+        areas_to_protect = [(bios_base, bios_limit)]
+        SPI_protected_ranges = self.cs.hals.spi.get_SPI_Protected_Ranges()
+        for (base, limit, wpe, _, _, _) in SPI_protected_ranges:
+            if base > limit:
+                continue
+            if wpe == 1:
+                areas = areas_to_protect[:]
+                for area in areas:
+                    (start, end) = area
+                    if (base <= start) and (limit >= start):
+                        if limit >= end:
                             areas_to_protect.remove(area)
-                            areas_to_protect.append((start, base - 1))
-                            areas_to_protect.append((limit + 1, end))
+                        else:
+                            areas_to_protect.remove(area)
+                            area = (limit + 1, end)
+                            areas_to_protect.append(area)
+                    elif (base <= end) and (limit >= end):
+                        if base <= start:
+                            areas_to_protect.remove(area)
+                        else:
+                            areas_to_protect.remove(area)
+                            area = (start, base - 1)
+                            areas_to_protect.append(area)
+                    elif (base > start) and (limit < end):
+                        areas_to_protect.remove(area)
+                        areas_to_protect.append((start, base - 1))
+                        areas_to_protect.append((limit + 1, end))
 
         if len(areas_to_protect) == 0:
             pr_cover_bios = True

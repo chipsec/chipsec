@@ -573,10 +573,10 @@ class CoreConfigRegisters(BaseConfigParser):
                 cont_obj = CONTROLHelper(attrs, reg)
                 objs.append(cont_obj)
             # Update storage location with new data
-            if name in self.cfg.CONTROLS and len(set(self.cfg.CONTROLS[name]).intersection(objs)) == 0:
-                self.cfg.CONTROLS[name].extend(objs)
-            else:
+            if name not in self.cfg.CONTROLS:
                 self.cfg.CONTROLS[name] = objs
+            elif len(set(self.cfg.CONTROLS[name]).intersection(objs)) == 0:
+                self.cfg.CONTROLS[name].extend(objs)
             hex_dict = make_dict_hex(attrs)
             self.logger.log_debug(f"    + {attrs['name']:16}: {hex_dict}")
 

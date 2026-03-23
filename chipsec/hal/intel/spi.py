@@ -51,7 +51,7 @@ from chipsec.library.file import write_file, read_file
 from chipsec.library.logger import print_buffer_bytes
 from chipsec.hal import hal_base
 from chipsec.library.spi_jedec_ids import JEDEC_ID
-from chipsec.library.exceptions import SpiRuntimeError, HALInitializationError
+from chipsec.library.exceptions import CSReadError, SpiRuntimeError, HALInitializationError
 from chipsec.library.intel.spi import SPI_REGION, SPI_FLA_SHIFT, SPI_FLA_PAGE_MASK, SPI_REGION_NAMES, SPI_REGION_tuple, print_SPI_Flash_Regions
 
 SPI_READ_WRITE_MAX_DBC = 64
@@ -110,9 +110,23 @@ class SPI(hal_base.HALBase):
 
     def __init__(self, cs):
         super(SPI, self).__init__(cs)
-        self.instance = cs.device.get_instance_by_name('8086.SPI', 0)
         self.mmio = cs.hals.mmio
-        self.get_registers()
+        self.device_found = False
+        self.spi_base = 0
+        self.devices = cs.device.get_list_by_name('8086.SPI')
+        for device in self.devices:
+            for instance in device.instances.values():
+                try:
+                    self.set_instance(instance)
+                except (CSReadError, HALInitializationError):
+                    continue
+                self.device_found = True
+                break
+            else:
+                continue
+            break
+        if not self.device_found:
+            raise HALInitializationError("No SPI device found. Be sure to have it defined in the platform configuration XML file.")
         # self.rcba_spi_base = self.get_SPI_MMIO_base()
         # We try to map SPIBAR in the process memory, this will increase the
         # speed of MMIO access later on.
@@ -164,16 +178,18 @@ class SPI(hal_base.HALBase):
 
     def set_instance(self, instance: 'PCIObj') -> None:
         self.instance = instance
+        self.spi_base = 0
         self.get_registers()
 
     def get_SPI_MMIO_base(self) -> int:
-        spi_base = 0
+        if self.spi_base != 0:
+            return self.spi_base
         if self.mmio.is_MMIO_BAR_defined('8086.SPI.SPIBAR'):
-            (spi_base, _) = self.mmio.get_MMIO_BAR_base_address('8086.SPI.SPIBAR', self.instance)
+            (self.spi_base, _) = self.mmio.get_MMIO_BAR_base_address('8086.SPI.SPIBAR', self.instance)
         else:
             self.logger.log_hal('[spi] get_SPI_MMIO_base(): SPIBAR not defined. Returning spi_base = 0.')
-        self.logger.log_hal(f'[spi] SPI MMIO base: 0x{spi_base:016X} (assuming below 4GB)')
-        return spi_base
+        self.logger.log_hal(f'[spi] SPI MMIO base: 0x{self.spi_base:016X} (assuming below 4GB)')
+        return self.spi_base
 
     def spi_reg_read(self, reg: int, size: int = 4) -> int:
         return self.mmio.read_MMIO_reg(self.get_SPI_MMIO_base(), reg, size)
