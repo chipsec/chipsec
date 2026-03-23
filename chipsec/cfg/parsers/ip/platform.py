@@ -139,8 +139,31 @@ class RegisterList:
             register_name: Name of the register
             register_object: Register object to add
         """
-        self.register_list[register_name] = register_object
-        self.__setattr__(register_name, register_object)
+        if register_name in self.register_list:
+            self._merge_register_instances(register_name, register_object)
+        else:
+            self.register_list[register_name] = register_object
+        self.__setattr__(register_name, self.register_list[register_name])
+
+    def _merge_register_instances(self, register_name: str, register_object: Any) -> None:
+        """
+        Merge new register instances into an existing register entry.
+
+        Replaces an existing instance if one with the same instance ID is found;
+        otherwise appends the new instance if it is not already present.
+
+        Args:
+            register_name: Name of the existing register entry
+            register_object: New register instances to merge in
+        """
+        existing = self.register_list[register_name]
+        existing_instances = [r.get_instance() for r in existing]
+        for reg in register_object:
+            if reg.get_instance() in existing_instances:
+                idx = existing_instances.index(reg.get_instance())
+                existing[idx] = reg
+            elif reg not in existing:
+                existing.append(reg)
 
     def get_register(self, register_name: str) -> ObjList:
         """
