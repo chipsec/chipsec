@@ -31,7 +31,7 @@ from chipsec.library.logger import logger
 
 modules: Dict[str, bool] = {}
 
-for module_name in ['brotli', 'EfiCompressor', 'gzip', 'lzma', 'zlib', 'zstandard']:
+for module_name in ['brotli', 'EfiCompressor', 'gzip', 'lzma', 'zlib']:
     try:
         globals()[module_name] = importlib.import_module(module_name)
 
@@ -52,7 +52,6 @@ COMPRESSION_TYPE_UNKNOWN: int = 6
 COMPRESSION_TYPE_LZMAF86: int = 7
 COMPRESSION_TYPE_ZLIB_AMD: int = 8
 COMPRESSION_TYPE_GZIP: int = 9
-COMPRESSION_TYPE_ZSTD: int = 10
 
 COMPRESSION_TYPES_ALGORITHMS: List[int] = [
     COMPRESSION_TYPE_LZMA,
@@ -62,7 +61,6 @@ COMPRESSION_TYPES_ALGORITHMS: List[int] = [
     COMPRESSION_TYPE_ZLIB_AMD,
     COMPRESSION_TYPE_GZIP,
     COMPRESSION_TYPE_BROTLI,
-    COMPRESSION_TYPE_ZSTD,
     COMPRESSION_TYPE_NONE
 ]
 
@@ -76,8 +74,7 @@ COMPRESSION_TYPES: List[int] = [
     COMPRESSION_TYPE_TIANO,
     COMPRESSION_TYPE_UEFI,
     COMPRESSION_TYPE_UNKNOWN,
-    COMPRESSION_TYPE_ZLIB_AMD,
-    COMPRESSION_TYPE_ZSTD
+    COMPRESSION_TYPE_ZLIB_AMD
 ]
 
 COMPRESSION_TYPES_UNKNOWN_EFI: List[int] = [
@@ -89,11 +86,9 @@ COMPRESSION_TYPES_UNKNOWN_ALL: List[int] = [
     COMPRESSION_TYPE_TIANO,
     COMPRESSION_TYPE_UEFI,
     COMPRESSION_TYPE_LZMA,
-    COMPRESSION_TYPE_LZMAF86,
     COMPRESSION_TYPE_ZLIB_AMD,
     COMPRESSION_TYPE_GZIP,
-    COMPRESSION_TYPE_BROTLI,
-    COMPRESSION_TYPE_ZSTD
+    COMPRESSION_TYPE_BROTLI
 ]
 
 # noinspection PyUnresolvedReferences
@@ -183,12 +178,6 @@ class UefiCompression:
                     raise ValueError('Could not validate decompressed BROTLI data length')
             except Exception as error:
                 logger().log_hal(f'Cannot decompress BROTLI data: {error}')
-        elif compression_type == COMPRESSION_TYPE_ZSTD and modules.get('zstandard', False):
-            try:
-                dctx = zstandard.ZstdDecompressor()
-                data = dctx.decompress(compressed_data, max_output_size=64 * 1024 * 1024)
-            except Exception as error:
-                logger().log_hal(f'Cannot decompress ZSTD data: {error}')
 
         if not data:
             logger().log_hal(f'Failed to decompress EFI data of type 0x{compression_type:X}')
@@ -272,11 +261,5 @@ class UefiCompression:
                 data = brotli_header_data + brotli.compress(uncompressed_data)
             except brotli.error as error:
                 logger().log_hal(f'Cannot compress BROTLI data: {error}')
-        elif compression_type == COMPRESSION_TYPE_ZSTD and modules.get('zstandard', False):
-            try:
-                cctx = zstandard.ZstdCompressor()
-                data = cctx.compress(uncompressed_data)
-            except Exception as error:
-                logger().log_hal(f'Cannot compress ZSTD data: {error}')
 
         return data
