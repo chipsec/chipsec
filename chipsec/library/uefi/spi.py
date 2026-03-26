@@ -45,7 +45,7 @@ if TYPE_CHECKING:
 from chipsec.library.logger import logger
 from chipsec.library.file import write_file, read_file
 from chipsec.library.uefi.compression import COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_EFI_STANDARD, COMPRESSION_TYPES_ALGORITHMS, COMPRESSION_TYPE_UNKNOWN, COMPRESSION_TYPE_LZMAF86
-from chipsec.library.uefi.compression import COMPRESSION_TYPE_BROTLI, COMPRESSION_TYPE_GZIP, COMPRESSION_TYPE_ZLIB_AMD, COMPRESSION_TYPE_ZSTD
+from chipsec.library.uefi.compression import COMPRESSION_TYPE_BROTLI, COMPRESSION_TYPE_GZIP, COMPRESSION_TYPE_ZLIB_AMD
 from chipsec.library.uefi.compression import UefiCompression
 from chipsec.library.uefi.common import bit_set, EFI_GUID_SIZE, EFI_GUID_FMT
 from chipsec.library.uefi.platform import FWType, fw_types, EFI_NVRAM_GUIDS, EFI_PLATFORM_FS_GUIDS, NVAR_NVRAM_FS_FILE
@@ -66,7 +66,6 @@ from chipsec.library.uefi.fv import EFI_COMPRESSION_SECTION, EFI_COMPRESSION_SEC
 from chipsec.library.uefi.fv import EFI_GUIDED_SECTION_TIANO, EFI_GUIDED_SECTION_BROTLI, EFI_GUIDED_SECTION_LZMAF86
 from chipsec.library.uefi.fv import EFI_GUIDED_SECTION_LZMA, EFI_GUIDED_SECTION_LZMA_HP, EFI_GUIDED_SECTION_LZMA_MS
 from chipsec.library.uefi.fv import EFI_GUIDED_SECTION_GZIP, EFI_GUIDED_SECTION_ZLIB_AMD1, EFI_GUIDED_SECTION_ZLIB_AMD2
-from chipsec.library.uefi.fv import EFI_GUIDED_SECTION_ZSTD
 from chipsec.library.uefi.fv import EFI_GUIDED_SECTION_AMI_SIGNED, EFI_GUIDED_SECTION_PHOENIX
 from chipsec.library.uefi.fv import EFI_CAPSULE_HEADER_FMT, EFI_CAPSULE_HEADER_SIZE, EFI_CAPSULE_GUIDS
 from chipsec.library.uefi.fv import EFI_FTW_GUIDS
@@ -372,8 +371,7 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
                 sec.children = build_efi_modules_tree(fwtype, sec.Image[sec.DataOffset:], Size - sec.DataOffset, 0, polarity)
             elif sec.Guid in [EFI_GUIDED_SECTION_LZMA, EFI_GUIDED_SECTION_LZMA_HP, EFI_GUIDED_SECTION_LZMA_MS,
                               EFI_GUIDED_SECTION_LZMAF86, EFI_GUIDED_SECTION_BROTLI, EFI_GUIDED_SECTION_GZIP,
-                              EFI_GUIDED_SECTION_ZLIB_AMD1, EFI_GUIDED_SECTION_ZLIB_AMD2, EFI_GUIDED_SECTION_TIANO,
-                              EFI_GUIDED_SECTION_ZSTD]:
+                              EFI_GUIDED_SECTION_ZLIB_AMD1, EFI_GUIDED_SECTION_ZLIB_AMD2, EFI_GUIDED_SECTION_TIANO]:
                 if sec.Guid in [EFI_GUIDED_SECTION_LZMA, EFI_GUIDED_SECTION_LZMA_HP, EFI_GUIDED_SECTION_LZMA_MS]:
                     d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_LZMA)
                 elif sec.Guid == EFI_GUIDED_SECTION_LZMAF86:
@@ -386,8 +384,7 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
                     d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_ZLIB_AMD)
                 elif sec.Guid == EFI_GUIDED_SECTION_TIANO:
                     d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_EFI_STANDARD)
-                elif sec.Guid == EFI_GUIDED_SECTION_ZSTD:
-                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_ZSTD)
+
                 else:
                     d = b''
 
