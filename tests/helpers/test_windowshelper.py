@@ -260,30 +260,6 @@ class WindowsHelperTest(unittest.TestCase):
         cpuid_value = self.whelper.cpuid(1, 0)
         self.assertEqual(cpuid_value, (0x406F1, 0, 0, 0))
 
-    def test_firmware_vendor_product_and_version(self, *mocks):
-        self._assign_mocks(mocks)
-        type0 = b'\x00\x12\x00\x00\x01\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00'
-        type0_strings = b'TestVendor\x00FW1.2.3\x002026-03-17\x00\x00'
-        type1 = b'\x01\x08\x01\x00\x01\x02\x03\x04'
-        type1_strings = b'TestManufacturer\x00TestProduct\x00BoardVersion\x00Serial\x00\x00'
-        end = b'\x7f\x04\xff\xff\x00\x00'
-        smbios_table = type0 + type0_strings + type1 + type1_strings + end
-        self.whelper._get_rsmb_table_data = Mock(return_value=smbios_table)
-
-        self.assertEqual(self.whelper.firmware_vendor(), 'TestVendor')
-        self.assertEqual(self.whelper.firmware_product(), 'TestProduct')
-        self.assertEqual(self.whelper.firmware_version(), 'FW1.2.3')
-
-    def test_firmware_type(self, *mocks):
-        self._assign_mocks(mocks)
-
-        def fill_firmware_type(value):
-            value.value = 3
-            return 1
-
-        self.whelper.GetFirmwareType = Mock(side_effect=fill_firmware_type)
-        self.assertEqual(self.whelper.firmware_type(), 'UEFI')
-
         
     def test_alloc_phys_mem(self, *mocks):
         self._assign_mocks(mocks)

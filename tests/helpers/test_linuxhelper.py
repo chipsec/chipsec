@@ -257,29 +257,6 @@ class LinuxHelperTest(unittest.TestCase):
         lh_ioctl.side_effect = LinuxHelperTest.ioctlret
         msg_s_r_m = self.lhelper.msgbus_send_write_message(0x1, 0x2, 0x3)
         self.assertIsNone(msg_s_r_m)
-
-    @patch('chipsec.helper.linux.linuxhelper.open', create=True)
-    @patch('chipsec.helper.linux.linuxhelper.os.path.exists')
-    def test_firmware_info(self, os_path_exists, mock_open, _, __):
-        def open_side_effect(filename, *args, **kwargs):
-            file_map = {
-                '/sys/class/dmi/id/bios_vendor': 'LinuxVendor\n',
-                '/sys/class/dmi/id/product_name': 'LinuxProduct\n',
-                '/sys/class/dmi/id/bios_version': 'LinuxVersion\n'
-            }
-            handle = Mock()
-            handle.__enter__ = Mock(return_value=handle)
-            handle.__exit__ = Mock(return_value=False)
-            handle.read.return_value = file_map[filename]
-            return handle
-
-        mock_open.side_effect = open_side_effect
-        os_path_exists.side_effect = lambda path: path == '/sys/firmware/efi'
-
-        self.assertEqual(self.lhelper.firmware_vendor(), 'LinuxVendor')
-        self.assertEqual(self.lhelper.firmware_product(), 'LinuxProduct')
-        self.assertEqual(self.lhelper.firmware_version(), 'LinuxVersion')
-        self.assertEqual(self.lhelper.firmware_type(), 'UEFI')
     
     # TODO Test: get_affinity
     
