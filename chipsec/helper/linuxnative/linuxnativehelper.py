@@ -466,7 +466,7 @@ class LinuxNativeHelper(Helper):
         return self._read_sysfs_text('/sys/class/dmi/id/product_name')
 
     def firmware_version(self) -> Optional[str]:
-        return self.get_bios_version()
+        return self._read_sysfs_text('/sys/class/dmi/id/bios_version')
 
     def firmware_type(self) -> Optional[str]:
         return 'UEFI' if os.path.exists('/sys/firmware/efi') else 'BIOS'
