@@ -451,6 +451,26 @@ class LinuxNativeHelper(Helper):
     def retpoline_enabled(self):
         raise NotImplementedError('retpoline_enabled')
 
+    def _read_sysfs_text(self, filename: str) -> Optional[str]:
+        try:
+            with open(filename, 'r', encoding='utf-8') as infile:
+                value = infile.read().strip()
+        except OSError:
+            return None
+        return value or None
+
+    def firmware_vendor(self) -> Optional[str]:
+        return self._read_sysfs_text('/sys/class/dmi/id/bios_vendor')
+
+    def firmware_product(self) -> Optional[str]:
+        return self._read_sysfs_text('/sys/class/dmi/id/product_name')
+
+    def firmware_version(self) -> Optional[str]:
+        return self._read_sysfs_text('/sys/class/dmi/id/bios_version')
+
+    def firmware_type(self) -> Optional[str]:
+        return 'UEFI' if os.path.exists('/sys/firmware/efi') else 'BIOS'
+
     def get_bios_version(self) -> str:
         try:
             filename = '/sys/class/dmi/id/bios_version'

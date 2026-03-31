@@ -64,6 +64,18 @@ class Helper(ABC):
     def get_info(self) -> Tuple[str, str]:
         return self.name, self.driverpath
 
+    def firmware_vendor(self) -> Optional[str]:
+        return None
+
+    def firmware_product(self) -> Optional[str]:
+        return None
+
+    def firmware_version(self) -> Optional[str]:
+        return None
+
+    def firmware_type(self) -> Optional[str]:
+        return None
+
     #################################################################################################
     # Actual OS helper functionality accessible to HAL components
 

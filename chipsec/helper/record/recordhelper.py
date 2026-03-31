@@ -56,6 +56,18 @@ class RecordHelper(Helper):
         self._subhelper = newhelper
         logger().log(f"Switched subhelper to: {self._subhelper.name}")
 
+    def firmware_vendor(self) -> Optional[str]:
+        return self._call_subhelper()
+
+    def firmware_product(self) -> Optional[str]:
+        return self._call_subhelper()
+
+    def firmware_version(self) -> Optional[str]:
+        return self._call_subhelper()
+
+    def firmware_type(self) -> Optional[str]:
+        return self._call_subhelper()
+
     def _add_element(self, cmd: str, args: Tuple, ret: Any) -> None:
         try:
             margs = f"({','.join(str(i) for i in args)})"
