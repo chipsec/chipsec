@@ -28,19 +28,28 @@ files and identifies duplicate registers with their differences.
 - Built with AI assistance.
 
 Usage:
-    python extract_registers.py <xml_file1> [xml_file2 ...] [-o output_file]
+    python extract_registers.py [<xml_file_or_glob> ...] [-o output_file_or_dir] [--cfg-dir CFG_DIR]
 
-Example:
-    python extract_registers.py chipsec/cfg/8086/adl.xml chipsec/cfg/8086/adl_addition.xml
+Notes:
+    - If one or more XML files or glob patterns are provided, the script processes
+      those inputs directly and -o specifies the output file.
+    - If no XML inputs are provided, the script auto-discovers platform XML files
+      under --cfg-dir and -o specifies the output directory.
+
+Examples:
+    python extract_registers.py "chipsec/cfg/8086/adl.xml" -o registers.txt
+    python extract_registers.py --cfg-dir chipsec/cfg -o out/
 """
 
 import xml.etree.ElementTree as ET
 import argparse
+import glob
 import os
+import re
 import sys
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 
 class RegisterInfo:
@@ -106,6 +115,21 @@ class ControlInfo:
         return ET.tostring(self.element, encoding='unicode', method='xml')
 
 
+class CrossReference:
+    """Store a cross-reference from an element to a register/field."""
+
+    def __init__(self, tag: str, element_name: str, source_file: str,
+                 register_attr: str, register_name: str,
+                 field_attr: str, field_name: str):
+        self.tag = tag                      # e.g., 'bar', 'subcomponent', 'control', 'lock'
+        self.element_name = element_name    # name attribute of the referencing element
+        self.source_file = source_file
+        self.register_attr = register_attr  # attribute name holding the register ref (e.g., 'register')
+        self.register_name = register_name  # value of the register attribute
+        self.field_attr = field_attr        # attribute name holding the field ref (e.g., 'base_field')
+        self.field_name = field_name        # value of the field attribute
+
+
 class XMLConfigParser:
     """Parse CHIPSEC XML configuration files and extract registers."""
 
@@ -113,11 +137,14 @@ class XMLConfigParser:
         self.base_paths = [Path(p).resolve() for p in base_paths]
         self.registers: Dict[str, List[RegisterInfo]] = defaultdict(list)
         self.controls: Dict[str, List[ControlInfo]] = defaultdict(list)
+        self.cross_references: List[CrossReference] = []
+        self.parse_errors: List[str] = []
+        self._cached_validation_errors: List[str] = None
         self.processed_files: Set[str] = set()
         self.file_tree: Dict[str, List[str]] = defaultdict(list)
         self.file_to_top_level: Dict[str, str] = {}  # Maps any file to its top-level source
 
-    def find_config_file(self, config_path: str, current_file: str) -> str:
+    def find_config_file(self, config_path: str, current_file: str) -> Optional[str]:
         """Find the actual path of a config file."""
         current_dir = Path(current_file).parent
 
@@ -142,48 +169,48 @@ class XMLConfigParser:
         if potential_path.exists():
             return str(potential_path.resolve())
 
-        # Find the cfg/8086 directory from current file
-        search_dir = current_dir
-        while search_dir.name != '8086' and search_dir.parent != search_dir:
-            if search_dir.name == '8086':
-                break
-            search_dir = search_dir.parent
+        # Find the vendor directory (e.g., 8086, 1022) from current file
+        # Walk up from current_dir looking for a parent whose parent is named 'cfg'
+        vendor_dir = self._find_vendor_dir(current_dir)
 
-        if search_dir.name == '8086':
+        if vendor_dir:
             # Try with dot notation converted
-            potential_path = search_dir / config_path_converted
+            potential_path = vendor_dir / config_path_converted
             if potential_path.exists():
                 return str(potential_path.resolve())
 
             # Try as-is
-            potential_path = search_dir / config_path
+            potential_path = vendor_dir / config_path
             if potential_path.exists():
                 return str(potential_path.resolve())
 
         # Try each base path
         for base_path in self.base_paths:
-            # Extract the directory from base path
             cfg_dir = base_path.parent if base_path.is_file() else base_path
+            vendor_dir = self._find_vendor_dir(cfg_dir)
 
-            # Look for cfg/8086 directory
-            search_dir = cfg_dir
-            while search_dir.name != '8086' and search_dir.parent != search_dir:
-                if (search_dir / '8086').exists():
-                    search_dir = search_dir / '8086'
-                    break
-                search_dir = search_dir.parent
-
-            if search_dir.name == '8086':
+            if vendor_dir:
                 # Try with dot notation converted
-                potential_path = search_dir / config_path_converted
+                potential_path = vendor_dir / config_path_converted
                 if potential_path.exists():
                     return str(potential_path.resolve())
 
                 # Try as-is
-                potential_path = search_dir / config_path
+                potential_path = vendor_dir / config_path
                 if potential_path.exists():
                     return str(potential_path.resolve())
 
+        return None
+
+    @staticmethod
+    def _find_vendor_dir(start_dir: Path) -> Optional[Path]:
+        """Walk up from start_dir to find the vendor directory (child of cfg/).
+        The vendor directory name must be a 4-digit hex value (e.g., 8086, 1022)."""
+        search_dir = start_dir.resolve()
+        while search_dir.parent != search_dir:
+            if search_dir.parent.name == 'cfg' and re.fullmatch(r'[0-9a-fA-F]{4}', search_dir.name):
+                return search_dir
+            search_dir = search_dir.parent
         return None
 
     def parse_file(self, file_path: str, parent_path: str = "", top_level_file: str = None) -> None:
@@ -206,10 +233,14 @@ class XMLConfigParser:
             tree = ET.parse(file_path)
             root = tree.getroot()
         except ET.ParseError as e:
-            print(f"Warning: Failed to parse {file_path}: {e}", file=sys.stderr)
+            msg = f"ERROR: Failed to parse {file_path}: {e}"
+            print(msg, file=sys.stderr)
+            self.parse_errors.append(msg)
             return
         except FileNotFoundError:
-            print(f"Warning: File not found: {file_path}", file=sys.stderr)
+            msg = f"ERROR: File not found: {file_path}"
+            print(msg, file=sys.stderr)
+            self.parse_errors.append(msg)
             return
 
         # Extract registers from this file
@@ -226,8 +257,50 @@ class XMLConfigParser:
                 ctrl_info = ControlInfo(name, control, file_path, parent_path, top_level_file)
                 self.controls[name].append(ctrl_info)
 
+        # Collect cross-references for validation
+        self._collect_cross_references(root, file_path)
+
         # Follow config references
         self._follow_config_references(root, file_path, parent_path, top_level_file)
+
+    def _collect_cross_references(self, root: ET.Element, source_file: str) -> None:
+        """Collect cross-references between elements and registers/fields."""
+        # Define which tags/attributes reference register fields
+        # Format: (xpath, register_attr, [(field_attr, field_register_attr)])
+        # field_register_attr: which attribute holds the register for this field (usually same as register_attr)
+        ref_specs = [
+            ('.//bar',          'register', [('base_field', None), ('enable_field', None)]),
+            ('.//subcomponent',  'register', [('base_field', None), ('enable_field', None), ('valid', None), ('valid_field', None)]),
+            ('.//subcomponent',  'limit_register', [('limit_field', None)]),
+            ('.//control',      'register', [('field', None)]),
+            ('.//lock',         'register', [('field', None)]),
+        ]
+
+        for xpath, reg_attr, field_specs in ref_specs:
+            for elem in root.findall(xpath):
+                reg_name = elem.get(reg_attr)
+                if not reg_name:
+                    continue
+
+                elem_name = elem.get('name', elem.tag)
+
+                # Check register-only references (register exists?)
+                self.cross_references.append(CrossReference(
+                    tag=elem.tag, element_name=elem_name, source_file=source_file,
+                    register_attr=reg_attr, register_name=reg_name,
+                    field_attr='', field_name=''
+                ))
+
+                # Check field references
+                for field_attr, field_reg_attr in field_specs:
+                    field_name = elem.get(field_attr)
+                    if field_name:
+                        target_reg = elem.get(field_reg_attr) if field_reg_attr else reg_name
+                        self.cross_references.append(CrossReference(
+                            tag=elem.tag, element_name=elem_name, source_file=source_file,
+                            register_attr=reg_attr, register_name=target_reg,
+                            field_attr=field_attr, field_name=field_name
+                        ))
 
     def _follow_config_references(self, element: ET.Element, current_file: str, parent_path: str, top_level_file: str) -> None:
         """Recursively follow config attributes in XML elements."""
@@ -247,8 +320,9 @@ class XMLConfigParser:
                     self.file_tree[current_file].append(config_file)
                     self.parse_file(config_file, new_parent_path, top_level_file)
                 else:
-                    print(f"Warning: Config file not found: {config_path} (referenced from {current_file})", 
-                          file=sys.stderr)
+                    msg = f"ERROR: Config file not found: {config_path} (referenced from {current_file})"
+                    print(msg, file=sys.stderr)
+                    self.parse_errors.append(msg)
 
         # Recursively process children
         for child in element:
@@ -319,6 +393,62 @@ class XMLConfigParser:
 
         return deltas
 
+    def _resolve_register_name(self, reg_name: str) -> str:
+        """Resolve dotted register names (e.g., 'PWRMBASE.VGPIO_BAR' -> 'VGPIO_BAR')."""
+        if '.' in reg_name:
+            return reg_name.rsplit('.', 1)[-1]
+        return reg_name
+
+    def validate_cross_references(self) -> List[str]:
+        """Validate all cross-references and return a list of error messages."""
+        errors = []
+        seen = set()
+
+        # Precompute register -> set(field_names) map
+        reg_field_map: Dict[str, Set[str]] = {}
+        for reg_name, reg_infos in self.registers.items():
+            fields = set()
+            for reg_info in reg_infos:
+                for fname, _ in reg_info.get_fields():
+                    fields.add(fname)
+            reg_field_map[reg_name] = fields
+
+        for xref in self.cross_references:
+            resolved_name = self._resolve_register_name(xref.register_name)
+
+            # Check if referenced register exists
+            if resolved_name not in self.registers:
+                key = (xref.tag, xref.element_name, xref.source_file, xref.register_attr, xref.register_name)
+                if key not in seen:
+                    seen.add(key)
+                    errors.append(
+                        f"ERROR: <{xref.tag} name=\"{xref.element_name}\"> in {xref.source_file}\n"
+                        f"  {xref.register_attr}=\"{xref.register_name}\" references undefined register \"{resolved_name}\""
+                    )
+                continue
+
+            # If this is a field reference, check that the field exists
+            if xref.field_name:
+                field_names = reg_field_map[resolved_name]
+
+                if xref.field_name not in field_names:
+                    key = (xref.tag, xref.element_name, xref.source_file, resolved_name, xref.field_attr, xref.field_name)
+                    if key not in seen:
+                        seen.add(key)
+                        suggestion = ""
+                        # Try to find a close match
+                        for fname in sorted(field_names):
+                            if xref.field_name.lower() in fname.lower() or fname.lower() in xref.field_name.lower():
+                                suggestion = f" (did you mean \"{fname}\"?)"
+                                break
+                        errors.append(
+                            f"ERROR: <{xref.tag} name=\"{xref.element_name}\"> in {xref.source_file}\n"
+                            f"  {xref.field_attr}=\"{xref.field_name}\" not found in register \"{resolved_name}\"{suggestion}\n"
+                            f"  Available fields: {', '.join(sorted(field_names)) if field_names else '(no fields defined)'}"
+                        )
+
+        return errors
+
     def generate_output(self, output_file: str = None) -> None:
         """Generate the flat register list output."""
         output = sys.stdout if output_file is None else open(output_file, 'w', encoding='utf-8')
@@ -331,7 +461,21 @@ class XMLConfigParser:
 
             output.write(f"Total unique registers: {len(self.registers)}\n")
             output.write(f"Total unique controls: {len(self.controls)}\n")
-            output.write(f"Total files processed: {len(self.processed_files)}\n\n")
+            output.write(f"Total files processed: {len(self.processed_files)}\n")
+
+            # Use cached validation results if available, otherwise compute
+            validation_errors = self._cached_validation_errors if self._cached_validation_errors is not None else self.validate_cross_references()
+            output.write(f"Cross-reference errors: {len(validation_errors)}\n")
+            output.write(f"Parse/config errors: {len(self.parse_errors)}\n\n")
+
+            # Output validation errors first if any
+            if validation_errors:
+                output.write("!" * 80 + "\n")
+                output.write("CROSS-REFERENCE VALIDATION ERRORS\n")
+                output.write("!" * 80 + "\n\n")
+                for i, error in enumerate(validation_errors, 1):
+                    output.write(f"{i}. {error}\n\n")
+                output.write("=" * 80 + "\n\n")
 
             # List processed files
             output.write("Processed files:\n")
@@ -610,6 +754,63 @@ class XMLConfigParser:
         return deltas
 
 
+def discover_platforms(cfg_dir: str) -> Dict[str, List[str]]:
+    """Scan cfg_dir for XML files with <configuration platform="..."> and group by platform."""
+    platforms = defaultdict(list)
+    pattern = re.compile(r'<configuration\s+platform="([^"]+)"')
+
+    for xml_path in sorted(glob.glob(os.path.join(cfg_dir, '**', '*.xml'), recursive=True)):
+        if os.path.basename(xml_path) == 'template.xml':
+            continue
+        try:
+            with open(xml_path, 'r', encoding='utf-8', errors='ignore') as f:
+                # Only need to check first few KB for the configuration tag
+                head = f.read(4096)
+            match = pattern.search(head)
+            if match:
+                platform = match.group(1)
+                platforms[platform].append(xml_path)
+        except OSError:
+            continue
+
+    return dict(platforms)
+
+
+def process_files(xml_files: List[str], output_file: str = None) -> Tuple[int, int]:
+    """Process a list of XML files and generate output. Returns (xref_errors, parse_errors)."""
+    base_paths = [os.path.dirname(os.path.abspath(f)) for f in xml_files]
+
+    xml_parser = XMLConfigParser(base_paths)
+
+    print(f"Processing {len(xml_files)} file(s)...", file=sys.stderr)
+    for xml_file in xml_files:
+        print(f"  - {xml_file}", file=sys.stderr)
+        xml_parser.parse_file(xml_file)
+
+    print(f"\nFound {len(xml_parser.registers)} unique registers and {len(xml_parser.controls)} unique controls across {len(xml_parser.processed_files)} files",
+          file=sys.stderr)
+
+    if xml_parser.parse_errors:
+        print(f"\n!!! {len(xml_parser.parse_errors)} PARSE ERROR(S) !!!", file=sys.stderr)
+
+    validation_errors = xml_parser.validate_cross_references()
+    xml_parser._cached_validation_errors = validation_errors
+    if validation_errors:
+        print(f"\n!!! {len(validation_errors)} CROSS-REFERENCE ERROR(S) FOUND !!!", file=sys.stderr)
+        for error in validation_errors:
+            print(f"  {error}", file=sys.stderr)
+
+    if output_file:
+        print(f"\nWriting output to {output_file}...", file=sys.stderr)
+
+    xml_parser.generate_output(output_file)
+
+    if output_file:
+        print("Done!", file=sys.stderr)
+
+    return len(validation_errors), len(xml_parser.parse_errors)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='Extract all registers from CHIPSEC XML configuration files',
@@ -622,45 +823,86 @@ Examples:
   # Multiple files
   python extract_registers.py chipsec/cfg/8086/adl.xml chipsec/cfg/8086/adl_addition.xml
 
+  # Glob pattern
+  python extract_registers.py "chipsec/cfg/8086/adl*.xml"
+
   # With output file
   python extract_registers.py chipsec/cfg/8086/adl.xml -o adl_registers.txt
+
+  # Auto-discover all platforms (no args, searches chipsec/cfg/)
+  python extract_registers.py
 """)
 
-    parser.add_argument('xml_files', nargs='+', help='XML configuration files to process')
-    parser.add_argument('-o', '--output', help='Output file (default: stdout)')
+    parser.add_argument('xml_files', nargs='*', help='XML configuration files or glob patterns to process. '
+                        'If omitted, auto-discovers platforms from chipsec/cfg/')
+    parser.add_argument('-o', '--output', help='Output file (default: stdout). In auto-discover mode, '
+                        'used as output directory for <platform>_registers.txt files')
+    parser.add_argument('--cfg-dir', default='chipsec/cfg',
+                        help='Config directory to scan for auto-discovery (default: chipsec/cfg)')
 
     args = parser.parse_args()
 
-    # Validate input files
-    for xml_file in args.xml_files:
-        if not os.path.exists(xml_file):
-            print(f"Error: File not found: {xml_file}", file=sys.stderr)
+    if args.xml_files:
+        # Explicit file mode: expand globs and process
+        expanded_files = []
+        for pattern in args.xml_files:
+            matches = sorted(glob.glob(pattern))
+            if matches:
+                expanded_files.extend(matches)
+            else:
+                print(f"Error: No files matched: {pattern}", file=sys.stderr)
+                return 1
+
+        for xml_file in expanded_files:
+            if not os.path.exists(xml_file):
+                print(f"Error: File not found: {xml_file}", file=sys.stderr)
+                return 1
+
+        xref_errors, parse_errors = process_files(expanded_files, args.output)
+        return 1 if (xref_errors + parse_errors) > 0 else 0
+
+    # Auto-discover mode
+    cfg_dir = args.cfg_dir
+    if not os.path.isdir(cfg_dir):
+        print(f"Error: Config directory not found: {cfg_dir}", file=sys.stderr)
+        return 1
+
+    platforms = discover_platforms(cfg_dir)
+    if not platforms:
+        print(f"Error: No platform configurations found in {cfg_dir}", file=sys.stderr)
+        return 1
+
+    print(f"Auto-discovered {len(platforms)} platform(s): {', '.join(sorted(platforms.keys()))}\n", file=sys.stderr)
+
+    # Use -o as output directory in auto-discover mode
+    output_dir = args.output if args.output else '.'
+    if output_dir != '.' and not os.path.isdir(output_dir):
+        if os.path.exists(output_dir):
+            print(f"Error: Output path exists and is not a directory: {output_dir}", file=sys.stderr)
             return 1
+        os.makedirs(output_dir, exist_ok=True)
 
-    # Extract base paths for finding config references
-    base_paths = [os.path.dirname(os.path.abspath(f)) for f in args.xml_files]
+    total_xref_errors = 0
+    total_parse_errors = 0
+    for platform in sorted(platforms.keys()):
+        files = platforms[platform]
+        output_file = os.path.join(output_dir, f"{platform.lower()}_registers.txt")
 
-    # Parse all files
-    xml_parser = XMLConfigParser(base_paths)
+        print(f"{'=' * 80}", file=sys.stderr)
+        print(f"Platform: {platform} ({len(files)} file(s)) -> {output_file}", file=sys.stderr)
+        print(f"{'=' * 80}", file=sys.stderr)
 
-    print(f"Processing {len(args.xml_files)} file(s)...", file=sys.stderr)
-    for xml_file in args.xml_files:
-        print(f"  - {xml_file}", file=sys.stderr)
-        xml_parser.parse_file(xml_file)
+        xref_errors, parse_errors = process_files(files, output_file)
+        total_xref_errors += xref_errors
+        total_parse_errors += parse_errors
+        print("", file=sys.stderr)
 
-    print(f"\nFound {len(xml_parser.registers)} unique registers and {len(xml_parser.controls)} unique controls across {len(xml_parser.processed_files)} files", 
-          file=sys.stderr)
+    print(f"{'=' * 80}", file=sys.stderr)
+    print(f"Summary: Processed {len(platforms)} platform(s), "
+          f"{total_xref_errors} cross-reference error(s), "
+          f"{total_parse_errors} parse/config error(s)", file=sys.stderr)
 
-    # Generate output
-    if args.output:
-        print(f"Writing output to {args.output}...", file=sys.stderr)
-
-    xml_parser.generate_output(args.output)
-
-    if args.output:
-        print("Done!", file=sys.stderr)
-
-    return 0
+    return 1 if (total_xref_errors + total_parse_errors) > 0 else 0
 
 
 if __name__ == '__main__':

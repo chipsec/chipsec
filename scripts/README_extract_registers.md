@@ -7,40 +7,53 @@ A Python script that extracts all registers from CHIPSEC XML configuration files
 - **Recursive parsing**: Automatically follows `config` attributes to include all referenced XML files
 - **Flat register list**: Consolidates all registers into a single, easy-to-browse file
 - **Controls extraction**: Extracts control definitions alongside registers
+- **Cross-reference validation**: Detects undefined register/field references (e.g., BAR `base_field` pointing to a non-existent field)
 - **Duplicate detection**: Identifies when a register or control is defined in multiple files
 - **Delta analysis**: Shows detailed differences between duplicate register/control definitions
 - **File dependency tree**: Visualizes how configuration files reference each other
 - **Type-based grouping**: Organizes registers by type (msr, pcicfg, mmio, memory, etc.) and controls by context
 - **Offset-based sorting**: Within each type/context, items are sorted by offset for easy navigation
+- **Glob pattern support**: Accept glob patterns (e.g., `adl*.xml`) as input arguments
+- **Auto-discover mode**: When run with no arguments, scans `chipsec/cfg/` for all platform configurations and processes each independently
 
 ## Usage
 
 ### Basic Usage
 
 ```bash
-python extract_registers.py <xml_file1> [xml_file2 ...] [-o output_file]
+python extract_registers.py [xml_file_or_glob ...] [-o output_file_or_dir] [--cfg-dir DIR]
 ```
 
 ### Examples
 
 #### Extract from a single XML file:
 ```bash
-python extract_registers.py chipsec/chipsec/cfg/8086/adl.xml
+python extract_registers.py chipsec/cfg/8086/adl.xml
+```
+
+#### Extract using a glob pattern:
+```bash
+python extract_registers.py "chipsec/cfg/8086/adl*.xml"
 ```
 
 #### Extract from multiple XML files:
 ```bash
-python extract_registers.py chipsec/chipsec/cfg/8086/adl.xml chipsec/chipsec/cfg/8086/adl_custom.xml
+python extract_registers.py chipsec/cfg/8086/adl.xml chipsec/cfg/8086/adl_custom.xml
 ```
 
 #### Save output to a file:
 ```bash
-python extract_registers.py chipsec/chipsec/cfg/8086/adl.xml -o adl_registers.txt
+python extract_registers.py chipsec/cfg/8086/adl.xml -o adl_registers.txt
 ```
 
-#### Process multiple platforms:
+#### Auto-discover all platforms (no arguments):
 ```bash
-python extract_registers.py chipsec/chipsec/cfg/8086/adl.xml chipsec/chipsec/cfg/8086/mtl.xml -o combined_registers.txt
+python extract_registers.py
+```
+
+#### Auto-discover with output directory:
+```bash
+python extract_registers.py -o results/
 ```
 
 ## Output Format
@@ -50,10 +63,18 @@ The generated output file contains:
 1. **Header Section**
    - Total number of unique registers
    - Total number of unique controls
+   - Total files processed
+   - Cross-reference error count
+   - Parse/config error count
    - List of all processed files
    - File dependency tree showing config references
 
-2. **Registers Section** (grouped by type, then context, then offset)
+2. **Cross-Reference Validation Errors** (if any)
+   - Undefined register references
+   - Invalid field references with suggestions (e.g., "did you mean ...?")
+   - Available fields listed for each invalid reference
+
+3. **Registers Section** (grouped by type, then context, then offset)
    - Register name
    - Source file path
    - Included by (top-level XML file that referenced it)
@@ -63,7 +84,7 @@ The generated output file contains:
    - Field definitions with their attributes
    - Full XML representation
 
-3. **Controls Section** (grouped by context)
+4. **Controls Section** (grouped by context)
    - Control name
    - Source file path
    - Included by (top-level XML file that referenced it)
@@ -71,7 +92,7 @@ The generated output file contains:
    - All control attributes (register, field, desc, etc.)
    - Full XML representation
 
-4. **Duplicate Analysis** (when applicable for both registers and controls)
+5. **Duplicate Analysis** (when applicable for both registers and controls)
    - Number of files defining the same register/control
    - Detailed comparison of attribute differences
    - Field-by-field delta showing additions, removals, and modifications
@@ -86,6 +107,8 @@ CHIPSEC XML Configuration - Flat Register List
 Total unique registers: 231
 Total unique controls: 3
 Total files processed: 13
+Cross-reference errors: 0
+Parse/config errors: 0
 
 Processed files:
   1. C:\path\to\chipsec\cfg\8086\adl.xml
@@ -175,8 +198,19 @@ The script resolves `config` attributes using the following logic:
 
 1. Converts dot notation to paths: `HOSTCTL.hostctl1.xml` → `HOSTCTL/hostctl1.xml`
 2. Searches relative to the current file's directory
-3. Searches in the `cfg/8086` directory tree
+3. Walks up the directory tree to find the vendor directory (a 4-hex-digit directory name under `cfg/`, e.g., `8086`, `1022`)
 4. Uses all provided input file paths as potential base directories
+
+## Exit Codes
+
+- **0**: Success, no errors found
+- **1**: One or more errors occurred (parse errors, file-not-found, or cross-reference validation errors)
+
+## Auto-Discover Mode
+
+When run with no file arguments, the script scans the `--cfg-dir` directory (default: `chipsec/cfg`) for XML files containing `<configuration platform="...">` tags, groups them by platform, and processes each platform independently. The `template.xml` file is excluded from auto-discovery.
+
+In this mode, `-o` specifies the output directory (default: current directory) and output files are named `<platform>_registers.txt`.
 
 ## Requirements
 
