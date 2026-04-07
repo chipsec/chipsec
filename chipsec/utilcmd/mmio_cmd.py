@@ -20,27 +20,35 @@
 
 """
 >>> chipsec_util mmio list
->>> chipsec_util mmio dump <MMIO_BAR_name> [offset] [length]
+>>> chipsec_util mmio dump <MMIO_BAR_name> [offset] [length] [--instance/-i B:D.F]
 >>> chipsec_util mmio dump-abs <MMIO_base_address> [offset] [length]
->>> chipsec_util mmio read <MMIO_BAR_name> <offset> <width>
+>>> chipsec_util mmio read <MMIO_BAR_name> <offset> <width> [--instance/-i B:D.F]
 >>> chipsec_util mmio read-abs <MMIO_base_address> <offset> <width>
->>> chipsec_util mmio write <MMIO_BAR_name> <offset> <width> <value>
+>>> chipsec_util mmio write <MMIO_BAR_name> <offset> <width> <value> [--instance/-i B:D.F]
 >>> chipsec_util mmio write-abs <MMIO_base_address> <offset> <width> <value>
+
+For BARs with multiple PCI device instances, use --instance/-i B:D.F to select
+which instance to target.  Run 'mmio list' to see available instances.
+When --instance/-i is omitted, the first discovered instance is used.
 
 Examples:
 
 >>> chipsec_util mmio list
->>> chipsec_util mmio dump MCHBAR
+>>> chipsec_util mmio dump 8086.HOSTCTL.MCHBAR
+>>> chipsec_util mmio dump 8086.HOSTCTL.MCHBAR --instance 00:00.0
 >>> chipsec_util mmio dump-abs 0xFE010000 0x70 0x10
 >>> chipsec_util mmio read SPIBAR 0x74 0x4
+>>> chipsec_util mmio read 8086.HOSTCTL.MCHBAR 0x0 0x4 -i 00:00.0
 >>> chipsec_util mmio read-abs 0xFE010000 0x74 0x04
 >>> chipsec_util mmio write SPIBAR 0x74 0x4 0xFFFF0000
+>>> chipsec_util mmio write SPIBAR 0x74 0x4 0xFFFF0000 -i 00:00.0
 >>> chipsec_util mmio write-abs 0xFE010000 0x74 0x04 0xFFFF0000
 """
 
 from chipsec.command import BaseCommand, toLoad
 from chipsec.hal.common import mmio
 from argparse import ArgumentParser
+from chipsec.library.exceptions import MMIOBARNotFoundError
 
 
 # ###################################################################
@@ -66,6 +74,8 @@ class MMIOCommand(BaseCommand):
                                  help='Offset in BAR to start dump')
         parser_dump.add_argument('length', type=lambda x: int(x, 16), nargs='?', default=None,
                                  help='Length of the region to dump')
+        parser_dump.add_argument('-i', '--instance', type=str, default=None,
+                                 help='PCI instance as hex B:D.F (e.g. 00:00.0)')
         parser_dump.set_defaults(func=self.dump_bar)
 
         parser_dump_abs = subparsers.add_parser('dump-abs')
@@ -81,7 +91,8 @@ class MMIOCommand(BaseCommand):
         parser_read.add_argument('offset', type=lambda x: int(x, 16), help='Offset value (hex)')
         parser_read.add_argument('width', type=lambda x: int(x, 16), choices=[1, 2, 4, 8],
                                  help='Width value [1, 2, 4, 8] (hex)')
-        parser_read.add_argument('bus', type=lambda x: int(x, 16), nargs='?', default=None, help='bus value')
+        parser_read.add_argument('-i', '--instance', type=str, default=None,
+                                 help='PCI instance as hex B:D.F (e.g. 00:00.0)')
         parser_read.set_defaults(func=self.read_bar)
 
         parser_read_abs = subparsers.add_parser('read-abs')
@@ -97,7 +108,8 @@ class MMIOCommand(BaseCommand):
         parser_write.add_argument('width', type=lambda x: int(x, 16), choices=[1, 2, 4, 8],
                                   help='Width value [1, 2, 4, 8] (hex)')
         parser_write.add_argument('value', type=lambda x: int(x, 16), help='Value to write (hex)')
-        parser_write.add_argument('bus', type=lambda x: int(x, 16), nargs='?', default=None, help='bus value')
+        parser_write.add_argument('-i', '--instance', type=str, default=None,
+                                  help='PCI instance as hex B:D.F (e.g. 00:11.0)')
         parser_write.set_defaults(func=self.write_bar)
 
         parser_write_abs = subparsers.add_parser('write-abs')
@@ -113,12 +125,45 @@ class MMIOCommand(BaseCommand):
     def set_up(self) -> None:
         self._mmio = mmio.MMIO(self.cs)
 
+    def _resolve_instance(self, bar_name):
+        """Resolve --instance B:D.F string to a matching PCIObj, or None."""
+        if not hasattr(self, 'instance') or self.instance is None:
+            return None
+        bdf = self.instance
+        try:
+            bd, f = bdf.split('.')
+            b, d = bd.split(':')
+            bus, dev, fun = int(b, 16), int(d, 16), int(f, 16)
+        except (ValueError, AttributeError):
+            message = f"[mmio] Invalid B:D.F format: '{bdf}' (expected XX:XX.X)"
+            self.logger.log_error(message)
+            raise AttributeError(message)
+        bar = self._mmio.cs.register.mmio.get_def(bar_name)
+        if bar is None:
+            message = f"[mmio] Cannot find BAR name: '{bar_name}'"
+            self.logger.log_error(message)
+            raise MMIOBARNotFoundError(message)
+        for inst in bar.instances:
+            ib_ = inst.bus if inst.bus is not None else None
+            id_ = inst.dev if inst.dev is not None else None
+            if_ = inst.fun if inst.fun is not None else None
+            if ib_ == bus and id_ == dev and if_ == fun:
+                return inst
+        message = f"[mmio] No {bar_name} instance found at {bdf}"
+        self.logger.log_error(message)
+        raise AttributeError(message)
+
     def list_bars(self):
         self._mmio.list_MMIO_BARs()
 
     def dump_bar(self):
-        self.logger.log("[CHIPSEC] Dumping {} MMIO space..".format(self.bar_name.upper()))
-        (bar_base, bar_size) = self._mmio.get_MMIO_BAR_base_address(self.bar_name.upper())
+        bar = self.bar_name.upper()
+        try:
+            inst = self._resolve_instance(bar)
+        except AttributeError as e:
+            return
+        self.logger.log(f"[CHIPSEC] Dumping {bar} MMIO space..")
+        (bar_base, bar_size) = self._mmio.get_MMIO_BAR_base_address(bar, inst)
         if self.length is not None:
             bar_size = self.length
         else:
@@ -132,13 +177,17 @@ class MMIOCommand(BaseCommand):
             tmp_length = 0x1000
         else:
             tmp_length = self.length
-        self.logger.log("[CHIPSEC] Dumping MMIO space 0x{:08X} to 0x{:08X}".format(tmp_base, tmp_base + tmp_length))
+        self.logger.log(f"[CHIPSEC] Dumping MMIO space 0x{tmp_base:08X} to 0x{tmp_base + tmp_length:08X}")
         self._mmio.dump_MMIO(tmp_base, tmp_length)
 
     def read_bar(self):
         bar = self.bar_name.upper()
-        reg = self._mmio.read_MMIO_BAR_reg(bar, self.offset, self.width, self.bus)
-        self.logger.log("[CHIPSEC] Read {} + 0x{:X}: 0x{:08X}".format(bar, self.offset, reg))
+        try:
+            inst = self._resolve_instance(bar)
+        except AttributeError as e:
+            return
+        reg = self._mmio.read_MMIO_BAR_reg(bar, self.offset, self.width, inst)
+        self.logger.log(f"[CHIPSEC] Read {bar} + 0x{self.offset:X}: 0x{reg:08X}")
 
     def read_abs(self):
         if self.width == 1:
@@ -150,15 +199,22 @@ class MMIOCommand(BaseCommand):
         elif self.width == 8:
             reg = self._mmio.read_MMIO_reg_dword(self.base, self.offset)
             reg |= self._mmio.read_MMIO_reg_dword(self.base, self.offset + 4) << 32
-        self.logger.log("[CHIPSEC] Read 0x{:X} + 0x{:X}: 0x{:08X}".format(self.base, self.offset, reg))
+        else:
+            self.logger.log_error(f"[CHIPSEC] Invalid width: {self.width}")
+            return
+        self.logger.log(f"[CHIPSEC] Read 0x{self.base:X} + 0x{self.offset:X}: 0x{reg:08X}")
 
     def write_bar(self):
         bar = self.bar_name.upper()
-        self.logger.log("[CHIPSEC] Write {} + 0x{:X}: 0x{:08X}".format(bar, self.offset, self.value))
-        self._mmio.write_MMIO_BAR_reg(bar, self.offset, self.value, self.width, self.bus)
+        try:
+            inst = self._resolve_instance(bar)
+        except AttributeError as e:
+            return
+        self.logger.log(f"[CHIPSEC] Write {bar} + 0x{self.offset:X}: 0x{self.value:08X}")
+        self._mmio.write_MMIO_BAR_reg(bar, self.offset, self.value, self.width, inst)
 
     def write_abs(self):
-        self.logger.log("[CHIPSEC] Write 0x{:X} + 0x{:X}: 0x{:08X}".format(self.base, self.offset, self.value))
+        self.logger.log(f"[CHIPSEC] Write 0x{self.base:X} + 0x{self.offset:X}: 0x{self.value:08X}")
         if self.width == 1:
             self._mmio.write_MMIO_reg_byte(self.base, self.offset, self.value & 0xFF)
         elif self.width == 2:

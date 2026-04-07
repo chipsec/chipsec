@@ -329,29 +329,29 @@ class MMIO(hal_base.HALBase):
     #
     # Read MMIO register from MMIO range defined by MMIO BAR name
     #
-    def read_MMIO_BAR_reg(self, bar_name: str, offset: int, size: int = 4, bus: Optional[int] = None) -> int:
-        (bar_base, bar_size) = self.get_MMIO_BAR_base_address(bar_name, bus)
+    def read_MMIO_BAR_reg(self, bar_name: str, offset: int, size: int = 4, instance: Optional['PCIObj'] = None) -> int:
+        (bar_base, bar_size) = self.get_MMIO_BAR_base_address(bar_name, instance)
         # @TODO: check offset exceeds BAR size
         return self.read_MMIO_reg(bar_base, offset, size, bar_size)
 
     #
     # Write MMIO register from MMIO range defined by MMIO BAR name
     #
-    def write_MMIO_BAR_reg(self, bar_name: str, offset: int, value: int, size: int = 4, bus: Optional[int] = None) -> Optional[int]:
-        (bar_base, _) = self.get_MMIO_BAR_base_address(bar_name, bus)
+    def write_MMIO_BAR_reg(self, bar_name: str, offset: int, value: int, size: int = 4, instance: Optional['PCIObj'] = None) -> Optional[int]:
+        (bar_base, _) = self.get_MMIO_BAR_base_address(bar_name, instance)
         # @TODO: check offset exceeds BAR size
 
         return self.write_MMIO_reg(bar_base, offset, value, size)
 
-    def read_MMIO_BAR(self, bar_name: str, bus: Optional[int] = None) -> List[int]:
-        (bar_base, bar_size) = self.get_MMIO_BAR_base_address(bar_name, bus)
+    def read_MMIO_BAR(self, bar_name: str, instance: Optional['PCIObj'] = None) -> List[int]:
+        (bar_base, bar_size) = self.get_MMIO_BAR_base_address(bar_name, instance)
         return self.read_MMIO(bar_base, bar_size)
 
     #
     # Dump MMIO range by MMIO BAR name
     #
-    def dump_MMIO_BAR(self, bar_name: str) -> None:
-        (bar_base, bar_size) = self.get_MMIO_BAR_base_address(bar_name)
+    def dump_MMIO_BAR(self, bar_name: str, instance: Optional['PCIObj'] = None) -> None:
+        (bar_base, bar_size) = self.get_MMIO_BAR_base_address(bar_name, instance)
         self.dump_MMIO(bar_base, bar_size)
 
     def list_MMIO_BARs(self) -> None:
