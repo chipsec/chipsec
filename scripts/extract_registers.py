@@ -213,7 +213,7 @@ class XMLConfigParser:
             search_dir = search_dir.parent
         return None
 
-    def parse_file(self, file_path: str, parent_path: str = "", top_level_file: str = None) -> None:
+    def parse_file(self, file_path: str, parent_path: str = "", top_level_file: Optional[str] = None) -> None:
         """Parse an XML file and extract registers."""
         file_path = str(Path(file_path).resolve())
 
