@@ -46,10 +46,14 @@ class firmware_info(BaseModule):
         return True
 
     def get_firmware_info(self) -> int:
-        vendor = self.cs.firmware_vendor()
-        product = self.cs.firmware_product()
-        version = self.cs.firmware_version()
-        fw_type = self.cs.firmware_type()
+        vendor = product = version = fw_type = None
+        try:
+            vendor = self.cs.firmware_vendor()
+            product = self.cs.firmware_product()
+            version = self.cs.firmware_version()
+            fw_type = self.cs.firmware_type()
+        except Exception:
+            self.logger.log_information('Could not retrieve firmware information')
 
         self.logger.log(f'[*] Firmware Information')
         self.logger.log(f'    Type   : {fw_type    or "Unknown"}')
