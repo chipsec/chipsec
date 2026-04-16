@@ -43,12 +43,8 @@ class DeltasCommand(BaseCommand):
 
     def parse_arguments(self) -> None:
         options = Options()
-        try:
-            default_format = options.get_section_data('Util_Config','log_output_deltas_format')
-            default_out_file =  options.get_section_data('Util_Config','deltas_output_file')
-        except Exception:
-            default_format = 'JSON'
-            default_out_file = 'log_output_deltas.json'
+        default_format = options.get_section_data('Util_Config','log_output_deltas_format', 'JSON')
+        default_out_file =  options.get_section_data('Util_Config','deltas_output_file', 'log_output_deltas.json')
         parser = ArgumentParser(usage=__doc__)
         parser.add_argument('_prev_log', metavar='<previous>', help='previous log file')
         parser.add_argument('_cur_log', metavar='<current>', help='current log file')

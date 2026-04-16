@@ -52,7 +52,7 @@ class MMIO(hal_base.HALBase):
         super(MMIO, self).__init__(cs)
         self.cached_bar_addresses = {}
         options = Options()
-        self.cache_bar_addresses_resolution = options.get_section_data('HAL_Config', 'mmio_cache_bar_addresses') == "True"
+        self.cache_bar_addresses_resolution = options.get_section_data('HAL_Config', 'mmio_cache_bar_addresses', 'True') == "True"
 
     ###########################################################################
     # Access to MMIO BAR defined by configuration files (chipsec/cfg/*.py)
