@@ -41,10 +41,7 @@ class smbios_cmd(BaseCommand):
 
     def parse_arguments(self) -> None:
         options = Options()
-        try:
-            default_type = options.get_section_data('Util_Config', 'smbios_get_type')
-        except Exception:
-            default_type = 'raw'
+        default_type = options.get_section_data('Util_Config', 'smbios_get_type', 'raw')
 
         parser = ArgumentParser(prog='chipsec_util smbios', usage=__doc__)
         subparsers = parser.add_subparsers()
