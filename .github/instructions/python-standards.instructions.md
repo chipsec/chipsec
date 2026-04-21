@@ -99,7 +99,7 @@ import sys
 ## 12. Dunder (Double Underscore)
 
 - Avoid using `__dunders__` when naming variables.
-- Should only be used for functions that overwrite or add to classes, and only as needed.
+- Should only be used for functions that overwrite or add to classes.
 
 ## 13. Code Indents
 
@@ -176,7 +176,7 @@ if True is False == False:
 
 For more information: [PEP 483 - The Theory of Type Hints](https://peps.python.org/pep-0483/)
 
-The following Type Hint PEPs are in scope for CHIPSEC:
+The following table defines whether Type Hint PEPs are in or out of scope for Chipsec:
 
 | PEP | Description | Min Version | In Scope |
 |-----|-------------|-------------|----------|
