@@ -145,12 +145,9 @@ Used in sub-config files (not typically in top-level platform files). For top-le
 ```xml
 <mmio>
   <bar name="SPIBAR" register="SPIBAR0" base_field="MEMBAR" size="0x1000" enable_bit="0" desc="SPI mmio Range"/>
-  <!-- Legacy form: -->
-  <bar name="DMIBAR" bus="0x00" dev="0x00" fun="0" reg="0x68" width="8" mask="0xFFFFFFFFFFFFF000" size="0x1000" enable_bit="0" desc="Root Complex Register Range"/>
 </mmio>
 ```
 
-Prefer the register-reference form over the legacy bus/dev/fun form.
 
 ## `<io>` — I/O BARs
 
