@@ -225,9 +225,11 @@ class CoreParserHelper:
 
             for fxml in dev_attr.config:
                 try:
-                    cfg_file = self._process_config_path(fxml)
-                    base_dir = os.path.dirname(stage_data.xml_file)
-                    cfg_path = os.path.join(base_dir, cfg_file)
+                    cfg_path = self._resolve_config_include_path(
+                        stage_data.xml_file,
+                        stage_data.vid_str,
+                        fxml
+                    )
 
                     if not os.path.exists(cfg_path):
                         msg = f"Configuration file not found: {cfg_path}"
@@ -254,6 +256,42 @@ class CoreParserHelper:
     def _process_config_path(self, fxml: str) -> str:
         """Convert dot-separated config path to file system path."""
         return fxml.replace('.', os.path.sep, fxml.count('.') - 1)
+
+    def _is_vendor_scoped_include(self, fxml: str) -> bool:
+        """Return True for dot-qualified include tokens like MMIO.mmio0.xml."""
+        if os.path.isabs(fxml):
+            return False
+        if '/' in fxml or '\\' in fxml:
+            return False
+        return fxml.count('.') >= 2
+
+    def _get_vendor_root_dir(self, xml_file: str, vid_str: str) -> Optional[str]:
+        """Locate vendor root directory (e.g. .../cfg/8086) for a config file."""
+        cur_dir = os.path.dirname(xml_file)
+        vid_upper = vid_str.upper()
+        while True:
+            if os.path.basename(cur_dir).upper() == vid_upper:
+                return cur_dir
+            parent = os.path.dirname(cur_dir)
+            if parent == cur_dir:
+                return None
+            cur_dir = parent
+
+    def _resolve_config_include_path(self, xml_file: str, vid_str: str, fxml: str) -> str:
+        """Resolve include path deterministically from token format."""
+        cfg_file = self._process_config_path(fxml)
+
+        if os.path.isabs(cfg_file):
+            return cfg_file
+
+        # Dot-qualified includes are vendor-root scoped (for example 8086/MMIO/mmio0.xml).
+        if self._is_vendor_scoped_include(fxml):
+            vendor_root = self._get_vendor_root_dir(xml_file, vid_str)
+            if vendor_root:
+                return os.path.join(vendor_root, cfg_file)
+
+        # Plain file tokens remain relative to the current XML directory.
+        return os.path.join(os.path.dirname(xml_file), cfg_file)
 
     def handle_bars(self,
                     et_node: Element,
