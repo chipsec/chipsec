@@ -37,9 +37,17 @@ from chipsec.library.logger import logger
 ################################################################################################
 
 FFS_ATTRIB_LARGE_FILE = 0x01
+FFS_ATTRIB_DATA_ALIGNMENT2 = 0x02
 FFS_ATTRIB_FIXED = 0x04
 FFS_ATTRIB_DATA_ALIGNMENT = 0x38
 FFS_ATTRIB_CHECKSUM = 0x40
+
+# PI spec Vol III, Table 2.3.1 — FFS file data alignment values
+# Index into this table is bits [5:3] of Attributes; when FFS_ATTRIB_DATA_ALIGNMENT2 is set, add 8
+FFS_ALIGNMENT_TABLE = [
+    1, 16, 128, 512, 1024, 4096, 32768, 65536,          # base (ALIGNMENT2=0)
+    131072, 262144, 524288, 1048576, 2097152, 4194304, 8388608, 16777216  # extended (ALIGNMENT2=1)
+]
 
 EFI_FILE_HEADER_CONSTRUCTION = 0x01
 EFI_FILE_HEADER_VALID = 0x02
@@ -90,6 +98,12 @@ FILE_TYPE_NAMES = {
     0xF0: 'FV_FFS_PAD'
 }
 
+# PI spec Vol III Table 3: OEM file types 0xC0-0xDF, Debug/test types 0xE0-0xEF
+for _i in range(0xC0, 0xE0):
+    FILE_TYPE_NAMES[_i] = f'FV_OEM_{_i:02X}'
+for _i in range(0xE0, 0xF0):
+    FILE_TYPE_NAMES[_i] = f'FV_DEBUG_{_i:02X}'
+
 EFI_SECTION_ALL = 0x00
 EFI_SECTION_COMPRESSION = 0x01
 EFI_SECTION_GUID_DEFINED = 0x02
@@ -103,6 +117,7 @@ EFI_SECTION_COMPATIBILITY16 = 0x16
 EFI_SECTION_FIRMWARE_VOLUME_IMAGE = 0x17
 EFI_SECTION_FREEFORM_SUBTYPE_GUID = 0x18
 EFI_SECTION_RAW = 0x19
+EFI_SECTION_DISPOSABLE = 0x1A
 EFI_SECTION_PEI_DEPEX = 0x1B
 EFI_SECTION_MM_DEPEX = 0x1C
 
@@ -120,6 +135,7 @@ SECTION_NAMES = {
     0x17: 'S_FV_IMAGE',
     0x18: 'S_FREEFORM_SUBTYPE_GUID',
     0x19: 'S_RAW',
+    0x1A: 'S_DISPOSABLE',
     0x1B: 'S_PEI_DEPEX',
     0x1C: 'S_MM_DEPEX'
 }
@@ -129,6 +145,18 @@ EFI_SECTIONS_EXE = [EFI_SECTION_PE32, EFI_SECTION_TE, EFI_SECTION_PIC, EFI_SECTI
 EFI_FIRMWARE_VOLUME_HEADER = "<16s16sQIIHHHBB"
 EFI_FIRMWARE_VOLUME_HEADER_size = struct.calcsize(EFI_FIRMWARE_VOLUME_HEADER)
 EFI_FV_BLOCK_MAP_ENTRY = "<II"
+
+# PI spec Vol III, Section 3.2.1 - EFI_FIRMWARE_VOLUME_EXT_HEADER
+EFI_FIRMWARE_VOLUME_EXT_HEADER = "<16sI"
+EFI_FIRMWARE_VOLUME_EXT_HEADER_size = struct.calcsize(EFI_FIRMWARE_VOLUME_EXT_HEADER)
+
+# PI spec Vol III, Section 3.2.1 - EFI_FIRMWARE_VOLUME_EXT_ENTRY
+EFI_FIRMWARE_VOLUME_EXT_ENTRY = "<HH"
+EFI_FIRMWARE_VOLUME_EXT_ENTRY_size = struct.calcsize(EFI_FIRMWARE_VOLUME_EXT_ENTRY)
+EFI_FV_EXT_TYPE_OEM_TYPE = 0x01
+EFI_FV_EXT_TYPE_GUID_TYPE = 0x02
+EFI_FV_EXT_TYPE_USED_SIZE_TYPE = 0x03
+
 EFI_FFS_FILE_HEADER = "<16sHBB3sB"
 EFI_FFS_FILE_HEADER2 = "<16sHBB3sBQ"
 EFI_COMMON_SECTION_HEADER = "<3sB"
@@ -136,6 +164,14 @@ EFI_COMPRESSION_SECTION = "<IB"
 EFI_COMPRESSION_SECTION_size = struct.calcsize(EFI_COMPRESSION_SECTION)
 EFI_GUID_DEFINED_SECTION = "<16sHH"
 EFI_GUID_DEFINED_SECTION_size = struct.calcsize(EFI_GUID_DEFINED_SECTION)
+
+# PI spec Vol III, Section 2.4.1.4 - EFI_SECTION_VERSION has BuildNumber (UINT16) after common header
+EFI_VERSION_SECTION = "<H"
+EFI_VERSION_SECTION_size = struct.calcsize(EFI_VERSION_SECTION)
+
+# PI spec Vol III, Section 2.4.1.8 - EFI_FREEFORM_SUBTYPE_GUID_SECTION has SubTypeGuid after common header
+EFI_FREEFORM_SUBTYPE_GUID_SECTION = "<16s"
+EFI_FREEFORM_SUBTYPE_GUID_SECTION_size = struct.calcsize(EFI_FREEFORM_SUBTYPE_GUID_SECTION)
 EFI_SECTION_BROTLI_PARAM_LGWIN = 20
 EFI_SECTION_BROTLI_HEADER_FORMAT = '<QQ'
 EFI_SECTION_BROTLI_HEADER_LENGTH = struct.calcsize(EFI_SECTION_BROTLI_HEADER_FORMAT)
@@ -169,9 +205,92 @@ EFI_GUIDED_SECTION_TIANO = UUID('A31280AD-481E-41B6-95E8-127F4C984779')
 EFI_GUIDED_SECTION_ZLIB_AMD1 = UUID('CE3233F5-2CD6-4D87-9152-4A238BB6D1C4')
 EFI_GUIDED_SECTION_ZLIB_AMD2 = UUID('991EFAC0-E260-416B-A4B8-3B153072B804')
 
+# Vendor-proprietary GUID-defined sections (signed/compressed wrappers)
+EFI_GUIDED_SECTION_AMI_SIGNED = UUID('3049C727-2C23-4EC4-8CC0-1DCFA3428358')  # AMI Aptio signed section
+EFI_GUIDED_SECTION_PHOENIX = UUID('5A537A18-83C6-4E91-86C1-CA5A4C3E48A7')     # Phoenix proprietary
+EFI_GUIDED_SECTION_INSYDE_SIGNED = UUID('0F9D89E8-9259-4F76-A5AF-0C89E34023DF')  # Insyde signed (same as EFI_FIRMWARE_CONTENTS_SIGNED_GUID)
+
 FIRMWARE_VOLUME_GUID = UUID("24400798-3807-4A42-B413-A1ECEE205DD8")
 VOLUME_SECTION_GUID = UUID("367AE684-335D-4671-A16D-899DBFEA6B88")
 EFI_FFS_VOLUME_TOP_FILE_GUID = UUID("1BA0062E-C779-4582-8566-336AE8F78F09")
+
+# Fault Tolerant Write (FTW) GUIDs (PI spec)
+EFI_FTW_WORKING_BLOCK_GUID = UUID('9E21FD93-9C72-4C15-8C4B-E77F1DB2D792')
+EFI_FTW_SPARE_BLOCK_GUID = UUID('EF718A3E-80B3-4029-80EB-D4B8EA0F8C48')
+EFI_FTW_GUIDS = [EFI_FTW_WORKING_BLOCK_GUID, EFI_FTW_SPARE_BLOCK_GUID]
+
+# Apriori file GUIDs — PEI dispatch order (PI spec Vol I §6.3) and DXE dispatch order (PI spec Vol II §10.1)
+EFI_PEI_APRIORI_FILE_GUID = UUID('1B45CC0A-156A-428A-AF62-49864DA0E6E6')
+EFI_DXE_APRIORI_FILE_GUID = UUID('FC510EE7-FFDC-11D4-BD41-0080C73C8881')
+EFI_APRIORI_GUIDS = [EFI_PEI_APRIORI_FILE_GUID, EFI_DXE_APRIORI_FILE_GUID]
+
+# UEFI Spec Section 8.5 - EFI_CAPSULE_HEADER
+# typedef struct {
+#   EFI_GUID  CapsuleGuid;      // 16 bytes
+#   UINT32    HeaderSize;        // offset to capsule body
+#   UINT32    Flags;
+#   UINT32    CapsuleImageSize;  // total capsule size including header
+# } EFI_CAPSULE_HEADER;
+EFI_CAPSULE_HEADER_FMT = '<16sIII'
+EFI_CAPSULE_HEADER_SIZE = struct.calcsize(EFI_CAPSULE_HEADER_FMT)  # 28 bytes
+
+# Well-known capsule GUIDs
+EFI_CAPSULE_GUID = UUID('3B6686BD-0D76-4030-B70E-B5519E2FC5A0')
+EFI_FMP_CAPSULE_GUID = UUID('6DCBD5ED-E82D-4C44-BDA1-7194199AD92A')
+EFI_CAPSULE_GUIDS = [EFI_CAPSULE_GUID, EFI_FMP_CAPSULE_GUID]
+
+# PI spec Vol III - Dependency Expression Opcodes (Section 2.4.1.3, 10.6, 13.1)
+DEPEX_OPCODE_PUSH = 0x00
+DEPEX_OPCODE_AND = 0x01
+DEPEX_OPCODE_OR = 0x02
+DEPEX_OPCODE_NOT = 0x03
+DEPEX_OPCODE_TRUE = 0x04
+DEPEX_OPCODE_FALSE = 0x05
+DEPEX_OPCODE_END = 0x06
+DEPEX_OPCODE_SOR = 0x07
+DEPEX_OPCODE_BEFORE = 0x08
+DEPEX_OPCODE_AFTER = 0x09
+
+DEPEX_OPCODE_NAMES = {
+    DEPEX_OPCODE_PUSH: 'PUSH',
+    DEPEX_OPCODE_AND: 'AND',
+    DEPEX_OPCODE_OR: 'OR',
+    DEPEX_OPCODE_NOT: 'NOT',
+    DEPEX_OPCODE_TRUE: 'TRUE',
+    DEPEX_OPCODE_FALSE: 'FALSE',
+    DEPEX_OPCODE_END: 'END',
+    DEPEX_OPCODE_SOR: 'SOR',
+    DEPEX_OPCODE_BEFORE: 'BEFORE',
+    DEPEX_OPCODE_AFTER: 'AFTER',
+}
+
+
+def decode_depex(data: bytes) -> str:
+    """Decode a dependency expression (DEPEX) section into human-readable form.
+
+    Per PI spec Vol III: PEI (Section 10.6), DXE (Section 2.4.1.3), MM (Section 13.1)
+    """
+    result = []
+    offset = 0
+    while offset < len(data):
+        opcode = data[offset]
+        offset += 1
+        if opcode in (DEPEX_OPCODE_PUSH, DEPEX_OPCODE_BEFORE, DEPEX_OPCODE_AFTER):
+            if offset + 16 > len(data):
+                result.append(f'{DEPEX_OPCODE_NAMES.get(opcode, f"UNKNOWN(0x{opcode:02X})")} <TRUNCATED>')
+                break
+            guid = UUID(bytes_le=data[offset:offset + 16])
+            result.append(f'{DEPEX_OPCODE_NAMES[opcode]} {{{guid}}}')
+            offset += 16
+        elif opcode in DEPEX_OPCODE_NAMES:
+            result.append(DEPEX_OPCODE_NAMES[opcode])
+            if opcode == DEPEX_OPCODE_END:
+                break
+        else:
+            result.append(f'UNKNOWN(0x{opcode:02X})')
+            break
+    return ' '.join(result)
+
 
 DEF_INDENT = "    "
 
@@ -228,17 +347,25 @@ class EFI_MODULE:
 
 
 class EFI_FV(EFI_MODULE):
-    def __init__(self, Offset: int, Guid: UUID, Size: int, Attributes: int, HeaderSize: int, Checksum: int, ExtHeaderOffset: int, Image: bytes, CalcSum: int):
+    def __init__(self, Offset: int, Guid: UUID, Size: int, Attributes: int, HeaderSize: int, Checksum: int, ExtHeaderOffset: int, Image: bytes, CalcSum: int,
+                 FvNameGuid: Optional[UUID] = None, UsedSize: Optional[int] = None, ExtEntries: Optional[list] = None):
         super(EFI_FV, self).__init__(Offset, Guid, HeaderSize, Attributes, Image)
         self.Size = Size
         self.Checksum = Checksum
         self.ExtHeaderOffset = ExtHeaderOffset
         self.CalcSum = CalcSum
+        self.FvNameGuid = FvNameGuid  # FV Name GUID from extended header (PI spec Vol III, Section 3.2.1)
+        self.UsedSize = UsedSize      # Actual used size from ext entry type 0x03
+        self.ExtEntries = ExtEntries  # List of parsed ext header entry dicts
 
     def __str__(self) -> str:
         schecksum = f'{self.Checksum:04X}h ({self.CalcSum:04X}h) *** checksum mismatch ***' if self.CalcSum != self.Checksum else f'{self.Checksum:04X}h'
         _s = f'\n{self.indent}{type(self).__name__} +{self.Offset:08X}h {{{self.Guid}}}: '
         _s += f"Size {self.Size:08X}h, Attr {self.Attributes:08X}h, HdrSize {self.HeaderSize:04X}h, ExtHdrOffset {self.ExtHeaderOffset:08X}h, Checksum {schecksum}"
+        if self.FvNameGuid:
+            _s += f", FvName {{{self.FvNameGuid}}}"
+        if self.UsedSize is not None:
+            _s += f", UsedSize {self.UsedSize:08X}h"
         _s += super(EFI_FV, self).__str__()
         return bytestostring(_s)
 
@@ -257,6 +384,18 @@ class EFI_FILE(EFI_MODULE):
     def __str__(self) -> str:
         schecksum = f'{self.Checksum:04X}h ({self.CalcSum:04X}h) *** checksum mismatch ***' if self.CalcSum != self.Checksum else f'{self.Checksum:04X}h'
         _s = f'\n{self.indent}+{self.Offset:08X}h {self.name()}\n{self.indent}Type {self.Type:02X}h, Attr {self.Attributes:08X}h, State {self.State:02X}h, Size {self.Size:06X}h, Checksum {schecksum}'
+        # Decode data alignment from attributes (PI spec Vol III, Table 2.3.1)
+        align_idx = (self.Attributes & FFS_ATTRIB_DATA_ALIGNMENT) >> 3
+        if self.Attributes & FFS_ATTRIB_DATA_ALIGNMENT2:
+            align_idx += 8
+        if align_idx < len(FFS_ALIGNMENT_TABLE):
+            required_align = FFS_ALIGNMENT_TABLE[align_idx]
+            if required_align > 1:
+                _s += f', Align {required_align}'
+        if self.UD:
+            _s += ' [DELETED/MARKED_FOR_UPDATE]'
+        if self.Name == EFI_FFS_VOLUME_TOP_FILE_GUID:
+            _s += ' [VTF - Volume Top File]'
         _s += (super(EFI_FILE, self).__str__() + '\n')
         return bytestostring(_s)
 
@@ -369,8 +508,49 @@ def NextFwVolume(buffer: bytes, off: int = 0, last_fv_size: int = 0) -> Optional
         FsGuid = UUID(bytes_le=FileSystemGuid0)
         FvImage = buffer[fof:fof + FvLength]
         if ValidateFwVolumeHeader(FsGuid, FvLength, HeaderLength, ExtHeaderOffset, Reserved, len(FvImage), CalcSum, Checksum):
-            return EFI_FV(fof, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, FvImage, CalcSum)
+            # Parse the FV extended header if present (PI spec Vol III, Section 3.2.1)
+            fv_name_guid = None
+            fv_used_size = None
+            fv_ext_entries = None
+            actual_header_size = HeaderLength
+            if ExtHeaderOffset != 0 and (fof + ExtHeaderOffset + EFI_FIRMWARE_VOLUME_EXT_HEADER_size) <= len(buffer):
+                ext_hdr_data = FvImage[ExtHeaderOffset:ExtHeaderOffset + EFI_FIRMWARE_VOLUME_EXT_HEADER_size]
+                if len(ext_hdr_data) == EFI_FIRMWARE_VOLUME_EXT_HEADER_size:
+                    fv_name_guid_raw, ext_hdr_size = struct.unpack(EFI_FIRMWARE_VOLUME_EXT_HEADER, ext_hdr_data)
+                    fv_name_guid = UUID(bytes_le=fv_name_guid_raw)
+                    # Parse ext header entries (PI spec Vol III, Section 3.2.1)
+                    fv_ext_entries = []
+                    entry_off = EFI_FIRMWARE_VOLUME_EXT_HEADER_size
+                    while entry_off + EFI_FIRMWARE_VOLUME_EXT_ENTRY_size <= ext_hdr_size:
+                        entry_data = FvImage[ExtHeaderOffset + entry_off:ExtHeaderOffset + entry_off + EFI_FIRMWARE_VOLUME_EXT_ENTRY_size]
+                        if len(entry_data) < EFI_FIRMWARE_VOLUME_EXT_ENTRY_size:
+                            break
+                        entry_size, entry_type = struct.unpack(EFI_FIRMWARE_VOLUME_EXT_ENTRY, entry_data)
+                        if entry_size < EFI_FIRMWARE_VOLUME_EXT_ENTRY_size or entry_off + entry_size > ext_hdr_size:
+                            break
+                        entry_info = {'type': entry_type, 'size': entry_size}
+                        if entry_type == EFI_FV_EXT_TYPE_OEM_TYPE and entry_size >= EFI_FIRMWARE_VOLUME_EXT_ENTRY_size + 4:
+                            oem_data = FvImage[ExtHeaderOffset + entry_off + EFI_FIRMWARE_VOLUME_EXT_ENTRY_size:ExtHeaderOffset + entry_off + entry_size]
+                            entry_info['oem_type'] = struct.unpack_from('<I', oem_data)[0] if len(oem_data) >= 4 else None
+                        elif entry_type == EFI_FV_EXT_TYPE_GUID_TYPE and entry_size >= EFI_FIRMWARE_VOLUME_EXT_ENTRY_size + 16:
+                            guid_data = FvImage[ExtHeaderOffset + entry_off + EFI_FIRMWARE_VOLUME_EXT_ENTRY_size:ExtHeaderOffset + entry_off + EFI_FIRMWARE_VOLUME_EXT_ENTRY_size + 16]
+                            entry_info['guid'] = UUID(bytes_le=guid_data)
+                        elif entry_type == EFI_FV_EXT_TYPE_USED_SIZE_TYPE and entry_size >= EFI_FIRMWARE_VOLUME_EXT_ENTRY_size + 4:
+                            used_data = FvImage[ExtHeaderOffset + entry_off + EFI_FIRMWARE_VOLUME_EXT_ENTRY_size:ExtHeaderOffset + entry_off + EFI_FIRMWARE_VOLUME_EXT_ENTRY_size + 4]
+                            fv_used_size = struct.unpack_from('<I', used_data)[0]
+                            entry_info['used_size'] = fv_used_size
+                        fv_ext_entries.append(entry_info)
+                        entry_off += entry_size
+                    if not fv_ext_entries:
+                        fv_ext_entries = None
+                    # Per EDK2: first file starts at max(HeaderLength, align8(ExtHeaderOffset + ExtHeaderSize))
+                    ext_end = align(ExtHeaderOffset + ext_hdr_size, 8)
+                    if ext_end > actual_header_size:
+                        actual_header_size = ext_end
+                        logger().log_hal(f'[uefi] FV extended header extends past HeaderLength: file start adjusted to 0x{actual_header_size:X}')
+            return EFI_FV(fof, FsGuid, FvLength, Attributes, actual_header_size, Checksum, ExtHeaderOffset, FvImage, CalcSum, fv_name_guid, fv_used_size, fv_ext_entries)
         else:
+            logger().log_hal(f'Candidate FV header at offset 0x{fof:08X} GUID={{{FsGuid}}} failed validation, skipping')
             fof += 0x2C
     return None
 
@@ -414,7 +594,16 @@ def GetFvHeader(buffer: bytes, off: int = 0) -> Tuple[int, int, int]:
     if size >= 0x40000000 or size == 0:
         logger().log_hal("ERROR: Volume is corrupted")
         return (0, 0, 0)
-    return (size, HeaderLength, Attributes)
+    # Compute actual file start offset accounting for extended header (PI spec Vol III, Section 3.2.1)
+    file_start = HeaderLength
+    if ExtHeaderOffset != 0 and (off + ExtHeaderOffset + EFI_FIRMWARE_VOLUME_EXT_HEADER_size) <= len(buffer):
+        ext_data = buffer[off + ExtHeaderOffset:off + ExtHeaderOffset + EFI_FIRMWARE_VOLUME_EXT_HEADER_size]
+        if len(ext_data) == EFI_FIRMWARE_VOLUME_EXT_HEADER_size:
+            _, ext_hdr_size = struct.unpack(EFI_FIRMWARE_VOLUME_EXT_HEADER, ext_data)
+            ext_end = align(ExtHeaderOffset + ext_hdr_size, 8)
+            if ext_end > file_start:
+                file_start = ext_end
+    return (size, file_start, Attributes)
 
 
 def NextFwFile(FvImage: bytes, FvLength: int, fof: int, polarity: bool) -> Optional[EFI_FILE]:
@@ -445,15 +634,15 @@ def NextFwFile(FvImage: bytes, FvLength: int, fof: int, polarity: bool) -> Optio
             header_size = struct.calcsize(EFI_FFS_FILE_HEADER)
 
         # Get File size
-        if Attributes & FFS_ATTRIB_LARGE_FILE and len(FvImage) > fof + struct.calcsize(EFI_FFS_FILE_HEADER2):
-            fsize = struct.unpack("Q", FvImage[fof + file_header_size:fof + file_header_size + struct.calcsize("Q")])[0]
+        if Attributes & FFS_ATTRIB_LARGE_FILE and len(FvImage) > cur_offset + struct.calcsize(EFI_FFS_FILE_HEADER2):
+            fsize = struct.unpack("Q", FvImage[cur_offset + file_header_size:cur_offset + file_header_size + struct.calcsize("Q")])[0]
             fsize &= 0xFFFFFFFF
         if fsize == 0 or fsize > FvLength - cur_offset:
             fsize = get_3b_size(Size)
 
         # Validate fsize is a legal value
         if fsize == 0 or fsize > FvLength - cur_offset:
-            logger().log_hal("WARNING: Unable to get correct file size for NextFwFile corrupt header information")
+            logger().log_hal(f'Corrupt FFS file header at offset 0x{cur_offset:08X} (invalid size 0x{fsize:X}), skipping')
             break
         # Get next_offset
         update_or_deleted = (bit_set(State, EFI_FILE_MARKED_FOR_UPDATE, polarity)) or (bit_set(State, EFI_FILE_DELETED, polarity))
@@ -462,8 +651,11 @@ def NextFwFile(FvImage: bytes, FvLength: int, fof: int, polarity: bool) -> Optio
             cur_offset = align(cur_offset + 1, 8)
             continue
         Name = UUID(bytes_le=Name0)
-        # TODO need to fix up checksum?
-        fheader = struct.pack(EFI_FFS_FILE_HEADER, Name0, 0, Type, Attributes, Size, 0)
+        # Compute header checksum using the correct header format for large files
+        if Attributes & FFS_ATTRIB_LARGE_FILE:
+            fheader = struct.pack(EFI_FFS_FILE_HEADER2, Name0, 0, Type, Attributes, Size, 0, 0)
+        else:
+            fheader = struct.pack(EFI_FFS_FILE_HEADER, Name0, 0, Type, Attributes, Size, 0)
         hsum = FvChecksum8(fheader)
         if (Attributes & FFS_ATTRIB_CHECKSUM):
             fsum = FvChecksum8(FvImage[cur_offset + file_header_size:cur_offset + fsize])
@@ -495,6 +687,7 @@ def NextFwFileSection(sections: bytes, ssize: int, sof: int, polarity: bool) -> 
         else:
             sec_name = f'S_UNKNOWN_{Type:02X}'
         if (Size == 0xffffff and Type == 0xff) or (Size == 0):
+            logger().log_hal(f'Skipping invalid section at offset 0x{curr_offset:08X} (Size=0x{Size:X}, Type=0x{Type:02X})')
             curr_offset = align(curr_offset + 4, 4)
             continue
         sec_body = sections[curr_offset:curr_offset + Size]
@@ -549,7 +742,13 @@ def assemble_uefi_section(image: bytes, uncomressed_size: int, compression_type:
     EFI_COMPRESSION_SECTION_HEADER = "<LLB"
     SectionType = EFI_SECTION_COMPRESSION
     SectionSize = struct.calcsize(EFI_COMPRESSION_SECTION_HEADER) + len(image)
-    SectionHeader = struct.pack(EFI_COMPRESSION_SECTION_HEADER, (SectionSize & 0x00FFFFFF) | (SectionType << 24), uncomressed_size, compression_type)
+    # Map internal compression type to PI-spec CompressionType (PI spec Vol III, Section 2.4.1.2):
+    # 0x00 = EFI_NOT_COMPRESSED, 0x01 = EFI_STANDARD_COMPRESSION
+    if compression_type == 0:
+        pi_comp_type = 0x00
+    else:
+        pi_comp_type = 0x01
+    SectionHeader = struct.pack(EFI_COMPRESSION_SECTION_HEADER, (SectionSize & 0x00FFFFFF) | (SectionType << 24), uncomressed_size, pi_comp_type)
     return SectionHeader + image
 
 
