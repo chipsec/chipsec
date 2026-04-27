@@ -850,7 +850,7 @@ class Cfg:
         try:
             for vid in self.CONFIG_PCI_RAW:
                 for did in self.CONFIG_PCI_RAW[vid]:
-                    if 0 in self.CONFIG_PCI_RAW[vid][did].cfg['bus'] and self.CONFIG_PCI_RAW[vid][did].cfg['dev'] == 0 and self.CONFIG_PCI_RAW[vid][did].cfg['fun'] == 0:
+                    if self.CONFIG_PCI_RAW[vid][did].cfg['bus'] == 0 and self.CONFIG_PCI_RAW[vid][did].cfg['dev'] == 0 and self.CONFIG_PCI_RAW[vid][did].cfg['fun'] == 0:
                         return self.CONFIG_PCI_RAW[vid][did].cfg
         except (TypeError, KeyError):
             pass
@@ -859,89 +859,6 @@ class Cfg:
     def add_memory_range(self, mem_range_obj: Dict) -> None:
         """Add memory range configuration."""
         self.MEMORY_RANGES[mem_range_obj['vid_str']][mem_range_obj['name']] = mem_range_obj
-
-    def platform_detection(self, proc_code, pch_code, cpuid):
-        """Detect platform with improved error handling."""
-        # Detect processor files
-        self.cpuid = cpuid
-        sku = self._find_sku_data(self.proc_dictionary, proc_code, cpuid)
-        if sku:
-            self.vid = sku['vid']
-            self.did = self._find_did(sku)
-            self.code = sku['code']
-            self.longname = sku['longname']
-            self.req_pch = sku['req_pch']
-
-            if self.did == 0xFFFF:
-                dev000 = self.get_dev_from_bdf_000()
-                self.did = dev000['did']
-                self.rid = dev000['rid']
-            elif not proc_code:
-                try:
-                    vid_str = make_hex_key_str(self.vid)
-                    did_str = make_hex_key_str(self.did)
-                    if (vid_str in self.CONFIG_PCI_RAW and
-                            did_str in self.CONFIG_PCI_RAW[vid_str]):
-                        pci_obj = self.CONFIG_PCI_RAW[vid_str][did_str]
-                        if hasattr(pci_obj, 'get_rid'):
-                            self.rid = pci_obj.get_rid(0, 0, 0)
-                        else:
-                            self.rid = 0xFF
-                    else:
-                        dev000 = self.get_dev_from_bdf_000()
-                        self.rid = dev000['rid']
-                except (KeyError, AttributeError, TypeError):
-                    dev000 = self.get_dev_from_bdf_000()
-                    self.rid = dev000['rid']
-            else:
-                raise CSConfigError('There is already a CPU detected, '
-                                    'are you adding a new config?')
-        else:
-            dev000 = self.get_dev_from_bdf_000()
-            self.vid = dev000['vid']
-            self.did = dev000['did']
-            self.rid = dev000['rid']
-
-        # Detect PCH files
-        sku = self._find_sku_data(self.pch_dictionary, pch_code)
-        if sku:
-            self.pch_vid = sku['vid']
-            self.pch_did = self._find_did(sku)
-            self.pch_code = sku['code']
-            self.pch_longname = sku['longname']
-
-            if not pch_code:
-                try:
-                    vid_str = make_hex_key_str(self.pch_vid)
-                    did_str = make_hex_key_str(self.pch_did)
-                    if (vid_str in self.CONFIG_PCI_RAW and
-                            did_str in self.CONFIG_PCI_RAW[vid_str]):
-                        pci_obj = self.CONFIG_PCI_RAW[vid_str][did_str]
-                        if hasattr(pci_obj, 'instances'):
-                            for cfg_data in pci_obj.instances.values():
-                                if (0x1f == cfg_data.dev and
-                                    0x0 == cfg_data.fun):
-                                    self.pch_rid = cfg_data.rid
-                                    break
-                        else:
-                            self.pch_rid = 0xFF
-                    else:
-                        self.pch_rid = 0xFF
-                except (KeyError, AttributeError, TypeError):
-                    self.pch_rid = 0xFF
-            else:
-                raise CSConfigError('There is already a PCH detected, '
-                                    'are you adding a new config?')
-
-        # Create XML file load list
-        if self.code:
-            self.load_list.extend(self.platform_xml_files.get(self.code, []))
-        if self.pch_code:
-            self.load_list.extend(
-                self.platform_xml_files.get(self.pch_code, [])
-            )
-        if 'devices' in self.platform_xml_files:
-            self.load_list.extend(self.platform_xml_files['devices'])
 
     def get_supported_platforms(self):
         seen = set()
@@ -1145,7 +1062,7 @@ class Cfg:
                     self.scope_manager.child_keys):
             setattr(self, key, {})
 
-    def enhanced_platform_detection(self, proc_code: str = None,
+    def platform_detection(self, proc_code: str = None,
                                    pch_code: str = None,
                                    cpuid: int = 0) -> None:
         """
