@@ -1,0 +1,132 @@
+<?xml version="1.0"?>
+<configuration platform="ARLH">
+<!--
+CHIPSEC: Platform Security Assessment Framework
+Copyright (c) 2026, Intel Corporation
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; Version 2.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+Contact information:
+chipsec@intel.com
+-->
+
+<!--
+XML configuration file for Arrow Lake H/U based platforms
+
+* Intel(R) Core Ultra 200H/U Series Processor Family Datasheet:
+Volume 1: https://edc.intel.com/content/www/us/en/design/products-and-solutions/processors-and-chipsets/core-ultra-200h-and-200u-series-processors-datasheet-volume-1-of-2
+Volume 2: https://edc.intel.com/content/www/us/en/design/publications/core-ultra-200h-and-200u-series-processors-datasheet-volume-2-of-2/
+-->
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Information                          -->
+  <!--                                      -->
+  <!-- #################################### -->
+
+  <!-- TODO: Confirm detection_value (CPUID) for Arrow Lake H/U -->
+  <info family="core" detection_value="0xC0652,0xB0650">
+    <sku did="0x7D06" name="Arrow Lake H" code="ARLH" longname="Arrow Lake H 6P+8E" />
+    <sku did="0x7D30" name="Arrow Lake U" code="ARLH" longname="Arrow Lake U 2P+8E" />
+  </info>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Integrated devices                   -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <pci>
+    <device name="HOSTCTL" bus="0x00" dev="0x00" fun="0" did="0x7D06,0x7D30" config="HOSTCTL.hostctl13gen.xml" >
+      <subcomponent type="mmiobar" name="MCHBAR" register="MCHBAR" base_field="MCHBAR" size="0x20000" enable_bit="0" desc="Host Memory Mapped Register Range" config="MMIO.mmio13gen.xml" />
+      <subcomponent type="mmiobar" name="MCHBARMC1" register="MCHBAR" base_field="MCHBAR" offset="0x10000" size="0x20000" enable_bit="0" desc="Host Memory Mapped Register Range" config="MMIO.mmio13gen.xml" />
+      <subcomponent type="mmiobar" name="VTBAR" register="MCHBAR.VTBAR" base_field="BASE" size="0x8000" enable_bit="0" desc="VTD Register Range" config="IOMMU.iommu.xml" />
+      <subcomponent type="mmiobar" name="GFXVTBAR" register="MCHBAR.GFXVTBAR" base_field="BASE" size="0x8000" enable_bit="0" desc="GFXVTD Register Range" config="IOMMU.iommu.xml" />
+    </device>
+
+    <device name="IGD" bus="0x00" dev="0x02" fun="0" vid="0x8086" did="0x7D51,0x7D41" config="IGD.igd0.xml" />
+
+    <!-- Processor die devices -->
+    <device name="PXPF"      bus="0x00" dev="0x01" fun="0" vid="0x8086" did="0x7ECC" config="PCIE.pcie.xml" />
+    <device name="DTT"       bus="0x00" dev="0x04" fun="0" vid="0x8086" did="0x7D03" />
+    <device name="IPU"       bus="0x00" dev="0x05" fun="0" vid="0x8086" did="0x7D19" />
+    <device name="PXPC"      bus="0x00" dev="0x06" fun="0" vid="0x8086" did="0x774D" config="PCIE.pcie.xml" />
+    <device name="PXPD"      bus="0x00" dev="0x06" fun="1" vid="0x8086" did="0x7ECA" config="PCIE.pcie.xml" />
+    <device name="PXPE"      bus="0x00" dev="0x06" fun="2" vid="0x8086" did="0x7ECB" config="PCIE.pcie.xml" />
+    <device name="TCSS_PCIE" vid="0x8086" did="0x7EC4-0x7EC7" config="PCIE.pcie.xml" />
+    <device name="GNA"       bus="0x00" dev="0x08" fun="0" vid="0x8086" did="0x774C" />
+    <device name="PMT"       bus="0x00" dev="0x0A" fun="0" vid="0x8086" did="0x7D0D" />
+    <device name="NPU"       bus="0x00" dev="0x0B" fun="0" vid="0x8086" did="0x7D1D" />
+    <device name="XHCI"      bus="0x00" dev="0x0D" fun="0" vid="0x8086" did="0x7EC0" />
+    <device name="XDCI"      bus="0x00" dev="0x0D" fun="1" vid="0x8086" did="0x7EC1" />
+    <device name="TBT_DMA"  vid="0x8086" did="0x7EC2-0x7EC3" />
+    <device name="VMD"       bus="0x00" dev="0x0E" fun="0" vid="0x8086" did="0x7D0B" />
+    <device name="THC"      vid="0x8086" did="0x7748-0x774B" />
+    <device name="ISH"       bus="0x00" dev="0x12" fun="0" vid="0x8086" did="0x7745" />
+    <device name="GSPI"     vid="0x8086" did="0x7746,0x7727,0x7730" />
+
+    <!-- IOE bridge devices -->
+    <device name="P2SBC" vid="0x8086" did="0x7EC8,0x7720" config="P2SB.p2sbc1.xml,P2SB.p2sbc8xx.xml" >
+      <subcomponent type="mmiobar" name="SBREGBAR" register="SBREG_BAR" base_field="RBA" size="0x1000000" fixed_address="0xE0000000" desc="Sideband Register Access BAR"/>
+    </device>
+    <device name="IEH"   bus="0x00" dev="0x13" fun="1" vid="0x8086" did="0x7EC9" />
+    <device name="PMC" vid="0x8086" did="0x7ECE,0x7721" config="PMC.pmc-pch8xx.xml" >
+      <subcomponent type="mmiobar" name="PWRMBASE" register="PWRMBASE" base_field="BA" size="0x1000" fixed_address="0xFE000000" desc="Power Management Register Range" config="MMIO.pwrm0.xml" />
+      <subcomponent type="iobar"   name="ABASE"    register="ABASE"    base_field="BA" size="0x100"  fixed_address="0x1800"     desc="ACPI Base Address" config="IO.acpi0.xml" />
+      <subcomponent type="iobar"   name="PMBASE"   register="ABASE"    base_field="BA" size="0x100"  fixed_address="0x1800"     desc="ACPI Base Address" config="IO.acpi0.xml" />
+    </device>
+    <device name="SRAM_IOE"  bus="0x00" dev="0x13" fun="3" vid="0x8086" did="0x7ECF" />
+
+    <!-- SOC devices -->
+    <device name="XHCI_SA"  bus="0x00" dev="0x14" fun="0" vid="0x8086" did="0x777D" />
+    <device name="XDCI_SA"  bus="0x00" dev="0x14" fun="1" vid="0x8086" did="0x777E" />
+    <device name="SRAM"     bus="0x00" dev="0x14" fun="2" vid="0x8086" did="0x777F" />
+    <device name="CNVi"     bus="0x00" dev="0x14" fun="3" vid="0x8086" did="0x7740" />
+    <device name="I2C"     vid="0x8086" did="0x7750-0x7751,0x7778-0x777B" />
+    <device name="I3C"      bus="0x00" dev="0x15" fun="4" vid="0x8086" did="0x777C" />
+    <device name="IDER"     bus="0x00" dev="0x16" fun="2" vid="0x8086" did="0x7772" />
+    <device name="KT"       bus="0x00" dev="0x16" fun="3" vid="0x8086" did="0x7773" />
+    <device name="SATA"     vid="0x8086" did="0x7763,0x7767,0x282A" config="SATA.sata0.xml" />
+    <device name="MEI"     vid="0x8086" did="0x7758" config="ME.mei0.xml" />
+    <device name="UART"    vid="0x8086" did="0x7725-0x7726,0x7752" />
+    <device name="PCIE"    vid="0x8086" did="0x7738-0x773F" config="PCIE.pcie.xml" />
+    <device name="ESPI"     vid="0x8086" did="0x7202,0x7203" />
+    <device name="HDA"      vid="0x8086" did="0x7728" />
+    <device name="SMBUS"    vid="0x8086" did="0x7722" config="SMBUS.smbus1.xml" />
+    <device name="SPI"      vid="0x8086" did="0x7723" config="SPI.spi0.xml" >
+      <subcomponent type="mmiobar" name="SPIBAR" register="SPIBAR0" base_field="MEMBAR" size="0x1000" desc="SPI mmio Range" config="SPI.spibar0.xml" />
+    </device>
+    <device name="GBE"      vid="0x8086" did="0x57A0,0x57A1" />
+    <device name="ITRACE"   vid="0x8086" did="0x7724" />
+
+  </pci>
+
+  <msr>
+    <definition name="MSR" config="MSR.msr2.xml" />
+  </msr>
+
+  <mm_msgbus>
+    <definition name="RTC" port="0x6C" config="RTC.rtc0.xml" />
+  </mm_msgbus>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Memory ranges                        -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <memory>
+    <range name="TPM" access="mmio" address="0xFED40000" limit="0xFED4FFFF" config="TPM.tpm12.xml" />
+    <range name="TXT" access="mmio" address="0xFED30000" limit="0xFED4FFFF" config="TPM.txt.xml" />
+  </memory>
+
+</configuration>
