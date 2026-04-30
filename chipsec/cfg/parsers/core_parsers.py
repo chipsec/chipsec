@@ -25,7 +25,6 @@ platform configuration files and populating the CHIPSEC configuration objects.
 """
 
 import copy
-import os
 
 from chipsec.cfg.parsers.ip.iobar import IOBarConfig
 from chipsec.cfg.parsers.ip.io import IOConfig
@@ -223,8 +222,11 @@ class DevConfig(BaseConfigParser):
                 if attr not in ['config', 'name']:
                     attrs[attr] = dev_attr[attr]
             for fxml in dev_attr['config']:
-                cfg_file = fxml.replace('.', os.path.sep, fxml.count('.') - 1)
-                cfg_path = os.path.join(os.path.dirname(stage_data.xml_file), cfg_file)
+                cfg_path = self.parser_helper._resolve_config_include_path(
+                    stage_data.xml_file,
+                    stage_data.vid_str,
+                    fxml
+                )
                 ret_val.append(config_data(stage_data.vid_str, dev_name, cfg_path, component, attrs))
 
         return ret_val
