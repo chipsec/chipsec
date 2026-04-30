@@ -225,7 +225,7 @@ class CoreParserHelper:
 
             for fxml in dev_attr.config:
                 try:
-                    cfg_path = self._resolve_config_include_path(
+                    cfg_path = self.resolve_config_include_path(
                         stage_data.xml_file,
                         stage_data.vid_str,
                         fxml
@@ -277,7 +277,7 @@ class CoreParserHelper:
                 return None
             cur_dir = parent
 
-    def _resolve_config_include_path(self, xml_file: str, vid_str: str, fxml: str) -> str:
+    def resolve_config_include_path(self, xml_file: str, vid_str: str, fxml: str) -> str:
         """Resolve include path deterministically from token format."""
         cfg_file = self._process_config_path(fxml)
 

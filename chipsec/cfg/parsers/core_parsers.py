@@ -222,7 +222,7 @@ class DevConfig(BaseConfigParser):
                 if attr not in ['config', 'name']:
                     attrs[attr] = dev_attr[attr]
             for fxml in dev_attr['config']:
-                cfg_path = self.parser_helper._resolve_config_include_path(
+                cfg_path = self.parser_helper.resolve_config_include_path(
                     stage_data.xml_file,
                     stage_data.vid_str,
                     fxml
