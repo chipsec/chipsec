@@ -146,7 +146,7 @@ class LinuxHelper(Helper):
             raise Exception(f'Could not start Linux Helper, are you running as Admin/root?\n\t{err}')
         uid = gid = 0
         os.chown(self.DEVICE_NAME, uid, gid)
-        os.chmod(self.DEVICE_NAME, 600)
+        os.chmod(self.DEVICE_NAME, 0o600)
         if os.path.exists(self.DEVICE_NAME):
             logger().log_debug(f'Module {self.DEVICE_NAME} loaded successfully')
         else:
