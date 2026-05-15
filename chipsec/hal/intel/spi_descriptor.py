@@ -33,6 +33,8 @@ from chipsec.hal.hal_base import HALBase
 from chipsec.library.logger import print_buffer_bytes
 from chipsec.library.intel.spi import SPI_REGION_NAMES, SPI_FREGx_BASE_MASK, SPI_FLA_SHIFT, SPI_FREGx_LIMIT_MASK, SPI_FLA_PAGE_MASK, SPI_REGION_tuple, print_SPI_Flash_Regions
 from chipsec.library.intel.spi import SPI_REGION_NUMBER_IN_FD, FLASH_DESCRIPTOR, SPI_MASTER_NAMES, SPI_FLASH_DESCRIPTOR_SIZE, SPI_FLASH_DESCRIPTOR_SIGNATURE
+from chipsec.library.spi_descriptor_cfgs import FLMAP0_CFG, FLMAP1_CFG, FLMAP2_CFG, FLMSTR_CFG
+from chipsec.cfg.parsers.registers.simple import SimpleRegister
 
 class SpiDescriptor(HALBase):
     def __init__(self, cs):
@@ -110,16 +112,16 @@ class SpiDescriptor(HALBase):
         # Flash Descriptor Map Section
         #
         flmap0 = struct.unpack_from('=I', fd[0x14:0x18])[0]
-        flmap0_obj = self.cs.register.get_list_by_name('8086.SPI.FLMAP0')[0]
-        flmap0_obj.value = flmap0
+        flmap0_obj = SimpleRegister(FLMAP0_CFG)
+        flmap0_obj.set_value(flmap0)
 
         flmap1 = struct.unpack_from('=I', fd[0x18:0x1C])[0]
-        flmap1_obj = self.cs.register.get_list_by_name('8086.SPI.FLMAP1')[0]
-        flmap1_obj.value = flmap1
+        flmap1_obj = SimpleRegister(FLMAP1_CFG)
+        flmap1_obj.set_value(flmap1)
 
         flmap2 = struct.unpack_from('=I', fd[0x1C:0x20])[0]
-        flmap2_obj = self.cs.register.get_list_by_name('8086.SPI.FLMAP2')[0]
-        flmap2_obj.value = flmap2
+        flmap2_obj = SimpleRegister(FLMAP2_CFG)
+        flmap2_obj.set_value(flmap2)
 
         fcba = flmap0_obj.get_field('FCBA') << 4
         nc = flmap0_obj.get_field('NC') + 1
@@ -133,12 +135,6 @@ class SpiDescriptor(HALBase):
         self.logger.log(f'  Number of Flash Components  : {nc:d}')
 
         nr = SPI_REGION_NUMBER_IN_FD
-        if flmap0_obj.has_field('NR'):
-            nr = flmap0_obj.get_field('NR')
-            if nr == 0:
-                self.logger.log_warning('only 1 region (FD) is found. Looks like flash descriptor binary is from Skylake platform or later. Try with option --platform')
-            nr += 1
-            self.logger.log(f'  Number of Regions           : {nr:d}')
 
         fmba = flmap1_obj.get_field('FMBA') << 4
         nm = flmap1_obj.get_field('NM')
@@ -187,8 +183,8 @@ class SpiDescriptor(HALBase):
         for m in range(nm):
             flmstr_off = fmba + m * 4
             flmstr = struct.unpack_from('=I', fd[flmstr_off:flmstr_off + 0x4])[0]
-            flmstr_obj = self.cs.register.get_list_by_name('8086.SPI.FLMSTR1')[0]
-            flmstr_obj.value = flmstr
+            flmstr_obj = SimpleRegister(FLMSTR_CFG)
+            flmstr_obj.set_value(flmstr)
             master_region_ra = flmstr_obj.get_field('MRRA')
             master_region_wa = flmstr_obj.get_field('MRWA')
             flmstrs[m] = (master_region_ra, master_region_wa)

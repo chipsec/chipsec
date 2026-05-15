@@ -884,6 +884,16 @@ class Cfg:
         sec_load_list = []
         cfg_handlers = self._get_stage_parsers(Stage.DEVICE_CFG)
         tag_handlers = cfg_handlers['DevConfig']
+
+        # Ensure per-VID storage exists even when PCI enumeration didn't run
+        # (e.g. helper not started). platform_detection has already resolved
+        # the VID(s) from SKU data; _create_vid is idempotent.
+        seen_vids = set()
+        for fxml in self.load_list:
+            if fxml.vid_str and fxml.vid_str not in seen_vids:
+                self._create_vid(fxml.vid_str)
+                seen_vids.add(fxml.vid_str)
+
         for fxml in self.load_list:
             self.logger.log_debug(f'[*] Loading primary config data: {fxml.xml_file}')
             for config_root in self._get_config_iter(fxml):
