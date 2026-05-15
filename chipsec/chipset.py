@@ -61,6 +61,15 @@ PCH_ADDRESS = {
 }
 
 
+# Mapping from architecture VID to CPUID manufacturer string. Used to seed
+# Cfg.mfgid when running without a helper, so HAL dispatch (which keys off
+# mfgid) still selects the correct architecture-specific HALs.
+_MFGID_BY_VID = {
+    ARCH_VID.INTEL: 'GenuineIntel',
+    ARCH_VID.AMD: 'AuthenticAMD',
+}
+
+
 class Chipset:
     """Main chipset detection and configuration management class.
 
@@ -156,7 +165,13 @@ class Chipset:
 
         if load_config:
             self.init_cfg_bus()
-            self.init_topology()
+            if start_helper:
+                self.init_topology()
+            else:
+                # Seed a minimal topology so config parsers that reference CPU
+                # (e.g. MSR scope handling) don't fail when running without a helper.
+                self.Cfg.set_topology({'threads': 1, 'cores': {0: [0]}, 'packages': {0: [0]}})
+                self.Cfg.set_mfgid(_MFGID_BY_VID.get(self.Cfg.vid, 'GenuineIntel'))
             if not ignore_platform:
                 self.Cfg.platform_detection(platform_code, req_pch_code, cpuid)
                 _unknown_proc = not bool(self.Cfg.get_chipset_code())
