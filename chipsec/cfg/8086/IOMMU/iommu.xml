@@ -138,9 +138,8 @@ XML configuration file for Intel Virtualization Technology for Directed I/O (VT-
       <field name="MUA" bit="0" size="32" desc="Message Upper Address"/>
     </register>
     <register name="AFL" type="mmio" offset="0x58" size="8" desc="Advanced Fault Log">
-      <field name="R"   bit="0" size="9"  desc="Reserved"/>
       <field name="FLS" bit="9" size="3"  desc="Fault Log Size"/>
-      <field name="FLA" bit="0" size="52" desc="Fault Log Address"/>
+      <field name="FLA" bit="12" size="34" desc="Fault Log Address"/>
     </register>
     <register name="PMEN" type="mmio" offset="0x64" size="4" desc="Protected Memory Enable">
       <field name="PRS" bit="0"  size="1"  desc="Protected Region Status"/>
@@ -174,11 +173,11 @@ XML configuration file for Intel Virtualization Technology for Directed I/O (VT-
     <register name="IECTL"   type="mmio" offset="0xA0" size="4" desc="Invalidation Event Control"/>
     <register name="IEDATA"  type="mmio" offset="0xA4" size="4" desc="Invalidation Event Data"/>
     <register name="IEADDR"  type="mmio" offset="0xA8" size="4" desc="Invalidation Event Address"/>
-    <register name="IEUADDR" type="mmio" offset="0xAC" size="4" desc="Invalidation Event Address"/>
-    <register name="IRTA"    type="mmio" offset="0xB8" size="4" desc="Invalidation Event Upper Address">
+    <register name="IEUADDR" type="mmio" offset="0xAC" size="4" desc="Invalidation Event Upper Address"/>
+    <register name="IRTA"    type="mmio" offset="0xB8" size="4" desc="Interrupt Remapping Table Address">
       <field name="S"    bit="0"  size="4"  desc="Size"/>
       <field name="EIME" bit="11" size="1"  desc="Extended Interrupt Mode Enable"/>
-      <field name="IRTA" bit="12" size="52" desc="Interrupt Remapping Table Address"/>
+      <field name="IRTA" bit="12" size="34" desc="Interrupt Remapping Table Address"/>
     </register>
 
     <!-- TODO: variable/relative register offsets -->

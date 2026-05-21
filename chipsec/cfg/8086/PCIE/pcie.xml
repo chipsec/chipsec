@@ -107,7 +107,7 @@
         <register name="ACSCAPR" type="mmcfg" offset="0x224" size="2" desc="ACS Capability Register And ACS Control Register">
         <field name="U" bit="4" size="1" desc="ACS Upstream Forwarding" />
         <field name="C" bit="3" size="1" desc="ACS P2P Completion Redirect" />
-        <field name="R" bit="3" size="1" desc="ACS P2P Request Redirect" />
+        <field name="R" bit="2" size="1" desc="ACS P2P Request Redirect" />
         <field name="B" bit="1" size="1" desc="ACS Transaction Blocking" />
         <field name="V" bit="0" size="1" desc="ACS Source Validation" />
         </register>
