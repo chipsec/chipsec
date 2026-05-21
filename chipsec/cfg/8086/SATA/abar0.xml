@@ -35,7 +35,7 @@
           <field name="PI0" bit="0" size="1" desc="Port 0 Implemented" />
       </register>
 
-      <register name="EM_CTL" type="mmio" bar="ABAR" offset="20" size="4" desc="Enclosure Managment Control" >
+      <register name="EM_CTL" type="mmio" bar="ABAR" offset="0x20" size="4" desc="Enclosure Managment Control" >
           <field name="ATTR_ALHD" bit="26" size="1" desc="Activity LED Hardware Driven" />
       </register>
 
