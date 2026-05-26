@@ -174,7 +174,7 @@ XML configuration file for Intel Virtualization Technology for Directed I/O (VT-
     <register name="IEDATA"  type="mmio" offset="0xA4" size="4" desc="Invalidation Event Data"/>
     <register name="IEADDR"  type="mmio" offset="0xA8" size="4" desc="Invalidation Event Address"/>
     <register name="IEUADDR" type="mmio" offset="0xAC" size="4" desc="Invalidation Event Upper Address"/>
-    <register name="IRTA"    type="mmio" offset="0xB8" size="4" desc="Interrupt Remapping Table Address">
+    <register name="IRTA"    type="mmio" offset="0xB8" size="8" desc="Interrupt Remapping Table Address">
       <field name="S"    bit="0"  size="4"  desc="Size"/>
       <field name="EIME" bit="11" size="1"  desc="Extended Interrupt Mode Enable"/>
       <field name="IRTA" bit="12" size="34" desc="Interrupt Remapping Table Address"/>
