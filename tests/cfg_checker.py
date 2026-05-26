@@ -19,7 +19,7 @@
 # chipsec@intel.com
 #
 
-from os import listdir
+from os import listdir, walk
 import os.path as op
 import sys
 import xml.etree.ElementTree as ET
@@ -132,20 +132,20 @@ class ConfigChecker():
                         self.inconsistency_found = True
 
     def run_checks(self):
-        # Iterate over all XML files in chipsec/cfg
+        # Iterate over all XML files in chipsec/cfg, including subdirectories
         vid_list = [f for f in listdir(self.cfg_path) if op.isdir(op.join(self.cfg_path, f)) and is_hex(f)]
         for vid in vid_list:
-            for cfg_file in listdir(op.join(self.cfg_path, vid)):
-                filepath = op.join(self.cfg_path, vid, cfg_file)
-                if op.isdir(filepath):
-                    print("d", end="")
-                    continue
-                print(".", end="")
-                tree = ET.parse(filepath)
-                root = tree.getroot()
-                self.check_registers(root, filepath)
-                self.check_platform_codes(root, filepath)
-                # Iterate over all registers within current cfg file
+            vid_path = op.join(self.cfg_path, vid)
+            for dirpath, _, filenames in walk(vid_path):
+                for cfg_file in filenames:
+                    if not cfg_file.endswith('.xml'):
+                        continue
+                    filepath = op.join(dirpath, cfg_file)
+                    print(".", end="")
+                    tree = ET.parse(filepath)
+                    root = tree.getroot()
+                    self.check_registers(root, filepath)
+                    self.check_platform_codes(root, filepath)
 
         print("")
         for message in self.log_messages:

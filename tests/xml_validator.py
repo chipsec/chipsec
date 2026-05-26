@@ -10,6 +10,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
+import re
+from unicodedata import name as unicodename 
 import xml.etree.ElementTree as ET
 from typing import Dict, List, Tuple
 import os.path as op
@@ -24,7 +26,7 @@ CFG_PATH = op.join(get_main_dir(), 'chipsec', 'cfg') # Where to look for config 
 
 """
 Usage: python xml_validator.py [config_file1] [config_file2] ...
-Run with no arguments to vlidatate all XML config files in the default cfg directory.
+Run with no arguments to validate all XML config files in the default cfg directory.
 """
 
 class ConfigAttributeValidator:
@@ -44,6 +46,20 @@ class ConfigAttributeValidator:
         self.validation_errors = []
         self.passed_file_count = 0
         self.file_count = 0
+
+        # Regex matching invisible/non-printable Unicode characters:
+        # \x00-\x08\x0b\x0c\x0e-\x1f  - C0 control chars (excluding \t \n \r)
+        # \x7f-\x9f                      - DEL + C1 control chars
+        # \xad                           - Soft hyphen
+        # \u200b-\u200f                  - Zero-width and directional marks
+        # \u2028-\u202f                  - Line/paragraph separators, embedding controls
+        # \u2060-\u206f                  - Word joiner, invisible operators
+        # \ufeff                         - BOM / zero-width no-break space
+        # \ufff0-\uffff                  - Specials block
+        self._invisible_re = re.compile(
+            r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f\xad'
+            r'\u200b-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]'
+        )
         
 
     def validate_integer_value(self, value: str) -> bool:
@@ -122,6 +138,19 @@ class ConfigAttributeValidator:
 
         return True
 
+    def validate_no_invisible_chars(self, text: str, context: str) -> bool:
+        """Check for invisible or non-printable Unicode characters in text"""
+        valid = True
+        for match in self._invisible_re.finditer(text):
+            ch = match.group()
+            pos = match.start()
+            char_name = unicodename(ch, f'U+{ord(ch):04X}')
+            self.validation_errors.append(
+                f"{context}: Invisible character '{char_name}' (U+{ord(ch):04X}) at position {pos}"
+            )
+            valid = False
+        return valid
+
     def validate_xml_element(self, element: ET.Element, did_is_range: bool = False) -> bool:
         """Validate all attributes of an XML element"""
         element_valid = True
@@ -129,6 +158,20 @@ class ConfigAttributeValidator:
         for attr_name, attr_value in element.attrib.items():
             if not self.validate_attribute(attr_name, attr_value, element.tag, did_is_range):
                 element_valid = False
+            if not self.validate_no_invisible_chars(
+                attr_value, f"Element '{element.tag}', attribute '{attr_name}'"
+            ):
+                element_valid = False
+
+        if element.text and not self.validate_no_invisible_chars(
+            element.text, f"Element '{element.tag}' text content"
+        ):
+            element_valid = False
+
+        if element.tail and not self.validate_no_invisible_chars(
+            element.tail, f"Element '{element.tag}' tail text"
+        ):
+            element_valid = False
 
         return element_valid
 
