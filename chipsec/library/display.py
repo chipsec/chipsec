@@ -24,6 +24,7 @@ Display functions
 
 import platform
 import sys
+from datetime import datetime
 from typing import Tuple, Sequence
 
 from chipsec.chipset import Chipset
@@ -34,6 +35,7 @@ from chipsec.library.logger import logger
 def chipsec_banner(arguments: Sequence[str], version: str, message: str, custom_str: str = '') -> str:
     """Creates the CHIPSEC banner string"""
     args = ' '.join(arguments)
+    start_time = datetime.now().isoformat().replace('T',' ').split('.')[0]
     if custom_str:
         message += f'\n{custom_str}'
     banner = f'''
@@ -43,6 +45,7 @@ def chipsec_banner(arguments: Sequence[str], version: str, message: str, custom_
 ##                                                            ##
 ################################################################
 [CHIPSEC] Version  : {version}
+[CHIPSEC] Start    : {start_time}
 [CHIPSEC] Arguments: {args}
 {message}'''
     return banner
