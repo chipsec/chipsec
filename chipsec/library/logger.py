@@ -28,7 +28,7 @@ import platform
 import string
 import sys
 import os
-from time import localtime, strftime
+from datetime import datetime
 from typing import Tuple, Dict, List, Optional
 from enum import Enum
 
@@ -155,7 +155,6 @@ class Logger:
 
     def __init__(self):
         """The Constructor."""
-        self.mytime = localtime()
         self.logfile = None
         self.ALWAYS_FLUSH = False
         self.LOG_PATH = os.path.join(BASE_PATH, "logs")
@@ -221,7 +220,8 @@ class Logger:
 
     def set_autolog_file(self, prefix: str="") -> None:
         if self.create_logs_folder():
-            log_file_name = f'{prefix}{"-" if prefix else ""}{strftime("%Y%b%d-%H%M%S")}.log'
+            datestr = datetime.now().isoformat().replace(':','').replace('-','').split('.')[0]
+            log_file_name = f'{prefix}{"-" if prefix else ""}{datestr}.log'
             log_path = os.path.join(self.LOG_PATH, log_file_name)
             file_handler = logging.FileHandler(log_path)
             self.chipsecLogger.addHandler(file_handler)
