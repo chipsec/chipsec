@@ -33,7 +33,7 @@ from chipsec.hal.hal_base import HALBase
 from chipsec.library.logger import print_buffer_bytes
 from chipsec.library.intel.spi import SPI_REGION_NAMES, SPI_FREGx_BASE_MASK, SPI_FLA_SHIFT, SPI_FREGx_LIMIT_MASK, SPI_FLA_PAGE_MASK, SPI_REGION_tuple, print_SPI_Flash_Regions
 from chipsec.library.intel.spi import SPI_REGION_NUMBER_IN_FD, FLASH_DESCRIPTOR, SPI_MASTER_NAMES, SPI_FLASH_DESCRIPTOR_SIZE, SPI_FLASH_DESCRIPTOR_SIGNATURE
-from chipsec.library.spi_descriptor_cfgs import FLMAP0_CFG, FLMAP1_CFG, FLMAP2_CFG, FLMSTR_CFG
+from chipsec.library.intel.spi_descriptor_cfgs import FLMAP0_CFG, FLMAP1_CFG, FLMAP2_CFG, FLMSTR_CFG
 from chipsec.cfg.parsers.registers.simple import SimpleRegister
 
 class SpiDescriptor(HALBase):
