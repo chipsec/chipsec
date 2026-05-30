@@ -38,7 +38,7 @@ from typing import Dict, Tuple, List, Optional, Any, Union
 
 from chipsec.library import defines
 from chipsec.library.file import read_file, write_file
-from chipsec.library.logger import logger, print_buffer_bytes
+from chipsec.library.logger import logger, print_buffer_bytes, dump_buffer_bytes
 from chipsec.library.types import EfiVariableType
 from chipsec.library.uefi.common import EFI_GUID_FMT, EFI_GUID_SIZE, EFI_GUID_STR, bit_set, get_3b_size
 from chipsec.library.uefi.platform import FWType, NVAR_NVRAM_FS_FILE, NVRAM_ATTR_VLD, NVRAM_ATTR_DATA, NVRAM_ATTR_GUID, NVRAM_ATTR_DESC_ASCII, NVRAM_ATTR_EXTHDR, NVRAM_ATTR_RT
@@ -101,61 +101,120 @@ VARIABLE_SIGNATURE_VSS = VARIABLE_DATA_SIGNATURE
 SIGNATURE_LIST = "<16sIII"
 SIGNATURE_LIST_size = struct.calcsize(SIGNATURE_LIST)
 
-
-def parse_sha256(data):
-    return
-
-
-def parse_rsa2048(data):
-    return
-
-
-def parse_rsa2048_sha256(data):
-    return
+# Optional dependency: cryptography provides detailed X.509/PKCS7 parsing.
+# Falls back to basic hex-digest logging when unavailable.
+try:
+    from cryptography import x509
+    from cryptography.hazmat.primitives.serialization import pkcs7 as pkcs7_mod
+    from cryptography.hazmat.primitives.asymmetric import rsa as rsa_mod
+    HAS_CRYPTOGRAPHY = True
+except ImportError:
+    HAS_CRYPTOGRAPHY = False
 
 
-def parse_sha1(data):
-    return
+def _log_sig(msg: str) -> None:
+    """Log a signature parsing result via the chipsec logger."""
+    logger().log(f'    [sig] {msg}')
 
 
-def parse_rsa2048_sha1(data):
-    return
+def parse_sha256(data: bytes) -> None:
+    _log_sig(f'SHA-256 digest: {data.hex()}')
 
 
-def parse_x509(data):
-    return
+def parse_rsa2048(data: bytes) -> None:
+    if len(data) >= 0x100:
+        _log_sig(f'RSA-2048 public key ({len(data)} bytes), modulus: {data[:0x100].hex()[:32]}...')
+    else:
+        _log_sig(f'RSA-2048 data ({len(data)} bytes)')
 
 
-def parse_sha224(data):
-    return
+def parse_rsa2048_sha256(data: bytes) -> None:
+    if len(data) >= 0x100:
+        _log_sig(f'RSA-2048 key + SHA-256 ({len(data)} bytes), modulus: {data[:0x100].hex()[:32]}...')
+    else:
+        _log_sig(f'RSA-2048/SHA-256 data ({len(data)} bytes)')
 
 
-def parse_sha384(data):
-    return
+def parse_sha1(data: bytes) -> None:
+    _log_sig(f'SHA-1 digest: {data.hex()}')
 
 
-def parse_sha512(data):
-    return
+def parse_rsa2048_sha1(data: bytes) -> None:
+    if len(data) >= 0x100:
+        _log_sig(f'RSA-2048 key + SHA-1 ({len(data)} bytes), modulus: {data[:0x100].hex()[:32]}...')
+    else:
+        _log_sig(f'RSA-2048/SHA-1 data ({len(data)} bytes)')
 
 
-def parse_x509_sha256(data):
-    return
+def parse_x509(data: bytes) -> None:
+    if HAS_CRYPTOGRAPHY:
+        try:
+            cert = x509.load_der_x509_certificate(data)
+            _log_sig(f'X.509 Subject : {cert.subject.rfc4514_string()}')
+            _log_sig(f'X.509 Issuer  : {cert.issuer.rfc4514_string()}')
+            _log_sig(f'X.509 Serial  : {cert.serial_number}')
+            _log_sig(f'X.509 Valid   : {cert.not_valid_before_utc} - {cert.not_valid_after_utc}')
+        except Exception as e:
+            _log_sig(f'X.509 parse error: {repr(e)}, raw size: {len(data)} bytes')
+    else:
+        _log_sig(f'X.509 certificate ({len(data)} bytes) [install cryptography for details]')
 
 
-def parse_x509_sha384(data):
-    return
+def parse_sha224(data: bytes) -> None:
+    _log_sig(f'SHA-224 digest: {data.hex()}')
 
 
-def parse_x509_sha512(data):
-    return
+def parse_sha384(data: bytes) -> None:
+    _log_sig(f'SHA-384 digest: {data.hex()}')
 
 
-def parse_external(data):
-    return
+def parse_sha512(data: bytes) -> None:
+    _log_sig(f'SHA-512 digest: {data.hex()}')
 
 
-def parse_pkcs7(data):
-    return
+def parse_x509_sha256(data: bytes) -> None:
+    if len(data) >= 0x20:
+        _log_sig(f'X.509/SHA-256 TBS hash: {data[:0x20].hex()}')
+        if len(data) > 0x20 and HAS_CRYPTOGRAPHY:
+            parse_x509(data[0x20:])
+    else:
+        _log_sig(f'X.509/SHA-256 data ({len(data)} bytes)')
+
+
+def parse_x509_sha384(data: bytes) -> None:
+    if len(data) >= 0x30:
+        _log_sig(f'X.509/SHA-384 TBS hash: {data[:0x30].hex()}')
+        if len(data) > 0x30 and HAS_CRYPTOGRAPHY:
+            parse_x509(data[0x30:])
+    else:
+        _log_sig(f'X.509/SHA-384 data ({len(data)} bytes)')
+
+
+def parse_x509_sha512(data: bytes) -> None:
+    if len(data) >= 0x40:
+        _log_sig(f'X.509/SHA-512 TBS hash: {data[:0x40].hex()}')
+        if len(data) > 0x40 and HAS_CRYPTOGRAPHY:
+            parse_x509(data[0x40:])
+    else:
+        _log_sig(f'X.509/SHA-512 data ({len(data)} bytes)')
+
+
+def parse_external(data: bytes) -> None:
+    _log_sig(f'External management signature ({len(data)} bytes)')
+
+
+def parse_pkcs7(data: bytes) -> None:
+    if HAS_CRYPTOGRAPHY:
+        try:
+            certs = pkcs7_mod.load_der_pkcs7_certificates(data)
+            _log_sig(f'PKCS#7 contains {len(certs)} certificate(s)')
+            for i, cert in enumerate(certs):
+                _log_sig(f'  [{i}] Subject: {cert.subject.rfc4514_string()}')
+                _log_sig(f'  [{i}] Issuer : {cert.issuer.rfc4514_string()}')
+        except Exception as e:
+            _log_sig(f'PKCS#7 parse error: {repr(e)}, raw size: {len(data)} bytes')
+    else:
+        _log_sig(f'PKCS#7 signed data ({len(data)} bytes) [install cryptography for details]')
 
 
 sig_types: Dict[str, Tuple[str, Callable, int, str]] = {
@@ -177,6 +236,7 @@ sig_types: Dict[str, Tuple[str, Callable, int, str]] = {
 
 
 def parse_sb_db(db: bytes, decode_dir: str) -> List[bytes]:
+    """Parse a Secure Boot signature database (db/dbx) and extract individual certificates."""
     entries = []
     dof = 0
     nsig = 0
@@ -466,43 +526,6 @@ def getEFIvariables_UEFI_AUTH(nvram_buf: bytes) -> Dict[str, List[EfiVariableTyp
     return _getEFIvariables_VSS(nvram_buf, FWType.EFI_FW_TYPE_VSS_AUTH)
 
 
-'''
-def getEFIvariables_UEFI_Ex( nvram_buf, auth = False ):
-    dof = 0
-    length = len(nvram_buf)
-    storen = 0
-    variables = dict()
-    while ((dof+UEFI_VARIABLE_STORE_HEADER_SIZE) < length):
-        store_start = dof
-        StoreGuid0, StoreGuid1, StoreGuid2, StoreGuid03, Size, Format, State, R0, R1 = \
-            struct.unpack(UEFI_VARIABLE_STORE_HEADER, nvram_buf[dof:dof + UEFI_VARIABLE_STORE_HEADER_SIZE])
-        dof = align(dof + UEFI_VARIABLE_STORE_HEADER_SIZE, 4)
-        if ((Format != VARIABLE_STORE_FORMATTED) or (State != VARIABLE_STORE_HEALTHY)):
-            break
-        if ((store_start + Size) >= length): break
-        while ((dof + EFI_VARIABLE_HEADER_SIZE) <= (store_start + Size)):
-            StartId, State, R0, Attributes, Auth, NameSize, DataSize, VendorGuid0, VendorGuid1, VendorGuid2, VendorGuid3 = \
-                struct.unpack(EFI_VARIABLE_HEADER, nvram_buf[dof:dof+EFI_VARIABLE_HEADER_SIZE]);
-            if (StartId != VARIABLE_DATA): break
-            dof += EFI_VARIABLE_HEADER_SIZE
-            if ((State == 0xff) and (DataSize == 0xffffffff) and (NameSize == 0xffffffff) and (Attributes == 0xffffffff)):
-                NameSize = 0
-                DataSize = 0
-                # just skip variable with empty name and data for now
-            else:
-                guid = guid_str(VendorGuid0, VendorGuid1, VendorGuid2, VendorGuid3)
-                Name = nvram_buf[dof:dof+NameSize]
-                NameStr = unicode(Name, "utf-16-le").split('\x00')[0]
-                VarData = nvram_buf[dof+NameSize:dof+NameSize+DataSize]
-                if NameStr not in variables.keys():
-                    variables[NameStr] = []
-                #                          off, buf,  hdr,  data,    guid, attrs
-                variables[NameStr].append((dof, None, None, VarData, guid, Attributes))
-            dof = align(dof+NameSize+DataSize, 4)
-        dof = store_start + Size
-        storen += 1
-    return variables
-'''
 ##################################################################################################
 #
 # Platform/Vendor Specific EFI NVRAM Parsing Functions
@@ -942,7 +965,6 @@ def _getEFIvariables_VSS(nvram_buf: bytes, _fwtype: str) -> Dict[str, List[EfiVa
 
     while (start + hdr_size) < nvsize:
         efi_var_hdr = None
-        variables = {}
         if _fwtype in (FWType.EFI_FW_TYPE_VSS, FWType.EFI_FW_TYPE_VSS2):
             efi_var_hdr = EFI_HDR_VSS(*struct.unpack_from(hdr_fmt, nvram_buf[start:]))
         elif _fwtype in (FWType.EFI_FW_TYPE_VSS_AUTH, FWType.EFI_FW_TYPE_VSS2_AUTH):
@@ -1205,9 +1227,12 @@ EFI_VAR_DICT: Dict[str, Dict[str, Any]] = {
 }
 
 
-def decode_EFI_variables(efi_vars: Dict[str, List[EfiVariableType]], nvram_pth: str) -> None:
-    # print decoded and sorted EFI variables into a log file
-    print_sorted_EFI_variables(efi_vars)
+def decode_EFI_variables(efi_vars: Dict[str, List[EfiVariableType]], nvram_pth: str, lst_lines: Optional[List[str]] = None) -> None:
+    # Format decoded and sorted EFI variables
+    if lst_lines is not None:
+        lst_lines.extend(format_sorted_EFI_variables(efi_vars))
+    else:
+        print_sorted_EFI_variables(efi_vars)
     # write each EFI variable into its own binary file
     for name in efi_vars.keys():
         n = 0
@@ -1227,24 +1252,30 @@ def decode_EFI_variables(efi_vars: Dict[str, List[EfiVariableType]], nvram_pth: 
             n = n + 1
 
 
-def identify_EFI_NVRAM(buffer: bytes) -> str:
+def identify_EFI_NVRAM(buffer: bytes) -> Optional[str]:
     b = buffer
     for fw_type in fw_types:
         if EFI_VAR_DICT[fw_type]['func_getnvstore']:
             (offset, _, _) = EFI_VAR_DICT[fw_type]['func_getnvstore'](b)
             if offset != -1:
                 return fw_type
-    return ''
+    return None
 
 
-def parse_EFI_variables(fname: str, rom: bytes, authvars: bool, _fw_type: Optional[str] = None) -> bool:
+def parse_EFI_variables(fname: str, rom: bytes, authvars: bool, _fw_type: Optional[str] = None, lst_lines: Optional[List[str]] = None) -> bool:
+    def _out(msg: str) -> None:
+        if lst_lines is not None:
+            lst_lines.append(msg)
+        else:
+            logger().log(msg)
+
     if (_fw_type in fw_types) and (_fw_type is not None):
-        logger().log(f'[uefi] Using FW type (NVRAM format): {_fw_type}')
+        _out(f'[uefi] Using FW type (NVRAM format): {_fw_type}')
     else:
         logger().log_error(f"Unrecognized FW type '{_fw_type}' (NVRAM format) '{_fw_type}'.")
         return False
 
-    logger().log('[uefi] Searching for NVRAM in the binary..')
+    _out('[uefi] Searching for NVRAM in the binary..')
     efi_vars_store = find_EFI_variable_store(rom, _fw_type)
     if efi_vars_store:
         nvram_fname = f'{fname}.nvram.bin'
@@ -1252,9 +1283,9 @@ def parse_EFI_variables(fname: str, rom: bytes, authvars: bool, _fw_type: Option
         nvram_pth = f'{fname}.nvram.dir'
         if not os.path.exists(nvram_pth):
             os.makedirs(nvram_pth)
-        logger().log('[uefi] Extracting EFI Variables in the NVRAM..')
+        _out('[uefi] Extracting EFI Variables in the NVRAM..')
         efi_vars = EFI_VAR_DICT[_fw_type]['func_getefivariables'](efi_vars_store)
-        decode_EFI_variables(efi_vars, nvram_pth)
+        decode_EFI_variables(efi_vars, nvram_pth, lst_lines=lst_lines)
     else:
         logger().log_error('Did not find NVRAM')
         return False
@@ -1311,17 +1342,16 @@ def IS_VARIABLE_STATE(_c: int, _Mask: int) -> bool:
     return ((((~_c) & 0xFF) & ((~_Mask) & 0xFF)) != 0)
 
 
-def print_efi_variable(offset: int, var_buf: bytes, var_header: 'EfiTableType', var_name: str, var_data: bytes, var_guid: str, var_attrib: int) -> None:
-    logger().log('\n--------------------------------')
-    logger().log(f'EFI Variable (offset = 0x{offset:X}):')
-    logger().log('--------------------------------')
+def format_efi_variable(offset: int, var_buf: bytes, var_header: 'EfiTableType', var_name: str, var_data: bytes, var_guid: str, var_attrib: int) -> str:
+    """Format an EFI variable as a human-readable string (artifact output)."""
+    lines: List[str] = []
+    lines.append('')
+    lines.append('--------------------------------')
+    lines.append(f'EFI Variable (offset = 0x{offset:X}):')
+    lines.append('--------------------------------')
+    lines.append(f'Name      : {var_name}')
+    lines.append(f'Guid      : {var_guid}')
 
-    # Print Variable Name
-    logger().log(f'Name      : {var_name}')
-    # Print Variable GUID
-    logger().log(f'Guid      : {var_guid}')
-
-    # Print Variable State
     if var_header:
         if 'State' in var_header._fields:
             state = getattr(var_header, 'State')
@@ -1332,38 +1362,47 @@ def print_efi_variable(offset: int, var_buf: bytes, var_header: 'EfiTableType', 
                 state_str = f'{state_str} DELETED +'
             if IS_VARIABLE_STATE(state, VAR_ADDED):
                 state_str = f'{state_str} ADDED +'
-            logger().log(state_str)
+            lines.append(state_str)
 
-        # Print Variable Complete Header
         if logger().VERBOSE:
             if var_header.__str__:
-                logger().log(str(var_header))
+                lines.append(str(var_header))
             else:
                 decoded_header = FWType.EFI_FW_TYPE_UEFI.upper()
-                logger().log(f'Decoded Header ({decoded_header}):')
+                lines.append(f'Decoded Header ({decoded_header}):')
                 for attr in var_header._fields:
                     attr_str = f'{attr:<16}'
                     attr_value = getattr(var_header, attr)
-                    logger().log(f'{attr_str} = {attr_value:X}')
+                    lines.append(f'{attr_str} = {attr_value:X}')
 
     attr_str = (f'Attributes: 0x{var_attrib:X} ( {get_attr_string(var_attrib)} )')
-    logger().log(attr_str)
+    lines.append(attr_str)
+    lines.append('Data:')
+    lines.append(dump_buffer_bytes(var_data, 16))
 
-    # Print Variable Data
-    logger().log('Data:')
-    print_buffer_bytes(var_data)
-
-    # Print Variable Full Contents
     if logger().VERBOSE:
-        logger().log('Full Contents:')
+        lines.append('Full Contents:')
         if var_buf is not None:
-            print_buffer_bytes(var_buf)
+            lines.append(dump_buffer_bytes(var_buf, 16))
+
+    return '\n'.join(lines)
 
 
-def print_sorted_EFI_variables(variables: Dict[str, List['EfiVariableType']]) -> None:
+def format_sorted_EFI_variables(variables: Dict[str, List['EfiVariableType']]) -> List[str]:
+    """Format all EFI variables as a list of strings (artifact output)."""
+    lines: List[str] = []
     sorted_names = sorted(variables.keys())
     rec: Tuple[int, bytes, EfiTableType, bytes, str, int]
     for name in sorted_names:
         for rec in variables[name]:
-            #                   off,    buf,     hdr,         data,   guid,   attrs
-            print_efi_variable(rec[0], rec[1], rec[2], name, rec[3], rec[4], rec[5])
+            lines.append(format_efi_variable(rec[0], rec[1], rec[2], name, rec[3], rec[4], rec[5]))
+    return lines
+
+
+def print_efi_variable(offset: int, var_buf: bytes, var_header: 'EfiTableType', var_name: str, var_data: bytes, var_guid: str, var_attrib: int) -> None:
+    logger().log(format_efi_variable(offset, var_buf, var_header, var_name, var_data, var_guid, var_attrib))
+
+
+def print_sorted_EFI_variables(variables: Dict[str, List['EfiVariableType']]) -> None:
+    for line in format_sorted_EFI_variables(variables):
+        logger().log(line)
