@@ -1,0 +1,108 @@
+<?xml version="1.0"?>
+<configuration>
+<!--
+CHIPSEC: Platform Security Assessment Framework
+Copyright (c) 2026, Intel Corporation
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; Version 2.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+Contact information:
+chipsec@intel.com
+-->
+
+<!--
+Intel 440FX PCI and Memory Controller (PMC) configuration registers.
+Device 0:0.0 of the QEMU "pc" machine.
+
+Datasheet: Intel 440FX PCIset 82441FX (PMC) and 82442FX (DBX) - https://wiki.qemu.org/File:29054901.pdf
+-->
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Configuration registers              -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <registers>
+    <register name="VID"     type="pcicfg" offset="0x00" size="2" desc="Vendor ID"/>
+    <register name="DID"     type="pcicfg" offset="0x02" size="2" desc="Device ID"/>
+    <register name="CMD"     type="pcicfg" offset="0x04" size="2" desc="PCI Command Register"/>
+    <register name="STS"     type="pcicfg" offset="0x06" size="2" desc="PCI Status Register"/>
+    <register name="RID"     type="pcicfg" offset="0x08" size="1" desc="Revision ID"/>
+    <register name="CLASSC"  type="pcicfg" offset="0x09" size="3" desc="Class Code">
+      <field name="BASEC" bit="16" size="8" desc="Base Class Code"/>
+      <field name="SCC"   bit="8"  size="8" desc="Sub-Class Code"/>
+      <field name="PI"    bit="0"  size="8" desc="Programming Interface"/>
+    </register>
+    <register name="MLT"     type="pcicfg" offset="0x0D" size="1" desc="Master Latency Timer"/>
+    <register name="HEADT"   type="pcicfg" offset="0x0E" size="1" desc="Header Type"/>
+    <register name="BIST"    type="pcicfg" offset="0x0F" size="1" desc="BIST Register"/>
+    <register name="PMCCFG"  type="pcicfg" offset="0x50" size="2" desc="PMC Configuration">
+      <field name="WPE"  bit="15" size="1" desc="WSC Protocol Enable"/>
+      <field name="ELME" bit="14" size="1" desc="Row Select or Extra Copy of Lower Memory Address Enable"/>
+      <field name="HFS"  bit="8"  size="2" desc="Host Frequency Select"/>
+      <field name="EPTE" bit="6"  size="1" desc="ECC/Parity TEST Enable"/>
+      <field name="DDIM" bit="4"  size="2" desc="DRAM Data Integrity Mode"/>
+      <field name="IOQD" bit="2"  size="1" desc="In-Order Queue Depth"/>
+    </register>
+    <register name="DETURBO" type="pcicfg" offset="0x52" size="1" desc="Deturbo Counter Control"/>
+    <register name="DBC"     type="pcicfg" offset="0x53" size="1" desc="DBX Buffer Control"/>
+    <register name="AXC"     type="pcicfg" offset="0x54" size="1" desc="Auxiliary Control"/>
+    <register name="DRAMR"   type="pcicfg" offset="0x55" size="2" desc="DRAM Row Type (DRT)"/>
+    <register name="DRAMC"   type="pcicfg" offset="0x57" size="1" desc="DRAM Control"/>
+    <register name="DRAMT"   type="pcicfg" offset="0x58" size="1" desc="DRAM Timing"/>
+    <register name="PAM0"    type="pcicfg" offset="0x59" size="1" desc="Programmable Attribute Map 0"/>
+    <register name="PAM1"    type="pcicfg" offset="0x5A" size="1" desc="Programmable Attribute Map 1"/>
+    <register name="PAM2"    type="pcicfg" offset="0x5B" size="1" desc="Programmable Attribute Map 2"/>
+    <register name="PAM3"    type="pcicfg" offset="0x5C" size="1" desc="Programmable Attribute Map 3"/>
+    <register name="PAM4"    type="pcicfg" offset="0x5D" size="1" desc="Programmable Attribute Map 4"/>
+    <register name="PAM5"    type="pcicfg" offset="0x5E" size="1" desc="Programmable Attribute Map 5"/>
+    <register name="PAM6"    type="pcicfg" offset="0x5F" size="1" desc="Programmable Attribute Map 6"/>
+    <register name="DRB0"    type="pcicfg" offset="0x60" size="1" desc="DRAM Row Boundary 0"/>
+    <register name="DRB1"    type="pcicfg" offset="0x61" size="1" desc="DRAM Row Boundary 1"/>
+    <register name="DRB2"    type="pcicfg" offset="0x62" size="1" desc="DRAM Row Boundary 2"/>
+    <register name="DRB3"    type="pcicfg" offset="0x63" size="1" desc="DRAM Row Boundary 3"/>
+    <register name="DRB4"    type="pcicfg" offset="0x64" size="1" desc="DRAM Row Boundary 4"/>
+    <register name="DRB5"    type="pcicfg" offset="0x65" size="1" desc="DRAM Row Boundary 5"/>
+    <register name="DRB6"    type="pcicfg" offset="0x66" size="1" desc="DRAM Row Boundary 6"/>
+    <register name="DRB7"    type="pcicfg" offset="0x67" size="1" desc="DRAM Row Boundary 7"/>
+    <register name="FDHC"    type="pcicfg" offset="0x68" size="1" desc="Fixed DRAM Hole Control"/>
+    <register name="MTT"     type="pcicfg" offset="0x70" size="1" desc="Multi-Transaction Timer"/>
+    <register name="CLT"     type="pcicfg" offset="0x71" size="1" desc="CPU Latency Timer"/>
+    <register name="SMRAMC"  type="pcicfg" offset="0x72" size="1" desc="System Management RAM Control">
+      <field name="D_OPEN"     bit="6" size="1" desc="SMRAM Open"/>
+      <field name="D_CLS"      bit="5" size="1" desc="SMRAM Closed"/>
+      <field name="D_LCK"      bit="4" size="1" desc="SMRAM Locked"/>
+      <field name="G_SMRAME"   bit="3" size="1" desc="SMRAM Enabled"/>
+      <field name="C_BASE_SEG" bit="0" size="3" desc="SMRAM Base Segment = 010b"/>
+    </register>
+    <register name="ERRCMD"  type="pcicfg" offset="0x90" size="1" desc="Error Command Register"/>
+    <register name="ERRSTS"  type="pcicfg" offset="0x91" size="1" desc="Error Status Register"/>
+    <register name="TRC"     type="pcicfg" offset="0x93" size="1" desc="Turbo Reset Control Register">
+      <field name="BISTE" bit="3" size="1" desc="Built-In Self Test Enable"/>
+      <field name="RCPU"  bit="2" size="1" desc="Reset CPU"/>
+      <field name="SHRE"  bit="1" size="1" desc="System Hard Reset Enable"/>
+      <field name="DM"    bit="0" size="1" desc="Deturbo Mode"/>
+    </register>
+  </registers>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Locks                                -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <locks>
+    <lock name="SmramLock" register="SMRAMC" field="D_LCK" value="0x1" desc="SMRAM Locked"/>
+  </locks>
+
+</configuration>

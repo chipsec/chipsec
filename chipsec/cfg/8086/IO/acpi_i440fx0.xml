@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<configuration>
+<!--
+CHIPSEC: Platform Security Assessment Framework
+Copyright (c) 2026, Intel Corporation
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; Version 2.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+Contact information:
+chipsec@intel.com
+-->
+
+<!--
+Intel PIIX4 (82371AB) ACPI Power Management I/O registers, relative to the
+ACPI base address (ABASE / PMBASE). Device 0:1.3 of the QEMU "pc" machine.
+
+Only the standard ACPI PM1 block is implemented by QEMU
+(acpi_pm1_evt_init / acpi_pm1_cnt_init / acpi_pm_tmr_init in hw/acpi/piix4.c).
+The PIIX4 generates SMIs through the APM register pair at I/O 0xB2/0xB3, not a
+PMBASE-relative SMI_EN register, so no SMI_EN/TCO registers are defined here.
+-->
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Configuration registers              -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <registers>
+    <register name="PM1_STS" type="iobar" bar="ABASE" offset="0x0" size="2" desc="PM1 Status">
+      <field name="WAK_STS"       bit="15" size="1" desc="Wake Status"/>
+      <field name="PCIEXPWAK_STS" bit="14" size="1" desc="PCI Express Wake Status"/>
+      <field name="PWRBTNOR_STS"  bit="11" size="1" desc="Power Button Override Status"/>
+      <field name="RTC_STS"       bit="10" size="1" desc="RTC Status"/>
+      <field name="PWRBTN_STS"    bit="8"  size="1" desc="Power Button Status"/>
+      <field name="GBL_STS"       bit="5"  size="1" desc="Global Status"/>
+      <field name="BM_STS"        bit="4"  size="1" desc="Bus Master Status"/>
+      <field name="TMROF_STS"     bit="0"  size="1" desc="Timer Overflow Status"/>
+    </register>
+    <register name="PM1_EN" type="iobar" bar="ABASE" offset="0x2" size="2" desc="PM1 Enable">
+      <field name="RTC_EN"     bit="10" size="1" desc="RTC Event Enable"/>
+      <field name="PWRBTN_EN"  bit="8"  size="1" desc="Power Button Enable"/>
+      <field name="GBL_EN"     bit="5"  size="1" desc="Global Enable"/>
+      <field name="TMROF_EN"   bit="0"  size="1" desc="Timer Overflow Interrupt Enable"/>
+    </register>
+    <register name="PM1_CNT" type="iobar" bar="ABASE" offset="0x4" size="4" desc="PM1 Control">
+      <field name="SLP_EN"   bit="13" size="1" desc="Sleep Enable"/>
+      <field name="SLP_TYP"  bit="10" size="3" desc="Sleep Type"/>
+      <field name="GBL_RLS"  bit="2"  size="1" desc="Global Release"/>
+      <field name="BM_RLD"   bit="1"  size="1" desc="Bus Master Reload"/>
+      <field name="SCI_EN"   bit="0"  size="1" desc="SCI Enable"/>
+    </register>
+    <register name="PM1_TMR" type="iobar" bar="ABASE" offset="0x8" size="4" desc="PM1 Timer">
+      <field name="TMR_VAL"  bit="0" size="24" desc="Timer Value"/>
+    </register>
+  </registers>
+
+</configuration>
