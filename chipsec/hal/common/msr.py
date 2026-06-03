@@ -177,4 +177,4 @@ class Msr(HALBase):
         for tid in range(self.get_cpu_thread_count()):
             self.GDT(tid, num_entries)
 
-haldata = {"arch":[HALBase.MfgIds.Intel], 'name': {'msr': "Msr"}}
+haldata = {"arch":[HALBase.MfgIds.Any], 'name': {'msr': "Msr"}}

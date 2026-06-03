@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<configuration platform="PMC_I440FX" req_pch="False">
+<!--
+CHIPSEC: Platform Security Assessment Framework
+Copyright (c) 2026, Intel Corporation
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; Version 2.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+Contact information:
+chipsec@intel.com
+-->
+
+<!--
+XML configuration file for Intel 440FX PCI and Memory Controller (PMC).
+It is used by the QEMU "pc" machine, implemented in
+https://github.com/qemu/qemu/blob/v7.0.0/hw/pci-host/i440fx.c
+
+Datasheet: Intel 440FX PCIset 82441FX (PMC) and 82442FX (DBX) - https://wiki.qemu.org/File:29054901.pdf
+-->
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Information                          -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <info family="core">
+    <sku did="0x1237" name="i440FX" code="PMC_I440FX" longname="Intel 440FX PMC"/>
+  </info>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Integrated devices                   -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <pci>
+    <device name="HOSTCTL" bus="0x00" dev="0x00" fun="0" vid="0x8086" did="0x1237" config="HOSTCTL.pmc_i440fx0.xml"/>
+    <!-- PIIX3 PCI-to-ISA bridge (82371SB). Implements the 0xCF9 reset control. QEMU hw/isa/piix3.c -->
+    <device name="LPC" bus="0x00" dev="0x01" fun="0" vid="0x8086" did="0x7000"/>
+    <!-- PIIX4 ACPI Power Management and SMBus host controller (82371AB). QEMU hw/acpi/piix4.c -->
+    <device name="PM" bus="0x00" dev="0x01" fun="3" vid="0x8086" did="0x7113" config="PM.pm_i440fx0.xml">
+      <subcomponent type="iobar" name="ABASE"      register="ABASE"    base_field="BA" size="0x40" enable_bit="0" desc="ACPI Power Management Base Address" config="IO.acpi_i440fx0.xml"/>
+      <subcomponent type="iobar" name="PMBASE"     register="ABASE"    base_field="BA" size="0x40" enable_bit="0" desc="ACPI Power Management Base Address"/>
+      <subcomponent type="iobar" name="SMBUS_BASE" register="SMB_BASE" base_field="BA" size="0x20" enable_bit="0" desc="SMBus Base Address" config="SMBUS.smbus_i440fx0.xml"/>
+    </device>
+  </pci>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- MSR definitions                      -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <!-- Architectural CPU MSRs exposed by the QEMU vCPU (IA32_FEATURE_CONTROL, SMRR, MTRRCAP, APIC, etc.). -->
+  <msr>
+    <definition name="MSR" config="MSR.msr2.xml"/>
+  </msr>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- I/O spaces (I/O BARs)                -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <!-- Reset Control register at I/O port 0xCF9, implemented by the PIIX3 ISA bridge. -->
+  <io>
+    <definition name="IO" port="0xCF9" config="IO.io0.xml"/>
+  </io>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Memory ranges                        -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <memory>
+    <range name="Legacy DOS" access="dram" address="0x0" limit="0xFFFFF" desc="Legacy DOS Memory Range"/>
+  </memory>
+
+</configuration>
