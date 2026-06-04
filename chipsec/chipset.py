@@ -428,20 +428,23 @@ class Chipset:
 
     def _get_driver_firmware_info(self) -> Dict[str, Optional[str]]:
         info = {'vendor': None, 'product': None, 'version': None, 'type': None}
-        smbios = SMBIOS(self)
-        if not smbios.find_smbios_table():
-            return info
+        try:
+            smbios = SMBIOS(self)
+            if not smbios.find_smbios_table():
+                return info
 
-        bios_entries = smbios.get_decoded_structs(SMBIOS_BIOS_INFO_ENTRY_ID)
-        if bios_entries:
-            bios_info = bios_entries[0]
-            info['vendor'] = self._get_smbios_string(bios_info.vendor_str, bios_info.strings)
-            info['version'] = self._get_smbios_string(bios_info.version_str, bios_info.strings)
+            bios_entries = smbios.get_decoded_structs(SMBIOS_BIOS_INFO_ENTRY_ID)
+            if bios_entries:
+                bios_info = bios_entries[0]
+                info['vendor'] = self._get_smbios_string(bios_info.vendor_str, bios_info.strings)
+                info['version'] = self._get_smbios_string(bios_info.version_str, bios_info.strings)
 
-        system_entries = smbios.get_decoded_structs(SMBIOS_SYSTEM_INFO_ENTRY_ID)
-        if system_entries:
-            system_info = system_entries[0]
-            info['product'] = self._get_smbios_string(system_info.product_str, system_info.strings)
+            system_entries = smbios.get_decoded_structs(SMBIOS_SYSTEM_INFO_ENTRY_ID)
+            if system_entries:
+                system_info = system_entries[0]
+                info['product'] = self._get_smbios_string(system_info.product_str, system_info.strings)
+        except Exception as err:
+            self.logger.log_hal(f'[chipset] Unable to read firmware info from SMBIOS. Error: {err}')
 
         try:
             found, _, ect, _ = self.hals.uefi.find_EFI_Configuration_Table()

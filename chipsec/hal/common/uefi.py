@@ -260,7 +260,11 @@ class UEFI(hal_base.HALBase):
         pa = smram_base - CHUNK_SZ
         isFound = False
 
-        (tseg_base, tseg_limit, _) = self.cs.hals.cpu.get_TSEG()
+        try:
+            (tseg_base, tseg_limit, _) = self.cs.hals.cpu.get_TSEG()
+        except Exception as err:
+            logger().log_hal(f'[uefi] Unable to determine TSEG region, scanning all memory. Error: {err}')
+            tseg_base = tseg_limit = 0
 
         while pa > CHUNK_SZ:
             if (pa <= tseg_limit) and (pa >= tseg_base):
