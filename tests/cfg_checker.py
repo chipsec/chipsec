@@ -32,12 +32,129 @@ from chipsec.library.defines import is_hex
 
 class ConfigChecker():
 
+    VALID_SUBCOMPONENT_TYPES = ['mmiobar', 'iobar']
+
     def __init__(self) -> None:
         self.BYTES_TO_BITS = 8
         self.inconsistency_found = False  # Global flag to track inconsistencies
         self.FieldInterval = namedtuple('FieldInterval', ['start', 'end'])
         self.cfg_path = op.join(get_main_dir(), 'chipsec', 'cfg')
         self.log_messages = []
+        self._logged_messages = set()
+
+    def _add_error(self, message):
+        self.inconsistency_found = True
+        if message not in self._logged_messages:
+            self.log_messages.append(message)
+            self._logged_messages.add(message)
+
+    def _get_vid_from_path(self, cfg_file):
+        try:
+            rel_path = op.relpath(cfg_file, self.cfg_path)
+        except ValueError:
+            return None
+        vid = rel_path.split(op.sep)[0]
+        if is_hex(vid):
+            return vid
+        return None
+
+    def _process_config_path(self, fxml):
+        return fxml.replace('.', op.sep, fxml.count('.') - 1)
+
+    def _is_vendor_scoped_include(self, fxml):
+        if op.isabs(fxml):
+            return False
+        if '/' in fxml or '\\' in fxml:
+            return False
+        return fxml.count('.') >= 2
+
+    def _resolve_config_include_path(self, cfg_file, vid, fxml):
+        include_path = self._process_config_path(fxml)
+        if op.isabs(include_path):
+            return include_path
+        if vid is not None and self._is_vendor_scoped_include(fxml):
+            return op.join(self.cfg_path, vid, include_path)
+        return op.join(op.dirname(cfg_file), include_path)
+
+    def _iter_config_tokens(self, et_node):
+        config = et_node.attrib.get('config', '')
+        for fxml in config.split(','):
+            fxml = fxml.strip()
+            if fxml:
+                yield fxml
+
+    def _get_register_fields(self, root):
+        register_fields = {}
+        for reg in root.findall('./registers/register'):
+            if 'name' not in reg.attrib:
+                continue
+            reg_name = reg.attrib['name']
+            reg_field_names = set()
+            for field in reg.findall('./field'):
+                if 'name' in field.attrib:
+                    reg_field_names.add(field.attrib['name'])
+            register_fields[reg_name] = reg_field_names
+            if reg.attrib.get('type') in ['mmio', 'iobar'] and 'bar' in reg.attrib:
+                register_fields[f'{reg.attrib["bar"]}.{reg_name}'] = reg_field_names
+        return register_fields
+
+    def _get_referenced_register_fields(self, et_node, cfg_file, vid):
+        register_fields = self._get_register_fields(et_node)
+        for fxml in self._iter_config_tokens(et_node):
+            include_path = self._resolve_config_include_path(cfg_file, vid, fxml)
+            if not op.exists(include_path):
+                continue
+            try:
+                include_root = ET.parse(include_path).getroot()
+            except ET.ParseError as e:
+                self._add_error(f'{cfg_file}: failed to parse referenced config file {include_path}. Error message: {e}')
+                continue
+            register_fields.update(self._get_register_fields(include_root))
+        return register_fields
+
+    def _check_config_file_references(self, root, cfg_file, vid):
+        for et_node in root.iter():
+            for fxml in self._iter_config_tokens(et_node):
+                include_path = self._resolve_config_include_path(cfg_file, vid, fxml)
+                if not op.exists(include_path):
+                    self._add_error(f'{cfg_file}: referenced config file does not exist: {fxml} ({include_path})')
+
+    def _check_bar_register_reference(self, bar, register_fields, cfg_file, bar_context):
+        if 'register' not in bar.attrib:
+            self._add_error(f'{cfg_file}: {bar_context} does not have a "register=" attribute.')
+            return
+        if 'base_field' not in bar.attrib:
+            self._add_error(f'{cfg_file}: {bar_context} does not have a "base_field=" attribute.')
+            return
+
+        register = bar.attrib['register']
+        base_field = bar.attrib['base_field']
+        if register not in register_fields:
+            self._add_error(f'{cfg_file}: {bar_context} references undefined BAR register {register}.')
+            return
+        if base_field not in register_fields[register]:
+            self._add_error(f'{cfg_file}: {bar_context} references undefined BAR base field {register}.{base_field}.')
+
+    def check_bar_definitions(self, root, cfg_file):
+        vid = self._get_vid_from_path(cfg_file)
+        self._check_config_file_references(root, cfg_file, vid)
+        root_register_fields = self._get_register_fields(root)
+
+        for dev in root.findall('./pci/device'):
+            register_fields = root_register_fields.copy()
+            register_fields.update(self._get_referenced_register_fields(dev, cfg_file, vid))
+            for dev_subcomponent in dev.findall('./subcomponent'):
+                register_fields.update(self._get_referenced_register_fields(dev_subcomponent, cfg_file, vid))
+            dev_name = dev.attrib.get('name', '<unknown>')
+
+            for subcomponent in dev.findall('./subcomponent'):
+                sub_type = subcomponent.attrib.get('type')
+                sub_name = subcomponent.attrib.get('name', '<unknown>')
+                sub_context = f'subcomponent {dev_name}.{sub_name}'
+                if sub_type not in self.VALID_SUBCOMPONENT_TYPES:
+                    self._add_error(f'{cfg_file}: {sub_context} has invalid type {sub_type}. Expected one of: {", ".join(self.VALID_SUBCOMPONENT_TYPES)}.')
+                self._check_bar_register_reference(subcomponent, register_fields, cfg_file, sub_context)
+
 
     def _fields_overlap(self, field_intervals):
         field_intervals.sort(key=lambda f: f.start)
@@ -146,6 +263,7 @@ class ConfigChecker():
                     root = tree.getroot()
                     self.check_registers(root, filepath)
                     self.check_platform_codes(root, filepath)
+                    self.check_bar_definitions(root, filepath)
 
         print("")
         for message in self.log_messages:
