@@ -14,6 +14,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+from ast import literal_eval
 from json import loads
 import os
 from errno import EACCES, EFAULT
@@ -83,8 +84,8 @@ class ReplayHelper(Helper):
                 etype = getattr(import_module('.'.join(eimport[0:-1])), eimport[-1])
                 raise etype(ematch[2])
         try:
-            evaledobject = eval(element)
-        except Exception:
+            evaledobject = literal_eval(element)
+        except (ValueError, SyntaxError, TypeError):
             try:
                 evaledobject = stringtobytes(element)
             except Exception:
