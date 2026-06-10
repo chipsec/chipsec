@@ -22,6 +22,7 @@
 x64/IA-64 Paging functionality including x86 page tables, Extended Page Tables (EPT) and VT-d page tables
 """
 
+from ast import literal_eval
 import sys
 import struct
 from typing import Dict, List, Optional, Any
@@ -239,9 +240,9 @@ class c_paging(c_paging_with_2nd_level_translation, c_translation):
     def load_configuration(self, path: str) -> None:
         with open(path, 'r') as cfg:
             try:
-                self.translation_level2.translation = eval(cfg.readline())
-                self.translation = eval(cfg.readline())
-                self.pt = eval(cfg.readline())
+                self.translation_level2.translation = literal_eval(cfg.readline())
+                self.translation = literal_eval(cfg.readline())
+                self.pt = literal_eval(cfg.readline())
             except:
                 logger().log_hal(f'[paging] Error loading: {path}')
         return
