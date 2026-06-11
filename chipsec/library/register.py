@@ -448,6 +448,8 @@ class BaseConfigRegisterHelper(BaseConfigHelper):
         return self.fields.get(field_name, None) is not None
 
     def has_all_fields(self, field_names: List[str]) -> bool:
+        if not field_names:
+            return False
         return all(self.has_field(name) for name in field_names)
 
     def get_mask(self) -> int:
@@ -580,14 +582,19 @@ class ObjList(list):
             logger().log(inst)
 
     def is_all_value(self, value: int, mask: Optional[int] = None) -> bool:
+        if not self:
+            logger().log_warning('ObjList.is_all_value called on empty list')
+            return False
         if mask is None:
             return all(inst.value == value for inst in self)
-        return all((inst.value & mask) == value for inst in self)
+        masked_value = value & mask
+        return all((inst.value & mask) == masked_value for inst in self)
 
     def is_any_value(self, value: int, mask: Optional[int] = None) -> bool:
         if mask is None:
             return any(inst.value == value for inst in self)
-        return any((inst.value & mask) == value for inst in self)
+        masked_value = value & mask
+        return any((inst.value & mask) == masked_value for inst in self)
 
     def get_field_value_if_equivalent(self, field: str, preserve_field_position: bool = False) -> Optional[int]:
         """Get field value if all instances have the same value for that field"""
@@ -601,6 +608,9 @@ class ObjList(list):
     def is_all_field_value(
         self, value: int, field: str, preserve_field_position: bool = False
     ) -> bool:
+        if not self:
+            logger().log_warning(f'ObjList.is_all_field_value called on empty list, field={field}')
+            return False
         return all(
             inst.get_field(field, preserve_field_position) == value for inst in self
         )
@@ -618,6 +628,9 @@ class ObjList(list):
         return ObjList([inst for inst in self if inst.get_instance() == instance])
 
     def all_has_field(self, field: str) -> bool:
+        if not self:
+            logger().log_warning(f'ObjList.all_has_field called on empty list, field={field}')
+            return False
         return all(inst.has_field(field) for inst in self)
 
     def filter_with_field(self, field: str) -> 'ObjList':

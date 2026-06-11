@@ -569,6 +569,8 @@ class CoreConfigRegisters(BaseConfigParser):
             parent = self._get_parent_name(stage_data)
             if attrs['register'] in self.cfg.REGISTERS[stage_data.vid_str][parent]:
                 regs.extend(self.cfg.REGISTERS[stage_data.vid_str][parent][attrs['register']])
+            if not regs:
+                self.logger.log_debug(f"[CONTROL] Register '{attrs['register']}' not found for control '{name}' in REGISTERS[{stage_data.vid_str}][{parent}]")
             attrs['register'] = self._make_reg_name(stage_data, attrs['register'], True)
             objs = []
             for reg in regs:
