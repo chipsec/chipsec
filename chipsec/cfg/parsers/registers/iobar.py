@@ -154,6 +154,15 @@ class IOBARRegisters(BaseConfigRegisterHelper):
         """
         return self.io_port is not None and 0 <= self.io_port <= 0xFFFF
 
+    def get_instance(self) -> 'PCIObj':
+        """
+        Get the instance value, handling nested instance attributes.
+
+        Returns:
+            The instance PCIObj value
+        """
+        return self.instance if not hasattr(self.instance, 'instance') else self.instance.instance
+
     def _resolve_bar_address(self) -> None:
         """
         Resolve the BAR base address using CHIPSEC HAL if not already done.
