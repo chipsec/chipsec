@@ -24,7 +24,7 @@ Contains platform identification functions
 import errno
 import traceback
 import json
-from typing import Dict, Tuple, Type, Optional
+from typing import Dict, Tuple, Optional
 
 from chipsec.helper.oshelper import helper as os_helper
 from chipsec.helper.basehelper import Helper
@@ -35,7 +35,7 @@ from chipsec.library.options import Options
 from chipsec.library.exceptions import UnknownChipsetError, OsHelperError
 from chipsec.library.logger import logger
 from chipsec.library.defines import ARCH_VID
-from chipsec.library.register import Register, RegData
+from chipsec.library.register import Register
 from chipsec.library.lock import Lock
 from chipsec.library.control import Control
 from chipsec.library.device import Device
@@ -363,40 +363,6 @@ class Chipset:
         self.logger.log_debug('[*] Gathering CPU Topology..')
         topology = self.hals.cpu.get_cpu_topology()
         self.Cfg.set_topology(topology)
-
-    def is_all_value(self, regdata: Type[RegData], value: int, mask: Optional[int] = None) -> bool:
-        """Check if all register data values match the specified value.
-
-        Args:
-            regdata: Register data to check
-            value: Value to compare against
-            mask: Optional mask to apply before comparison
-
-        Returns:
-            bool: True if all values match
-        """
-        if mask is None:
-            return all(n.value == value for n in regdata)
-        else:
-            newvalue = value & mask
-            return all((n.value & mask) == newvalue for n in regdata)
-
-    def is_any_value(self, regdata: Type[RegData], value: int, mask: Optional[int] = None) -> bool:
-        """Check if any register data values match the specified value.
-
-        Args:
-            regdata: Register data to check
-            value: Value to compare against
-            mask: Optional mask to apply before comparison
-
-        Returns:
-            bool: True if any values match
-        """
-        if mask is None:
-            return any(n.value == value for n in regdata)
-        else:
-            newvalue = value & mask
-            return any((n.value & mask) == newvalue for n in regdata)
 
     # ###########################################################################
     # Scoping functions
