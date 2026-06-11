@@ -60,7 +60,10 @@ https://edc.intel.com/content/www/us/en/design/publications/800-series-chipset-f
       <subcomponent type="iobar"   name="ABASE"    register="ABASE"    base_field="BA" size="0x100"  fixed_address="0x1800"     desc="ACPI Base Address" config="IO.acpi0.xml" />
       <subcomponent type="iobar"   name="PMBASE"   register="ABASE"    base_field="BA" size="0x100"  fixed_address="0x1800"     desc="ACPI Base Address" config="IO.acpi0.xml" />
     </device>
-    <device name="SMBUS"   vid="0x8086" did="0x7F23" config="SMBUS.smbus1.xml" />
+    <device name="SMBUS"   vid="0x8086" did="0x7F23" config="SMBUS.smbus1.xml">
+      <subcomponent type="iobar" name="SMBUS_BASE" register="SMB_BASE" base_field="BASE" size="0x20" config="SMBUS.smbus1-iobar.xml" desc="SMBus Base Address"/>
+      <subcomponent type="iobar" name="TCOBAR"    register="TCOBASE"  base_field="TCOBA" size="0x20" config="SMBUS.tcobar0.xml" desc="TCO Base Address"/>
+    </device>
     <device name="SPI"     vid="0x8086" did="0x7F24" config="SPI.spi0.xml" >
       <subcomponent type="mmiobar" name="SPIBAR" register="SPIBAR0" base_field="MEMBAR" size="0x1000" desc="SPI mmio Range" config="SPI.spibar0.xml" />
     </device>

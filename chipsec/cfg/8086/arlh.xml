@@ -102,7 +102,10 @@ Volume 2: https://edc.intel.com/content/www/us/en/design/publications/core-ultra
     <device name="PCIE"    vid="0x8086" did="0x7738-0x773F" config="PCIE.pcie.xml" />
     <device name="ESPI"     vid="0x8086" did="0x7202,0x7203" />
     <device name="HDA"      vid="0x8086" did="0x7728" />
-    <device name="SMBUS"    vid="0x8086" did="0x7722" config="SMBUS.smbus1.xml" />
+    <device name="SMBUS"    vid="0x8086" did="0x7722" config="SMBUS.smbus1.xml">
+      <subcomponent type="iobar" name="SMBUS_BASE" register="SMB_BASE" base_field="BASE" size="0x20" config="SMBUS.smbus1-iobar.xml" desc="SMBus Base Address"/>
+      <subcomponent type="iobar" name="TCOBAR"    register="TCOBASE"  base_field="TCOBA" size="0x20" config="SMBUS.tcobar0.xml" desc="TCO Base Address"/>
+    </device>
     <device name="SPI"      vid="0x8086" did="0x7723" config="SPI.spi0.xml" >
       <subcomponent type="mmiobar" name="SPIBAR" register="SPIBAR0" base_field="MEMBAR" size="0x1000" desc="SPI mmio Range" config="SPI.spibar0.xml" />
     </device>
