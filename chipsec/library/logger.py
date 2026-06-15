@@ -86,8 +86,6 @@ class chipsecLogFormatter(logging.Formatter):
         self.infmt = fmt
 
     def format(self, record):
-        if record.args:
-            record.args = tuple()
         formatter = logging.Formatter(self.infmt)
         return formatter.format(record)
 
@@ -138,10 +136,9 @@ class chipsecStreamFormatter(logging.Formatter):
             color = 'PURPLE'
         else:
             color = 'WHITE'
-        if record.args:
-            if record.args[0] is not None and record.args[0] in self.colors:
-                color = record.args[0]
-            record.args = tuple()
+        override = getattr(record, 'chipsec_color', None)
+        if override is not None and override in self.colors:
+            color = override
         if color in self.colors:
             log_fmt = f'{self.colors[color]}{self.infmt}{self.colors["END"]}'
         else:
@@ -173,9 +170,9 @@ class Logger:
         self.logstream.setFormatter(streamFormatter)
         self.logFormatter = chipsecLogFormatter('%(additional)s%(message)s')
 
-    def log(self, text: str, level: level = level.INFO, color: Optional[str] = ...) -> None:
+    def log(self, text: str, level: level = level.INFO, color: Optional[str] = None) -> None:
         """Sends plain text to logging."""
-        self.chipsecLogger.log(level.value, text, color)
+        self.chipsecLogger.log(level.value, text, extra={'chipsec_color': color})
 
     def log_verbose(self, text: str) -> None:  # Use log('text', level.VERBOSE)
         """Logs a Verbose message"""
