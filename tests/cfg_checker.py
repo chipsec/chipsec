@@ -98,19 +98,44 @@ class ConfigChecker():
                 register_fields[f'{reg.attrib["bar"]}.{reg_name}'] = reg_field_names
         return register_fields
 
-    def _get_referenced_register_fields(self, et_node, cfg_file, vid):
-        register_fields = self._get_register_fields(et_node)
-        for fxml in self._iter_config_tokens(et_node):
-            include_path = self._resolve_config_include_path(cfg_file, vid, fxml)
-            if not op.exists(include_path):
-                continue
-            try:
-                include_root = ET.parse(include_path).getroot()
-            except ET.ParseError as e:
-                self._add_error(f'{cfg_file}: failed to parse referenced config file {include_path}. Error message: {e}')
-                continue
-            register_fields.update(self._get_register_fields(include_root))
-        return register_fields
+    def _merge_register_fields(self, dest, src):
+        for reg_name, fields in src.items():
+            if reg_name in dest:
+                dest[reg_name] = dest[reg_name] | fields
+            else:
+                dest[reg_name] = set(fields)
+
+    def _collect_group_register_fields_by_device(self, group_files):
+        # Build register definitions scoped per device name, aggregated across
+        # every file in the (vid, platform) group. Register names are reused
+        # across devices (e.g. "BAR"), so a subcomponent must only resolve
+        # against registers that belong to its own device. Aggregating across
+        # the group (rather than a single file) still allows an overlay file
+        # (e.g. *_custom.xml) to rely on register definitions provided by the
+        # same device in a sibling file of the same platform.
+        by_device = {}
+        for cfg_file, root, vid in group_files:
+            file_level_fields = self._get_register_fields(root)
+            for dev in root.findall('./pci/device'):
+                dev_name = dev.attrib.get('name', '<unknown>')
+                register_fields = by_device.setdefault(dev_name, {})
+                self._merge_register_fields(register_fields, file_level_fields)
+                seen_includes = set()
+                for et_node in dev.iter():
+                    for fxml in self._iter_config_tokens(et_node):
+                        include_path = self._resolve_config_include_path(cfg_file, vid, fxml)
+                        if include_path in seen_includes:
+                            continue
+                        seen_includes.add(include_path)
+                        if not op.exists(include_path):
+                            continue
+                        try:
+                            include_root = ET.parse(include_path).getroot()
+                        except ET.ParseError as e:
+                            self._add_error(f'{cfg_file}: failed to parse referenced config file {include_path}. Error message: {e}')
+                            continue
+                        self._merge_register_fields(register_fields, self._get_register_fields(include_root))
+        return by_device
 
     def _check_config_file_references(self, root, cfg_file, vid):
         for et_node in root.iter():
@@ -119,33 +144,85 @@ class ConfigChecker():
                 if not op.exists(include_path):
                     self._add_error(f'{cfg_file}: referenced config file does not exist: {fxml} ({include_path})')
 
-    def _check_bar_register_reference(self, bar, register_fields, cfg_file, bar_context):
+    def _check_bar_register_reference(self, bar, register_fields, cfg_file, bar_context, location_defined_in_platform_sibling=False, dev=None, vid=None):
+        location_defined_elsewhere = 'fixed_address' in bar.attrib or location_defined_in_platform_sibling
         if 'register' not in bar.attrib:
-            self._add_error(f'{cfg_file}: {bar_context} does not have a "register=" attribute.')
+            if not location_defined_elsewhere:
+                self._add_error(f'{cfg_file}: {bar_context} does not have a "register=" attribute.')
             return
         if 'base_field' not in bar.attrib:
-            self._add_error(f'{cfg_file}: {bar_context} does not have a "base_field=" attribute.')
+            if not location_defined_elsewhere:
+                self._add_error(f'{cfg_file}: {bar_context} does not have a "base_field=" attribute.')
             return
 
         register = bar.attrib['register']
         base_field = bar.attrib['base_field']
-        if register not in register_fields:
+        resolved_fields = register_fields.get(register)
+        if resolved_fields is None and '.' in register and dev is not None:
+            resolved_fields = self._resolve_qualified_register(dev, register, cfg_file, vid)
+        if resolved_fields is None:
             self._add_error(f'{cfg_file}: {bar_context} references undefined BAR register {register}.')
             return
-        if base_field not in register_fields[register]:
+        if base_field not in resolved_fields:
             self._add_error(f'{cfg_file}: {bar_context} references undefined BAR base field {register}.{base_field}.')
 
-    def check_bar_definitions(self, root, cfg_file):
-        vid = self._get_vid_from_path(cfg_file)
-        self._check_config_file_references(root, cfg_file, vid)
-        root_register_fields = self._get_register_fields(root)
+    def _resolve_qualified_register(self, dev, register_ref, cfg_file, vid):
+        sibling_name, _, reg_name = register_ref.rpartition('.')
+        sibling = None
+        for sub in dev.findall('./subcomponent'):
+            if sub.attrib.get('name') == sibling_name:
+                sibling = sub
+                break
+        if sibling is None:
+            return None
+        sibling_fields = {}
+        for fxml in self._iter_config_tokens(sibling):
+            include_path = self._resolve_config_include_path(cfg_file, vid, fxml)
+            if not op.exists(include_path):
+                continue
+            try:
+                include_root = ET.parse(include_path).getroot()
+            except ET.ParseError:
+                continue
+            self._merge_register_fields(sibling_fields, self._get_register_fields(include_root))
+        return sibling_fields.get(reg_name)
 
+    def check_bar_definitions(self, parsed_files):
+        # Verify every 'config=' reference points to an existing file (per file).
+        for cfg_file, root, vid in parsed_files:
+            self._check_config_file_references(root, cfg_file, vid)
+
+        groups = {}
+        for cfg_file, root, vid in parsed_files:
+            platform = root.attrib.get('platform')
+            group_key = (vid, platform) if platform else (vid, cfg_file)
+            groups.setdefault(group_key, []).append((cfg_file, root, vid))
+
+        for group_files in groups.values():
+            # Register resolution is scoped per device name (aggregated across
+            # the group). The group scope is also used for the "missing
+            # register/base_field is allowed if the BAR location is defined
+            # elsewhere in the group" exception.
+            register_fields_by_device = self._collect_group_register_fields_by_device(group_files)
+            defined_bar_subcomponents = self._collect_defined_bar_subcomponents(group_files)
+            for cfg_file, root, vid in group_files:
+                self._check_bars_in_file(root, cfg_file, vid, register_fields_by_device, defined_bar_subcomponents)
+
+    def _collect_defined_bar_subcomponents(self, group_files):
+        defined = set()
+        for cfg_file, root, vid in group_files:
+            for dev in root.findall('./pci/device'):
+                dev_name = dev.attrib.get('name', '<unknown>')
+                for subcomponent in dev.findall('./subcomponent'):
+                    sub_name = subcomponent.attrib.get('name', '<unknown>')
+                    if 'fixed_address' in subcomponent.attrib or ('register' in subcomponent.attrib and 'base_field' in subcomponent.attrib):
+                        defined.add((dev_name, sub_name))
+        return defined
+
+    def _check_bars_in_file(self, root, cfg_file, vid, register_fields_by_device, defined_bar_subcomponents):
         for dev in root.findall('./pci/device'):
-            register_fields = root_register_fields.copy()
-            register_fields.update(self._get_referenced_register_fields(dev, cfg_file, vid))
-            for dev_subcomponent in dev.findall('./subcomponent'):
-                register_fields.update(self._get_referenced_register_fields(dev_subcomponent, cfg_file, vid))
             dev_name = dev.attrib.get('name', '<unknown>')
+            register_fields = register_fields_by_device.get(dev_name, {})
 
             for subcomponent in dev.findall('./subcomponent'):
                 sub_type = subcomponent.attrib.get('type')
@@ -153,7 +230,8 @@ class ConfigChecker():
                 sub_context = f'subcomponent {dev_name}.{sub_name}'
                 if sub_type not in self.VALID_SUBCOMPONENT_TYPES:
                     self._add_error(f'{cfg_file}: {sub_context} has invalid type {sub_type}. Expected one of: {", ".join(self.VALID_SUBCOMPONENT_TYPES)}.')
-                self._check_bar_register_reference(subcomponent, register_fields, cfg_file, sub_context)
+                location_defined_in_platform_sibling = (dev_name, sub_name) in defined_bar_subcomponents
+                self._check_bar_register_reference(subcomponent, register_fields, cfg_file, sub_context, location_defined_in_platform_sibling, dev=dev, vid=vid)
 
 
     def _fields_overlap(self, field_intervals):
@@ -251,23 +329,34 @@ class ConfigChecker():
     def run_checks(self):
         # Iterate over all XML files in chipsec/cfg, including subdirectories
         vid_list = [f for f in listdir(self.cfg_path) if op.isdir(op.join(self.cfg_path, f)) and is_hex(f)]
+        total_xml_files = 0
+        parsed_files = []
         for vid in vid_list:
             vid_path = op.join(self.cfg_path, vid)
             for dirpath, _, filenames in walk(vid_path):
                 for cfg_file in filenames:
                     if not cfg_file.endswith('.xml'):
                         continue
+                    total_xml_files += 1
                     filepath = op.join(dirpath, cfg_file)
                     print(".", end="")
                     tree = ET.parse(filepath)
                     root = tree.getroot()
                     self.check_registers(root, filepath)
                     self.check_platform_codes(root, filepath)
-                    self.check_bar_definitions(root, filepath)
+                    parsed_files.append((filepath, root, vid))
+
+        self.check_bar_definitions(parsed_files)
 
         print("")
         for message in self.log_messages:
             print(message)
+
+        print("=== cfg_checker summary ===")
+        print(f'Vendor directories scanned: {len(vid_list)}')
+        print(f'XML files checked: {total_xml_files}')
+        print(f'Total errors: {len(self.log_messages)}')
+        print(f'Result: {"FAIL" if self.inconsistency_found else "PASS"}')
 
         # Exit code 0 or 1
         return int(self.inconsistency_found)
