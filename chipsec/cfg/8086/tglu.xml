@@ -37,10 +37,10 @@ http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.
   <!--                                      -->
   <!-- #################################### -->
   <info family="core">
-    <sku did="0x9A12" name="TigerLake" code="TGLU" longname="TGL UP4 4 Cores"/>
     <sku did="0x9A02" name="TigerLake" code="TGLU" longname="TGL UP4 2 Cores"/>
-    <sku did="0x9A14" name="TigerLake" code="TGLU" longname="TGL UP3 4 Cores"/>
     <sku did="0x9A04" name="TigerLake" code="TGLU" longname="TGL UP3 2 Cores"/>
+    <sku did="0x9A12" name="TigerLake" code="TGLU" longname="TGL UP4 4 Cores"/>
+    <sku did="0x9A14" name="TigerLake" code="TGLU" longname="TGL UP3 4 Cores"/>
   </info>
 
   <!-- #################################### -->
@@ -49,7 +49,7 @@ http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.
   <!--                                      -->
   <!-- #################################### -->
   <pci>
-    <device name="HOSTCTL" bus="0x0" dev="0x00" fun="0" did="0x9A14" config="HOSTCTL.hostctl11gen.xml">
+    <device name="HOSTCTL" bus="0x0" dev="0x00" fun="0" did="0x9A02,0x9A04,0x9A12,0x9A14" config="HOSTCTL.hostctl11gen.xml">
       <subcomponent type="mmiobar" name="MCHBAR" register="MCHBAR" base_field="MCHBAR" size="0x8000" enable_bit="0" config="MMIO.mmio0.xml" />
     </device>
     <!-- <device name="HOSTCTL" bus="0x0" dev="0x00" fun="0" config="IOMMU.iommu.xml"/> -->

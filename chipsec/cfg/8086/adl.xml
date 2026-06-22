@@ -65,7 +65,7 @@ Review:    !!!
   <!-- #################################### -->
   <pci>
     <!-- Review !!!!                                           !!!!                /-->
-    <device name="HOSTCTL" bus="0x00" dev="0x00" fun="0" did="0x4621,0x4660" config="HOSTCTL.hostctl1.xml" >
+    <device name="HOSTCTL" bus="0x00" dev="0x00" fun="0" did="0x4601,0x4602,0x4609,0x460A,0x4610,0x4619,0x461A,0x4621,0x4629,0x4630,0x4641,0x4648,0x4649,0x4650,0x4660,0x4668" config="HOSTCTL.hostctl1.xml" >
       <subcomponent type="mmiobar" name="MCHBAR" register="MCHBAR" base_field="MCHBAR" size="0x8000" enable_bit="0" desc="Host Memory Mapped Register Range" config="MMIO.mmio0.xml" />
       <subcomponent type="mmiobar" name="MCHBARMC1" register="MCHBAR" base_field="MCHBAR" offset="0x10000" size="0x8000" enable_bit="0" desc="Host Memory Mapped Register Range" config="MMIO.mmio0.xml" />
       <subcomponent type="mmiobar" name="VTBAR" register="MCHBAR.VTBAR" base_field="BASE" size="0x8000" enable_bit="0" desc="VTD Register Range" config="IOMMU.iommu.xml" />
