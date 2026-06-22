@@ -45,11 +45,11 @@ https://edc.intel.com/content/www/us/en/design/publications/core-ultra-200s-seri
   <info family="core" detection_value="0xC0662">
     <sku did="0x7D1A" name="Arrow Lake" code="ARL" longname="Arrow Lake S 8-16" />
     <sku did="0x7D1B" name="Arrow Lake" code="ARL" longname="Arrow Lake S 8-12" />
-    <sku did="0x7D2A" name="Arrow Lake" code="ARL" longname="Arrow Lake S 6-8" />
-    <sku did="0x7D35" name="Arrow Lake" code="ARL" longname="Arrow Lake S 6-4" />
     <sku did="0x7D1C" name="Arrow Lake" code="ARL" longname="Arrow Lake HX 8-16" />
+    <sku did="0x7D2A" name="Arrow Lake" code="ARL" longname="Arrow Lake S 6-8" />
     <sku did="0x7D2D" name="Arrow Lake" code="ARL" longname="Arrow Lake HX 8-12" />
     <sku did="0x7D2F" name="Arrow Lake" code="ARL" longname="Arrow Lake HX 6-8" />
+    <sku did="0x7D35" name="Arrow Lake" code="ARL" longname="Arrow Lake S 6-4" />
   </info>
 
 
@@ -60,7 +60,7 @@ https://edc.intel.com/content/www/us/en/design/publications/core-ultra-200s-seri
   <!--                                      -->
   <!-- #################################### -->
   <pci>
-    <device name="HOSTCTL" bus="0x00" dev="0x00" fun="0" did="0x7D1A-0x7D1C,0x7D2A-0x7D2F,0x7D35" config="HOSTCTL.hostctl13gen.xml" >
+    <device name="HOSTCTL" bus="0x00" dev="0x00" fun="0" did="0x7D1A-0x7D1C,0x7D2A,0x7D2D,0x7D2F,0x7D35" config="HOSTCTL.hostctl13gen.xml" >
       <subcomponent type="mmiobar" name="MCHBAR" register="MCHBAR" base_field="MCHBAR" size="0x20000" enable_bit="0" desc="Host Memory Mapped Register Range" config="MMIO.mmio13gen.xml" />
       <subcomponent type="mmiobar" name="MCHBARMC1" register="MCHBAR" base_field="MCHBAR" offset="0x10000" size="0x20000" enable_bit="0" desc="Host Memory Mapped Register Range" config="MMIO.mmio13gen.xml" />
       <subcomponent type="mmiobar" name="VTBAR" register="MCHBAR.VTBAR" base_field="BASE" size="0x8000" enable_bit="0" desc="VTD Register Range" config="IOMMU.iommu.xml" />
