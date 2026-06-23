@@ -147,6 +147,27 @@ class chipsecStreamFormatter(logging.Formatter):
         return formatter.format(record)
 
 
+class SafeStreamHandler(logging.StreamHandler):
+    """
+    StreamHandler that degrades gracefully when the output stream can't encode Unicode.
+
+    This matters in UEFI Python environments where stdout is often ASCII-only.
+    """
+
+    def emit(self, record) -> None:
+        try:
+            super().emit(record)
+        except UnicodeEncodeError:
+            try:
+                msg = self.format(record)
+                enc = getattr(self.stream, 'encoding', None) or 'ascii'
+                safe_msg = msg.encode(enc, errors='backslashreplace').decode(enc, errors='ignore')
+                self.stream.write(safe_msg + self.terminator)
+                self.flush()
+            except Exception:
+                self.handleError(record)
+
+
 class Logger:
     """Class for logging to console, text file, XML."""
 
@@ -155,7 +176,7 @@ class Logger:
         self.logfile = None
         self.ALWAYS_FLUSH = False
         self.LOG_PATH = os.path.join(BASE_PATH, "logs")
-        self.logstream = logging.StreamHandler(sys.stdout)
+        self.logstream = SafeStreamHandler(sys.stdout)
         self.chipsecLogger = logging.getLogger(LOGGER_NAME)
         self.chipsecLogger.setLevel(logging.INFO)
         if not self.chipsecLogger.handlers:
@@ -220,7 +241,7 @@ class Logger:
             datestr = datetime.now().isoformat().replace(':','').replace('-','').split('.')[0]
             log_file_name = f'{prefix}{"-" if prefix else ""}{datestr}.log'
             log_path = os.path.join(self.LOG_PATH, log_file_name)
-            file_handler = logging.FileHandler(log_path)
+            file_handler = logging.FileHandler(log_path, encoding='utf-8')
             self.chipsecLogger.addHandler(file_handler)
             file_handler.setFormatter(self.logFormatter)
         else:
@@ -267,7 +288,7 @@ class Logger:
             # Open new log file and keep it opened
             try:
                 # creates FileHandler for log file
-                self.logfile = logging.FileHandler(filename=self.LOG_FILE_NAME, mode='a')
+                self.logfile = logging.FileHandler(filename=self.LOG_FILE_NAME, mode='a', encoding='utf-8')
             except Exception:
                 self.log(f'WARNING: Could not open log file: {self.LOG_FILE_NAME}')
             else:
