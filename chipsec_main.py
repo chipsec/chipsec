@@ -25,7 +25,6 @@ Main application logic and automation functions
 
 # These are for debugging imports
 import sys
-import fnmatch
 import argparse
 import os
 import re
@@ -48,7 +47,7 @@ from chipsec.testcase import ExitCode, TestCase, ReturnCodeResults, LegacyResult
 from chipsec.library.display import print_banner, print_banner_properties
 from chipsec.library.exceptions import UnknownChipsetError, OsHelperError
 from chipsec.library.options import Options
-from chipsec.library.module_helper import enumerate_modules, print_modules
+from chipsec.library.module_helper import enumerate_modules, get_module_files, print_modules
 
 try:
     import importlib
@@ -245,13 +244,8 @@ class ChipsecMain:
     def load_modules_from_path(self, from_path, recursive=True):
         if self.logger.DEBUG:
             self.logger.log(f'[*] Path: {os.path.abspath(from_path)}')
-        for dirname, subdirs, mod_fnames in os.walk(os.path.abspath(from_path)):
-            if not recursive:
-                while len(subdirs) > 0:
-                    subdirs.pop()
-            for modx in mod_fnames:
-                if fnmatch.fnmatch(modx, '*.py') and not fnmatch.fnmatch(modx, '__init__.py') and not fnmatch.fnmatch(modx, '*sidekick.py'):
-                    self.load_module(os.path.join(dirname, modx), self._module_argv)
+        for module_file in get_module_files(from_path, recursive=recursive, skip_sidekick=True):
+            self.load_module(module_file, self._module_argv)
         self.Loaded_Modules.sort()
 
     def load_my_modules(self):
