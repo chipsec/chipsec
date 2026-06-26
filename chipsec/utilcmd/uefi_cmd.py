@@ -22,6 +22,7 @@
 """
 The uefi command provides access to UEFI variables, both on the live system and in a SPI flash image file.
 
+>>> chipsec_util uefi types
 >>> chipsec_util uefi var-list
 >>> chipsec_util uefi var-list-spi [rom_file]
 >>> chipsec_util uefi var-find <name>|<GUID>
@@ -36,6 +37,7 @@ The uefi command provides access to UEFI variables, both on the live system and 
 
 Examples:
 
+>>> chipsec_util uefi types
 >>> chipsec_util uefi var-list
 >>> chipsec_util uefi var-list-spi
 >>> chipsec_util uefi var-find PK
