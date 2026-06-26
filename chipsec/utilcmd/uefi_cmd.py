@@ -87,6 +87,10 @@ class UEFICommand(BaseCommand):
         parser = ArgumentParser(prog='chipsec_util uefi', usage=__doc__)
         subparsers = parser.add_subparsers()
 
+        # types command args
+        parser_types = subparsers.add_parser('types')
+        parser_types.set_defaults(func=self.print_uefi_types)
+
         # var-read command args
         parser_var_read = subparsers.add_parser('var-read')
         parser_var_read.add_argument('name', type=str, help='name of variable to read')
@@ -198,6 +202,9 @@ class UEFICommand(BaseCommand):
 
     def set_up(self) -> None:
         self._uefi = UEFI(self.cs)
+
+    def print_uefi_types(self):
+        self.logger.log(f"The <fwtype> should be one of: {fw_types}")
 
     def var_read(self):
         self.logger.log("[CHIPSEC] Reading EFI variable Name='{}' GUID={{{}}} to '{}' via Variable API..".format(self.name, self.guid, self.filename))
