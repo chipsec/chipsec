@@ -23,12 +23,25 @@ Release Convention
 
 Projects That Include CHIPSEC
 -----------------------------
- 
+
  * [ArchStrike](https://archstrike.org)
- 
+
  * [BlackArch Linux](https://www.blackarch.org/index.html)
 
  * [Linux UEFI Validation (LUV) (Archived)](https://github.com/intel/luv-yocto)
+
+Legacy Support (`chipsec1` branch)
+----------------------------------
+
+If you require support for **older Intel platforms**, use the `chipsec1` branch:
+
+ * **Client Platforms:** Pre-ADL (pre-12th Gen Core)
+ * **Server Platforms:** Pre-SPR (pre-3rd Gen Xeon Scalable)
+
+To switch to the legacy branch:
+```bash
+git checkout chipsec1
+```
 
 Contact Us
 ----------
