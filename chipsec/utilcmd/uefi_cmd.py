@@ -81,6 +81,8 @@ class UEFICommand(BaseCommand):
             return toLoad.Nil
         elif 'var-list-spi' in self.argv:
             return toLoad.All
+        elif 'tables' in self.argv:
+            return toLoad.All
         return toLoad.Driver
 
     def parse_arguments(self) -> None:
