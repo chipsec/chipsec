@@ -23,8 +23,9 @@
 Main application logic and automation functions
 """
 
-# These are for debugging imports
 import sys
+sys.dont_write_bytecode = True
+
 import argparse
 import os
 import re
@@ -35,7 +36,6 @@ import traceback
 from collections import OrderedDict
 from typing import Dict, Any, Optional, Sequence, Tuple
 
-import chipsec.library.file
 import chipsec.module
 import chipsec.library.result_deltas
 from chipsec.library import defines

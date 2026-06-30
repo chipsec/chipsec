@@ -325,3 +325,39 @@ jobs:
         CHIPSECEXIT="$($(sudo ${PYTHONEXE} chipsec_main.py -p PMC_I440FX 1>&2); echo $?)"
         if echo "0 1 2 4 8" | grep -qw $CHIPSECEXIT; then $(exit 0); else $(exit $CHIPSECEXIT); fi
 
+  qemu-uefi-test:
+    name: QEMU UEFI shell test
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Harden Runner
+      uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+      with:
+        egress-policy: audit
+
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      with:
+        persist-credentials: false
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: '3.11'
+
+    - name: Install QEMU and UEFI dependencies
+      run: |
+        sudo apt-get update -qy
+        sudo apt-get install -qqy ovmf qemu-system-x86 qemu-utils mtools dosfstools
+
+    - name: Run QEMU UEFI test
+      run: |
+        python scripts/qemu_uefi_test.py
+
+    - name: Upload QEMU test logs
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: qemu-uefi-test-logs
+        path: /tmp/qemu_uefi_test_*/logs/
+        if-no-files-found: ignore
+
