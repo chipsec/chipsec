@@ -1,0 +1,107 @@
+<?xml version="1.0"?>
+<configuration>
+<!--
+CHIPSEC: Platform Security Assessment Framework
+Copyright (c) 2026, Intel Corporation
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; Version 2.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+Contact information:
+chipsec@intel.com
+-->
+
+<!--
+Intel Q35 (P35/MCH) DRAM/Host Memory Controller Hub configuration registers.
+Device 0:0.0 of the QEMU "q35" machine.
+
+Source: QEMU include/hw/pci-host/q35.h and hw/pci-host/q35.c
+  - PCIEXBAR (MMCFG) : PCI config 0x60, 64-bit, enabled by bit 0
+  - PAM0-PAM6        : PCI config 0x90-0x96
+  - SMRAM            : PCI config 0x9D
+  - ESMRAMC          : PCI config 0x9E
+-->
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Memory Mapped I/O spaces (MMIO BARs) -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <mmio>
+    <bar name="MMCFG" register="PCIEXBAR" base_field="BA" size="0x10000000" enable_bit="0" desc="PCI Express Enhanced Configuration Space (MMCFG)"/>
+  </mmio>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Configuration registers              -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <registers>
+    <register name="VID"      type="pcicfg" offset="0x00" size="2" desc="Vendor ID"/>
+    <register name="DID"      type="pcicfg" offset="0x02" size="2" desc="Device ID"/>
+    <register name="CMD"      type="pcicfg" offset="0x04" size="2" desc="PCI Command Register"/>
+    <register name="STS"      type="pcicfg" offset="0x06" size="2" desc="PCI Status Register"/>
+    <register name="RID"      type="pcicfg" offset="0x08" size="1" desc="Revision ID"/>
+    <register name="CLASSC"   type="pcicfg" offset="0x09" size="3" desc="Class Code">
+      <field name="BASEC" bit="16" size="8" desc="Base Class Code"/>
+      <field name="SCC"   bit="8"  size="8" desc="Sub-Class Code"/>
+      <field name="PI"    bit="0"  size="8" desc="Programming Interface"/>
+    </register>
+    <register name="HEADT"    type="pcicfg" offset="0x0E" size="1" desc="Header Type"/>
+    <register name="EXT_TSEG_MBYTES" type="pcicfg" offset="0x50" size="2" desc="Extended TSEG Size in MiB"/>
+    <register name="PCIEXBAR" type="pcicfg" offset="0x60" size="8" desc="PCI Express Enhanced Configuration Space Base Address (MMCFG)">
+      <field name="BA"         bit="28" size="11" desc="Base Address (bits 38:28)"/>
+      <field name="ADMSK128"   bit="27" size="1"  desc="Part of Base Address or Mask (128MB)"/>
+      <field name="ADMSK64"    bit="26" size="1"  desc="Part of Base Address or Mask (64MB)"/>
+      <field name="LENGTH"     bit="1"  size="2"  desc="Length of the Region"/>
+      <field name="PCIEXBAREN" bit="0"  size="1"  desc="Enabled/Disabled"/>
+    </register>
+    <register name="PAM0"     type="pcicfg" offset="0x90" size="1" desc="Programmable Attribute Map 0"/>
+    <register name="PAM1"     type="pcicfg" offset="0x91" size="1" desc="Programmable Attribute Map 1"/>
+    <register name="PAM2"     type="pcicfg" offset="0x92" size="1" desc="Programmable Attribute Map 2"/>
+    <register name="PAM3"     type="pcicfg" offset="0x93" size="1" desc="Programmable Attribute Map 3"/>
+    <register name="PAM4"     type="pcicfg" offset="0x94" size="1" desc="Programmable Attribute Map 4"/>
+    <register name="PAM5"     type="pcicfg" offset="0x95" size="1" desc="Programmable Attribute Map 5"/>
+    <register name="PAM6"     type="pcicfg" offset="0x96" size="1" desc="Programmable Attribute Map 6"/>
+    <register name="F_SMBASE" type="pcicfg" offset="0x9C" size="1" desc="SMBASE Relocation Control">
+      <field name="LCK"    bit="1" size="1" desc="SMBASE Relocation Lock"/>
+      <field name="IN_RAM" bit="0" size="1" desc="SMBASE in RAM"/>
+    </register>
+    <register name="SMRAMC"   type="pcicfg" offset="0x9D" size="1" desc="System Management RAM Control">
+      <field name="D_OPEN"     bit="6" size="1" desc="SMRAM Open"/>
+      <field name="D_CLS"      bit="5" size="1" desc="SMRAM Closed"/>
+      <field name="D_LCK"      bit="4" size="1" desc="SMRAM Locked"/>
+      <field name="G_SMRAME"   bit="3" size="1" desc="SMRAM Enabled"/>
+      <field name="C_BASE_SEG" bit="0" size="3" desc="SMRAM Base Segment = 010b"/>
+    </register>
+    <register name="ESMRAMC"  type="pcicfg" offset="0x9E" size="1" desc="Extended System Management RAM Control">
+      <field name="H_SMRAME" bit="7" size="1" desc="High SMRAM Enable"/>
+      <field name="E_SMERR"  bit="6" size="1" desc="SMRAM Error"/>
+      <field name="SM_CACHE" bit="5" size="1" desc="SMRAM Cacheable"/>
+      <field name="SM_L1"    bit="4" size="1" desc="SMRAM L1 Cache Enable"/>
+      <field name="SM_L2"    bit="3" size="1" desc="SMRAM L2 Cache Enable"/>
+      <field name="TSEG_SZ"  bit="1" size="2" desc="TSEG Size"/>
+      <field name="T_EN"     bit="0" size="1" desc="TSEG Enable"/>
+    </register>
+  </registers>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Locks                                -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <locks>
+    <lock name="SmramLock" register="SMRAMC" field="D_LCK" value="0x1" desc="SMRAM Locked"/>
+  </locks>
+
+</configuration>

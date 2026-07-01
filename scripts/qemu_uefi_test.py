@@ -28,12 +28,16 @@ Requirements (install via apt on Ubuntu):
     sudo apt install ovmf qemu-system-x86 mtools dosfstools
 
 Usage:
-    # Run directly
+    # Run directly (defaults to the i440fx "pc" machine)
     python scripts/qemu_uefi_test.py
+
+    # Run against the QEMU Q35 machine / CHIPSEC Q35 config
+    python scripts/qemu_uefi_test.py --platform q35
 
     # Run via pytest (skips if dependencies are missing)
     pytest scripts/qemu_uefi_test.py -v
 """
+import argparse
 import glob
 import hashlib
 import os
@@ -76,13 +80,25 @@ OVMF_VARS_LOCATIONS = (
     '/usr/share/edk2/ovmf/OVMF_VARS.fd',
 )
 
-STARTUP_NSH = '''\
-@echo -off
-fs0:
-cd chipsec
-\\efi\\Tools\\Python.efi chipsec_main.py -p PMC_I440FX
-reset
-'''
+# Supported QEMU machine configurations. Each entry maps a friendly platform
+# name (used by --platform) to the CHIPSEC platform code passed to
+# chipsec_main.py and the matching QEMU '-machine' type.
+PLATFORMS = {
+    'i440fx': {'machine': 'pc'},
+    'q35': {'machine': 'q35'},
+}
+DEFAULT_PLATFORM = 'i440fx'
+
+
+def build_startup_nsh():
+    """Return the startup.nsh contents that run chipsec_main for a platform."""
+    return (
+        '@echo -off\n'
+        'fs0:\n'
+        'cd chipsec\n'
+        f'\\efi\\Tools\\Python.efi chipsec_main.py -vv\n'
+        'reset\n'
+    )
 
 
 def _find_ovmf():
@@ -270,11 +286,14 @@ def create_virtual_drive(disk_path, chipsec_base, startup_nsh):
     print(f'Virtual drive created successfully: {disk_path}')
 
 
-def run_qemu(disk_path, ovmf_path, timeout=QEMU_TIMEOUT_SECONDS):
+def run_qemu(disk_path, ovmf_path, machine=None, timeout=QEMU_TIMEOUT_SECONDS):
     """Start QEMU with UEFI shell support and the virtual drive.
 
     Streams the serial console to stdout in real time so progress can be
     tracked, while capturing the full output for later verification.
+
+    ``machine`` selects the QEMU '-machine' type (e.g. 'pc' or 'q35'); when
+    omitted QEMU uses its built-in default.
 
     Returns a CompletedProcess with the captured console in ``stdout``.
     """
@@ -295,7 +314,10 @@ def run_qemu(disk_path, ovmf_path, timeout=QEMU_TIMEOUT_SECONDS):
     qemu_cmd = [
         'qemu-system-x86_64',
         '-drive', f'if=pflash,format=raw,readonly=on,file={ovmf_path}',
+        '-cpu', 'qemu64,vendor=GenuineIntel',
     ]
+    if machine:
+        qemu_cmd += ['-machine', machine]
     if vars_copy:
         qemu_cmd += ['-drive', f'if=pflash,format=raw,file={vars_copy}']
     qemu_cmd += [
@@ -434,6 +456,19 @@ def _dependencies_available():
 
 def main():
     """Run the QEMU UEFI test standalone."""
+    parser = argparse.ArgumentParser(
+        description='Run chipsec_main.py in a QEMU UEFI shell and verify the logs.')
+    parser.add_argument('-p', '--platform', choices=sorted(PLATFORMS),
+                        default=DEFAULT_PLATFORM,
+                        help='platform/machine to test (default: %(default)s)')
+    parser.add_argument('-M', '--machine', type=str, default=None,
+                        help="override the QEMU '-machine' type for the "
+                             "selected platform (e.g. 'q35,smm=on')")
+    args = parser.parse_args()
+
+    platform = PLATFORMS[args.platform]
+    machine = args.machine or platform['machine']
+
     deps_ok, reason = _dependencies_available()
     if not deps_ok:
         print(f'ERROR: {reason}', file=sys.stderr)
@@ -441,24 +476,28 @@ def main():
 
     ovmf_path = _find_ovmf()
 
-    with tempfile.TemporaryDirectory(prefix='qemu_uefi_test_') as work_dir:
-        disk_path = os.path.join(work_dir, 'chipsec_uefi.img')
-        log_output_dir = os.path.join(work_dir, 'logs')
+    # Use a persistent directory so CI (e.g. GitHub Actions) can upload logs
+    # after the script exits.  The directory is NOT auto-deleted.
+    work_dir = tempfile.mkdtemp(prefix='qemu_uefi_test_')
+    print(f'Working directory: {work_dir}')
+    disk_path = os.path.join(work_dir, 'chipsec_uefi.img')
+    log_output_dir = os.path.join(work_dir, 'logs')
 
-        create_virtual_drive(disk_path, CHIPSEC_BASE, STARTUP_NSH)
-        result = run_qemu(disk_path, ovmf_path)
-        extract_logs(disk_path, log_output_dir)
+    startup_nsh = build_startup_nsh()
+    create_virtual_drive(disk_path, CHIPSEC_BASE, startup_nsh)
+    result = run_qemu(disk_path, ovmf_path, machine=machine)
+    extract_logs(disk_path, log_output_dir)
 
-        console_output = (result.stdout or '') + (result.stderr or '')
-        errors = verify_logs(log_output_dir, console_output)
+    console_output = (result.stdout or '') + (result.stderr or '')
+    errors = verify_logs(log_output_dir, console_output)
 
-        if errors:
-            print('\nTEST FAILED with errors:')
-            for err in errors:
-                print(f'  - {err}')
-            sys.exit(1)
-        else:
-            print('\nTEST PASSED: chipsec_main.py ran successfully in QEMU UEFI shell.')
+    if errors:
+        print('\nTEST FAILED with errors:')
+        for err in errors:
+            print(f'  - {err}')
+        sys.exit(1)
+    else:
+        print('\nTEST PASSED: chipsec_main.py ran successfully in QEMU UEFI shell.')
 
 
 if __name__ == '__main__':
