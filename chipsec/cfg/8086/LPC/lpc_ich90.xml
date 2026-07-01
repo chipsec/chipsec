@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<configuration>
+<!--
+CHIPSEC: Platform Security Assessment Framework
+Copyright (c) 2026, Intel Corporation
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; Version 2.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+Contact information:
+chipsec@intel.com
+-->
+
+<!--
+Intel ICH9 LPC Interface Bridge configuration registers.
+Device 0:1F.0 of the QEMU "q35" machine.
+
+Source: QEMU include/hw/i386/ich9.h and hw/isa/lpc_ich9.c
+  - PMBASE (ABASE) : PCI config 0x40, ACPI PM I/O base (bits 15:7), enabled via
+                     ACPI_CNTL[7] (ACPI_EN)
+  - ACPI_CNTL      : PCI config 0x44
+  - GEN_PMCON_1    : PCI config 0xA0 (SMI_LOCK at bit 4)
+  - RCBA           : PCI config 0xF0, Root Complex Register Block base
+-->
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Configuration registers              -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <registers>
+    <register name="VID"       type="pcicfg" offset="0x00" size="2" desc="Vendor ID"/>
+    <register name="DID"       type="pcicfg" offset="0x02" size="2" desc="Device ID"/>
+    <register name="CMD"       type="pcicfg" offset="0x04" size="2" desc="PCI Command Register"/>
+    <register name="ABASE"     type="pcicfg" offset="0x40" size="4" desc="ACPI Power Management Base Address (PMBASE)">
+      <field name="BA"  bit="7" size="9" desc="Base Address"/>
+      <field name="RTE" bit="0" size="1" desc="Range Enable"/>
+    </register>
+    <register name="ACPI_CNTL" type="pcicfg" offset="0x44" size="1" desc="ACPI Control">
+      <field name="ACPI_EN"     bit="7" size="1" desc="ACPI Enable (decode PMBASE)"/>
+      <field name="SCI_IRQ_SEL" bit="0" size="3" desc="SCI IRQ Select"/>
+    </register>
+    <register name="GEN_PMCON_1"    type="pcicfg" offset="0xA0" size="2" desc="General PM Configuration 1">
+      <field name="SMI_LOCK" bit="4" size="1" desc="SMI Lock"/>
+    </register>
+    <register name="GEN_PMCON_2"    type="pcicfg" offset="0xA2" size="2" desc="General PM Configuration 2"/>
+    <register name="GEN_PMCON_3"    type="pcicfg" offset="0xA4" size="2" desc="General PM Configuration 3"/>
+    <register name="GEN_PMCON_LOCK" type="pcicfg" offset="0xA6" size="2" desc="General PM Configuration Lock"/>
+    <register name="RCBA"      type="pcicfg" offset="0xF0" size="4" desc="Root Complex Base Address">
+      <field name="BA" bit="14" size="18" desc="Base Address"/>
+      <field name="EN" bit="0"  size="1"  desc="Enable"/>
+    </register>
+  </registers>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Locks                                -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <locks>
+    <lock name="SmiLock" register="GEN_PMCON_1" field="SMI_LOCK" value="0x1" desc="SMI Lock"/>
+  </locks>
+
+</configuration>

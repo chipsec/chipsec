@@ -1,0 +1,94 @@
+<?xml version="1.0"?>
+<configuration platform="Q35" req_pch="False">
+<!--
+CHIPSEC: Platform Security Assessment Framework
+Copyright (c) 2026, Intel Corporation
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; Version 2.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+Contact information:
+chipsec@intel.com
+-->
+
+<!--
+XML configuration file for the QEMU "q35" machine, which emulates the Intel Q35
+chipset (P35 MCH + ICH9 southbridge). It is implemented in
+https://github.com/qemu/qemu/blob/v7.0.0/hw/pci-host/q35.c
+
+Reference: https://wiki.qemu.org/Features/Q35 and
+https://microsoft.github.io/mu/dyn/mu_tiano_platforms/Platforms/Docs/Q35/QemuQ35_ReadMe/
+
+The Q35 machine exposes PCI Express (via the MCH PCIEXBAR/MMCFG) as well as an
+integrated ICH9 LPC bridge and SMBus host controller, unlike the legacy i440FX
+"pc" machine.
+-->
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Information                          -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <info family="core">
+    <sku did="0x29C0" name="Q35" code="Q35" longname="Intel Q35 (ICH9) Chipset"/>
+  </info>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Integrated devices                   -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <pci>
+    <!-- P35/MCH DRAM Controller and Host-Hub Interface bridge. QEMU hw/pci-host/q35.c -->
+    <device name="HOSTCTL" bus="0x00" dev="0x00" fun="0" vid="0x8086" did="0x29C0" config="HOSTCTL.mch_q350.xml"/>
+    <!-- ICH9 LPC Interface Bridge (D31:F0). Hosts the ACPI PM I/O base. QEMU hw/isa/lpc_ich9.c -->
+    <device name="LPC" bus="0x00" dev="0x1F" fun="0" vid="0x8086" did="0x2918" config="LPC.lpc_ich90.xml">
+      <subcomponent type="iobar" name="ABASE"  register="ABASE" base_field="BA" size="0x80" enable_bit="0" desc="ACPI Power Management Base Address" config="IO.acpi0.xml"/>
+      <subcomponent type="iobar" name="PMBASE" register="ABASE" base_field="BA" size="0x80" enable_bit="0" desc="ACPI Power Management Base Address"/>
+    </device>
+    <!-- ICH9 SMBus host controller (D31:F3). QEMU hw/i2c/smbus_ich9.c / hw/i2c/pm_smbus.c -->
+    <device name="SMBUS" bus="0x00" dev="0x1F" fun="3" vid="0x8086" did="0x2930" config="SMBUS.smbus1.xml">
+      <subcomponent type="iobar" name="SMBUS_BASE" register="SMB_BASE" base_field="BASE" size="0x20" enable_bit="0" desc="SMBus Base Address" config="SMBUS.smbus1-iobar.xml"/>
+    </device>
+  </pci>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- MSR definitions                      -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <!-- Architectural CPU MSRs exposed by the QEMU vCPU (IA32_FEATURE_CONTROL, SMRR, MTRRCAP, APIC, etc.). -->
+  <msr>
+    <definition name="MSR" config="MSR.msr2.xml"/>
+  </msr>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- I/O spaces (I/O BARs)                -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <!-- Reset Control register at I/O port 0xCF9, implemented by the ICH9 LPC bridge. -->
+  <io>
+    <definition name="IO" port="0xCF9" config="IO.io0.xml"/>
+  </io>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Memory ranges                        -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <memory>
+    <range name="Legacy DOS" access="dram" address="0x0" limit="0xFFFFF" desc="Legacy DOS Memory Range"/>
+  </memory>
+
+</configuration>
