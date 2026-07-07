@@ -209,7 +209,7 @@ class Chipset:
         verbose_condition = (start_helper and ((self.logger.VERBOSE) or
                                                (load_config and (_unknown_pch or _unknown_proc))))
         if verbose_condition:
-            pcilib.print_pci_devices(self.hals.pci.enumerate_devices())
+            pcilib.print_pci_devices(self.hals.pci.enumerate_devices(refresh=False))
         if _unknown_pch or _unknown_proc:
             msg.append('Results from this system may be incorrect.')
             self.logger.log(f'[!]            {msg[-1]}')
