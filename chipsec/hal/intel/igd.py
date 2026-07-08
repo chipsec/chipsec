@@ -34,6 +34,7 @@ usage:
 from typing import Optional, Tuple
 from chipsec.hal import hal_base
 from chipsec.library.logger import print_buffer_bytes
+from chipsec.library.exceptions import MMIOBARNotFoundError
 
 
 class IGD(hal_base.HALBase):
@@ -78,12 +79,20 @@ class IGD(hal_base.HALBase):
         return legacy
 
     def get_GMADR(self) -> int:
-        base, _ = self.cs.hals.mmio.get_MMIO_BAR_base_address('GMADR')
+        try:
+            base, _ = self.cs.hals.mmio.get_MMIO_BAR_base_address('8086.IGD.GMADR')
+        except MMIOBARNotFoundError:
+            self.logger.log_hal('[igd] Aperture (GMADR) not found')
+            raise
         self.logger.log_hal(f'[igd] Aperture (GMADR): 0x{base:016X}')
         return base
 
     def get_GTTMMADR(self) -> int:
-        base, _ = self.cs.hals.mmio.get_MMIO_BAR_base_address('GTTMMADR')
+        try:
+            base, _ = self.cs.hals.mmio.get_MMIO_BAR_base_address('8086.IGD.GTTMMADR')
+        except MMIOBARNotFoundError:
+            self.logger.log_hal('[igd] Graphics MMIO and GTT (GTTMMADR) not found')
+            raise
         self.logger.log_hal(f'[igd] Graphics MMIO and GTT (GTTMMADR): 0x{base:016X}')
         return base
 

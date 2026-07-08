@@ -3,6 +3,7 @@
 
   <mmio>
     <bar name="GTTMMADR" register="GTTMMADR" base_field="MBA" size="0x1000000" desc="Graphics Translation Table Range"/>
+    <bar name="GMADR" register="GMADR" base_field="MBA" size="0x10000000" desc="Graphics Memory Range"/>
   </mmio>
 
   <!-- #################################### -->
@@ -16,6 +17,13 @@
     <register name="GTTMMADR" type="pcicfg" offset="0x10" size="8" desc="Graphics Translation Table Memory Mapped Range Address">
         <field name="MBA" bit="24" size="40" desc="Memory Base Address (MBA_0)" />
         <field name="ADM" bit="4" size="20" desc="Address Mask (ADM)" />
+        <field name="PREFMEM" bit="3" size="1" desc="Prefetchable Memory (PREFMEM)" />
+        <field name="MEMTYP" bit="1" size="2" desc="Memory Type (MEMTYP)" />
+        <field name="MIOS" bit="0" size="1" desc="Memory I/O Space (MIOS)" />
+    </register>
+    <register name="GMADR" type="pcicfg" offset="0x18" size="8" desc="Graphics Memory Range Address">
+        <field name="MBA" bit="27" size="12" desc="Memory Base Address" />
+        <field name="ADM" bit="4" size="23" desc="Address Mask (ADM)" />
         <field name="PREFMEM" bit="3" size="1" desc="Prefetchable Memory (PREFMEM)" />
         <field name="MEMTYP" bit="1" size="2" desc="Memory Type (MEMTYP)" />
         <field name="MIOS" bit="0" size="1" desc="Memory I/O Space (MIOS)" />

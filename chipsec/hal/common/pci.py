@@ -60,10 +60,8 @@ class Pci(HALBase):
     #
 
     def read(self, bus: int, device: int, function: int, address: int, size: int) -> int:
-        if (bus,device,function) not in self.active_devices:
-            if self.get_DIDVID(bus, device, function) != (0xffff, 0xffff):
-                self.active_devices.append((bus,device,function))
-            else:
+        if (bus, device, function) not in self.active_devices:
+            if not self._is_device_active_and_added(bus, device, function):
                 raise CSReadError(f'PCI Device is not available ({bus}:{device}.{function})')
         if size in [1, 2, 4]:
             value = self.helper.read_pci_reg(bus, device, function, address, size)
@@ -122,9 +120,9 @@ class Pci(HALBase):
     #
 
     def enumerate_devices(self, bus: Optional[int] = None, device: Optional[int] = None, function: Optional[int] = None, spec: Optional[bool] = True, refresh: bool = True) -> List[Tuple[int, int, int, int, int, int]]:
-        if not refresh and self.devices:
-            return self.devices
-        self.devices = []
+        if not refresh and self.active_devices:
+            return self._zip_bdf_and_ids()
+        self.active_devices.clear()
         self.hal_log_every_read = False
         if bus is not None:
             bus_range = [bus]
@@ -142,20 +140,24 @@ class Pci(HALBase):
         for b, d in itertools.product(bus_range, dev_range):
             for f in func_range:
                 try:
-                    did_vid = self.helper.read_pci_reg(b, d, f, 0x0, 4)
-                    if 0xFFFFFFFF != did_vid:
-                        vid = did_vid & 0xFFFF
-                        did = (did_vid >> 16) & 0xFFFF
-                        rid = self.helper.read_pci_reg(b, d, f, 0x8, 1)
-                        self.devices.append((b, d, f, vid, did, rid))
-                    elif f == 0 and spec:
+                    if not self._is_device_active_and_added(b, d, f) and f == 0 and spec:
                         break
                 except OsHelperError:
                     self.logger.log_hal(f"[pci] unable to access B/D/F: {b:x}/{d:x}/{f:x}")
-
         self.hal_log_every_read = True
-        return self.devices
+        return self._zip_bdf_and_ids()
 
+    def _is_device_active_and_added(self, bus: int, device: int, function: int) -> bool:
+        did, vid = self.get_DIDVID(bus, device, function)
+        if did != 0xFFFF and vid != 0xFFFF:
+            rid = self.get_RID(bus, device, function)
+            self.active_devices[(bus, device, function)] = (vid, did, rid)
+            return True
+        return False
+
+    def _zip_bdf_and_ids(self) -> List[Tuple[int, int, int, int, int, int]]:
+        return list(map(lambda bdf, ids: bdf + ids, self.active_devices.keys(), self.active_devices.values()))
+    
     def dump_pci_config(self, bus: int, device: int, function: int) -> List[int]:
         cfg = []
         for off in range(0, 0x100, 4):
@@ -374,6 +376,10 @@ class Pci(HALBase):
         vid = didvid & 0xFFFF
         did = (didvid >> 16) & 0xFFFF
         return (did, vid)
+    
+    def get_RID(self, bus: int, dev: int, fun: int) -> int:
+        rid = self.helper.read_pci_reg(bus, dev, fun, 0x8, 1)
+        return rid
 
     def is_enabled(self, bus: int, dev: int, fun: int) -> bool:
         (did, vid) = self.get_DIDVID(bus, dev, fun)
