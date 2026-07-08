@@ -30,7 +30,7 @@ from chipsec.library.defines import bytestostring
 
 def get_json_results(json_file: str) -> Any:
     file_data = chipsec.library.file.read_file(json_file)
-    if file_data == 0:
+    if not file_data:
         return None
     try:
         json_data = json.loads(bytestostring(file_data))

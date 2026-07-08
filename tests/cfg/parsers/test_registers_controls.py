@@ -128,11 +128,34 @@ class TestControlHelperAccessors(unittest.TestCase):
         control = CONTROLHelper(make_cfg(), make_reg(name='REG_OBJ_NAME'))
         self.assertEqual(control.get_register_name(), 'REG_OBJ_NAME')
 
-    def test_is_field_available_when_field_in_reg_fields(self):
+    def test_is_field_available_true_when_reg_reports_field(self):
         reg = make_reg()
-        reg.fields = ['LOCK', 'OTHER']
+        reg.has_field.return_value = True
         control = CONTROLHelper(make_cfg(), reg)
         self.assertTrue(control.is_field_available())
+        reg.has_field.assert_called_with('LOCK')
+
+    def test_is_field_available_false_when_reg_lacks_field(self):
+        reg = make_reg()
+        reg.has_field.return_value = False
+        control = CONTROLHelper(make_cfg(), reg)
+        self.assertFalse(control.is_field_available())
+
+    def test_read_raises_when_field_unavailable(self):
+        reg = make_reg()
+        reg.has_field.return_value = False
+        control = CONTROLHelper(make_cfg(), reg)
+        with self.assertRaises(ControlHelperError):
+            control.read()
+        reg.read_field.assert_not_called()
+
+    def test_write_raises_when_field_unavailable(self):
+        reg = make_reg()
+        reg.has_field.return_value = False
+        control = CONTROLHelper(make_cfg(), reg)
+        with self.assertRaises(ControlHelperError):
+            control.write(0x1)
+        reg.write_field.assert_not_called()
 
     def test_str_before_read_shows_not_read(self):
         control = CONTROLHelper(make_cfg(), make_reg())
