@@ -43,6 +43,8 @@ from chipsec.helper.oshelper import OsHelperError
 from chipsec.library.uefi.platform import FWType, fw_types
 from chipsec.library.uefi.varstore import find_EFI_variable_store, EFI_VAR_DICT, print_sorted_EFI_variables
 from chipsec.library.uefi.variables import get_attr_string
+from chipsec.library.uefi.hob import EFI_HOB_LIST_GUID, EFI_HOB_HANDOFF_INFO_TABLE_SIZE, MAX_HOB_LIST_SIZE
+from chipsec.library.uefi.hob import parse_phit, parse_hob_list, walk_hob_list, is_hob_list_complete
 
 
 ########################################################################################################
@@ -369,6 +371,102 @@ class UEFI(hal_base.HALBase):
                 vt = EFI_VENDOR_TABLE(*struct.unpack_from(EFI_VENDOR_TABLE_FORMAT, ect_buf[i * EFI_VENDOR_TABLE_SIZE:]))
                 ect.VendorTables[vt.VendorGuid()] = vt.VendorTable
         return (found, ect_pa, ect, ect_buf)
+
+    ######################################################################
+    # PI Hand-Off Block (HOB) List
+    ######################################################################
+
+    def find_HOB_list(self) -> Tuple[bool, int]:
+        """
+        Locate the physical address of the PI HOB list.
+
+        The HOB list is published in the EFI Configuration Table under the
+        gEfiHobListGuid (EFI_HOB_LIST_GUID) vendor table entry.
+
+        Returns:
+            (found, hob_list_pa)
+        """
+        (found, _, ect, _) = self.find_EFI_Configuration_Table()
+        if not found or ect is None:
+            logger().log_hal('[uefi] Could not find EFI Configuration Table; unable to locate HOB list')
+            return (False, 0)
+        hob_pa = ect.VendorTables.get(EFI_HOB_LIST_GUID, 0)
+        if not hob_pa:
+            logger().log_hal(f'[uefi] HOB list GUID {{{EFI_HOB_LIST_GUID}}} not present in Configuration Table')
+            return (False, 0)
+        logger().log_hal(f'[uefi] HOB list located at PA 0x{hob_pa:016X}')
+        return (True, hob_pa)
+
+    def read_HOB_list(self) -> Tuple[bool, int, bytes]:
+        """
+        Read the entire HOB list from physical memory.
+
+        The HOB list is walked incrementally (following each HOB's self-describing
+        length) until the END_OF_HOB_LIST HOB is reached. The PHIT's EfiEndOfHobList
+        field is intentionally NOT used to compute the size: when the HOB list has
+        been relocated (e.g. by the DXE core), EfiEndOfHobList still references the
+        original PEI location and does not match the address published in the
+        Configuration Table.
+
+        Returns:
+            (found, hob_list_pa, hob_list_buffer)
+        """
+        (found, hob_pa) = self.find_HOB_list()
+        if not found:
+            return (False, 0, b'')
+
+        # Validate that the data at hob_pa starts with a PHIT (HANDOFF) HOB.
+        hdr_buf = self.cs.hals.memory.read_physical_mem(hob_pa, EFI_HOB_HANDOFF_INFO_TABLE_SIZE)
+        phit = parse_phit(hdr_buf)
+        if phit is None:
+            logger().log_error(f'[uefi] Data at 0x{hob_pa:016X} does not start with a valid PHIT HOB')
+            return (False, hob_pa, b'')
+        logger().log_hal(str(phit))
+
+        # Walk the list in chunks until END_OF_HOB_LIST is found.
+        CHUNK_SZ = 0x10000  # 64KB
+        hob_buf = bytearray(hdr_buf)
+        while len(hob_buf) < MAX_HOB_LIST_SIZE:
+            chunk = self.cs.hals.memory.read_physical_mem(hob_pa + len(hob_buf), CHUNK_SZ)
+            if not chunk:
+                break
+            hob_buf += chunk
+            _, complete, consumed = walk_hob_list(hob_buf, hob_pa)
+            if complete:
+                del hob_buf[consumed:]
+                break
+            if len(chunk) < CHUNK_SZ:
+                # Could not read a full chunk; no more memory to consume.
+                break
+
+        logger().log_hal(f'[uefi] Read HOB list: 0x{hob_pa:016X}-0x{hob_pa + len(hob_buf):016X} (0x{len(hob_buf):X} bytes)')
+        return (True, hob_pa, bytes(hob_buf))
+
+    def get_HOB_list(self) -> Tuple[bool, int, List['Hob']]:
+        """
+        Locate, read, and parse the PI HOB list.
+
+        Returns:
+            (found, hob_list_pa, list_of_Hob)
+        """
+        (found, hob_pa, hob_buf) = self.read_HOB_list()
+        if not found:
+            return (False, 0, [])
+        hobs = parse_hob_list(hob_buf, hob_pa)
+        if not is_hob_list_complete(hobs):
+            logger().log_hal('[uefi] HOB list did not terminate with an END_OF_HOB_LIST HOB (possibly truncated)')
+        return (True, hob_pa, hobs)
+
+    def dump_HOB_list(self) -> None:
+        (found, hob_pa, hobs) = self.get_HOB_list()
+        if not found:
+            logger().log('[uefi] HOB list not found')
+            return
+        complete = is_hob_list_complete(hobs)
+        logger().log(f'[uefi] HOB list at 0x{hob_pa:016X} ({len(hobs):d} HOBs, '
+                     f'{"complete" if complete else "INCOMPLETE"}):')
+        for hob in hobs:
+            logger().log(str(hob))
 
     def dump_EFI_tables(self) -> None:
         (found, pa, hdr, table, table_buf) = self.find_EFI_System_Table()

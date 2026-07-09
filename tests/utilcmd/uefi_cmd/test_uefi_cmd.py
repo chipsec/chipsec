@@ -28,9 +28,13 @@ import tempfile
 import unittest
 import uuid
 
+from unittest.mock import MagicMock
+
 from chipsec.library.logger import logger
 from chipsec.library.file import get_main_dir
 from chipsec.testcase import ExitCode
+from chipsec.utilcmd.uefi_cmd import UEFICommand
+from chipsec.library.uefi.hob import Hob, EFI_HOB_TYPE_FV, EFI_HOB_TYPE_END_OF_HOB_LIST
 from tests.utilcmd.run_chipsec_util import setup_run_destroy_util
 
 
@@ -85,6 +89,78 @@ class TestUEFIDecodeChipsecUtil(unittest.TestCase):
             self.init_replay_file, "uefi", f"decode {missing_path}"
         )
         self.assertEqual(retval, ExitCode.ERROR)
+
+
+class TestUEFIHobChipsecUtil(unittest.TestCase):
+    """Test the 'uefi hoblist' and 'uefi hobdump' commands.
+
+    These exercise the command logic (EFI-environment guard and per-HOB file
+    dumping) with the UEFI HAL mocked, so no live memory / replay data is needed.
+    """
+
+    def setUp(self):
+        self._cwd = os.getcwd()
+        self._tmpdir = tempfile.mkdtemp()
+        os.chdir(self._tmpdir)
+
+    def tearDown(self):
+        os.chdir(self._cwd)
+        shutil.rmtree(self._tmpdir, ignore_errors=True)
+
+    def _make_command(self, is_efi: bool = True) -> UEFICommand:
+        cs = MagicMock()
+        cs.os_helper.is_efi.return_value = is_efi
+        cmd = UEFICommand([], cs=cs)
+        # Mock the logger so set_log_file / log calls do not touch real files.
+        cmd.logger = MagicMock()
+        # Mock the UEFI HAL so no hardware access is attempted.
+        cmd._uefi = MagicMock()
+        return cmd
+
+    def test_hoblist_not_efi_logs_error_and_skips_dump(self):
+        cmd = self._make_command(is_efi=False)
+        cmd.hoblist()
+        cmd.logger.log_error.assert_called_once()
+        cmd._uefi.dump_HOB_list.assert_not_called()
+
+    def test_hoblist_efi_calls_dump(self):
+        cmd = self._make_command(is_efi=True)
+        cmd.hoblist()
+        cmd._uefi.dump_HOB_list.assert_called_once()
+
+    def test_hobdump_not_efi_logs_error_and_skips(self):
+        cmd = self._make_command(is_efi=False)
+        cmd.hobdump()
+        cmd.logger.log_error.assert_called_once()
+        cmd._uefi.get_HOB_list.assert_not_called()
+        self.assertFalse(os.path.exists("efi_hobs.dir"))
+
+    def test_hobdump_not_found_logs_and_creates_nothing(self):
+        cmd = self._make_command(is_efi=True)
+        cmd._uefi.get_HOB_list.return_value = (False, 0, [])
+        cmd.hobdump()
+        cmd.logger.log_important.assert_called_once()
+        self.assertFalse(os.path.exists("efi_hobs.dir"))
+
+    def test_hobdump_writes_one_file_per_hob(self):
+        cmd = self._make_command(is_efi=True)
+        fv = Hob(EFI_HOB_TYPE_FV, 0x18, 0x1000, b"\x05\x00\x18\x00" + b"\x00" * 20)
+        end = Hob(EFI_HOB_TYPE_END_OF_HOB_LIST, 0x08, 0x1018, b"\xff\xff\x08\x00\x00\x00\x00\x00")
+        cmd._uefi.get_HOB_list.return_value = (True, 0x1000, [fv, end])
+
+        cmd.hobdump()
+
+        self.assertTrue(os.path.isdir("efi_hobs.dir"))
+        files = sorted(os.listdir("efi_hobs.dir"))
+        self.assertEqual(len(files), 2)
+        # Filenames encode index, HOB type, and address.
+        self.assertTrue(files[0].startswith("hob_0000_0x0005_"))
+        self.assertTrue(files[1].startswith("hob_0001_0xFFFF_"))
+        # File contents are the raw HOB bytes.
+        with open(os.path.join("efi_hobs.dir", files[0]), "rb") as fh:
+            self.assertEqual(fh.read(), fv.raw)
+        with open(os.path.join("efi_hobs.dir", files[1]), "rb") as fh:
+            self.assertEqual(fh.read(), end.raw)
 
 
 if __name__ == "__main__":
