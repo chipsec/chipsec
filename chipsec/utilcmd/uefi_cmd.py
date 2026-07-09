@@ -31,6 +31,8 @@ The uefi command provides access to UEFI variables, both on the live system and 
 >>> chipsec_util uefi nvram[-auth] <rom_file> [fwtype]
 >>> chipsec_util uefi keys <keyvar_file>
 >>> chipsec_util uefi tables
+>>> chipsec_util uefi hoblist
+>>> chipsec_util uefi hobdump
 >>> chipsec_util uefi s3bootscript [script_address]
 >>> chipsec_util uefi assemble <GUID> freeform none|lzma|tiano <raw_file> <uefi_file>
 >>> chipsec_util uefi insert_before|insert_after|replace|remove <GUID> <rom> <new_rom> <uefi_file>
@@ -49,6 +51,8 @@ Examples:
 >>> chipsec_util uefi nvram uefi.rom vss_auth
 >>> chipsec_util uefi keys db.bin
 >>> chipsec_util uefi tables
+>>> chipsec_util uefi hoblist
+>>> chipsec_util uefi hobdump
 >>> chipsec_util uefi s3bootscript
 >>> chipsec_util uefi assemble AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE freeform lzma uefi.raw mydriver.efi
 >>> chipsec_util uefi replace  AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE bios.bin new_bios.bin mydriver.efi
@@ -77,11 +81,10 @@ from chipsec.library.uefi.platform import fw_types
 class UEFICommand(BaseCommand):
 
     def requirements(self) -> toLoad:
+        req_all = ['var-list-spi', 'hoblist', 'hobdump', 'tables']
         if 'decode' in self.argv:
             return toLoad.Nil
-        elif 'var-list-spi' in self.argv:
-            return toLoad.All
-        elif 'tables' in self.argv:
+        elif any(x in self.argv for x in req_all):
             return toLoad.All
         return toLoad.Driver
 
@@ -154,6 +157,14 @@ class UEFICommand(BaseCommand):
         # tables command args
         parser_tables = subparsers.add_parser('tables')
         parser_tables.set_defaults(func=self.tables)
+
+        # hoblist command args
+        parser_hoblist = subparsers.add_parser('hoblist')
+        parser_hoblist.set_defaults(func=self.hoblist)
+
+        # hobdump command args
+        parser_hobdump = subparsers.add_parser('hobdump')
+        parser_hobdump.set_defaults(func=self.hobdump)
 
         # s3bootscript command args
         parser_bootscript = subparsers.add_parser('s3bootscript')
@@ -364,6 +375,37 @@ class UEFICommand(BaseCommand):
     def tables(self):
         self.logger.log("[CHIPSEC] Searching memory for and dumping EFI tables (this may take a minute)..\n")
         self._uefi.dump_EFI_tables()
+
+    def hoblist(self):
+        if not self.cs.os_helper.is_efi():
+            self.logger.log_error("[CHIPSEC] Not running in EFI environment. Cannot dump HOBs.")
+            return
+        self.logger.log("[CHIPSEC] Searching memory for and dumping EFI HOB list (this may take a minute)..\n")
+        self._uefi.dump_HOB_list()
+
+    def hobdump(self):
+        if not self.cs.os_helper.is_efi():
+            self.logger.log_error("[CHIPSEC] Not running in EFI environment. Cannot dump HOBs.")
+            return
+        self.logger.log("[CHIPSEC] Searching memory for and dumping EFI HOB list (this may take a minute)..")
+        (found, hob_pa, hobs) = self._uefi.get_HOB_list()
+        if not found:
+            self.logger.log_important("[CHIPSEC] Could not locate the EFI HOB list. Exit..")
+            return
+        _orig_logname = self.logger.LOG_FILE_NAME
+        hob_pth = 'efi_hobs.dir'
+        try:
+            self.logger.set_log_file('efi_hobs.lst', False)
+            os.makedirs(hob_pth, exist_ok=True)
+            self.logger.log(f'[uefi] HOB list at 0x{hob_pa:016X} ({len(hobs):d} HOBs):')
+            for idx, hob in enumerate(hobs):
+                self.logger.log(str(hob))
+                safe_name = ''.join(c if c.isalnum() else '_' for c in hob.name)
+                hob_fname = os.path.join(hob_pth, f'hob_{idx:04d}_0x{hob.HobType:04X}_{safe_name}_0x{hob.address:016X}.bin')
+                write_file(hob_fname, hob.raw)
+        finally:
+            self.logger.set_log_file(_orig_logname)
+        self.logger.log("[CHIPSEC] HOBs are in efi_hobs.lst log and efi_hobs.dir directory")
 
     def s3bootscript(self):
         self.logger.log("[CHIPSEC] Searching for and parsing S3 resume bootscripts..")
