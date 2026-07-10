@@ -352,12 +352,3 @@ jobs:
     - name: Run QEMU UEFI test
       run: |
         python scripts/qemu_uefi_test.py
-
-    - name: Upload QEMU test logs
-      if: always()
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-        name: qemu-uefi-test-logs
-        path: /tmp/qemu_uefi_test_*/logs/
-        if-no-files-found: ignore
-
