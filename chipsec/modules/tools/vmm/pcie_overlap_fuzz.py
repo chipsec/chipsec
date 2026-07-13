@@ -51,7 +51,7 @@ import random
 
 from chipsec.module_common import BaseModule
 from chipsec.library.returncode import ModuleResult
-from chipsec.hal.common.pci import print_pci_devices
+from chipsec.library.pci import PCI
 
 #################################################################
 # Fuzzing configuration
@@ -164,7 +164,7 @@ class pcie_overlap_fuzz(BaseModule):
         pcie_devices = self.cs.hals.pci.enumerate_devices()
 
         self.logger.log('[*] About to fuzz the following PCIe devices..')
-        print_pci_devices(pcie_devices)
+        PCI.print_pci_devices(pcie_devices)
         self.fuzz_overlap_pcie_device(pcie_devices)
 
         self.logger.log_information('Module completed!')
