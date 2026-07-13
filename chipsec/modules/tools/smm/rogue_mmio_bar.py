@@ -44,7 +44,7 @@ from chipsec.module_common import BaseModule, SMM
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.defines import BOUNDARY_4GB
 from chipsec.library.file import write_file
-from chipsec.hal.common.pci import PCI_HDR_BAR_STEP, PCI_HDR_BAR_BASE_MASK_MMIO64, PCI_HDR_BAR_CFGBITS_MASK
+from chipsec.library.pci import PCI
 from chipsec.hal.common.interrupts import Interrupts
 
 TAGS = [SMM]
@@ -147,7 +147,7 @@ class rogue_mmio_bar(BaseModule):
     def modify_bar(self, b, d, f, off, is64bit, bar, new_bar):
         # Modify MMIO BAR address
         if is64bit:
-            self.cs.hals.pci.write_dword(b, d, f, off + PCI_HDR_BAR_STEP, ((new_bar >> 32) & 0xFFFFFFFF))
+            self.cs.hals.pci.write_dword(b, d, f, off + PCI.PCI_HDR_BAR_STEP, ((new_bar >> 32) & 0xFFFFFFFF))
         self.cs.hals.pci.write_dword(b, d, f, off, (new_bar & 0xFFFFFFFF))
         # Check that the MMIO BAR has been modified correctly. Restore original and skip if not
         l = self.cs.hals.pci.read_dword(b, d, f, off)
@@ -160,7 +160,7 @@ class rogue_mmio_bar(BaseModule):
 
     def restore_bar(self, b, d, f, off, is64bit, bar):
         if is64bit:
-            self.cs.hals.pci.write_dword(b, d, f, off + PCI_HDR_BAR_STEP, ((bar >> 32) & 0xFFFFFFFF))
+            self.cs.hals.pci.write_dword(b, d, f, off + PCI.PCI_HDR_BAR_STEP, ((bar >> 32) & 0xFFFFFFFF))
         self.cs.hals.pci.write_dword(b, d, f, off, (bar & 0xFFFFFFFF))
         return True
 
@@ -211,7 +211,7 @@ class rogue_mmio_bar(BaseModule):
                 if isMMIO and size <= MAX_MMIO_RANGE_SIZE:
                     self.logger.flush()
                     self.logger.log(f'[*] Found MMIO BAR +0x{bar_off:02X} (base 0x{base:016X}, size 0x{size:X})')
-                    new_bar = ((self.reloc_mmio & PCI_HDR_BAR_BASE_MASK_MMIO64) | (bar & PCI_HDR_BAR_CFGBITS_MASK))
+                    new_bar = ((self.reloc_mmio & PCI.PCI_HDR_BAR_BASE_MASK_MMIO64) | (bar & PCI.PCI_HDR_BAR_CFGBITS_MASK))
                     if self.smi_mmio_range_fuzz(0, b, d, f, bar_off, is64bit, bar, new_bar, base, size):
                         self.result.setStatusBit(self.result.status.RESTORE)
                         return self.result.getReturnCode(ModuleResult.FAILED)
