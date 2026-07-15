@@ -193,8 +193,8 @@ class remap(BaseModule):
                 remapbase_reg = remapbase_reg[0]
                 remaplimit_reg = remaplimit_reg[0]
 
-            remapbase = remapbase_reg.get_field('REMAPBASE')
-            remaplimit = remaplimit_reg.get_field('REMAPLMT')
+            remapbase = remapbase_reg.get_field('REMAPBASE', preserve_field_position=True)
+            remaplimit = remaplimit_reg.get_field('REMAPLMT', preserve_field_position=True)
 
             if remapbase == remaplimit:
                 self.logger.log('[!]   Memory Remap status is Unknown')
