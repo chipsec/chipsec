@@ -33,13 +33,12 @@ from typing import Optional, Dict, Any, Sequence
 
 from chipsec.helper.oshelper import helper
 from chipsec.library.logger import logger, level
-from chipsec.library.display import print_banner, print_banner_properties
+from chipsec.library.display import print_banner, print_chipsec_info
 from chipsec.library.exceptions import UnknownChipsetError
 from chipsec.library.options import Options
 from chipsec.testcase import ExitCode
 from chipsec.chipset import cs
 from chipsec.library.file import get_main_dir
-from chipsec.library.defines import get_version, get_message, os_version
 
 CMD_OPTS_WIDTH = {'byte': 0x1, 'word': 0x2, 'dword': 0x4}
 
@@ -110,7 +109,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
 
     if par['_cmd'] == 'help' or par['show_help']:
         if par['_show_banner']:
-            print_banner(argv, get_version(), get_message())
+            print_banner(argv)
         parser.print_help()
         return None
     else:
@@ -150,7 +149,7 @@ class ChipsecUtil:
     def main(self) -> int:
         """Receives and executes the commands"""
         if self._show_banner:
-            print_banner(self.argv, get_version(), get_message())
+            print_banner(self.argv)
 
         comm = self.commands[self._cmd](self._cmd_args, cs=self._cs)
         comm.parse_arguments()
@@ -176,7 +175,7 @@ class ChipsecUtil:
             return ExitCode.EXCEPTION
 
         if self._show_banner:
-            print_banner_properties(self._cs, os_version())
+            print_chipsec_info(self._cs)
 
         self.logger.log(f"[CHIPSEC] Executing command '{self._cmd}' with args {self._cmd_args}\n")
         

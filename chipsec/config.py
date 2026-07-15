@@ -551,21 +551,28 @@ class Cfg:
         """Check if PCH is required for this platform."""
         return bool(self.platform_info.req_pch)
 
+    def is_pch_detected(self) -> bool:
+        """Check if PCH is detected for this platform."""
+        return bool(self.pch_info.code != CHIPSET_CODE_UNKNOWN)
+    
     def print_platform_info(self) -> None:
         """Print platform information."""
-        self.logger.log(f'Mfg ID  : {self.cpu_info.mfgid}')
-        self.logger.log(f'Platform: {self.platform_info.longname}')
-        self.logger.log(f'\tCPUID: {self.cpu_info.cpuid:X}')
-        self.logger.log(f'\tVID: {self.platform_info.vid:04X}')
-        self.logger.log(f'\tDID: {self.platform_info.did:04X}')
-        self.logger.log(f'\tRID: {self.platform_info.rid:02X}')
+        self.logger.log(f'[CHIPSEC] Mfg ID  : {self.cpu_info.mfgid}')
+        self.logger.log(f'[CHIPSEC] Platform: {self.platform_info.longname}')
+        self.logger.log(f'[CHIPSEC]    CPUID: {self.cpu_info.cpuid:X}')
+        self.logger.log(f'[CHIPSEC]      VID: {self.platform_info.vid:04X}')
+        self.logger.log(f'[CHIPSEC]      DID: {self.platform_info.did:04X}')
+        self.logger.log(f'[CHIPSEC]      RID: {self.platform_info.rid:02X}')
 
     def print_pch_info(self) -> None:
         """Print PCH information."""
-        self.logger.log(f'Platform: {self.pch_info.longname}')
-        self.logger.log(f'\tVID: {self.pch_info.vid:04X}')
-        self.logger.log(f'\tDID: {self.pch_info.did:04X}')
-        self.logger.log(f'\tRID: {self.pch_info.rid:02X}')
+        if not self.is_pch_detected():
+            self.logger.log('[CHIPSEC] PCH     : Not detected')
+            return
+        self.logger.log(f'[CHIPSEC] PCH     : {self.pch_info.longname}')
+        self.logger.log(f'[CHIPSEC]      VID: {self.pch_info.vid:04X}')
+        self.logger.log(f'[CHIPSEC]      DID: {self.pch_info.did:04X}')
+        self.logger.log(f'[CHIPSEC]      RID: {self.pch_info.rid:02X}')
 
     def print_supported_chipsets(self) -> None:
         """Print supported chipsets/platforms."""

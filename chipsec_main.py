@@ -44,7 +44,7 @@ from chipsec import chipset
 from chipsec.helper.oshelper import helper
 from chipsec.library.logger import logger
 from chipsec.testcase import ExitCode, TestCase, ReturnCodeResults, LegacyResults
-from chipsec.library.display import print_banner, print_banner_properties
+from chipsec.library.display import print_banner, print_chipsec_info
 from chipsec.library.exceptions import UnknownChipsetError, OsHelperError
 from chipsec.library.options import Options
 from chipsec.library.module_helper import enumerate_modules, get_module_files, print_modules
@@ -102,7 +102,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     par = vars(parser.parse_args(argv))
     if par['help']:
         if par['_show_banner']:
-            print_banner(argv, defines.get_version(), defines.get_message())
+            print_banner(argv)
         parser.print_help()
         return None
     elif par['_list_modules']:
@@ -423,7 +423,7 @@ class ChipsecMain:
     def main(self) -> int:
 
         if self._show_banner:
-            print_banner(self.argv, defines.get_version(), defines.get_message())
+            print_banner(self.argv)
 
         for import_path in self.IMPORT_PATHS:
             sys.path.append(os.path.abspath(import_path))
@@ -456,7 +456,7 @@ class ChipsecMain:
             return ExitCode.EXCEPTION
 
         if self._show_banner:
-            print_banner_properties(self._cs, defines.os_version())
+            print_chipsec_info(self._cs)
 
         self.logger.log(" ")
 
