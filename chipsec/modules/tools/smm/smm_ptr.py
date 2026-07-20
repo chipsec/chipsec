@@ -28,7 +28,7 @@ Reference:
 
 
 Usage:
-``chipsec_main -m tools.smm.smm_ptr -l log.txt \``
+``chipsec_main -m tools.smm.smm_ptr -l log.txt``
 ``[-a <mode>,<config_file>|<smic_start:smic_end>,<size>,<address>]``
 
 - ``mode``: SMI fuzzing mode
