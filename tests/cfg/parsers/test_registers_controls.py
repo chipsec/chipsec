@@ -44,6 +44,46 @@ class _RegWithoutFieldMethods:
     instance = 0
 
 
+class _RegWithFieldsAttr:
+    """Register exposing a ``fields`` collection but no ``has_field`` method."""
+    name = 'CONTROL_REG'
+    instance = 0
+    fields = ['LOCK', 'OTHER']
+
+    def read_field(self, field):
+        return 0
+
+    def write_field(self, field, value):
+        return None
+
+
+class _RegNoLookup:
+    """Register with neither ``has_field`` nor ``fields`` lookup support."""
+    name = 'CONTROL_REG'
+    instance = 0
+
+    def read_field(self, field):
+        return 0
+
+    def write_field(self, field, value):
+        return None
+
+
+class _RegHasFieldRaises:
+    """Register whose ``has_field`` raises to exercise the except path."""
+    name = 'CONTROL_REG'
+    instance = 0
+
+    def has_field(self, field):
+        raise RuntimeError('lookup failure')
+
+    def read_field(self, field):
+        return 0
+
+    def write_field(self, field, value):
+        return None
+
+
 class TestControlHelperInit(unittest.TestCase):
     """Cover CONTROLHelper construction and validation."""
 
@@ -82,6 +122,14 @@ class TestControlHelperInit(unittest.TestCase):
     def test_register_without_field_methods_raises(self):
         with self.assertRaises(ControlHelperError):
             CONTROLHelper(make_cfg(), _RegWithoutFieldMethods())
+
+    def test_empty_name_raises(self):
+        with self.assertRaises(ControlHelperError):
+            CONTROLHelper(make_cfg(name=''), make_reg())
+
+    def test_empty_field_raises(self):
+        with self.assertRaises(ControlHelperError):
+            CONTROLHelper(make_cfg(field=''), make_reg())
 
 
 class TestControlHelperReadWrite(unittest.TestCase):
@@ -139,6 +187,23 @@ class TestControlHelperAccessors(unittest.TestCase):
         reg = make_reg()
         reg.has_field.return_value = False
         control = CONTROLHelper(make_cfg(), reg)
+        self.assertFalse(control.is_field_available())
+
+    def test_is_field_available_uses_fields_attribute(self):
+        control = CONTROLHelper(make_cfg(), _RegWithFieldsAttr())
+        self.assertTrue(control.is_field_available())
+
+    def test_is_field_available_fields_attribute_missing_field(self):
+        control = CONTROLHelper(make_cfg(field='LOCK'), _RegWithFieldsAttr())
+        control.field = 'MISSING'
+        self.assertFalse(control.is_field_available())
+
+    def test_is_field_available_defaults_true_without_lookup(self):
+        control = CONTROLHelper(make_cfg(), _RegNoLookup())
+        self.assertTrue(control.is_field_available())
+
+    def test_is_field_available_false_on_lookup_exception(self):
+        control = CONTROLHelper(make_cfg(), _RegHasFieldRaises())
         self.assertFalse(control.is_field_available())
 
     def test_read_raises_when_field_unavailable(self):
