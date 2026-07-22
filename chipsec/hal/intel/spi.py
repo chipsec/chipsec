@@ -45,7 +45,7 @@ usage:
 import struct
 import time
 from typing import Dict, List, Tuple, Optional
-from chipsec.library.defines import BIT0, BIT1, BIT2, BIT5
+from chipsec.library.defines import BIT0, BIT1, BIT2, BIT5, is_all_ones
 from chipsec.library.register import NullRegister
 from chipsec.library.file import write_file, read_file
 from chipsec.library.logger import print_buffer_bytes
@@ -114,7 +114,7 @@ class SPI(hal_base.HALBase):
         self.device_found = False
         self.spi_base = 0
         self.devices = cs.device.get_list_by_name('8086.SPI')
-        for device in self.devices:
+        for device in reversed(self.devices):
             for instance in device.instances.values():
                 try:
                     self.set_instance(instance)
@@ -169,6 +169,8 @@ class SPI(hal_base.HALBase):
         self.bioswe = self.cs.control.get_instance_by_name('BiosWriteEnable', self.instance)
         self.smmbwp = self.cs.control.get_instance_by_name('SmmBiosWriteProtection', self.instance)
         self.get_SPI_MMIO_base()
+        if is_all_ones(self.hsfs.read(), self.hsfs.size):
+            raise CSReadError(f"SPI device [{self.instance}] does not appear to be flash backed.")
 
         # self.logger.log_hal("[spi] Reading SPI flash controller registers definitions:")
         # self.logger.log_hal(f'      HSFS   offset = 0x{self.hsfs.offset:04X}')
