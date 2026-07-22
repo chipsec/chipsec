@@ -57,7 +57,7 @@ Registers used: (n = 0,1,2,3,4)
 
 """
 
-from chipsec.library.exceptions import CSReadError
+from chipsec.library.exceptions import CSReadError, HALInitializationError, HALNotFoundError
 from chipsec.module_common import BaseModule, BIOS
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.intel.spi import BIOS
@@ -73,6 +73,16 @@ class bios_wp(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self) -> bool:
+        try:
+            self.spi = self.cs.hals.spi
+            self.instance = self.spi.instance
+        except (HALNotFoundError, HALInitializationError) as err:
+            self.logger.log_important(f"SPI HAL is not initialized ({err}). Skipping module.")
+            return False
+        if not self.spi:
+            self.logger.log_important('SPI HAL not initialized.')
+            return False
+        
         ble_exists = self.cs.control.is_defined('BiosLockEnable')
         bioswe_exists = self.cs.control.is_defined('BiosWriteEnable')
         smmbwp_exists = self.cs.control.is_defined('SmmBiosWriteProtection')
@@ -83,16 +93,19 @@ class bios_wp(BaseModule):
         return False
 
     def check_BIOS_write_protection(self) -> int:
-        ble = self.cs.control.get_list_by_name('BiosLockEnable')
-        ble.read_and_print()
-        bioswe = self.cs.control.get_list_by_name('BiosWriteEnable')
-        bioswe.read_and_verbose_print()
-        smmbwp = self.cs.control.get_list_by_name('SmmBiosWriteProtection')
-        smmbwp.read_and_verbose_print()
+        ble = self.cs.control.get_instance_by_name('BiosLockEnable', self.instance)
+        ble.read()
+        self.logger.log(ble)
+        bioswe = self.cs.control.get_instance_by_name('BiosWriteEnable', self.instance)
+        bioswe.read()
+        self.logger.log_verbose(bioswe)
+        smmbwp = self.cs.control.get_instance_by_name('SmmBiosWriteProtection', self.instance)
+        smmbwp.read()
+        self.logger.log_verbose(smmbwp)
 
         write_protected = False
-        if ble.is_all_value(1) and bioswe.is_all_value(0):
-            if smmbwp.is_all_value(1):
+        if ble.value == 1 and bioswe.value == 0:
+            if smmbwp.value == 1:
                 self.logger.log_good('BIOS region write protection is enabled (writes restricted to SMM)')
                 write_protected = True
             else:
@@ -103,18 +116,18 @@ class bios_wp(BaseModule):
         return write_protected
 
     def check_SPI_protected_ranges(self) -> bool:
-        (bios_base, bios_limit, _) = self.cs.hals.spi.get_SPI_region(BIOS)
+        (bios_base, bios_limit, _) = self.spi.get_SPI_region(BIOS)
         self.logger.log(f'\n[*] BIOS Region: Base = 0x{bios_base:08X}, Limit = 0x{bios_limit:08X}')
-        self.cs.hals.spi.display_SPI_Protected_Ranges()
+        self.spi.display_SPI_Protected_Ranges()
 
         pr_cover_bios = False
         pr_partial_cover_bios = False
 
-        (bios_base, bios_limit, _) = self.cs.hals.spi.get_SPI_region(BIOS)
+        (bios_base, bios_limit, _) = self.spi.get_SPI_region(BIOS)
         self.logger.log(f'[*] BIOS Region: Base = 0x{bios_base:08X}, Limit = 0x{bios_limit:08X}')
 
         areas_to_protect = [(bios_base, bios_limit)]
-        SPI_protected_ranges = self.cs.hals.spi.get_SPI_Protected_Ranges()
+        SPI_protected_ranges = self.spi.get_SPI_Protected_Ranges()
         for (base, limit, wpe, _, _, _) in SPI_protected_ranges:
             if base > limit:
                 continue
