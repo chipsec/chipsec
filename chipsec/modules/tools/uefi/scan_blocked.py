@@ -56,7 +56,8 @@ from chipsec.module_common import BaseModule, BIOS
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.uefi.spi import search_efi_tree, build_efi_model, EFIModuleType
 from chipsec.hal.common.uefi import UEFI
-from chipsec.hal.intel.spi import SPI, BIOS
+from chipsec.hal.intel.spi import SPI
+from chipsec.library.intel.spi import BIOS as BIOS_REGION
 from chipsec.library.uefi.search import check_match_criteria
 from chipsec.library.file import read_file, get_main_dir
 
@@ -123,7 +124,7 @@ class scan_blocked(BaseModule):
         if len(module_argv) == 0:
             # Read firmware image directly from SPI flash memory
             self.spi = SPI(self.cs)
-            (base, limit, _) = self.spi.get_SPI_region(BIOS)
+            (base, limit, _) = self.spi.get_SPI_region(BIOS_REGION)
             image_size = limit + 1 - base
             self.logger.log(f'[*] Dumping FW image from ROM to {image_file}: 0x{base:08X} bytes at [0x{limit:08X}:0x{image_size:08X}]')
             self.logger.log("[*] This may take a few minutes (instead, use 'chipsec_util spi dump')...")
