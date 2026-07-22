@@ -94,7 +94,7 @@ class sinkhole(BaseModule):
         self.logger.log_important('NOTE: The system may hang or process may crash when running this test.')
         self.logger.log('      In that case, the mitigation to this issue is likely working but we may not be handling the exception generated.')
 
-        res = apic_base.write_field('APICBASE', smrrbase, False)
+        res = apic_base_msr.write_field('APICBASE', smrrbase, False)
 
         if res is None:
             self.logger.log_important('Error encountered when attempting to modify IA32_APIC_BASE')
