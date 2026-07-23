@@ -43,6 +43,8 @@ PCI_PCIEXBAR_REG_LENGTH = {0: 2,  # 256MB
                            5: 5,  # 2GB
                            6: 6}  # 4GB
 
+PCI_PCIEXBAR_REG_BASE_LENGTH = 26
+
 PCI_PCIEBAR_REG_MASK = 0x7FFC000000
 
 
@@ -119,8 +121,8 @@ class MMCFG(hal_base.HALBase):
         :param base_bus: The base bus object.
         :return: The adjusted base address of the BAR.
         """
-        if self.cs.register.has_field(self.MmioCfgBaseAddr, "LENGTH") and not self.cs.is_server():
-            bar_obj = self.cs.register.get_instance_by_name(self.PCIEXBAR, base_instance)
+        bar_obj = self.cs.register.get_instance_by_name(self.PCIEXBAR, base_instance)
+        if bar_obj and bar_obj.has_field('LENGTH') and not self.cs.is_server():
             reg_len = bar_obj.get_field("LENGTH")
             bar_base &= PCI_PCIEBAR_REG_MASK << PCI_PCIEXBAR_REG_LENGTH[reg_len]
         return bar_base
@@ -132,13 +134,17 @@ class MMCFG(hal_base.HALBase):
         :param base_bus: The base bus object.
         :return: The adjusted size of the BAR.
         """
-        if self.cs.register.has_field(self.MmioCfgBaseAddr, "BusRange"):
-            bar_obj = self.cs.register.get_instance_by_name(self.MmioCfgBaseAddr, base_instance)
+        bar_obj = self.cs.register.get_instance_by_name(self.MmioCfgBaseAddr, base_instance)
+        if bar_obj and bar_obj.has_field("BusRange"):
             num_buses = bar_obj.get_field("BusRange")
             if num_buses <= 8:
                 bar_size = 2**20 * 2**num_buses
             else:
                 self.logger.log_hal(f"[mmcfg] Unexpected MmioCfgBaseAddr bus range: 0x{num_buses:X}")
+            return bar_size
+        bar_obj = self.cs.register.get_instance_by_name(self.MMCFG, base_instance)
+        if bar_obj and bar_obj.has_field("LENGTH"):
+            bar_size = 1<<(PCI_PCIEXBAR_REG_BASE_LENGTH + PCI_PCIEXBAR_REG_LENGTH[bar_obj.get_field("LENGTH")])
         return bar_size
 
     def read_mmcfg_reg(self, bus: int, dev: int, fun: int, off: int, size: int) -> int:
