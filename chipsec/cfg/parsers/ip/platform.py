@@ -29,7 +29,7 @@ from typing import List, Union, Any
 from re import match
 
 from chipsec.library.exceptions import (
-    PlatformConfigError, RegisterNotFoundError, ScopeNotFoundError, BARNotFoundError
+    PlatformConfigError, ScopeNotFoundError, BARNotFoundError
 )
 from chipsec.library.register import ObjList
 from chipsec.library.logger import logger
@@ -41,7 +41,7 @@ class Recursable:
     This class provides the foundation for hierarchical traversal of platform configurations,
     supporting wildcard matching and recursive object discovery.
     """
-    
+
     def __init__(self) -> None:
         """Initialize Recursable object."""
         super().__init__()
@@ -173,16 +173,13 @@ class RegisterList:
             register_name: Name of the register to retrieve
 
         Returns:
-            ObjList containing the register
-
-        Raises:
-            RegisterNotFoundError: If register not found
+            ObjList containing the register or empty ObjList if not found
         """
         register_name = register_name.upper()
         if register_name in self.register_list:
             return ObjList(self.__getattribute__(register_name))
         else:
-            return ObjList() # raise RegisterNotFoundError(f'Invalid register name: {register_name}')
+            return ObjList()
 
     def get_register_matches(self, register_name: str) -> ObjList:
         """
@@ -192,10 +189,7 @@ class RegisterList:
             register_name: Register name pattern (supports wildcards)
 
         Returns:
-            ObjList containing matching registers
-
-        Raises:
-            RegisterNotFoundError: If no matches found
+            ObjList containing matching registers or empty ObjList if none found
         """
         registers = ObjList()
         reg_name = register_name.replace('*', '.*')
@@ -204,10 +198,7 @@ class RegisterList:
             if match(f'^{reg_name}$', reg):
                 registers.extend(self.get_register(reg))
 
-        # if registers:
         return registers
-        # else:
-        #     raise RegisterNotFoundError(f'Invalid register name: {register_name}')
 
 
 class Platform(Recursable):
@@ -591,7 +582,7 @@ class BarContainerMixin(Recursable):
     """Shared BAR container behavior used by both IP and BAR objects."""
 
     _container_type = 'Unknown'
-    
+
     def __init__(self) -> None:
         """Initialize BAR container."""
         super().__init__()
@@ -701,3 +692,16 @@ class Bar(BarContainerMixin, RegisterList):
         self.name = name
         self.obj = barobj
 
+
+    def get_bar_register_name(self) -> str:
+        """
+        Get the BAR register name from the BAR object.
+
+        Returns:
+            str containing the BAR register's full name (e.g., '8086.HOSTCTL.MCHBAR').
+        """
+        if hasattr(self.obj, 'register'):
+            return self.obj.register
+        if 'register' in self.obj:
+            return self.obj['register']
+        raise PlatformConfigError(f'BAR object {self.name} does not have a register attribute or key.')

@@ -5,6 +5,7 @@
 # as published by the Free Software Foundation; Version 2.
 
 import unittest
+from types import SimpleNamespace
 
 from chipsec.cfg.parsers.ip.platform import Bar, IP, Platform, Vendor
 from chipsec.library.exceptions import BARNotFoundError, PlatformConfigError
@@ -90,6 +91,22 @@ class TestIPAndBarHierarchy(unittest.TestCase):
         self.assertIn(ip_reg, platform_matches)
         self.assertIn(bar_reg, platform_matches)
         self.assertIn(nested_bar_reg, platform_matches)
+
+    def test_get_bar_register_name_from_object_attribute(self) -> None:
+        bar = Bar("MCHBAR", SimpleNamespace(register="8086.HOSTCTL.MCHBAR"))
+
+        self.assertEqual("8086.HOSTCTL.MCHBAR", bar.get_bar_register_name())
+
+    def test_get_bar_register_name_from_dict_key(self) -> None:
+        bar = Bar("MCHBAR", {"register": "8086.HOSTCTL.MCHBAR"})
+
+        self.assertEqual("8086.HOSTCTL.MCHBAR", bar.get_bar_register_name())
+
+    def test_get_bar_register_name_missing_raises(self) -> None:
+        bar = Bar("MCHBAR", {"base": 0x1000})
+
+        with self.assertRaises(PlatformConfigError):
+            bar.get_bar_register_name()
 
 
 if __name__ == "__main__":
