@@ -49,12 +49,16 @@ class FakeRegList(list):
         return None
 
     def is_all_value(self, value, mask=None):
-        if not self:
-            return False
+        if not self:
+
+            return False
+
         if mask is None:
             return all(reg.value == value for reg in self)
-        masked_value = value & mask
-        return all((reg.value & mask) == masked_value for reg in self)
+        masked_value = value & mask
+
+        return all((reg.value & mask) == masked_value for reg in self)
+
 
 def _build_test_context(base_regs, mask_regs):
     if isinstance(base_regs, FakeReg):
@@ -91,7 +95,8 @@ def _build_test_context(base_regs, mask_regs):
 
     result = Mock()
     result.status = status
-    result.getReturnCode.side_effect = lambda value, print_output=True: value
+    result.getReturnCode.side_effect = lambda value, print_output=True: value
+
     module_self = Mock()
     module_self.cs = cs
     module_self.result = result
@@ -181,16 +186,29 @@ class TestSmrr(unittest.TestCase):
 
         self.assertEqual(result, ModuleResult.FAILED)
 
-    def test_smrr_sets_not_applicable_when_cpu_does_not_support_smrr(self):
-        base_reg = FakeReg({'PHYSBASE': 0x88400000, 'TYPE': 0x6}, value=0x88400006)
-        mask_reg = FakeReg({'PHYSMASK': 0xFFF00000, 'VALID': 1}, value=0x00000C00)
-        module_self = _build_test_context(base_reg, mask_reg)
-        module_self.cs.hals.cpu.check_SMRR_supported.return_value = False
+    def test_smrr_sets_not_applicable_when_cpu_does_not_support_smrr(self):
+        base_reg = FakeReg({'PHYSBASE': 0x88400000, 'TYPE': 0x6}, value=0x88400006)
+        mask_reg = FakeReg({'PHYSMASK': 0xFFF00000, 'VALID': 1}, value=0x00000C00)
+        module_self = _build_test_context(base_reg, mask_reg)
+        module_self.cs.hals.cpu.check_SMRR_supported.return_value = False
 
-        result = smrr.check_SMRR(module_self, False)
-
-        module_self.result.setStatusBit.assert_called_once_with(module_self.result.status.NOT_APPLICABLE)
-        self.assertIn(result, (ModuleResult.PASSED, ModuleResult.NOTAPPLICABLE))
-
+        result = smrr.check_SMRR(module_self, False)
+
+        module_self.result.setStatusBit.assert_called_once_with(module_self.result.status.NOT_APPLICABLE)
+        self.assertEqual(result, ModuleResult.PASSED)
+
+    def test_smrr_not_applicable_path_falls_through_to_not_applicable_when_misconfigured(self):
+        base_reg = FakeReg({'PHYSBASE': 0x88400000, 'TYPE': 0x6}, value=0x88400006)
+        mask_reg = FakeReg({'PHYSMASK': 0xFFF00000, 'VALID': 0}, value=0x00000000)
+        module_self = _build_test_context(base_reg, mask_reg)
+        module_self.cs.hals.cpu.check_SMRR_supported.return_value = False
+
+        result = smrr.check_SMRR(module_self, False)
+
+        module_self.result.setStatusBit.assert_any_call(module_self.result.status.NOT_APPLICABLE)
+        module_self.result.setStatusBit.assert_any_call(module_self.result.status.CONFIGURATION)
+        self.assertEqual(result, ModuleResult.NOTAPPLICABLE)
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -80,12 +80,12 @@ class smrr(BaseModule):
 
     def check_SMRR(self, do_modify: bool) -> int:
 
-        if self.cs.hals.cpu.check_SMRR_supported():
+        smrr_supported = self.cs.hals.cpu.check_SMRR_supported()
+        if smrr_supported:
             self.logger.log_good('OK. SMRR range protection is supported')
         else:
             self.logger.log_not_applicable('CPU does not support SMRR range protection of SMRAM')
             self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-            self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
 
         smrr_ok = True
 
@@ -159,9 +159,13 @@ class smrr(BaseModule):
 
         self.logger.log('')
         if not smrr_ok:
-            res = ModuleResult.FAILED
             self.result.setStatusBit(self.result.status.CONFIGURATION)
-            self.logger.log_failed('SMRR protection against cache attack is not configured properly')
+            if not smrr_supported:
+                res = ModuleResult.NOTAPPLICABLE
+                self.logger.log('SMRR is misconfigured but not applicable because the CPU does not support SMRR range protection')
+            else:
+                res = ModuleResult.FAILED
+                self.logger.log_failed('SMRR protection against cache attack is not configured properly')
         else:
             res = ModuleResult.PASSED
             self.logger.log_passed('SMRR protection against cache attack is properly configured')
