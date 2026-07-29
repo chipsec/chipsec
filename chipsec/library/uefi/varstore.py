@@ -38,7 +38,7 @@ from typing import Dict, Tuple, List, Optional, Any, Union
 
 from chipsec.library import defines
 from chipsec.library.file import read_file, write_file
-from chipsec.library.logger import logger, print_buffer_bytes, dump_buffer_bytes
+from chipsec.library.logger import logger, dump_buffer_bytes
 from chipsec.library.types import EfiVariableType
 from chipsec.library.uefi.common import EFI_GUID_FMT, EFI_GUID_SIZE, EFI_GUID_STR, bit_set, get_3b_size
 from chipsec.library.uefi.platform import FWType, NVAR_NVRAM_FS_FILE, NVRAM_ATTR_VLD, NVRAM_ATTR_DATA, NVRAM_ATTR_GUID, NVRAM_ATTR_DESC_ASCII, NVRAM_ATTR_EXTHDR, NVRAM_ATTR_RT
@@ -106,7 +106,6 @@ SIGNATURE_LIST_size = struct.calcsize(SIGNATURE_LIST)
 try:
     from cryptography import x509
     from cryptography.hazmat.primitives.serialization import pkcs7 as pkcs7_mod
-    from cryptography.hazmat.primitives.asymmetric import rsa as rsa_mod
     HAS_CRYPTOGRAPHY = True
 except ImportError:
     HAS_CRYPTOGRAPHY = False
@@ -172,31 +171,65 @@ def parse_sha512(data: bytes) -> None:
     _log_sig(f'SHA-512 digest: {data.hex()}')
 
 
+EFI_TIME_FMT = '<HBBBBBBIhBB'
+EFI_TIME_SIZE = struct.calcsize(EFI_TIME_FMT)
+
+
+def _format_efi_time(data: bytes) -> str:
+    """Render an EFI_TIME structure (UEFI spec, GetTime()) as a readable string.
+
+    EFI_TIME is 16 bytes: Year(UINT16) Month Day Hour Minute Second Pad1
+    Nanosecond(UINT32) TimeZone(INT16) Daylight Pad2.
+    """
+    if len(data) < EFI_TIME_SIZE:
+        return f'<truncated EFI_TIME, {len(data)} bytes>'
+    year, month, day, hour, minute, second, _pad1, nanosecond, timezone, daylight, _pad2 = \
+        struct.unpack(EFI_TIME_FMT, data[:EFI_TIME_SIZE])
+    if not any((year, month, day, hour, minute, second, nanosecond)):
+        # An all-zero TimeOfRevocation means the entry carries no revocation time
+        return 'not specified (all zero)'
+    out = f'{year:04d}-{month:02d}-{day:02d} {hour:02d}:{minute:02d}:{second:02d}'
+    if nanosecond:
+        out += f'.{nanosecond:09d}'
+    # 0x07FF (2047) means "unspecified timezone" per the UEFI spec
+    if timezone != 0x07FF:
+        out += f' UTC{timezone // 60:+03d}:{abs(timezone) % 60:02d}'
+    if daylight:
+        out += f' (Daylight=0x{daylight:02X})'
+    return out
+
+
+def _parse_x509_hash_revocation(data: bytes, hash_size: int, hash_name: str) -> None:
+    """Parse EFI_CERT_X509_SHA256/384/512 signature data.
+
+    UEFI spec, Secure Boot and Driver Signing: the signature data for these
+    formats is the SHA hash of the TBS certificate followed by an EFI_TIME
+    TimeOfRevocation. The trailing bytes are NOT a DER certificate, so they must
+    not be handed to the X.509 parser.
+    """
+    if len(data) < hash_size:
+        _log_sig(f'X.509/{hash_name} data ({len(data)} bytes)')
+        return
+    _log_sig(f'X.509/{hash_name} TBS hash: {data[:hash_size].hex()}')
+    remainder = data[hash_size:]
+    if remainder:
+        _log_sig(f'X.509/{hash_name} TimeOfRevocation: {_format_efi_time(remainder)}')
+        extra = remainder[EFI_TIME_SIZE:]
+        if extra:
+            # Not spec-shaped. Report it rather than dropping it silently.
+            _log_sig(f'X.509/{hash_name} unexpected trailing data ({len(extra)} bytes): {extra[:32].hex()}')
+
+
 def parse_x509_sha256(data: bytes) -> None:
-    if len(data) >= 0x20:
-        _log_sig(f'X.509/SHA-256 TBS hash: {data[:0x20].hex()}')
-        if len(data) > 0x20 and HAS_CRYPTOGRAPHY:
-            parse_x509(data[0x20:])
-    else:
-        _log_sig(f'X.509/SHA-256 data ({len(data)} bytes)')
+    _parse_x509_hash_revocation(data, 0x20, 'SHA-256')
 
 
 def parse_x509_sha384(data: bytes) -> None:
-    if len(data) >= 0x30:
-        _log_sig(f'X.509/SHA-384 TBS hash: {data[:0x30].hex()}')
-        if len(data) > 0x30 and HAS_CRYPTOGRAPHY:
-            parse_x509(data[0x30:])
-    else:
-        _log_sig(f'X.509/SHA-384 data ({len(data)} bytes)')
+    _parse_x509_hash_revocation(data, 0x30, 'SHA-384')
 
 
 def parse_x509_sha512(data: bytes) -> None:
-    if len(data) >= 0x40:
-        _log_sig(f'X.509/SHA-512 TBS hash: {data[:0x40].hex()}')
-        if len(data) > 0x40 and HAS_CRYPTOGRAPHY:
-            parse_x509(data[0x40:])
-    else:
-        _log_sig(f'X.509/SHA-512 data ({len(data)} bytes)')
+    _parse_x509_hash_revocation(data, 0x40, 'SHA-512')
 
 
 def parse_external(data: bytes) -> None:
