@@ -344,6 +344,7 @@ class UEFICommand(BaseCommand):
     def decode(self):
         if not os.path.exists(self.filename):
             self.logger.log_error(f"Could not find file '{self.filename}'")
+            self.ExitCode = ExitCode.ERROR
             return
 
         self.logger.log(f"[CHIPSEC] Parsing EFI volumes from '{self.filename}'..")
@@ -357,7 +358,9 @@ class UEFICommand(BaseCommand):
                         ftypes.append(inv_filetypes[mtype])
                 else:
                     self.logger.log_warning(f"Unknown file type '{mtype}'. Valid types: {list(FILE_TYPE_NAMES.values())}")
-        decode_uefi_region(cur_dir, self.filename, self.fwtype, ftypes)
+        if not decode_uefi_region(cur_dir, self.filename, self.fwtype, ftypes):
+            self.ExitCode = ExitCode.ERROR
+            self.logger.log_error(f"Could not parse EFI firmware volumes from '{self.filename}'")
 
     def keys(self):
         if not os.path.exists(self.filename):

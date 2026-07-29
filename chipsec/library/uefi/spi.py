@@ -904,6 +904,7 @@ def parse_uefi_region_from_file(filename: str, fwtype: Optional[str], outpath: O
     write_file(f'{filename}.UEFI.json', json.dumps(tree_json, indent=2, separators=(',', ': '), cls=UUIDEncoder))
     if lst_lines:
         write_file(f'{filename}.UEFI.lst', '\n'.join(lst_lines))
+    return tree
 
 
 def decode_uefi_region(pth: str, fname: str, fwtype: Optional[str], filetype: Optional[List[int]] = None) -> bool:
@@ -937,6 +938,7 @@ def decode_uefi_region(pth: str, fname: str, fwtype: Optional[str], filetype: Op
         return bool(tree)
     nvram_fname = os.path.join(bios_pth, (f'nvram_{fwtype}'))
     nvram_lines: List[str] = []
-    parse_EFI_variables(nvram_fname, region_data, False, fwtype, lst_lines=nvram_lines)
+    nvram_ok = parse_EFI_variables(nvram_fname, region_data, False, fwtype, lst_lines=nvram_lines)
     if nvram_lines:
         write_file(f'{nvram_fname}.nvram.lst', '\n'.join(nvram_lines))
+    return bool(tree) and nvram_ok
