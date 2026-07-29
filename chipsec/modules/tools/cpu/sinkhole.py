@@ -47,6 +47,7 @@ Registers used:
 
 from chipsec.module_common import BaseModule, SMM
 from chipsec.library.returncode import ModuleResult
+from chipsec.library.exceptions import HWAccessViolationError
 
 TAGS = [SMM]
 METADATA_TAGS = ['OPENSOURCE', 'IA', 'TOOLS', 'CPU', 'SINKHOLE']
@@ -82,37 +83,40 @@ class sinkhole(BaseModule):
         self.logger.log(smrr_physbase_msr)
         self.logger.log(apic_base_msr)
 
-        smrrbase = smrr_physbase_msr.read_field('PHYSBASE')
-        smrr_base = smrr_physbase_msr.get_field('PHYSBASE', True)
+        smrr_base = smrr_physbase_msr.read_field('PHYSBASE', True)
         apic_base = apic_base_msr.read_field('APICBASE', True)
+        apic_base_msr_old = apic_base_msr.value
 
         self.logger.log(f'[*] Local APIC Base: 0x{apic_base:016X}')
         self.logger.log(f'[*] SMRR Base      : 0x{smrr_base:016X}')
 
         self.logger.log('[*] Attempting to overlap Local APIC page with SMRR region')
-        self.logger.log(f'   Writing 0x{smrrbase:X} to IA32_APIC_BASE[APICBASE]..')
+        self.logger.log(f'   Writing 0x{smrr_base:X} to IA32_APIC_BASE[APICBASE]..')
         self.logger.log_important('NOTE: The system may hang or process may crash when running this test.')
         self.logger.log('      In that case, the mitigation to this issue is likely working but we may not be handling the exception generated.')
+        try:
+            apic_base_msr.write_field('APICBASE', smrr_base, preserve_field_position=True)
+        except HWAccessViolationError as e:
+            self.logger.log_important('Hardware access violation encountered when attempting to modify IA32_APIC_BASE.')
+            if self.cs.os_helper.is_windows():
+                self.logger.log_important('Windows is blocking. To check FW mitigations, disable windows protections or attempt from Linux')
+            self.logger.log(f'\t{e}')
+        except Exception as e:
+            self.logger.log_important(f'Error encountered when attempting to modify IA32_APIC_BASE: {e}')
 
-        res = apic_base_msr.write_field('APICBASE', smrrbase, False)
-
-        if res is None:
-            self.logger.log_important('Error encountered when attempting to modify IA32_APIC_BASE')
-
-        apic_base_old = apic_base_msr.value
         apic_base_msr_new = apic_base_msr.read()
         self.logger.log(f'[*] New IA32_APIC_BASE: 0x{apic_base_msr_new:016X}')
 
-        if apic_base_msr_new == apic_base_old:
+        if apic_base_msr_new == apic_base_msr_old:
             self.logger.log_good('Could not modify IA32_APIC_BASE to overlap SMRR')
             self.logger.log_passed('CPU does not seem to have SMM memory sinkhole vulnerability')
             self.result.setStatusBit(self.result.status.SUCCESS)
             res = ModuleResult.PASSED
         else:
             self.logger.log_bad('Could modify IA32_APIC_BASE to overlap SMRR')
-            apic_base_msr.write(apic_base_old)
+            apic_base_msr.write(apic_base_msr_old)
             apic_base_msr.read()
-            self.logger.log(f'[*] Restored original value 0x{apic_base_old:016X} > APIC_BASE: 0x{apic_base_msr.value:016X}')
+            self.logger.log(f'[*] Restored original value 0x{apic_base_msr_old:016X} > APIC_BASE: 0x{apic_base_msr.value:016X}')
             self.logger.log_failed('CPU is susceptible to SMM memory sinkhole vulnerability.  Verify that SMRR is programmed correctly.')
             self.result.setStatusBit(self.result.status.PROTECTION)
             res = ModuleResult.FAILED
