@@ -22,27 +22,30 @@ from uuid import UUID
 from chipsec.library.uefi.fv import (
     EFI_FIRMWARE_VOLUME_HEADER, EFI_FIRMWARE_VOLUME_HEADER_size,
     EFI_FV_BLOCK_MAP_ENTRY,
-    EFI_FFS_FILE_HEADER,
+    EFI_FFS_FILE_HEADER, EFI_FFS_FILE_HEADER2,
     EFI_COMMON_SECTION_HEADER,
     EFI_FIRMWARE_FILE_SYSTEM2_GUID,
     EFI_FIRMWARE_FILE_SYSTEM3_GUID,
     EFI_FVB2_ERASE_POLARITY,
-    EFI_FV_FILETYPE_FREEFORM, EFI_FV_FILETYPE_RAW,
+    EFI_FV_FILETYPE_FREEFORM,
     EFI_SECTION_RAW, EFI_SECTION_PE32, EFI_SECTION_COMPRESSION,
     EFI_SECTION_USER_INTERFACE,
-    FFS_ATTRIB_CHECKSUM, FFS_FIXED_CHECKSUM,
+    FFS_ATTRIB_CHECKSUM, FFS_FIXED_CHECKSUM, FFS_ATTRIB_LARGE_FILE,
     FvSum8, FvChecksum8, FvSum16, FvChecksum16,
     ValidateFwVolumeHeader,
     NextFwVolume, GetFvHeader, NextFwFile, NextFwFileSection,
     assemble_uefi_file, assemble_uefi_section, assemble_uefi_raw,
     align_image, get_guid_bin,
     decode_depex,
+    EFI_SECTION_DISPOSABLE,
+    DEPEX_OPCODE_BEFORE, DEPEX_OPCODE_AFTER, DEPEX_OPCODE_PUSH,
+    DEPEX_OPCODE_AND, DEPEX_OPCODE_OR, DEPEX_OPCODE_NOT,
+    DEPEX_OPCODE_TRUE, DEPEX_OPCODE_FALSE, DEPEX_OPCODE_END, DEPEX_OPCODE_SOR,
+    EFI_SECTION_DXE_DEPEX, EFI_SECTION_PEI_DEPEX, EFI_SECTION_MM_DEPEX,
     EFI_FV, EFI_FILE, EFI_SECTION, EFI_MODULE,
     SECTION_NAMES, FILE_TYPE_NAMES,
     EFI_FIRMWARE_VOLUME_EXT_HEADER, EFI_FIRMWARE_VOLUME_EXT_HEADER_size,
-    EFI_FIRMWARE_VOLUME_EXT_ENTRY,
 )
-from chipsec.library.uefi.common import align
 
 
 # ---------------------------------------------------------------------------
@@ -496,6 +499,7 @@ class TestAssemblyFunctions(unittest.TestCase):
         # The section header encodes: [3-byte size + type] [4-byte uncomp_size] [1-byte comp_type]
         # Total = 4 + 4 + 1 + len(content) = 109
         expected_size = 4 + 4 + 1 + len(content)
+        self.assertEqual(len(compressed), expected_size)
         # Extract type from byte 3
         self.assertEqual(compressed[3], EFI_SECTION_COMPRESSION)
         # Extract uncompressed size
@@ -533,22 +537,93 @@ class TestAssemblyFunctions(unittest.TestCase):
 # Tests for decode_depex
 # ===========================================================================
 
+class TestLargeFileChecksum(unittest.TestCase):
+    """EFI_FFS_FILE_HEADER2 (large file) checksum coverage.
+
+    The header checksum must cover the whole 32-byte header including the real
+    ExtendedSize field, with IntegrityCheck and State treated as zero.
+    """
+
+    def test_header2_size_is_32(self):
+        self.assertEqual(struct.calcsize(EFI_FFS_FILE_HEADER), 24)
+        self.assertEqual(struct.calcsize(EFI_FFS_FILE_HEADER2), 32)
+
+    def test_extended_size_changes_header_checksum(self):
+        """A checksum computed with ExtendedSize hardcoded to zero would be wrong."""
+        name = b'\x11' * 16
+        hdr_real = bytearray(struct.pack(EFI_FFS_FILE_HEADER2, name, 0xABCD, 0x07,
+                                         FFS_ATTRIB_LARGE_FILE, b'\x30\x00\x00', 0xF8, 0x12345678))
+        hdr_zero = bytearray(struct.pack(EFI_FFS_FILE_HEADER2, name, 0xABCD, 0x07,
+                                         FFS_ATTRIB_LARGE_FILE, b'\x30\x00\x00', 0xF8, 0))
+        for h in (hdr_real, hdr_zero):
+            h[0x10:0x12] = b'\x00\x00'
+            h[0x17] = 0
+        self.assertNotEqual(FvChecksum8(bytes(hdr_real)), FvChecksum8(bytes(hdr_zero)))
+
+    def test_normal_header_checksum_unchanged_by_field_zeroing(self):
+        """For a 24-byte header, zeroing the fields in-place must match packing
+        them as zero, so behaviour for normal files is unchanged."""
+        name = b'\x22' * 16
+        packed = struct.pack(EFI_FFS_FILE_HEADER, name, 0, 0x07, 0x40, b'\x30\x00\x00', 0)
+        image = bytearray(struct.pack(EFI_FFS_FILE_HEADER, name, 0xABCD, 0x07, 0x40, b'\x30\x00\x00', 0xF8))
+        image[0x10:0x12] = b'\x00\x00'
+        image[0x17] = 0
+        self.assertEqual(bytes(image), packed)
+        self.assertEqual(FvChecksum8(bytes(image)), FvChecksum8(packed))
+
+
+class TestSectionTypeNames(unittest.TestCase):
+    """PI Vol III EFI_SECTION_TYPE values."""
+
+    def test_disposable_is_0x03(self):
+        self.assertEqual(EFI_SECTION_DISPOSABLE, 0x03)
+        sec = _make_section(0x03, b'abcd')
+        self.assertEqual(NextFwFileSection(sec, len(sec), 0, False).Name, 'S_DISPOSABLE')
+
+    def test_0x1a_is_not_disposable(self):
+        """0x1A is not an assigned section type and must not be labelled disposable."""
+        sec = _make_section(0x1A, b'abcd')
+        name = NextFwFileSection(sec, len(sec), 0, False).Name
+        self.assertNotEqual(name, 'S_DISPOSABLE')
+        self.assertNotIn(0x1A, SECTION_NAMES)
+
+
 class TestDecodeDepex(unittest.TestCase):
+    """Dependency expression decoding.
+
+    Opcode values are fixed by the PI specification: PI 1.9 Volume II
+    Section 10.7 (DXE) and Volume I Section 5.7.1.1 (PEI).
+    BEFORE=0x00 AFTER=0x01 PUSH=0x02 AND=0x03 OR=0x04
+    NOT=0x05 TRUE=0x06 FALSE=0x07 END=0x08 SOR=0x09
+    """
+
+    def test_opcode_constants_match_pi_spec(self):
+        self.assertEqual(DEPEX_OPCODE_BEFORE, 0x00)
+        self.assertEqual(DEPEX_OPCODE_AFTER, 0x01)
+        self.assertEqual(DEPEX_OPCODE_PUSH, 0x02)
+        self.assertEqual(DEPEX_OPCODE_AND, 0x03)
+        self.assertEqual(DEPEX_OPCODE_OR, 0x04)
+        self.assertEqual(DEPEX_OPCODE_NOT, 0x05)
+        self.assertEqual(DEPEX_OPCODE_TRUE, 0x06)
+        self.assertEqual(DEPEX_OPCODE_FALSE, 0x07)
+        self.assertEqual(DEPEX_OPCODE_END, 0x08)
+        self.assertEqual(DEPEX_OPCODE_SOR, 0x09)
 
     def test_true_end(self):
-        # DEPEX: TRUE END
-        data = bytes([0x04, 0x06])
-        result = decode_depex(data)
-        self.assertEqual(result, 'TRUE END')
+        self.assertEqual(decode_depex(bytes([0x06, 0x08])), 'TRUE END')
 
     def test_false_end(self):
-        data = bytes([0x05, 0x06])
-        result = decode_depex(data)
-        self.assertEqual(result, 'FALSE END')
+        self.assertEqual(decode_depex(bytes([0x07, 0x08])), 'FALSE END')
+
+    def test_not_opcode(self):
+        self.assertEqual(decode_depex(bytes([0x06, 0x05, 0x08])), 'TRUE NOT END')
+
+    def test_or_opcode(self):
+        self.assertEqual(decode_depex(bytes([0x06, 0x07, 0x04, 0x08])), 'TRUE FALSE OR END')
 
     def test_push_and_end(self):
         guid = UUID('AABBCCDD-1122-3344-5566-778899001122')
-        data = bytes([0x00]) + guid.bytes_le + bytes([0x06])
+        data = bytes([0x02]) + guid.bytes_le + bytes([0x08])
         result = decode_depex(data)
         self.assertIn('PUSH', result)
         self.assertIn(str(guid), result.lower())
@@ -557,36 +632,87 @@ class TestDecodeDepex(unittest.TestCase):
     def test_push_push_and_end(self):
         g1 = UUID('11111111-1111-1111-1111-111111111111')
         g2 = UUID('22222222-2222-2222-2222-222222222222')
-        data = bytes([0x00]) + g1.bytes_le + bytes([0x00]) + g2.bytes_le + bytes([0x01, 0x06])
+        data = bytes([0x02]) + g1.bytes_le + bytes([0x02]) + g2.bytes_le + bytes([0x03, 0x08])
         result = decode_depex(data)
         self.assertIn('AND', result)
-
-    def test_truncated_push(self):
-        # PUSH with only 4 bytes of GUID (needs 16)
-        data = bytes([0x00, 0x01, 0x02, 0x03, 0x04])
-        result = decode_depex(data)
-        self.assertIn('TRUNCATED', result)
-
-    def test_empty(self):
-        result = decode_depex(b'')
-        self.assertEqual(result, '')
-
-    def test_unknown_opcode(self):
-        data = bytes([0xFF])
-        result = decode_depex(data)
-        self.assertIn('UNKNOWN', result)
+        self.assertIn(str(g1), result.lower())
+        self.assertIn(str(g2), result.lower())
+        self.assertTrue(result.endswith('END'))
 
     def test_sor_opcode(self):
-        data = bytes([0x07, 0x04, 0x06])  # SOR TRUE END
-        result = decode_depex(data)
-        self.assertEqual(result, 'SOR TRUE END')
+        self.assertEqual(decode_depex(bytes([0x09, 0x06, 0x08])), 'SOR TRUE END')
 
     def test_before_opcode(self):
         guid = UUID('CCCCCCCC-CCCC-CCCC-CCCC-CCCCCCCCCCCC')
-        data = bytes([0x08]) + guid.bytes_le + bytes([0x06])
+        data = bytes([0x00]) + guid.bytes_le + bytes([0x08])
         result = decode_depex(data)
         self.assertIn('BEFORE', result)
+        self.assertIn(str(guid), result.lower())
         self.assertIn('END', result)
+
+    def test_after_opcode(self):
+        guid = UUID('DDDDDDDD-DDDD-DDDD-DDDD-DDDDDDDDDDDD')
+        data = bytes([0x01]) + guid.bytes_le + bytes([0x08])
+        result = decode_depex(data)
+        self.assertIn('AFTER', result)
+        self.assertIn(str(guid), result.lower())
+
+    def test_truncated_push(self):
+        # PUSH with only 4 bytes of GUID (needs 16)
+        data = bytes([0x02, 0x01, 0x02, 0x03, 0x04])
+        self.assertIn('TRUNCATED', decode_depex(data))
+
+    def test_empty(self):
+        self.assertEqual(decode_depex(b''), '')
+
+    def test_unknown_opcode(self):
+        self.assertIn('UNKNOWN', decode_depex(bytes([0xFF])))
+
+    # --- Non-conforming firmware must stay visible, not be silently dropped ---
+
+    def test_pei_section_flags_opcodes_pei_does_not_define(self):
+        """PEI has no BEFORE/AFTER/SOR, but vendors emit them. Decode and flag."""
+        guid = UUID('CCCCCCCC-CCCC-CCCC-CCCC-CCCCCCCCCCCC')
+        result = decode_depex(bytes([0x00]) + guid.bytes_le + bytes([0x08]), EFI_SECTION_PEI_DEPEX)
+        self.assertIn('BEFORE', result)
+        self.assertIn('non-PEI', result)
+        self.assertIn(str(guid), result.lower())
+        self.assertIn('END', result)
+        sor = decode_depex(bytes([0x09, 0x06, 0x08]), EFI_SECTION_PEI_DEPEX)
+        self.assertIn('SOR', sor)
+        self.assertIn('non-PEI', sor)
+
+    def test_pei_section_does_not_flag_valid_pei_opcodes(self):
+        guid = UUID('11111111-1111-1111-1111-111111111111')
+        result = decode_depex(bytes([0x02]) + guid.bytes_le + bytes([0x08]), EFI_SECTION_PEI_DEPEX)
+        self.assertIn('PUSH', result)
+        self.assertNotIn('non-PEI', result)
+
+    def test_dxe_section_does_not_flag_before(self):
+        guid = UUID('CCCCCCCC-CCCC-CCCC-CCCC-CCCCCCCCCCCC')
+        result = decode_depex(bytes([0x00]) + guid.bytes_le + bytes([0x08]), EFI_SECTION_DXE_DEPEX)
+        self.assertNotIn('non-PEI', result)
+
+    def test_mm_section_uses_dxe_opcode_set(self):
+        result = decode_depex(bytes([0x09, 0x06, 0x08]), EFI_SECTION_MM_DEPEX)
+        self.assertEqual(result, 'SOR TRUE END')
+
+    def test_payload_hidden_after_end_is_reported(self):
+        """Data after END is outside the expression and must not be hidden."""
+        result = decode_depex(bytes([0x06, 0x08]) + b'SECRETPAYLOAD')
+        self.assertIn('TRUE END', result)
+        self.assertIn('trailing bytes after END', result)
+
+    def test_blank_padding_after_end_is_not_reported(self):
+        """Erased/zero padding after END is normal and must not create noise."""
+        self.assertEqual(decode_depex(bytes([0x06, 0x08]) + b'\xff' * 16), 'TRUE END')
+        self.assertEqual(decode_depex(bytes([0x06, 0x08]) + b'\x00' * 16), 'TRUE END')
+
+    def test_unknown_opcode_reports_undecoded_remainder(self):
+        """An unknown opcode cannot be resynchronised; report what was skipped."""
+        result = decode_depex(bytes([0x06, 0x42]) + b'\xAA\xBB\xCC')
+        self.assertIn('UNKNOWN(0x42)', result)
+        self.assertIn('3 undecoded bytes', result)
 
 
 # ===========================================================================

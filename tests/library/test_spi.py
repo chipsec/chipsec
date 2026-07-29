@@ -29,20 +29,23 @@ from chipsec.library.uefi.fv import (
     EFI_COMMON_SECTION_HEADER,
     EFI_FIRMWARE_FILE_SYSTEM2_GUID,
     EFI_FVB2_ERASE_POLARITY,
-    EFI_FV_FILETYPE_FREEFORM, EFI_FV_FILETYPE_RAW, EFI_FV_FILETYPE_DRIVER,
+    EFI_FV_FILETYPE_FREEFORM, EFI_FV_FILETYPE_DRIVER,
     EFI_SECTION_RAW, EFI_SECTION_PE32, EFI_SECTION_USER_INTERFACE,
+    EFI_SECTION_COMPRESSION, EFI_SECTION_DISPOSABLE,
     FFS_ATTRIB_CHECKSUM, FFS_FIXED_CHECKSUM,
-    FvSum8, FvChecksum8, FvSum16, FvChecksum16,
+    FvChecksum8, FvChecksum16,
     EFI_FV, EFI_FILE, EFI_SECTION,
     EFI_CAPSULE_HEADER_FMT, EFI_CAPSULE_HEADER_SIZE,
     EFI_CAPSULE_GUID,
     assemble_uefi_file, assemble_uefi_raw,
-    EFI_SECTION_DXE_DEPEX,
-    EFI_SECTION_VERSION, EFI_VERSION_SECTION, EFI_VERSION_SECTION_size,
+    NextFwVolume, NextFwFile,
+    EFI_SECTION_DXE_DEPEX, EFI_SECTION_PEI_DEPEX,
+    EFI_SECTION_VERSION, EFI_VERSION_SECTION,
     EFI_PEI_APRIORI_FILE_GUID,
 )
 from chipsec.library.uefi.spi import (
     build_efi_tree, build_efi_file_tree, build_efi_modules_tree,
+    find_efi_modules,
     build_efi_model, update_efi_tree, save_efi_tree,
     modify_uefi_region, strip_capsule_header,
     CMD_UEFI_FILE_REMOVE, CMD_UEFI_FILE_REPLACE,
@@ -197,6 +200,38 @@ class TestBuildEfiModel(unittest.TestCase):
 
 class TestBuildEfiFileTree(unittest.TestCase):
 
+    def test_padding_section_image_matches_its_declared_size(self):
+        """The inter-file gap section must describe the gap it reports.
+
+        It previously sliced up to the end of the *current file* while declaring
+        only the gap length, so the recorded image did not match its own size.
+        """
+        f1 = assemble_uefi_file(UUID('11111111-1111-1111-1111-111111111111'),
+                                assemble_uefi_raw(b'A' * 0x20))
+        f1 += b'\xff' * ((-len(f1)) % 8)
+        image = _make_fv(0x8000, body=f1)
+        for node in build_efi_file_tree(image, None):
+            if getattr(node, 'Name', None) in ('Non-UEFI_Padding', 'Padding'):
+                self.assertEqual(len(node.Image), node.Size,
+                                 f'{node.Name}: image length does not match declared size')
+
+    def test_volume_hidden_in_gap_is_parsed_whole(self):
+        """Regression: the gap scan dropped its final byte.
+
+        A firmware volume occupying the gap exactly then failed its length check
+        and was misparsed into unrelated fragments instead of one volume.
+        """
+        hidden = _make_fv(0x400, body=assemble_uefi_file(
+            UUID('99999999-9999-9999-9999-999999999999'),
+            assemble_uefi_raw(b'GAPSECRET' * 4)))
+        whole = find_efi_modules(data=hidden, fwtype=None, polarity=False)
+        self.assertEqual(len(whole), 1, 'complete gap should parse as a single volume')
+        self.assertEqual(whole[0].Size, 0x400)
+
+        # Losing the last byte changes the result, which is what the bug did.
+        clipped = find_efi_modules(data=hidden[:-1], fwtype=None, polarity=False)
+        self.assertNotEqual([m.Size for m in clipped], [m.Size for m in whole])
+
     def test_parse_single_file(self):
         fv_data = _build_simple_fv_image()
         files = build_efi_file_tree(fv_data, None)
@@ -239,12 +274,42 @@ class TestBuildEfiModulesTree(unittest.TestCase):
         self.assertEqual(modules[0].ui_string, ui_text)
 
     def test_depex_section(self):
-        depex_body = bytes([0x04, 0x06])  # TRUE END
+        # PI opcodes: TRUE=0x06 END=0x08
+        depex_body = bytes([0x06, 0x08])
         sec = _make_section(EFI_SECTION_DXE_DEPEX, depex_body)
         modules = build_efi_modules_tree(None, sec, len(sec), 0, True)
         self.assertEqual(len(modules), 1)
         self.assertIn('TRUE', modules[0].Comments)
         self.assertIn('END', modules[0].Comments)
+
+    def test_depex_section_passes_section_type(self):
+        # A PEI DEPEX carrying a DXE-only opcode must be decoded and flagged,
+        # not dropped, so non-conforming firmware stays visible.
+        sec = _make_section(EFI_SECTION_PEI_DEPEX, bytes([0x09, 0x06, 0x08]))
+        modules = build_efi_modules_tree(None, sec, len(sec), 0, True)
+        self.assertEqual(len(modules), 1)
+        self.assertIn('SOR', modules[0].Comments)
+        self.assertIn('non-PEI', modules[0].Comments)
+
+    def test_malformed_compression_section_does_not_raise(self):
+        """A compression section with a valid common header but a truncated
+        payload header must not raise struct.error out of the decode pipeline."""
+        malformed = (8).to_bytes(3, 'little') + bytes([EFI_SECTION_COMPRESSION]) + b'\x00' * 4
+        modules = build_efi_modules_tree(None, malformed, len(malformed), 0, False)
+        self.assertEqual(len(modules), 1)
+        self.assertIn('Malformed', modules[0].Comments)
+
+    def test_disposable_section_contents_are_decoded(self):
+        """EFI_SECTION_DISPOSABLE is an encapsulation section: making its name
+        spec-correct must not stop its contents being discovered."""
+        inner = _make_section(EFI_SECTION_RAW, b'HIDDEN_PAYLOAD')
+        disp = _make_section(EFI_SECTION_DISPOSABLE, inner)
+        modules = build_efi_modules_tree(None, disp, len(disp), 0, False)
+        self.assertEqual(len(modules), 1)
+        self.assertEqual(modules[0].Name, 'S_DISPOSABLE')
+        children = modules[0].children or []
+        self.assertTrue(any(c.Type == EFI_SECTION_RAW for c in children),
+                        'content nested in a disposable section was not decoded')
 
     def test_version_section(self):
         build_number = 42
@@ -416,6 +481,74 @@ class TestModifyUefiRegion(unittest.TestCase):
         # Image should still be parseable
         tree = build_efi_tree(modified, None)
         self.assertGreater(len(tree), 0)
+
+    # --- Size-changing operations must leave a self-consistent, parseable FV ---
+
+    def _assert_fv_consistent(self, modified, original_len, label):
+        """The size delta is absorbed by the FV's free space, so the image size
+        and the FvLength in the header must both stay unchanged, and the result
+        must still be parseable."""
+        self.assertEqual(len(modified), original_len, f'{label}: image size changed')
+        fv = NextFwVolume(modified)
+        self.assertIsNotNone(fv, f'{label}: modified image is not parseable')
+        self.assertEqual(fv.Size, 0x8000, f'{label}: FvLength inconsistent with image')
+        tree = build_efi_tree(modified, None)
+        self.assertGreater(len(tree), 0, f'{label}: no modules found after modify')
+        return fv
+
+    def _file_guids(self, fv):
+        guids = []
+        fwbin = NextFwFile(fv.Image, fv.Size, fv.HeaderSize, False)
+        while fwbin is not None:
+            guids.append(fwbin.Guid)
+            fwbin = NextFwFile(fv.Image, fv.Size, fwbin.Size + fwbin.Offset, False)
+        return guids
+
+    def _new_file(self, guid, size):
+        ffs = assemble_uefi_file(guid, assemble_uefi_raw(b'\xAB' * size))
+        if len(ffs) % 8:
+            ffs += b'\xff' * (8 - len(ffs) % 8)
+        return ffs
+
+    def test_remove_keeps_fv_consistent(self):
+        image, g1, g2 = self._make_test_image()
+        modified = modify_uefi_region(image, CMD_UEFI_FILE_REMOVE, g1)
+        fv = self._assert_fv_consistent(modified, len(image), 'remove')
+        guids = self._file_guids(fv)
+        self.assertNotIn(g1, guids)
+        self.assertIn(g2, guids)
+
+    def test_insert_before_keeps_fv_consistent(self):
+        image, g1, g2 = self._make_test_image()
+        g3 = UUID('33333333-3333-3333-3333-333333333333')
+        modified = modify_uefi_region(image, CMD_UEFI_FILE_INSERT_BEFORE, g2, self._new_file(g3, 0x30))
+        fv = self._assert_fv_consistent(modified, len(image), 'insert_before')
+        guids = self._file_guids(fv)
+        self.assertIn(g3, guids)
+        self.assertLess(guids.index(g3), guids.index(g2))
+
+    def test_insert_after_keeps_fv_consistent(self):
+        image, g1, g2 = self._make_test_image()
+        g3 = UUID('33333333-3333-3333-3333-333333333333')
+        modified = modify_uefi_region(image, CMD_UEFI_FILE_INSERT_AFTER, g1, self._new_file(g3, 0x30))
+        fv = self._assert_fv_consistent(modified, len(image), 'insert_after')
+        guids = self._file_guids(fv)
+        self.assertIn(g3, guids)
+        self.assertGreater(guids.index(g3), guids.index(g1))
+
+    def test_replace_with_different_size_keeps_fv_consistent(self):
+        """Regression: rewriting FvLength to OldFvLength + delta made the header
+        inconsistent with the padded image and broke NextFwVolume()."""
+        image, g1, g2 = self._make_test_image()
+        bigger = self._new_file(g1, 0x80)
+        modified = modify_uefi_region(image, CMD_UEFI_FILE_REPLACE, g1, bigger)
+        fv = self._assert_fv_consistent(modified, len(image), 'replace larger')
+        self.assertIn(g2, self._file_guids(fv))
+
+        smaller = self._new_file(g1, 0x08)
+        modified = modify_uefi_region(image, CMD_UEFI_FILE_REPLACE, g1, smaller)
+        fv = self._assert_fv_consistent(modified, len(image), 'replace smaller')
+        self.assertIn(g2, self._file_guids(fv))
 
 
 # ===========================================================================
