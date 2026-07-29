@@ -53,11 +53,11 @@ from chipsec.library.uefi.varstore import identify_EFI_NVRAM, parse_EFI_variable
 from chipsec.library.uefi.fv import EFI_SECTION_PE32, EFI_SECTION_TE, EFI_SECTION_PIC, EFI_SECTION_COMPATIBILITY16, EFI_FIRMWARE_FILE_SYSTEM2_GUID
 from chipsec.library.uefi.fv import EFI_FIRMWARE_FILE_SYSTEM_GUID, EFI_FIRMWARE_FILE_SYSTEM3_GUID, EFI_SECTIONS_EXE, EFI_SECTION_USER_INTERFACE, EFI_SECTION_GUID_DEFINED
 from chipsec.library.uefi.fv import EFI_GUID_DEFINED_SECTION, EFI_GUID_DEFINED_SECTION_size, NextFwFile, NextFwFileSection, NextFwVolume, GetFvHeader
-from chipsec.library.uefi.fv import EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID, FvChecksum16
+from chipsec.library.uefi.fv import EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID
 from chipsec.library.uefi.fv import EFI_CERT_TYPE_RSA_2048_SHA256_GUID, EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size, EFI_SECTION, EFI_FV, EFI_FILE
 from chipsec.library.uefi.fv import EFI_FIRMWARE_CONTENTS_SIGNED_GUID, WIN_CERT_TYPE_EFI_GUID, WIN_CERTIFICATE_size, WIN_CERTIFICATE
 from chipsec.library.uefi.fv import WIN_CERT_TYPE_PKCS_SIGNED_DATA, WIN_CERT_TYPE_EFI_PKCS115
-from chipsec.library.uefi.fv import EFI_SECTION_COMPRESSION, EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_SECTION_RAW, SECTION_NAMES, DEF_INDENT
+from chipsec.library.uefi.fv import EFI_SECTION_COMPRESSION, EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_SECTION_RAW, EFI_SECTION_DISPOSABLE, SECTION_NAMES, DEF_INDENT
 from chipsec.library.uefi.fv import EFI_SECTION_DXE_DEPEX, EFI_SECTION_PEI_DEPEX, EFI_SECTION_MM_DEPEX, decode_depex
 from chipsec.library.uefi.fv import EFI_SECTION_VERSION, EFI_VERSION_SECTION, EFI_VERSION_SECTION_size
 from chipsec.library.uefi.fv import EFI_SECTION_FREEFORM_SUBTYPE_GUID, EFI_FREEFORM_SUBTYPE_GUID_SECTION, EFI_FREEFORM_SUBTYPE_GUID_SECTION_size
@@ -189,17 +189,13 @@ def _parse_pe_te_metadata(sec_type: int, data: bytes) -> Optional[str]:
 
     sig = data[0:2]
     if sig == b'VZ' and sec_type == EFI_SECTION_TE:
-        # Terse Executable header (40 bytes)
-        # Offset 0: Signature (VZ), 2: Machine, 4: NumberOfSections
-        # 6: Subsystem, 8: StrippedSize, 12: AddressOfEntryPoint
-        # 16: BaseOfCode, 20: ImageBase (UINT64)
+        # EFI_TE_IMAGE_HEADER (PI spec Vol I, Section 15 "TE Image"), 40 bytes:
+        # 0x00 Signature ('VZ'), 0x02 Machine, 0x04 NumberOfSections, 0x05 Subsystem,
+        # 0x06 StrippedSize, 0x08 AddressOfEntryPoint, 0x0C BaseOfCode, 0x10 ImageBase,
+        # 0x18 DataDirectory[2]
         if len(data) < 40:
             return None
-        machine, num_sections, subsystem = struct.unpack_from('<HBxBx', data, 2)
-        # Re-read properly from the TE header structure
-        machine = struct.unpack_from('<H', data, 2)[0]
-        num_sections = struct.unpack_from('<B', data, 4)[0]
-        subsystem = struct.unpack_from('<B', data, 5)[0]
+        machine, num_sections, subsystem = struct.unpack_from('<HBB', data, 2)
         entry_point = struct.unpack_from('<I', data, 8)[0]
         machine_name = PE_MACHINE_TYPES.get(machine, f'0x{machine:04X}')
         subsys_name = PE_SUBSYSTEM_TYPES.get(subsystem, f'0x{subsystem:02X}')
@@ -299,26 +295,13 @@ def modify_uefi_region(data: bytes, command: int, guid: UUID, uefi_file: bytes =
                 fwbin = NextFwFile(fv.Image, fv.Size, next_offset, polarity)
             if FvEndOffset == 0:
                 logger().log_hal('Using FvEndOffset = 0')
+            # The size delta is absorbed by the free space at the end of the FV, so the
+            # FV keeps its original length. FvLength and the FV header checksum therefore
+            # stay valid and must not be rewritten.
             if FvLengthChange >= 0:
                 data = data[:FvEndOffset] + data[FvEndOffset + FvLengthChange:]
             else:
                 data = data[:FvEndOffset] + (abs(FvLengthChange) * b'\xFF') + data[FvEndOffset:]
-
-            # Recalculate FV header FvLength and checksum after modification
-            if FvLengthChange != 0:
-                FvOffset = fv.Offset
-                FvHeaderLength = fv.HeaderSize
-                OldFvLength = fv.Size
-                NewFvLength = OldFvLength + FvLengthChange
-                logger().log(f'Rebuilding FV header at offset 0x{FvOffset:08X}: FvLength 0x{OldFvLength:X} -> 0x{NewFvLength:X}')
-                FvHeader = bytearray(data[FvOffset:FvOffset + FvHeaderLength])
-                # Update FvLength (UINT64 at offset 0x20)
-                struct.pack_into('<Q', FvHeader, 0x20, NewFvLength)
-                # Zero out checksum field (UINT16 at offset 0x32) before recalculating
-                struct.pack_into('<H', FvHeader, 0x32, 0)
-                NewChecksum = FvChecksum16(bytes(FvHeader))
-                struct.pack_into('<H', FvHeader, 0x32, NewChecksum)
-                data = data[:FvOffset] + bytes(FvHeader) + data[FvOffset + FvHeaderLength:]
 
             FvLengthChange = 0
 
@@ -442,25 +425,33 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
                     sec.children = build_efi_model(sec.Image[sec.HeaderSize:], fwtype)
 
         elif sec.Type == EFI_SECTION_COMPRESSION:
-            compressed_data = sec.Image[sec.HeaderSize + EFI_COMPRESSION_SECTION_size:]
             # Parse the CompressionType field from the EFI_COMPRESSION_SECTION header (PI spec Vol III, Section 2.4.1.2)
-            _uncomp_size, _comp_type = struct.unpack(EFI_COMPRESSION_SECTION, sec.Image[sec.HeaderSize:sec.HeaderSize + EFI_COMPRESSION_SECTION_size])
-            if _comp_type == 0x00:
-                # EFI_NOT_COMPRESSED: data is not compressed
-                d = compressed_data
-            elif _comp_type == 0x01:
-                # EFI_STANDARD_COMPRESSION: try standard EFI decompression first
-                d = decompress_section_data("", sec_fs_name, compressed_data, COMPRESSION_TYPE_EFI_STANDARD)
+            if len(sec.Image) < sec.HeaderSize + EFI_COMPRESSION_SECTION_size:
+                # Truncated/malformed compression section: the common section header is
+                # valid but the compression payload header is incomplete. Report it and
+                # keep the section rather than raising struct.error out of the pipeline.
+                logger().log_warning(f'Malformed compression section at offset 0x{sec.Offset:08X}: expected at least '
+                                     f'{sec.HeaderSize + EFI_COMPRESSION_SECTION_size} bytes, got {len(sec.Image)}')
+                sec.Comments = 'Malformed compression section (truncated header)'
             else:
-                d = b''
-            # If spec-directed decompression failed, fall back to brute-force
-            if not d:
-                for mct in COMPRESSION_TYPES_ALGORITHMS:
-                    d = decompress_section_data("", sec_fs_name, compressed_data, mct)
-                    if d:
-                        break
-            if d:
-                sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
+                compressed_data = sec.Image[sec.HeaderSize + EFI_COMPRESSION_SECTION_size:]
+                _uncomp_size, _comp_type = struct.unpack(EFI_COMPRESSION_SECTION, sec.Image[sec.HeaderSize:sec.HeaderSize + EFI_COMPRESSION_SECTION_size])
+                if _comp_type == 0x00:
+                    # EFI_NOT_COMPRESSED: data is not compressed
+                    d = compressed_data
+                elif _comp_type == 0x01:
+                    # EFI_STANDARD_COMPRESSION: try standard EFI decompression first
+                    d = decompress_section_data("", sec_fs_name, compressed_data, COMPRESSION_TYPE_EFI_STANDARD)
+                else:
+                    d = b''
+                # If spec-directed decompression failed, fall back to brute-force
+                if not d:
+                    for mct in COMPRESSION_TYPES_ALGORITHMS:
+                        d = decompress_section_data("", sec_fs_name, compressed_data, mct)
+                        if d:
+                            break
+                if d:
+                    sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
 
         elif sec.Type == EFI_SECTION_FIRMWARE_VOLUME_IMAGE:
             children = build_efi_file_tree(sec.Image[sec.HeaderSize:], fwtype)
@@ -481,10 +472,11 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
             sec.children = build_efi_model(raw_data, fwtype)
 
         elif sec.Type in (EFI_SECTION_DXE_DEPEX, EFI_SECTION_PEI_DEPEX, EFI_SECTION_MM_DEPEX):
-            # Decode dependency expression opcodes (PI spec Vol III)
+            # Decode dependency expression opcodes.
+            # PI spec Vol II Section 10.7 (DXE/MM), Vol I Section 5.7.1.1 (PEI)
             depex_data = sec.Image[sec.HeaderSize:]
             if depex_data:
-                sec.Comments = decode_depex(depex_data)
+                sec.Comments = decode_depex(depex_data, sec.Type)
 
         elif sec.Type == EFI_SECTION_VERSION:
             # Parse BuildNumber (UINT16) after common header (PI spec Vol III, Section 2.4.1.4)
@@ -495,8 +487,9 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
                 ver_string = ''
                 try:
                     ver_string = sec.Image[ver_start + EFI_VERSION_SECTION_size:].decode('utf-16-le').rstrip('\x00')
-                except (UnicodeDecodeError, Exception):
-                    pass
+                except UnicodeDecodeError as e:
+                    # Version string is optional and may hold non-UCS-2 bytes; report and continue
+                    logger().log_warning(f'Could not decode VERSION section string at offset 0x{sec.Offset:08X}: {repr(e)}')
                 sec.Comments = f'BuildNumber={build_number}'
                 if ver_string:
                     sec.Comments += f' Version="{ver_string}"'
@@ -510,6 +503,16 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
                 sec.Comments = f'SubTypeGuid={{{sec.Guid}}}'
                 # Attempt to recurse into the data after the SubTypeGuid
                 sec.children = build_efi_model(sec.Image[guid_start + EFI_FREEFORM_SUBTYPE_GUID_SECTION_size:], fwtype)
+
+        elif sec.Type == EFI_SECTION_DISPOSABLE:
+            # Encapsulation section: the common header is followed directly by a series of
+            # sections. Recurse so content inside disposable sections is still discovered.
+            disposable_data = sec.Image[sec.HeaderSize:]
+            if disposable_data:
+                sec.children = build_efi_modules_tree(fwtype, disposable_data, len(disposable_data), 0, polarity)
+                if not sec.children:
+                    # Fall back to a generic scan in case the contents are not well-formed
+                    sec.children = build_efi_model(disposable_data, fwtype)
 
         elif sec.Type not in SECTION_NAMES.keys():
             sec.children = build_efi_model(sec.Image[sec.HeaderSize:], fwtype)
@@ -538,10 +541,14 @@ def build_efi_file_tree(fv_img: bytes, fwtype: Optional[str]) -> List[EFI_FILE]:
         fw_offset = fwbin.Size + fwbin.Offset
         fwbin.calc_hashes()
         if padding < fwbin.Offset:
+            # The gap runs from the end of the previous file up to this one. Scan all of
+            # it: a trailing '- 1' dropped the final byte, so content ending exactly at
+            # the gap boundary was truncated and missed.
+            gap = fv_img[padding:fwbin.Offset]
             non_UEFI = EFI_SECTION(padding, 'Non-UEFI_Padding', EFI_FV_FILETYPE_FFS_PAD,
-                                   fv_img[padding:fw_offset - 1], 0, fwbin.Offset - padding)
+                                   gap, 0, fwbin.Offset - padding)
             non_UEFI.Comments = 'Attempting to identify modules in non-UEFI Padding Section'
-            non_UEFI.children = find_efi_modules(data=fv_img[padding:fwbin.Offset - 1], fwtype=fwtype, polarity=polarity)
+            non_UEFI.children = find_efi_modules(data=gap, fwtype=fwtype, polarity=polarity)
             if non_UEFI.children:
                 fv.append(non_UEFI)
         padding = fw_offset
@@ -559,7 +566,7 @@ def build_efi_file_tree(fv_img: bytes, fwtype: Optional[str]) -> List[EFI_FILE]:
                 fwbin.NVRAMType = FWType.EFI_FW_TYPE_NVAR
                 fv.append(fwbin)
         elif fwbin.Type == EFI_FV_FILETYPE_FFS_PAD:
-            non_UEFI = EFI_SECTION(fwbin.Offset, 'Padding', fwbin.Type, fv_img[fw_offset:], 0, fwbin.Size)
+            non_UEFI = EFI_SECTION(fwbin.Offset, 'Padding', fwbin.Type, fwbin.Image, 0, fwbin.Size)
             non_UEFI.Comments = 'Attempting to identify modules in Padding Section'
             non_UEFI.children = find_efi_modules(data=fwbin.Image, fwtype=fwtype, polarity=polarity)
             if non_UEFI.children:
@@ -855,7 +862,7 @@ def strip_capsule_header(data: bytes) -> bytes:
     return data
 
 
-def parse_uefi_region_from_file(filename: str, fwtype: Optional[str], outpath: Optional[str] = None, filetype: List[int] = []) -> None:
+def parse_uefi_region_from_file(filename: str, fwtype: Optional[str], outpath: Optional[str] = None, filetype: Optional[List[int]] = None) -> List['EFI_MODULE']:
     # Create an output folder to dump EFI module tree
     if outpath is None:
         outpath = f'{filename}.dir'

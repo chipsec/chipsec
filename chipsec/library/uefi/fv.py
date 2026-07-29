@@ -42,7 +42,7 @@ FFS_ATTRIB_FIXED = 0x04
 FFS_ATTRIB_DATA_ALIGNMENT = 0x38
 FFS_ATTRIB_CHECKSUM = 0x40
 
-# PI spec Vol III, Table 2.3.1 — FFS file data alignment values
+# PI spec Vol III, "Firmware Storage Code Definitions" - FFS file data alignment values.
 # Index into this table is bits [5:3] of Attributes; when FFS_ATTRIB_DATA_ALIGNMENT2 is set, add 8
 FFS_ALIGNMENT_TABLE = [
     1, 16, 128, 512, 1024, 4096, 32768, 65536,          # base (ALIGNMENT2=0)
@@ -117,14 +117,19 @@ EFI_SECTION_COMPATIBILITY16 = 0x16
 EFI_SECTION_FIRMWARE_VOLUME_IMAGE = 0x17
 EFI_SECTION_FREEFORM_SUBTYPE_GUID = 0x18
 EFI_SECTION_RAW = 0x19
-EFI_SECTION_DISPOSABLE = 0x1A
 EFI_SECTION_PEI_DEPEX = 0x1B
 EFI_SECTION_MM_DEPEX = 0x1C
+
+# PI spec Vol III, "Firmware Storage Code Definitions" (EFI_SECTION_TYPE):
+# EFI_SECTION_DISPOSABLE is an encapsulation section type defined as 0x03.
+# 0x1A is not an assigned section type.
+EFI_SECTION_DISPOSABLE = 0x03
 
 SECTION_NAMES = {
     0x00: 'S_ALL',
     0x01: 'S_COMPRESSION',
     0x02: 'S_GUID_DEFINED',
+    0x03: 'S_DISPOSABLE',
     0x10: 'S_PE32',
     0x11: 'S_PIC',
     0x12: 'S_TE',
@@ -135,7 +140,6 @@ SECTION_NAMES = {
     0x17: 'S_FV_IMAGE',
     0x18: 'S_FREEFORM_SUBTYPE_GUID',
     0x19: 'S_RAW',
-    0x1A: 'S_DISPOSABLE',
     0x1B: 'S_PEI_DEPEX',
     0x1C: 'S_MM_DEPEX'
 }
@@ -239,19 +243,27 @@ EFI_CAPSULE_GUID = UUID('3B6686BD-0D76-4030-B70E-B5519E2FC5A0')
 EFI_FMP_CAPSULE_GUID = UUID('6DCBD5ED-E82D-4C44-BDA1-7194199AD92A')
 EFI_CAPSULE_GUIDS = [EFI_CAPSULE_GUID, EFI_FMP_CAPSULE_GUID]
 
-# PI spec Vol III - Dependency Expression Opcodes (Section 2.4.1.3, 10.6, 13.1)
-DEPEX_OPCODE_PUSH = 0x00
-DEPEX_OPCODE_AND = 0x01
-DEPEX_OPCODE_OR = 0x02
-DEPEX_OPCODE_NOT = 0x03
-DEPEX_OPCODE_TRUE = 0x04
-DEPEX_OPCODE_FALSE = 0x05
-DEPEX_OPCODE_END = 0x06
-DEPEX_OPCODE_SOR = 0x07
-DEPEX_OPCODE_BEFORE = 0x08
-DEPEX_OPCODE_AFTER = 0x09
+# Dependency expression opcodes.
+# PI spec Vol II, Section 10.7 (DXE) and Vol I, Section 5.7.1.1 (PEI):
+# "Dependency Expression Opcode Summary"
+DEPEX_OPCODE_BEFORE = 0x00
+DEPEX_OPCODE_AFTER = 0x01
+DEPEX_OPCODE_PUSH = 0x02
+DEPEX_OPCODE_AND = 0x03
+DEPEX_OPCODE_OR = 0x04
+DEPEX_OPCODE_NOT = 0x05
+DEPEX_OPCODE_TRUE = 0x06
+DEPEX_OPCODE_FALSE = 0x07
+DEPEX_OPCODE_END = 0x08
+DEPEX_OPCODE_SOR = 0x09
 
+# Opcodes followed by a 16-byte GUID operand
+DEPEX_OPCODES_WITH_GUID = (DEPEX_OPCODE_BEFORE, DEPEX_OPCODE_AFTER, DEPEX_OPCODE_PUSH)
+
+# DXE and MM dependency expressions use the full opcode set
 DEPEX_OPCODE_NAMES = {
+    DEPEX_OPCODE_BEFORE: 'BEFORE',
+    DEPEX_OPCODE_AFTER: 'AFTER',
     DEPEX_OPCODE_PUSH: 'PUSH',
     DEPEX_OPCODE_AND: 'AND',
     DEPEX_OPCODE_OR: 'OR',
@@ -260,35 +272,61 @@ DEPEX_OPCODE_NAMES = {
     DEPEX_OPCODE_FALSE: 'FALSE',
     DEPEX_OPCODE_END: 'END',
     DEPEX_OPCODE_SOR: 'SOR',
-    DEPEX_OPCODE_BEFORE: 'BEFORE',
-    DEPEX_OPCODE_AFTER: 'AFTER',
 }
 
+# Opcodes not defined for PEI dependency expressions. These are still decoded when
+# found in a PEI DEPEX section, but flagged, since firmware in the wild is not
+# always conformant and the deviation itself is worth reporting.
+PEI_UNDEFINED_DEPEX_OPCODES = (DEPEX_OPCODE_BEFORE, DEPEX_OPCODE_AFTER, DEPEX_OPCODE_SOR)
 
-def decode_depex(data: bytes) -> str:
+
+def decode_depex(data: bytes, section_type: int = EFI_SECTION_DXE_DEPEX) -> str:
     """Decode a dependency expression (DEPEX) section into human-readable form.
 
-    Per PI spec Vol III: PEI (Section 10.6), DXE (Section 2.4.1.3), MM (Section 13.1)
+    Opcode encodings are defined by the PI specification:
+      - DXE: Volume II, Section 10.7 'Dependency Expression Instruction Set'
+      - PEI: Volume I, Section 5.7.1.1 'Dependency Expression Instruction Set'
+
+    MM dependency expressions reuse the DXE opcode set. PEI does not define the
+    BEFORE, AFTER or SOR opcodes.
+
+    Decoding always uses the full opcode table so that non-conforming images stay
+    visible: an opcode that is not valid for the section type is still decoded but
+    tagged '!non-PEI'. Real firmware does contain such deviations and silently
+    dropping them would hide content from analysis.
     """
     result = []
     offset = 0
     while offset < len(data):
         opcode = data[offset]
         offset += 1
-        if opcode in (DEPEX_OPCODE_PUSH, DEPEX_OPCODE_BEFORE, DEPEX_OPCODE_AFTER):
+        if opcode not in DEPEX_OPCODE_NAMES:
+            # Operand length is unknown, so the stream cannot be resynchronised.
+            # Report how much was left undecoded instead of dropping it silently.
+            remaining = len(data) - offset
+            result.append(f'UNKNOWN(0x{opcode:02X})')
+            if remaining:
+                result.append(f'<{remaining} undecoded bytes>')
+            break
+        name = DEPEX_OPCODE_NAMES[opcode]
+        if section_type == EFI_SECTION_PEI_DEPEX and opcode in PEI_UNDEFINED_DEPEX_OPCODES:
+            name += '!non-PEI'
+        if opcode in DEPEX_OPCODES_WITH_GUID:
             if offset + 16 > len(data):
-                result.append(f'{DEPEX_OPCODE_NAMES.get(opcode, f"UNKNOWN(0x{opcode:02X})")} <TRUNCATED>')
+                result.append(f'{name} <TRUNCATED>')
                 break
             guid = UUID(bytes_le=data[offset:offset + 16])
-            result.append(f'{DEPEX_OPCODE_NAMES[opcode]} {{{guid}}}')
+            result.append(f'{name} {{{guid}}}')
             offset += 16
-        elif opcode in DEPEX_OPCODE_NAMES:
-            result.append(DEPEX_OPCODE_NAMES[opcode])
-            if opcode == DEPEX_OPCODE_END:
-                break
         else:
-            result.append(f'UNKNOWN(0x{opcode:02X})')
-            break
+            result.append(name)
+            if opcode == DEPEX_OPCODE_END:
+                # Anything after END is outside the expression. Surface non-blank
+                # trailing data rather than discarding it.
+                trailing = data[offset:]
+                if trailing.strip(b'\xff') and trailing.strip(b'\x00'):
+                    result.append(f'<{len(trailing)} trailing bytes after END>')
+                break
     return ' '.join(result)
 
 
@@ -384,7 +422,7 @@ class EFI_FILE(EFI_MODULE):
     def __str__(self) -> str:
         schecksum = f'{self.Checksum:04X}h ({self.CalcSum:04X}h) *** checksum mismatch ***' if self.CalcSum != self.Checksum else f'{self.Checksum:04X}h'
         _s = f'\n{self.indent}+{self.Offset:08X}h {self.name()}\n{self.indent}Type {self.Type:02X}h, Attr {self.Attributes:08X}h, State {self.State:02X}h, Size {self.Size:06X}h, Checksum {schecksum}'
-        # Decode data alignment from attributes (PI spec Vol III, Table 2.3.1)
+        # Decode data alignment from attributes (PI spec Vol III, EFI_FFS_FILE_HEADER Attributes)
         align_idx = (self.Attributes & FFS_ATTRIB_DATA_ALIGNMENT) >> 3
         if self.Attributes & FFS_ATTRIB_DATA_ALIGNMENT2:
             align_idx += 8
@@ -635,7 +673,7 @@ def NextFwFile(FvImage: bytes, FvLength: int, fof: int, polarity: bool) -> Optio
 
         # Get File size
         if Attributes & FFS_ATTRIB_LARGE_FILE and len(FvImage) > cur_offset + struct.calcsize(EFI_FFS_FILE_HEADER2):
-            fsize = struct.unpack("Q", FvImage[cur_offset + file_header_size:cur_offset + file_header_size + struct.calcsize("Q")])[0]
+            fsize = struct.unpack("<Q", FvImage[cur_offset + file_header_size:cur_offset + file_header_size + struct.calcsize("<Q")])[0]
             fsize &= 0xFFFFFFFF
         if fsize == 0 or fsize > FvLength - cur_offset:
             fsize = get_3b_size(Size)
@@ -651,14 +689,22 @@ def NextFwFile(FvImage: bytes, FvLength: int, fof: int, polarity: bool) -> Optio
             cur_offset = align(cur_offset + 1, 8)
             continue
         Name = UUID(bytes_le=Name0)
-        # Compute header checksum using the correct header format for large files
-        if Attributes & FFS_ATTRIB_LARGE_FILE:
-            fheader = struct.pack(EFI_FFS_FILE_HEADER2, Name0, 0, Type, Attributes, Size, 0, 0)
-        else:
-            fheader = struct.pack(EFI_FFS_FILE_HEADER, Name0, 0, Type, Attributes, Size, 0)
-        hsum = FvChecksum8(fheader)
+        # Header checksum: per the PI spec the IntegrityCheck and State fields are treated
+        # as zero. Checksum the header bytes straight from the image so that large-file
+        # headers cover their real ExtendedSize field.
+        if len(FvImage) < cur_offset + header_size:
+            # Not enough room for this header. Keep sliding the scan window rather than
+            # aborting: a bogus LARGE_FILE attribute in non-file data must not stop the
+            # search for content placed outside the normal file chain.
+            logger().log_hal(f'Truncated FFS file header at offset 0x{cur_offset:08X}, continuing scan')
+            cur_offset = align(cur_offset + 1, 8)
+            continue
+        fheader = bytearray(FvImage[cur_offset:cur_offset + header_size])
+        fheader[0x10:0x12] = b'\x00\x00'  # IntegrityCheck
+        fheader[0x17] = 0  # State
+        hsum = FvChecksum8(bytes(fheader))
         if (Attributes & FFS_ATTRIB_CHECKSUM):
-            fsum = FvChecksum8(FvImage[cur_offset + file_header_size:cur_offset + fsize])
+            fsum = FvChecksum8(FvImage[cur_offset + header_size:cur_offset + fsize])
         else:
             fsum = FFS_FIXED_CHECKSUM
         CalcSum = (hsum | (fsum << 8))

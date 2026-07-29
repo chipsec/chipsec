@@ -360,7 +360,8 @@ class UEFICommand(BaseCommand):
                 else:
                     self.logger.log_warning("Unknown file type '{}'. Valid types: {}".format(
                         mtype, list(FILE_TYPE_NAMES.values())))
-        decode_uefi_region(cur_dir, self.filename, self.fwtype, ftypes)
+        if not decode_uefi_region(cur_dir, self.filename, self.fwtype, ftypes):
+            self.ExitCode = ExitCode.ERROR
         self.logger.set_log_file(_orig_logname)
         if self.ExitCode == ExitCode.ERROR:
             self.logger.log_error(f"Could not parse EFI firmware volumes from '{self.filename}'")
