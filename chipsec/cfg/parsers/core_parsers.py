@@ -509,6 +509,10 @@ class CoreConfigRegisters(BaseConfigParser):
                         elif reg_attr['scope'] == 'cores':
                             cores = self.cfg.CPU['cores']
                             threads_to_use = [cores[p][0] for p in cores]
+                        elif reg_attr['scope'] != 'thread':
+                            self.logger.log_warning(
+                                f"Unrecognized scope '{reg_attr['scope']}' for MSR {reg_name}. "
+                                "Expected 'package', 'cores' or 'thread'; defaulting to per-thread.")
                     if threads_to_use is None:
                         threads_to_use = range(self.cfg.CPU['threads'])
                     reg_obj = self.create_register_object(MSRRegisters, reg_attr, threads_to_use)
