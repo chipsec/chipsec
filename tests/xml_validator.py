@@ -43,6 +43,7 @@ class ConfigAttributeValidator:
         self.int_list_attrs = {'bus'}
         self.str_list_attrs = {'config'}
         self.range_list_attrs = {'detection_value'}
+        self.valid_msr_scopes = {'package', 'cores', 'thread'}
         self.validation_errors = []
         self.passed_file_count = 0
         self.file_count = 0
@@ -138,6 +139,19 @@ class ConfigAttributeValidator:
 
         return True
 
+    def validate_msr_scope(self, element: ET.Element) -> bool:
+        """Validate the 'scope' attribute on MSR register definitions"""
+        if element.tag != 'register' or element.get('type') != 'msr':
+            return True
+        scope = element.get('scope')
+        if scope is None or scope in self.valid_msr_scopes:
+            return True
+        valid_scopes = ', '.join(sorted(self.valid_msr_scopes))
+        self.validation_errors.append(
+            f"Element 'register' ({element.get('name')}): Attribute 'scope' must be one of [{valid_scopes}]; got '{scope}'"
+        )
+        return False
+
     def validate_no_invisible_chars(self, text: str, context: str) -> bool:
         """Check for invisible or non-printable Unicode characters in text"""
         valid = True
@@ -154,6 +168,9 @@ class ConfigAttributeValidator:
     def validate_xml_element(self, element: ET.Element, did_is_range: bool = False) -> bool:
         """Validate all attributes of an XML element"""
         element_valid = True
+
+        if not self.validate_msr_scope(element):
+            element_valid = False
 
         for attr_name, attr_value in element.attrib.items():
             if not self.validate_attribute(attr_name, attr_value, element.tag, did_is_range):
