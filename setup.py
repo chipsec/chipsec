@@ -219,7 +219,12 @@ if platform.system().lower() == 'windows':
 
 elif platform.system().lower() == 'linux':
     package_data['chipsec_tools.compression'] = ['*']
-    data_files = [(os.path.abspath(os.path.join(os.sep,'usr','share', 'doc','chipsec')), ['chipsec-manual.pdf'])]
+    # Relative to the install prefix, not absolute. A wheel is relocatable -- whoever
+    # installs it decides where it lands -- so an absolute destination cannot be
+    # expressed. Given one, the wheel build strips the leading separator and treats
+    # the remainder as an ordinary directory name, installing the manual to
+    # site-packages/usr/share/doc/chipsec/ instead of /usr/share/doc/chipsec/.
+    data_files = [(os.path.join('share', 'doc', 'chipsec'), ['chipsec-manual.pdf'])]
     extra_kw = [
         Extension(
             'EfiCompressor',
