@@ -183,7 +183,11 @@ package_data = {
     # Include any configuration file.
     '': ['*.ini', '*.cfg', '*.json'],
     'chipsec': ['*VERSION*', 'WARNING.txt', 'options/*.ini'],
-    'chipsec.cfg': ['8086/*.xml', '1022/*.xml', '*.xml', '*.xsd'],
+    # Vendor directories under cfg/ nest one level deeper than '<vendor>/*.xml'
+    # reaches (e.g. cfg/8086/TPM/tpm12.xml), and those subdirectories are not Python
+    # packages, so they are only installed if matched from here. Matching by depth
+    # rather than by vendor id also picks up vendors added later.
+    'chipsec.cfg': ['*.xml', '*.xsd', '*/*.xml', '*/*/*.xml'],
 }
 data_files = [('', ['chipsec-manual.pdf'])]
 install_requires = []
