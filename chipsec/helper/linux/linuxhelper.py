@@ -128,6 +128,26 @@ class LinuxHelper(Helper):
             else:
                 a2 = f'a2=0x{phys_mem_access_prot}'
 
+        # Prefer modprobe, which resolves the module by name through the kernel's own
+        # search path. The file probing below only recognises 'chipsec.ko' and
+        # 'chipsec.ko.xz', so it cannot see a module built by DKMS on a distribution
+        # that compresses modules with zstd (Arch Linux installs chipsec.ko.zst), and
+        # insmod could not load a compressed module even if it found one. modprobe
+        # handles every compression format and succeeds harmlessly when the module is
+        # already loaded.
+        try:
+            subprocess.check_output(['modprobe', self.MODULE_NAME] + [p for p in (a1, a2) if p],
+                                    stderr=subprocess.STDOUT)
+        except Exception:
+            pass
+        else:
+            if os.path.exists(self.DEVICE_NAME):
+                os.chown(self.DEVICE_NAME, 0, 0)
+                os.chmod(self.DEVICE_NAME, 0o600)
+                logger().log_debug(f'Module {self.DEVICE_NAME} loaded successfully')
+                self.driverpath = f'(modprobe {self.MODULE_NAME})'
+                return
+
         driver_path = os.path.join(chipsec.library.file.get_main_dir(), 'chipsec', 'helper', 'linux', 'chipsec.ko')
         if not os.path.exists(driver_path):
             driver_path += '.xz'
