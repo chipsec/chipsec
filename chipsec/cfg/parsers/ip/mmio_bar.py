@@ -29,9 +29,16 @@ from typing import Optional, TYPE_CHECKING
 from chipsec.cfg.parsers.ip.generic import GenericConfig, GenericConfigError
 from chipsec.cfg.parsers.ip.platform import RegisterList
 from chipsec.library.exceptions import MMIOBarConfigError
+from chipsec.library.logger import logger
 
 if TYPE_CHECKING:
     from chipsec.cfg.parsers.ip.pci_device import PCIObj
+
+
+def _is_valid_fixed_address(value) -> bool:
+    # bool is a subclass of int; zero means "no fixed address" to the MMIO HAL
+    return isinstance(value, int) and not isinstance(value, bool) and value > 0
+
 
 class MMIOObj:
     """
@@ -154,18 +161,23 @@ class MMIOBarConfig(GenericConfig, RegisterList):
             GenericConfig.__init__(self, cfg_obj)
             RegisterList.__init__(self)
 
-            # Required fields
-            if 'register' not in cfg_obj or 'base_field' not in cfg_obj:
+            # Base comes from a register/base_field pair or a fixed address
+            self.fixed_address = cfg_obj.get('fixed_address')
+            # A malformed numeric XML attribute is left as its original string by XMLConfigConverter
+            if self.fixed_address is not None and not _is_valid_fixed_address(self.fixed_address):
                 raise MMIOBarConfigError(
-                    "Missing required fields: register and/or base_field")
+                    f"Invalid fixed_address for BAR {self.name}: expected a positive integer, got {self.fixed_address!r}")
+            if self.fixed_address is None and ('register' not in cfg_obj or 'base_field' not in cfg_obj):
+                logger().log_debug(f'BAR object {self.name} has an incomplete register/base_field pair.')
+                raise MMIOBarConfigError("Missing required fields: register and/or base_field")
 
             # Device field (can be 'device' or 'component')
             self.device = (cfg_obj.get('device') or
                            cfg_obj.get('component'))
 
             # Core configuration
-            self.register = cfg_obj['register']
-            self.base_field = cfg_obj['base_field']
+            self.register = cfg_obj.get('register')
+            self.base_field = cfg_obj.get('base_field')
             self.size = cfg_obj.get('size')
             self.desc = cfg_obj.get('desc', self.name)
             self.reg_align = cfg_obj.get('reg_align')
@@ -179,7 +191,6 @@ class MMIOBarConfig(GenericConfig, RegisterList):
             self.limit_field = cfg_obj.get('limit_field')
             self.limit_register = cfg_obj.get('limit_register')
             self.limit_align = cfg_obj.get('limit_align')
-            self.fixed_address = cfg_obj.get('fixed_address')
             self.enable_field = cfg_obj.get('enable_field')
             self.enable_bit = cfg_obj.get('enable_bit')
             self.valid = cfg_obj.get('valid')
@@ -284,7 +295,10 @@ class MMIOBarConfig(GenericConfig, RegisterList):
                 return False
 
             # Validate required fields
-            if not self.register or not self.base_field:
+            if self.fixed_address is None:
+                if not self.register or not self.base_field:
+                    return False
+            elif not _is_valid_fixed_address(self.fixed_address):
                 return False
 
             # Validate all MMIO instances

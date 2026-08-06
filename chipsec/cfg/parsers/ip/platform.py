@@ -698,10 +698,20 @@ class Bar(BarContainerMixin, RegisterList):
         Get the BAR register name from the BAR object.
 
         Returns:
-            str containing the BAR register's full name (e.g., '8086.HOSTCTL.MCHBAR').
+            str containing the BAR register's full name (e.g., '8086.HOSTCTL.MCHBAR')
+
+        Raises:
+            PlatformConfigError: If the BAR is not backed by a register.
         """
-        if hasattr(self.obj, 'register'):
-            return self.obj.register
-        if 'register' in self.obj:
-            return self.obj['register']
+        register = getattr(self.obj, 'register', None)
+        if register is None and hasattr(self.obj, 'get'):
+            register = self.obj.get('register')
+        if register is not None:
+            return register
+        fixed_address = getattr(self.obj, 'fixed_address', None)
+        if fixed_address is None and hasattr(self.obj, 'get'):
+            fixed_address = self.obj.get('fixed_address')
+        if fixed_address is not None:
+            raise PlatformConfigError(
+                f'BAR object {self.name} is defined by fixed address {fixed_address} and has no backing register.')
         raise PlatformConfigError(f'BAR object {self.name} does not have a register attribute or key.')
