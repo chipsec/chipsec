@@ -53,6 +53,6 @@ jobs:
           make
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81
+        uses: github/codeql-action/analyze@d1ba80a13dd99fba24a470575428917156a28b43
         with:
           category: "/language:${{ matrix.language }}"
