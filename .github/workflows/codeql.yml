@@ -42,7 +42,7 @@ jobs:
           sudo apt-get install -qqy nasm
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81
+        uses: github/codeql-action/init@5595ccaf912efad79be6eef63a5619ff05969be3
         with:
           languages: ${{ matrix.language }}
           queries: +security-and-quality
@@ -53,6 +53,6 @@ jobs:
           make
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81
+        uses: github/codeql-action/analyze@5595ccaf912efad79be6eef63a5619ff05969be3
         with:
           category: "/language:${{ matrix.language }}"
