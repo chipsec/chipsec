@@ -60,7 +60,7 @@ from chipsec.module_common import BaseModule, BIOS
 from chipsec.library.returncode import ModuleResult
 
 from chipsec.hal.common.uefi import UEFI
-from chipsec.hal.intel.spi import SPI, BIOS
+from chipsec.hal.intel.spi import SPI
 from chipsec.library.uefi.fv import EFI_MODULE, EFI_SECTION
 from chipsec.library.uefi.spi import build_efi_model, search_efi_tree, EFIModuleType, UUIDEncoder
 from chipsec.library.file import write_file, read_file
