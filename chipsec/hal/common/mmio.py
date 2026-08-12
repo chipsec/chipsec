@@ -74,7 +74,7 @@ class MMIO(hal_base.HALBase):
     def read_MMIO_reg(self, bar_base: int, offset: int, size: int = 4, bar_size: Optional[int] = None) -> int:
         if size > 8:
             if self.logger.HAL:
-                self.logger.log_warning("[mmio] MMIO read cannot exceed 8")
+                self.logger.log_warning(f'[mmio] Requested read size 0x{size:x} exceeds the 8-byte maximum for a single MMIO access')
         if bar_size and offset + size > bar_size:
             self.logger.log_warning(f"[mmio] Offset(0x{offset:x}) + size(0x{size:x}) is > bar_size(0x{bar_size:x})")
         reg_value = self.cs.helper.read_mmio_reg(bar_base+offset, size)

@@ -107,7 +107,8 @@ class UEFI(hal_base.HALBase):
 
     def read_EFI_variables(self, efi_var_store: Optional[bytes], authvars: bool) -> Dict[str, List['EfiVariableType']]:
         if efi_var_store is None:
-            logger().log_error('efi_var_store is None')
+            logger().log_error('Cannot read EFI variables: the NVRAM/variable store buffer is empty. '
+                               'The SPI/ROM region may not have been read successfully.')
             return {}
         variables: Dict[str, List[EfiVariableType]] = EFI_VAR_DICT[self._FWType]['func_getefivariables'](efi_var_store)
         if logger().UTIL_TRACE:

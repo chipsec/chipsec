@@ -34,8 +34,8 @@ def get_json_results(json_file: str) -> Any:
         return None
     try:
         json_data = json.loads(bytestostring(file_data))
-    except Exception:
-        logger().log_error(f'Unable to load JSON file: {json_file}')
+    except Exception as err:
+        logger().log_error(f'Could not parse "{json_file}" as CHIPSEC JSON results: {type(err).__name__}: {err}')
         return None
     return json_data
 

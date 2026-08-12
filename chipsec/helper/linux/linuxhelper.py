@@ -296,9 +296,10 @@ class LinuxHelper(Helper):
         d = struct.pack(f'5{self._pack}', ((_PCI_DOM << 16) | bus), ((device << 16) | function), offset, size, 0)
         try:
             ret = self.ioctl(IOCTL_RDPCI, d)
-        except IOError:
+        except IOError as err:
             if logger().DEBUG:
-                logger().log_error('IOError\n')
+                logger().log_error(f'[helper] RDPCI ioctl failed reading {size:d} bytes from '
+                                   f'B:D.F {bus:02X}:{device:02X}.{function:X} offset 0x{offset:X}: {err}')
             return 0
         x = struct.unpack(f'5{self._pack}', ret)
         return x[4]
@@ -308,9 +309,10 @@ class LinuxHelper(Helper):
         d = struct.pack(f'5{self._pack}', ((_PCI_DOM << 16) | bus), ((device << 16) | function), offset, size, value)
         try:
             ret = self.ioctl(IOCTL_WRPCI, d)
-        except IOError:
+        except IOError as err:
             if logger().DEBUG:
-                logger().log_error('IOError\n')
+                logger().log_error(f'[helper] WRPCI ioctl failed writing 0x{value:X} ({size:d} bytes) to '
+                                   f'B:D.F {bus:02X}:{device:02X}.{function:X} offset 0x{offset:X}: {err}')
             return 0
         x = struct.unpack(f'5{self._pack}', ret)
         return x[4]
@@ -323,9 +325,10 @@ class LinuxHelper(Helper):
         out_length = 0
         try:
             out_buf = self.ioctl(IOCTL_LOAD_UCODE_PATCH, in_buf_final)
-        except IOError:
+        except IOError as err:
             if logger().DEBUG:
-                logger().log_error('IOError IOCTL Load Patch\n')
+                logger().log_error(f'[helper] LOAD_UCODE_PATCH ioctl failed loading a {len(ucode_update_buf):d}-byte '
+                                   f'microcode update on CPU thread {cpu_thread_id:d}: {err}')
             return False
 
         return True
@@ -518,15 +521,17 @@ class LinuxHelper(Helper):
             buffer = array.array('B', in_buf)
             try:
                 stat = self.ioctl(IOCTL_GET_EFIVAR, buffer)
-            except IOError:
+            except IOError as err:
                 if logger().DEBUG:
-                    logger().log_error('IOError IOCTL GetUEFIvar\n')
+                    logger().log_error(f'[helper] GET_EFIVAR ioctl failed re-reading UEFI variable '
+                                       f'({name}:{guid}) with buffer size {new_size:d}: {err}')
                 return (off, buf, hdr, b'', guid, attr)
             new_size, status = struct.unpack('2I', buffer[:8])
 
         if (new_size > data_size):
             if logger().DEBUG:
-                logger().log_error('Incorrect size returned from driver')
+                logger().log_error(f'[helper] Driver reported UEFI variable ({name}:{guid}) data size {new_size:d} '
+                                   f'which is larger than the requested buffer size {data_size:d}; discarding the data')
             return (off, buf, hdr, b'', guid, attr)
 
         if (status > 0):

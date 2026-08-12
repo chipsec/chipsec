@@ -229,7 +229,8 @@ class Register:
 
         # Check that the configuration is initialized
         if not hasattr(self.cs, 'Cfg'):
-            logger().log_warning("Configuration not initialized")
+            logger().log_warning(f'Cannot look up register "{reg_name}": platform configuration has not been '
+                                 f'loaded yet (cs.Cfg is missing). Returning an empty register list.')
             return result_list
 
         # Use the platform structure to search across all vendors, IPs and BARs
@@ -266,7 +267,7 @@ class Register:
                 if reg_obj.get_instance() == instance:
                     return reg_obj
         except RegisterNotFoundError:
-            logger().log_error(f'Register {reg_name} not found')
+            logger().log_error(f'Register "{reg_name}" (instance {instance}) is not defined for this platform')
 
         # Return a null register object instead of None for better error handling
         return NullRegister(reg_name, instance)
@@ -583,7 +584,8 @@ class ObjList(list):
 
     def is_all_value(self, value: int, mask: Optional[int] = None) -> bool:
         if not self:
-            logger().log_warning('ObjList.is_all_value called on empty list')
+            logger().log_warning(f'ObjList.is_all_value(0x{value:X}) called on an empty register list; '
+                                 f'the register is likely not defined for this platform. Returning False.')
             return False
         if mask is None:
             return all(inst.value == value for inst in self)
@@ -687,12 +689,14 @@ class NullRegister:
 
     def read(self) -> int:
         """Null implementation of read operation."""
-        logger().log_warning(f'Attempted to read null register {self.name}')
+        logger().log_warning(f'Read of register "{self.name}" (instance {self.instance}) returned 0: '
+                             f'the register instance was not found in the platform configuration.')
         return 0
 
     def write(self, value: int) -> None:
         """Null implementation of write operation."""
-        logger().log_warning(f'Attempted to write to null register {self.name}')
+        logger().log_warning(f'Write of 0x{value:X} to register "{self.name}" (instance {self.instance}) was ignored: '
+                             f'the register instance was not found in the platform configuration.')
 
     def has_field(self, field_name: str) -> bool:
         """Null implementation - no fields available."""
