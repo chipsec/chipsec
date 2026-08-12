@@ -153,7 +153,8 @@ class ChipsecMain:
         """
         module = None
         if not self.MODPATH_RE.match(module_path):
-            self.logger.log_error(f'Invalid module path: {module_path}')
+            self.logger.log_error(f'Invalid module path: "{module_path}". Expected a dotted Python module path '
+                                  f'(e.g. chipsec.modules.common.bios_wp) containing only letters, digits and underscores.')
         else:
             try:
                 module = importlib.import_module(module_path)
@@ -283,7 +284,8 @@ class ChipsecMain:
 
     def print_loaded_modules(self):
         if self.Loaded_Modules == []:
-            self.logger.log("No modules have been loaded")
+            self.logger.log('No modules have been loaded. Check the module path/name passed with -m, '
+                            'the tag filters passed with -t, and that the platform was detected correctly.')
         for (modx, _) in self.Loaded_Modules:
             self.logger.log(f'[+] loaded {modx}')
 
@@ -363,7 +365,8 @@ class ChipsecMain:
         if self._deltas_file is not None:
             prev_results = chipsec.library.result_deltas.get_json_results(self._deltas_file)
             if prev_results is None:
-                self.logger.log_error("Delta processing disabled.  Displaying results summary.")
+                self.logger.log_error(f'Could not read previous results from "{self._deltas_file}" (missing or invalid JSON). '
+                                      f'Delta processing is disabled; displaying the standard results summary instead.')
             else:
                 test_deltas = chipsec.library.result_deltas.compute_result_deltas(prev_results, results.get_results())
                 chipsec.library.result_deltas.display_deltas(test_deltas, self.no_time, t)
@@ -433,8 +436,10 @@ class ChipsecMain:
         except UnknownChipsetError as msg:
             self.logger.log_error(f'Platform is not supported ({str(msg)}).')
             if self._ignore_platform:
-                self.logger.log_error('To specify a cpu please use -p command-line option')
-                self.logger.log_error('To specify a pch please use --pch command-line option\n')
+                self.logger.log_error('Platform detection could not match this system to a configuration in chipsec/cfg.')
+                self.logger.log_error('To force a CPU/platform, use: -p <platform_code>')
+                self.logger.log_error('To force a PCH, use: --pch <pch_code>')
+                self.logger.log_error('Valid platform/PCH codes can be found using `chipsec_main.py --help`')
                 self.logger.log_error('If the correct configuration is not loaded, results should not be trusted.')
                 if self.logger.DEBUG:
                     self.logger.log_bad(traceback.format_exc())

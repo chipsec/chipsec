@@ -502,7 +502,7 @@ class SPI(hal_base.HALBase):
 
         cycle_done = self._wait_SPI_flash_cycle_done()
         if not cycle_done:
-            self.logger.log_warning("SPI cycle not done")
+            self.logger.log_warning(f'SPI cycle (HSFC = 0x{hsfctl_spi_cycle_cmd:x}) at FLA = 0x{spi_fla:x} did not complete before timeout')
         else:
             self.logger.log_hal('[spi] < SPI cycle done')
 
@@ -550,7 +550,7 @@ class SPI(hal_base.HALBase):
 
         cycle_done = self._wait_SPI_flash_cycle_done()
         if not cycle_done:
-            self.logger.log_error("SPI cycle not ready")
+            self.logger.log_error(f'SPI controller is busy: a previous cycle is still pending, cannot start read at FLA = 0x{spi_fla:x}')
             return b''
         progress_max = DEFAULT_PROGRESS_MAX if n > DEFAULT_PROGRESS_MAX or n <= 0 else n
         progress_tick = n // progress_max
@@ -561,7 +561,7 @@ class SPI(hal_base.HALBase):
                 self.logger.log_inline('-')
             self.logger.log_hal(f'[spi] Reading chunk {i:d} of 0x{dbc:x} bytes from 0x{spi_fla + i * dbc:x}')
             if not self._send_spi_cycle(HSFCTL_READ_CYCLE, dbc - 1, spi_fla + i * dbc):
-                self.logger.log_error("SPI flash read failed")
+                self.logger.log_error(f'SPI flash read of 0x{dbc:x} bytes at FLA = 0x{spi_fla + i * dbc:x} failed (chunk {i:d} of {n:d})')
             else:
                 for fdata_idx in range(0, dbc // 4):
                     dword_value = self.spi_reg_read(self.fdata0.offset + fdata_idx * 4)
@@ -574,7 +574,7 @@ class SPI(hal_base.HALBase):
         if (0 != r):
             self.logger.log_hal(f'[spi] Reading remaining 0x{r:x} bytes from 0x{spi_fla + n * dbc:x}')
             if not self._send_spi_cycle(HSFCTL_READ_CYCLE, r - 1, spi_fla + n * dbc):
-                self.logger.log_error("SPI flash read failed")
+                self.logger.log_error(f'SPI flash read of the remaining 0x{r:x} bytes at FLA = 0x{spi_fla + n * dbc:x} failed')
             else:
                 t = 4
                 n_dwords = (r + 3) // 4
@@ -607,7 +607,7 @@ class SPI(hal_base.HALBase):
 
         cycle_done = self._wait_SPI_flash_cycle_done()
         if not cycle_done:
-            self.logger.log_error("SPI cycle not ready")
+            self.logger.log_error(f'SPI controller is busy: a previous cycle is still pending, cannot start write at FLA = 0x{spi_fla:x}')
             return False
 
         for i in range(n):
@@ -619,7 +619,7 @@ class SPI(hal_base.HALBase):
             self.spi_reg_write(self.fdata0.offset, dword_value)
             if not self._send_spi_cycle(HSFCTL_WRITE_CYCLE, dbc - 1, spi_fla + i * dbc):
                 write_ok = False
-                self.logger.log_error("SPI flash write cycle failed")
+                self.logger.log_error(f'SPI flash write of 0x{dbc:x} bytes at FLA = 0x{spi_fla + i * dbc:x} failed (chunk {i:d} of {n:d})')
 
         if (0 != r):
             if self.logger.UTIL_TRACE or self.logger.HAL:
@@ -632,7 +632,7 @@ class SPI(hal_base.HALBase):
             self.spi_reg_write(self.fdata0.offset, dword_value)
             if not self._send_spi_cycle(HSFCTL_WRITE_CYCLE, r - 1, spi_fla + n * dbc):
                 write_ok = False
-                self.logger.log_error("SPI flash write cycle failed")
+                self.logger.log_error(f'SPI flash write of the remaining 0x{r:x} bytes at FLA = 0x{spi_fla + n * dbc:x} failed')
 
         return write_ok
 
@@ -645,12 +645,12 @@ class SPI(hal_base.HALBase):
 
         cycle_done = self._wait_SPI_flash_cycle_done()
         if not cycle_done:
-            self.logger.log_error("SPI cycle not ready")
+            self.logger.log_error(f'SPI controller is busy: a previous cycle is still pending, cannot erase block at FLA = 0x{spi_fla:x}')
             return cycle_done
 
         erase_ok = self._send_spi_cycle(HSFCTL_ERASE_CYCLE, 0, spi_fla)
         if not erase_ok:
-            self.logger.log_error("SPI Flash erase cycle failed")
+            self.logger.log_error(f'SPI flash erase cycle for block at FLA = 0x{spi_fla:x} failed')
 
         return erase_ok
 

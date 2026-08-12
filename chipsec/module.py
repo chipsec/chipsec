@@ -98,7 +98,8 @@ class Module:
         """
         loaded = False
         if not MODPATH_RE.match(self.get_name()):
-            self.logger.log_error(f'Invalid module path: {self.name}')
+            self.logger.log_error(f'Invalid module path: "{self.name}". Expected a dotted Python module path '
+                                  f'(e.g. chipsec.modules.common.bios_wp) containing only letters, digits and underscores.')
         else:
             try:
                 if _importlib:
@@ -153,8 +154,8 @@ class Module:
         self.get_module_object()
 
         if module_argv:
-            self.logger.log(f'[*] Module arguments ({len(module_argv):d}):')
-            self.logger.log(module_argv)
+            argv_str = ' '.join(str(a) for a in module_argv)
+            self.logger.log(f'[*] Module arguments ({len(module_argv):d}): {argv_str}')
         else:
             module_argv = []
 
@@ -168,8 +169,8 @@ class Module:
                     self.mod_obj.result.status.NOT_APPLICABLE)
                 result = self.mod_obj.result.getReturnCode(
                     ModuleResult.NOTAPPLICABLE)
-                skip_msg = (f'Skipping module {self.name} since it is not '
-                            f'applicable in this environment and/or platform')
+                skip_msg = (f'Skipping module {self.name}: is_supported() returned False, '
+                            f'so the module does not apply to this platform/environment')
                 self.logger.log(skip_msg)
 
         return result
@@ -200,7 +201,8 @@ class Module:
                     raise ModuleNotFoundError(self.module)
             except (AttributeError, TypeError, ModuleNotFoundError):
                 self.logger.chipsecLogger.exception(
-                    'Error getting module object')
+                    f'Could not locate a BaseModule subclass named after "{self.name}" inside the imported module. '
+                    f'The class name must match the file name.')
 
     def get_location(self) -> str:
         """
