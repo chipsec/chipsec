@@ -381,14 +381,14 @@ class UEFICommand(BaseCommand):
             self.logger.log_error("[CHIPSEC] Not running in EFI environment. Cannot dump HOBs.")
             return
         self.logger.log("[CHIPSEC] Searching memory for and dumping EFI HOB list (this may take a minute)..\n")
-        self._uefi.dump_HOB_list()
+        self.cs.hals.hob.dump_HOB_list()
 
     def hobdump(self):
         if not self.cs.os_helper.is_efi():
             self.logger.log_error("[CHIPSEC] Not running in EFI environment. Cannot dump HOBs.")
             return
         self.logger.log("[CHIPSEC] Searching memory for and dumping EFI HOB list (this may take a minute)..")
-        (found, hob_pa, hobs) = self._uefi.get_HOB_list()
+        (found, hob_pa, hobs) = self.cs.hals.hob.get_HOB_list()
         if not found:
             self.logger.log_important("[CHIPSEC] Could not locate the EFI HOB list. Exit..")
             return
@@ -400,7 +400,7 @@ class UEFICommand(BaseCommand):
             self.logger.log(f'[uefi] HOB list at 0x{hob_pa:016X} ({len(hobs):d} HOBs):')
             for idx, hob in enumerate(hobs):
                 self.logger.log(str(hob))
-                safe_name = ''.join(c if c.isalnum() else '_' for c in hob.name)
+                safe_name = ''.join(c if c.isalnum() else '_' for c in hob.type_name)
                 hob_fname = os.path.join(hob_pth, f'hob_{idx:04d}_0x{hob.HobType:04X}_{safe_name}_0x{hob.address:016X}.bin')
                 write_file(hob_fname, hob.raw)
         finally:

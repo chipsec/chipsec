@@ -124,7 +124,8 @@ class DevConfig(BaseConfigParser):
                 'io': self.handle_io,
                 'msr': self.handle_msr,
                 'mmiobar': self.handle_mmiobar,
-                'iobar': self.handle_iobar}
+                'iobar': self.handle_iobar,
+                'hob': self.handle_hob}
 
     def get_subcomponent_handlers(self):
         return {'mmiobar': self.handle_mmio_subcomponent,
@@ -277,6 +278,14 @@ class DevConfig(BaseConfigParser):
 
     def handle_iobar(self, et_node, stage_data):
         return self.parser_helper.handle_bars(et_node, stage_data, self.cfg.IO_BARS, IOBarConfig)
+
+    def handle_hob(self, et_node, stage_data):
+        """Queue HOB definition files referenced by <hob config="..."/>."""
+        node_attr = _config_convert_data(et_node)
+        if 'config' not in node_attr:
+            return []
+        dev_name = node_attr.get('name', 'HOB')
+        return self._process_config(stage_data, dev_name, node_attr)
 
 
 class CoreConfigRegisters(BaseConfigParser):

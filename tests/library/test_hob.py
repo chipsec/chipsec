@@ -17,8 +17,10 @@
 
 import struct
 import unittest
+from unittest.mock import MagicMock
 from uuid import UUID
 
+from chipsec.hal.common.hob import HOB
 from chipsec.library.uefi.hob import (
     parse_phit,
     parse_hob_list,
@@ -193,6 +195,26 @@ class TestWalkHobList(unittest.TestCase):
         self.assertTrue(complete)
         trimmed = acc[:consumed]
         self.assertTrue(is_hob_list_complete(parse_hob_list(trimmed, BASE)))
+
+
+class TestHobHalContract(unittest.TestCase):
+    def test_get_hob_list_returns_public_result_tuple(self):
+        hal = HOB.__new__(HOB)
+        hal.hobs = []
+        hal.hob_pa = BASE
+        hal.complete = False
+        hal.found = False
+        hal.definitions = None
+        hal.logger = MagicMock()
+        hal.read_HOB_list = MagicMock(return_value=(True, _end()))
+        hal._publish_decoded_registers = MagicMock()
+
+        found, hob_pa, hobs = hal.get_HOB_list()
+
+        self.assertTrue(found)
+        self.assertEqual(hob_pa, BASE)
+        self.assertEqual(len(hobs), 1)
+        self.assertEqual(hobs[0].HobType, EFI_HOB_TYPE_END_OF_HOB_LIST)
 
 
 if __name__ == '__main__':
