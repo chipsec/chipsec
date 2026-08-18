@@ -52,7 +52,12 @@ NATIVE_BYTE_ORDER = sys.byteorder
 
 
 class HobRegister(SimpleRegister):
-    """In-memory register whose fields are the members of a HOB structure."""
+    """In-memory register whose fields are the members of a HOB structure.
+
+    The value is a snapshot of the HOB payload taken while the HOB list was walked,
+    so read()/get_field() report what was in memory at that time. write() and
+    write_field() update only this snapshot; they do not write back to the HOB.
+    """
 
     register_type = 'hob'
 
@@ -60,6 +65,7 @@ class HobRegister(SimpleRegister):
         super().__init__(cfg_obj)
         self.guid = cfg_obj.get('guid', '')
         self.vid_str = cfg_obj.get('vid_str', '')
+        self.ip_name = cfg_obj.get('ip_name', '')
         self.address = cfg_obj.get('address', 0)
 
     def set_data(self, data: bytes) -> None:

@@ -234,7 +234,7 @@ class MemoryAllocationHob(Hob):
 
     def decode_fields(self, values: Tuple) -> None:
         name, base, length, mem_type = values
-        self.fields['Name'] = EFI_GUID_STR(name)
+        self.fields['GUID'] = EFI_GUID_STR(name)
         self.fields['MemoryBaseAddress'] = base
         self.fields['MemoryLength'] = length
         self.fields['MemoryType'] = MEMORY_TYPES.get(mem_type, f'0x{mem_type:X}')
@@ -248,7 +248,7 @@ class ResourceDescriptorHob(Hob):
 
     def decode_fields(self, values: Tuple) -> None:
         owner, res_type, res_attr, start, length = values
-        self.fields['Owner'] = EFI_GUID_STR(owner)
+        self.fields['Owner_GUID'] = EFI_GUID_STR(owner)
         self.fields['ResourceType'] = RESOURCE_TYPES.get(res_type, f'0x{res_type:X}')
         self.fields['ResourceAttribute'] = res_attr
         self.fields['PhysicalStart'] = start
@@ -265,7 +265,7 @@ class GuidExtensionHob(Hob):
     def decode_fields(self, values: Tuple) -> None:
         data_off = EFI_HOB_GENERIC_HEADER_SIZE + struct.calcsize(self.BODY_FMT)
         self.data = self.raw[data_off:self.HobLength]
-        self.fields['Name'] = EFI_GUID_STR(values[0])
+        self.fields['GUID'] = EFI_GUID_STR(values[0])
         self.fields['DataLength'] = self.HobLength - data_off
         self.fields['Data'] = self.data
         self.decode_payload()
@@ -274,7 +274,7 @@ class GuidExtensionHob(Hob):
         """Build the register view of the payload if a matching definition was supplied."""
         if self.definitions is None:
             return
-        hob_def = self.definitions.get_by_guid(str(self.fields['Name']))
+        hob_def = self.definitions.get_by_guid(str(self.fields['GUID']))
         if hob_def is None:
             return
         if len(self.data) < hob_def.size:
@@ -292,7 +292,8 @@ class GuidExtensionHob(Hob):
             field_names: list of field names corresponding to the unpacked values
 
         Returns:
-            A dictionary mapping field names to unpacked values, or None if the data is too short.
+            A dictionary mapping field names to unpacked values, or None if the data
+            length does not match the size of the format string.
         """
         expected_size = struct.calcsize(struct_str)
         if len(self.data) != expected_size:
@@ -324,8 +325,8 @@ class FirmwareVolume2Hob(Hob):
         base, length, fv_name, file_name = values
         self.fields['BaseAddress'] = base
         self.fields['Length'] = length
-        self.fields['FvName'] = EFI_GUID_STR(fv_name)
-        self.fields['FileName'] = EFI_GUID_STR(file_name)
+        self.fields['FvName_GUID'] = EFI_GUID_STR(fv_name)
+        self.fields['FileName_GUID'] = EFI_GUID_STR(file_name)
 
 
 class FirmwareVolume3Hob(Hob):
@@ -340,8 +341,8 @@ class FirmwareVolume3Hob(Hob):
         self.fields['Length'] = length
         self.fields['AuthenticationStatus'] = auth
         self.fields['ExtractedFv'] = bool(extracted)
-        self.fields['FvName'] = EFI_GUID_STR(fv_name)
-        self.fields['FileName'] = EFI_GUID_STR(file_name)
+        self.fields['FvName_GUID'] = EFI_GUID_STR(fv_name)
+        self.fields['FileName_GUID'] = EFI_GUID_STR(file_name)
 
 
 class CpuHob(Hob):
@@ -420,7 +421,7 @@ def walk_hob_list(buffer: bytes, base_address: int = 0, definitions=None):
         definitions: Optional HOB definition lookup used to decode GUID extension HOB
             payloads while walking. Any object providing get_by_guid(guid) that returns
             a definition with size and create_register(data, address) works; in practice
-            this is a HOBCommands built from the XML <hob> declarations.
+            this is a HOBCommands built from the XML <structure> declarations.
 
     Returns:
         Tuple of (hobs, complete, consumed) where:

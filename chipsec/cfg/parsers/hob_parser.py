@@ -22,25 +22,30 @@
 HOB definition parser - describes the payload of GUID extension HOBs in XML
 
 A platform configuration file pulls in HOB definitions the same way it pulls in
-register definitions:
+other definitions, naming the IP node that will hold them:
 
-    <hob config="HOB.hob0.xml" />
-
-The included file declares one <hob> element per known GUID extension HOB, with a
-<field> element per member of the corresponding C structure, in declaration order:
-
-    <hob name="PEI_PCD_DATABASE" guid="EA296D92-0B69-423C-8C28-33B4E0A91268">
-        <field name="Signature"    type="guid"   desc="PcdDataBaseGuid" />
-        <field name="BuildVersion" type="uint32" />
-        <field name="Pad"          type="bytes"  size="6" />
+    <hob>
+        <definition name="HOB" config="HOB.hob0.xml" />
     </hob>
 
-Layouts are packed (little-endian, no implicit alignment padding), so any padding
-present in the C structure must be declared explicitly as a field.
+The included file declares one <structure> element per known GUID extension HOB,
+with a <field> element per member of the corresponding C structure, in declaration
+order:
 
-Each definition is exposed as a register whose fields are the structure members
-(byte offsets converted to bit positions) and is published into the platform
-hierarchy under a 'HOB' IP, so a definition is reachable as VID.HOB.NAME.
+    <hob>
+        <structure name="PEI_PCD_DATABASE" guid="EA296D92-0B69-423C-8C28-33B4E0A91268">
+            <field name="Signature"    type="guid"   desc="PcdDataBaseGuid" />
+            <field name="BuildVersion" type="uint32" />
+            <field name="Pad"          type="bytes"  size="6" />
+        </structure>
+    </hob>
+
+Layouts are packed (no implicit alignment padding), so any padding present in the
+C structure must be declared explicitly as a field.
+
+Definitions are stored by GUID in Cfg.HOB_DEFINITIONS and each one is exposed as a
+register whose fields are the structure members (byte offsets converted to bit
+positions), published into the platform hierarchy as VID.<definition name>.<structure name>.
 """
 
 import struct
@@ -51,7 +56,7 @@ from chipsec.library.exceptions import PlatformConfigError
 from chipsec.parsers import BaseConfigParser, BaseConfigHelper
 from chipsec.parsers import Stage
 
-# Name of the IP node that holds HOB definitions in the platform hierarchy
+# IP node used when a definition file is loaded without a <definition> entry
 HOB_IP_NAME = 'HOB'
 
 # EDK II base type -> struct format character for a single element
@@ -108,12 +113,13 @@ class HobDefinition:
     """Declared layout of a GUID extension HOB payload."""
 
     def __init__(self, name: str, guid: str, fields: List[HobFieldDefinition],
-                 desc: str = '', vid_str: str = '') -> None:
+                 desc: str = '', vid_str: str = '', ip_name: str = HOB_IP_NAME) -> None:
         self.name = name
         self.guid = guid
         self.fields = fields
         self.desc = desc or name
         self.vid_str = vid_str
+        self.ip_name = ip_name
         self.fmt = '=' + ''.join(field.fmt for field in fields)
         self.FIELDS = self._build_fields()
         self.size = struct.calcsize(self.fmt)
@@ -157,6 +163,7 @@ class HobDefinition:
             'size': self.size,
             'guid': self.guid,
             'vid_str': self.vid_str,
+            'ip_name': self.ip_name,
             'address': address,
             'value': 0,
         })
@@ -190,8 +197,8 @@ def normalize_guid(guid: str) -> str:
 class HOBParser(BaseConfigParser):
     def startup(self) -> None:
         """Initialize HOB definition storage in the config object."""
-        if not hasattr(self.cfg, 'HOBS'):
-            setattr(self.cfg, 'HOBS', {})
+        if not hasattr(self.cfg, 'HOB_DEFINITIONS'):
+            self.cfg.HOB_DEFINITIONS = {}
 
     def parser_name(self) -> str:
         return 'HOB'
@@ -200,13 +207,13 @@ class HOBParser(BaseConfigParser):
         return Stage.CUST_SUPPORT
 
     def get_metadata(self) -> Dict[str, object]:
-        return {'hob': self.handle_hob}
+        return {'structure': self.handle_structure}
 
-    def handle_hob(self, et_node, stage_data) -> None:
-        """Parse a single <hob> definition element."""
+    def handle_structure(self, et_node, stage_data) -> None:
+        """Parse a single <structure> declaration from a HOB definition file."""
         attrs = et_node.attrib
-        # <hob config="..."/> include references are handled at the device stage
         if 'name' not in attrs or 'guid' not in attrs:
+            self.logger.log_error('[hob] Structure declaration is missing a name or guid')
             return
         name = attrs['name']
         guid = normalize_guid(attrs['guid'])
@@ -222,17 +229,19 @@ class HOBParser(BaseConfigParser):
             return
 
         hob_def = HobDefinition(name, guid, fields, attrs.get('desc', ''),
-                                getattr(stage_data, 'vid_str', '') or '')
-        if guid in self.cfg.HOBS and self.cfg.HOBS[guid].name != name:
+                                getattr(stage_data, 'vid_str', '') or '',
+                                getattr(stage_data, 'dev_name', '') or HOB_IP_NAME)
+        definitions = self.cfg.HOB_DEFINITIONS
+        if guid in definitions and definitions[guid].name != name:
             self.logger.log_debug(f'[hob] Replacing definition for {{{guid}}}: '
-                                  f'{self.cfg.HOBS[guid].name} -> {name}')
-        self.cfg.HOBS[guid] = hob_def
+                                  f'{definitions[guid].name} -> {name}')
+        definitions[guid] = hob_def
         self._add_to_platform(hob_def)
         self.logger.log_debug(f'    + {name:32}: {{{guid}}} 0x{hob_def.size:X} bytes, '
                               f'{len(fields):d} fields')
 
     def _add_to_platform(self, hob_def: HobDefinition) -> None:
-        """Publish a definition into the platform hierarchy as VID.HOB.NAME."""
+        """Publish a definition into the platform hierarchy as VID.<IP>.NAME."""
         if not hob_def.vid_str or not hasattr(self.cfg, 'platform'):
             return
         try:
@@ -241,9 +250,10 @@ class HOBParser(BaseConfigParser):
             self.logger.log_debug(f'[hob] Vendor {hob_def.vid_str} not present; '
                                   f'{hob_def.name} not added to the platform hierarchy')
             return
-        if HOB_IP_NAME not in vendor.ip_list:
-            vendor.add_ip(HOB_IP_NAME, self.cfg.HOBS)
-        vendor.get_ip(HOB_IP_NAME).add_register(hob_def.name.upper(), [hob_def.create_register()])
+        # The IP is normally created from the <definition> entry at the device stage
+        if hob_def.ip_name not in vendor.ip_list:
+            vendor.add_ip(hob_def.ip_name, self.cfg.HOB_DEFINITIONS)
+        vendor.get_ip(hob_def.ip_name).add_register(hob_def.name.upper(), [hob_def.create_register()])
 
     def _convert_field(self, hob_name: str, attrs: Dict[str, str]) -> Optional[HobFieldDefinition]:
         """Convert a <field> element's attributes into a HobFieldDefinition."""
@@ -274,16 +284,16 @@ class HOBCommands(BaseConfigHelper):
 
     def __init__(self, cfg_obj):
         super().__init__(cfg_obj)
-        self.defs: Dict[str, HobDefinition] = getattr(self.cfg, 'HOBS', {})
+        self.defs: Dict[str, HobDefinition] = getattr(self.cfg, 'HOB_DEFINITIONS', {})
 
     def get_by_guid(self, guid: str) -> Optional[HobDefinition]:
         """Get a HOB definition by GUID string."""
         return self.defs.get(normalize_guid(guid))
 
     def get_by_name(self, name: str) -> Optional[HobDefinition]:
-        """Get a HOB definition by declared name."""
+        """Get a HOB definition by declared name (case-insensitive)."""
         for hob_def in self.defs.values():
-            if hob_def.name == name:
+            if hob_def.name.upper() == name.upper():
                 return hob_def
         return None
 

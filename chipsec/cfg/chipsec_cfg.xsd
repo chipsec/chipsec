@@ -232,10 +232,15 @@
 </xs:attributeGroup>
 
 <!-- HOB definitions -->
-<xs:attributeGroup name="hob_attr">
-  <xs:attribute name="name" type="xs:string" use="optional"/>
-  <xs:attribute name="guid" type="xs:string" use="optional"/>
-  <xs:attribute name="config" type="xs:string" use="optional"/>
+<xs:attributeGroup name="hobdef_attr">
+  <xs:attribute name="name" type="xs:string" use="required"/>
+  <xs:attribute name="config" type="xs:string" use="required"/>
+  <xs:attribute name="desc" type="xs:string" use="optional"/>
+</xs:attributeGroup>
+
+<xs:attributeGroup name="hobstruct_attr">
+  <xs:attribute name="name" type="xs:string" use="required"/>
+  <xs:attribute name="guid" type="xs:string" use="required"/>
   <xs:attribute name="desc" type="xs:string" use="optional"/>
 </xs:attributeGroup>
 
@@ -267,17 +272,28 @@
   <xs:attributeGroup ref="hobfield_attr"/>
 </xs:complexType>
 
-<xs:complexType name="hob_type">
+<xs:complexType name="hobdef_type">
+  <xs:attributeGroup ref="hobdef_attr"/>
+</xs:complexType>
+
+<xs:complexType name="hobstruct_type">
   <xs:sequence>
     <xs:element name="field" type="hobfield_type" minOccurs="0" maxOccurs="unbounded"/>
   </xs:sequence>
-  <xs:attributeGroup ref="hob_attr"/>
+  <xs:attributeGroup ref="hobstruct_attr"/>
+</xs:complexType>
+
+<xs:complexType name="hob_type">
+  <xs:choice minOccurs="0" maxOccurs="unbounded">
+    <xs:element name="definition" type="hobdef_type" minOccurs="0"/>
+    <xs:element name="structure" type="hobstruct_type" minOccurs="0"/>
+  </xs:choice>
 </xs:complexType>
 
 <!-- configuration -->
 <xs:element name="configuration">
   <xs:complexType>
-    <xs:choice minOccurs="0" maxOccurs="unbounded">
+    <xs:all>
       <xs:element name="pci" type="pci_type" minOccurs="0"/>
       <xs:element name="mmio" type="mmio_type" minOccurs="0"/>
       <xs:element name="io" type="io_type" minOccurs="0"/>

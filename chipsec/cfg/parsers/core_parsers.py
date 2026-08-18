@@ -27,6 +27,7 @@ platform configuration files and populating the CHIPSEC configuration objects.
 import copy
 
 from chipsec.cfg.parsers.ip.iobar import IOBarConfig
+from chipsec.cfg.parsers.ip.hob import HOBConfig
 from chipsec.cfg.parsers.ip.io import IOConfig
 from chipsec.cfg.parsers.ip.memory import MemoryConfig
 from chipsec.cfg.parsers.ip.mmio_bar import MMIOBarConfig
@@ -280,12 +281,7 @@ class DevConfig(BaseConfigParser):
         return self.parser_helper.handle_bars(et_node, stage_data, self.cfg.IO_BARS, IOBarConfig)
 
     def handle_hob(self, et_node, stage_data):
-        """Queue HOB definition files referenced by <hob config="..."/>."""
-        node_attr = _config_convert_data(et_node)
-        if 'config' not in node_attr:
-            return []
-        dev_name = node_attr.get('name', 'HOB')
-        return self._process_config(stage_data, dev_name, node_attr)
+        return self._process_def(self.cfg.HOB, et_node, 'definition', stage_data, HOBConfig)
 
 
 class CoreConfigRegisters(BaseConfigParser):

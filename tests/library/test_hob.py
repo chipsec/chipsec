@@ -17,10 +17,14 @@
 
 import struct
 import unittest
+import xml.etree.ElementTree as ET
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 from uuid import UUID
 
+from chipsec.cfg.parsers.hob_parser import HOBParser, HOBCommands
 from chipsec.hal.common.hob import HOB
+from chipsec.library.register import ObjList
 from chipsec.library.uefi.hob import (
     parse_phit,
     parse_hob_list,
@@ -30,7 +34,9 @@ from chipsec.library.uefi.hob import (
     EFI_HOB_GENERIC_HEADER_SIZE,
     EFI_HOB_TYPE_HANDOFF,
     EFI_HOB_TYPE_RESOURCE_DESCRIPTOR,
+    EFI_HOB_TYPE_GUID_EXTENSION,
     EFI_HOB_TYPE_FV,
+    EFI_HOB_TYPE_FV2,
     EFI_HOB_TYPE_END_OF_HOB_LIST,
 )
 
@@ -130,6 +136,23 @@ class TestParseHobList(unittest.TestCase):
         self.assertEqual(res.fields['PhysicalStart'], 0x0)
         self.assertEqual(res.fields['ResourceLength'], 0xA0000)
 
+    def test_guid_valued_fields_are_suffixed(self):
+        # Every decoded field holding a GUID is named with a GUID suffix.
+        res = parse_hob_list(_build_list()[0], BASE)[2]
+        self.assertIn('Owner_GUID', res.fields)
+        self.assertEqual(res.fields['Owner_GUID'], '00000000-0000-0000-0000-000000000000')
+
+        guid = 'AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE'
+        body = struct.pack('<16s', UUID(guid).bytes_le) + b'\x01\x02'
+        guid_hob = _hdr(EFI_HOB_TYPE_GUID_EXTENSION, EFI_HOB_GENERIC_HEADER_SIZE + len(body)) + body
+        self.assertEqual(parse_hob_list(guid_hob)[0].fields['GUID'], guid)
+
+        body = struct.pack('<QQ16s16s', 0x1000, 0x2000, UUID(guid).bytes_le, UUID(guid).bytes_le)
+        fv2 = _hdr(EFI_HOB_TYPE_FV2, EFI_HOB_GENERIC_HEADER_SIZE + len(body)) + body
+        fv2_fields = parse_hob_list(fv2)[0].fields
+        self.assertEqual(fv2_fields['FvName_GUID'], guid)
+        self.assertEqual(fv2_fields['FileName_GUID'], guid)
+
     def test_complete_list_detected(self):
         hobs = parse_hob_list(_build_list()[0], BASE)
         self.assertTrue(is_hob_list_complete(hobs))
@@ -215,6 +238,54 @@ class TestHobHalContract(unittest.TestCase):
         self.assertEqual(hob_pa, BASE)
         self.assertEqual(len(hobs), 1)
         self.assertEqual(hobs[0].HobType, EFI_HOB_TYPE_END_OF_HOB_LIST)
+
+    def _hal_with_registers(self):
+        """Build a HAL whose HOB list holds two decoded registers of one definition."""
+        guid = '11111111-2222-3333-4444-555555555555'
+        cfg = SimpleNamespace()
+        parser = HOBParser(cfg)
+        parser.startup()
+        xml = ('<configuration><hob>'
+               f'<structure name="T" guid="{guid}">'
+               '<field name="A" type="uint32" /><field name="B" type="uint16" />'
+               '</structure></hob></configuration>')
+        for node in ET.fromstring(xml).iter('structure'):
+            parser.handle_structure(node, SimpleNamespace(vid_str='8086', dev_name='HOB'))
+
+        definitions = HOBCommands(cfg)
+        buf = b''
+        for b_value in (5, 7):
+            body = struct.pack('<16sIH', UUID(guid).bytes_le, 0xAAAA, b_value)
+            buf += _hdr(EFI_HOB_TYPE_GUID_EXTENSION, EFI_HOB_GENERIC_HEADER_SIZE + len(body)) + body
+        buf += _end()
+
+        hal = HOB.__new__(HOB)
+        hal.found = True
+        hal.logger = MagicMock()
+        hal.definitions = definitions
+        hal.hobs, _, _ = walk_hob_list(buf, BASE, definitions)
+        return hal
+
+    def test_get_list_by_name_returns_objlist(self):
+        registers = self._hal_with_registers().get_list_by_name('8086.HOB.T')
+        self.assertIsInstance(registers, ObjList)
+        self.assertEqual(len(registers), 2)
+
+    def test_returned_objlist_supports_register_helpers(self):
+        registers = self._hal_with_registers().get_list_by_name('T')
+        self.assertEqual(registers.get_field('A'), [0xAAAA, 0xAAAA])
+        self.assertEqual(registers.read_field('B'), [5, 7])
+        self.assertTrue(registers.is_all_field_value(0xAAAA, 'A'))
+        self.assertTrue(registers.all_has_field('B'))
+        self.assertEqual(registers.get_field_value_if_equivalent('A'), 0xAAAA)
+        self.assertIsNone(registers.get_field_value_if_equivalent('B'))
+        self.assertEqual(len(registers.filter_enabled()), 2)
+        self.assertEqual(len(registers.read()), 2)
+
+    def test_no_match_returns_empty_objlist(self):
+        registers = self._hal_with_registers().get_list_by_name('8086.OTHER.T')
+        self.assertIsInstance(registers, ObjList)
+        self.assertEqual(len(registers), 0)
 
 
 if __name__ == '__main__':
