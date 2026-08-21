@@ -61,6 +61,7 @@ from chipsec.library.returncode import ModuleResult
 
 from chipsec.hal.common.uefi import UEFI
 from chipsec.hal.intel.spi import SPI
+from chipsec.library.intel.spi import BIOS as BIOS_REGION
 from chipsec.library.uefi.fv import EFI_MODULE, EFI_SECTION
 from chipsec.library.uefi.spi import build_efi_model, search_efi_tree, EFIModuleType, UUIDEncoder
 from chipsec.library.file import write_file, read_file
@@ -174,7 +175,7 @@ class scan_image(BaseModule):
                 image_file = DEF_FWIMAGE_FILE
                 json_file = DEF_EFILIST_FILE
                 self.spi = SPI(self.cs)
-                (base, limit, _) = self.spi.get_SPI_region(BIOS)
+                (base, limit, _) = self.spi.get_SPI_region(BIOS_REGION)
                 image_size = limit + 1 - base
                 self.logger.log(f'[*] Dumping firmware image from ROM to \'{image_file}\': 0x{image_size:08X} bytes at [0x{base:08X}:0x{limit:08X}]')
                 self.spi.read_spi_to_file(base, image_size, image_file)
