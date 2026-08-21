@@ -259,6 +259,15 @@ class CONTROLHelper(BaseConfigHelper):
             self.logger.log_error(error_msg)
             raise ControlError(error_msg) from e
 
+    def is_enabled(self) -> bool:
+        """
+        Check if the register that backs the control is enabled (value is non-zero).
+
+        Returns:
+            True if control is enabled, False otherwise
+        """
+        return self.__reg.is_enabled() if hasattr(self.__reg, 'is_enabled') else False
+
     def __str__(self) -> str:
         """Return string representation of control."""
         return f"""Control: {self.name}

@@ -60,7 +60,7 @@ class Control:
         controls = ObjList()
         if control_name in self.cs.Cfg.CONTROLS:
             controls.extend(self.cs.Cfg.CONTROLS[control_name])
-        return controls
+        return controls.filter_enabled()
 
     def get_instance_by_name(self, control_name: str, instance: Any) -> Optional[Any]:
         """
