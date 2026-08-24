@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<configuration>
+<!--
+CHIPSEC: Platform Security Assessment Framework
+Copyright (c) 2026, Intel Corporation
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; Version 2.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+Contact information:
+chipsec@intel.com
+-->
+
+<!--
+GUID extension HOB definitions
+
+Each <structure> element declares the payload that follows the Name GUID of an
+EFI_HOB_TYPE_GUID_EXTENSION HOB. <field> elements are listed in C declaration
+order and describe a packed layout, so structure padding must be declared
+explicitly (see the Pad field below).
+
+Supported field types: uint8, uint16, uint32, uint64, int8, int16, int32,
+int64, boolean, guid, bytes (requires size). Use count for array members.
+-->
+
+  <hob>
+    <structure name="PEI_PCD_DATABASE" guid="EA296D92-0B69-423C-8C28-33B4E0A91268" desc="PEI PCD Database">
+      <field name="Signature"                   type="guid"   desc="PcdDataBaseGuid" />
+      <field name="BuildVersion"                type="uint32" desc="PCD database build version" />
+      <field name="Length"                      type="uint32" desc="Length of DEFAULT SKU PCD DB" />
+      <field name="SystemSkuId"                 type="uint64" desc="Current SkuId value (SKU_ID)" />
+      <field name="LengthForAllSkus"            type="uint32" desc="Length of all SKU PCD DB" />
+      <field name="UninitDataBaseSize"          type="uint32" desc="Total size for PCD those default value with 0" />
+      <field name="LocalTokenNumberTableOffset" type="uint32" desc="Offset of the local token number table (TABLE_OFFSET)" />
+      <field name="ExMapTableOffset"            type="uint32" desc="Offset of the DynamicEx mapping table (TABLE_OFFSET)" />
+      <field name="GuidTableOffset"             type="uint32" desc="Offset of the GUID table (TABLE_OFFSET)" />
+      <field name="StringTableOffset"           type="uint32" desc="Offset of the string table (TABLE_OFFSET)" />
+      <field name="SizeTableOffset"             type="uint32" desc="Offset of the size table (TABLE_OFFSET)" />
+      <field name="SkuIdTableOffset"            type="uint32" desc="Offset of the SKU ID table (TABLE_OFFSET)" />
+      <field name="PcdNameTableOffset"          type="uint32" desc="Offset of the PCD name table (TABLE_OFFSET)" />
+      <field name="LocalTokenCount"             type="uint16" desc="LOCAL_TOKEN_NUMBER for all" />
+      <field name="ExTokenCount"                type="uint16" desc="EX_TOKEN_NUMBER for DynamicEx" />
+      <field name="GuidTableCount"              type="uint16" desc="The Number of Guid in GuidTable" />
+      <field name="Pad"                         type="bytes"  size="6" desc="Pad bytes to satisfy the alignment" />
+    </structure>
+  </hob>
+
+</configuration>

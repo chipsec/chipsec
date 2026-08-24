@@ -257,7 +257,7 @@ class ScopeManager:
     def __init__(self):
         self.parent_keys = [
             'CONFIG_PCI_RAW', 'CONFIG_PCI', 'MEMORY_RANGES', 'MM_MSGBUS',
-            'MSGBUS', 'IO', 'MSR', 'MMIO_BARS', 'IO_BARS'
+            'MSGBUS', 'IO', 'MSR', 'MMIO_BARS', 'IO_BARS', 'HOB'
         ]
         self.child_keys = [
             'IMA_REGISTERS', 'REGISTERS', 'CONTROLS', 'LOCKS', 'LOCKEDBY'

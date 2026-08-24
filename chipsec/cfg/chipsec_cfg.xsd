@@ -111,7 +111,7 @@
     <xs:enumeration value="mmio" />
   </xs:restriction>
 </xs:simpleType>
-		
+
 <xs:attributeGroup name="memrange_attr">
   <xs:attribute name="name" type="xs:string" use="required"/>
   <xs:attribute name="type" type="memtype" use="required"/>
@@ -157,7 +157,7 @@
     <xs:enumeration value="RW-L" />
   </xs:restriction>
 </xs:simpleType>
-		
+
 <xs:attributeGroup name="reg_attr">
   <xs:attribute name="name" type="xs:string" use="required"/>
   <xs:attribute name="type" type="rtype" use="required"/>
@@ -231,6 +231,65 @@
   <xs:attribute name="desc" type="xs:string" use="optional"/>
 </xs:attributeGroup>
 
+<!-- HOB definitions -->
+<xs:attributeGroup name="hobdef_attr">
+  <xs:attribute name="name" type="xs:string" use="required"/>
+  <xs:attribute name="config" type="xs:string" use="required"/>
+  <xs:attribute name="desc" type="xs:string" use="optional"/>
+</xs:attributeGroup>
+
+<xs:attributeGroup name="hobstruct_attr">
+  <xs:attribute name="name" type="xs:string" use="required"/>
+  <xs:attribute name="guid" type="xs:string" use="required"/>
+  <xs:attribute name="desc" type="xs:string" use="optional"/>
+</xs:attributeGroup>
+
+<xs:attributeGroup name="hobfield_attr">
+  <xs:attribute name="name" type="xs:string" use="required"/>
+  <xs:attribute name="type" type="hobfield_type_name" use="required"/>
+  <xs:attribute name="count" type="xs:string" use="optional"/>
+  <xs:attribute name="size" type="xs:string" use="optional"/>
+  <xs:attribute name="desc" type="xs:string" use="optional"/>
+</xs:attributeGroup>
+
+<xs:simpleType name="hobfield_type_name">
+  <xs:restriction base="xs:string">
+    <xs:enumeration value="uint8" />
+    <xs:enumeration value="uint16" />
+    <xs:enumeration value="uint32" />
+    <xs:enumeration value="uint64" />
+    <xs:enumeration value="int8" />
+    <xs:enumeration value="int16" />
+    <xs:enumeration value="int32" />
+    <xs:enumeration value="int64" />
+    <xs:enumeration value="boolean" />
+    <xs:enumeration value="guid" />
+    <xs:enumeration value="bytes" />
+  </xs:restriction>
+</xs:simpleType>
+
+<xs:complexType name="hobfield_type">
+  <xs:attributeGroup ref="hobfield_attr"/>
+</xs:complexType>
+
+<xs:complexType name="hobdef_type">
+  <xs:attributeGroup ref="hobdef_attr"/>
+</xs:complexType>
+
+<xs:complexType name="hobstruct_type">
+  <xs:sequence>
+    <xs:element name="field" type="hobfield_type" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:sequence>
+  <xs:attributeGroup ref="hobstruct_attr"/>
+</xs:complexType>
+
+<xs:complexType name="hob_type">
+  <xs:choice minOccurs="0" maxOccurs="unbounded">
+    <xs:element name="definition" type="hobdef_type" minOccurs="0"/>
+    <xs:element name="structure" type="hobstruct_type" minOccurs="0"/>
+  </xs:choice>
+</xs:complexType>
+
 <!-- configuration -->
 <xs:element name="configuration">
   <xs:complexType>
@@ -242,7 +301,8 @@
       <xs:element name="ima" type="ima_type" minOccurs="0"/>
       <xs:element name="registers" type="regs_type" minOccurs="0"/>
       <xs:element name="controls" type="controls_type" minOccurs="0"/>
-    </xs:all>
+      <xs:element name="hob" type="hob_type" minOccurs="0"/>
+    </xs:choice>
     <xs:attribute name="platform" type="xs:string" use="optional"/>
   </xs:complexType>
 </xs:element>

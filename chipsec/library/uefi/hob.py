@@ -26,7 +26,7 @@ Reference: UEFI PI Specification, MdePkg/Include/Pi/PiHob.h
 
 import struct
 from collections import namedtuple
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple, Type
 
 from chipsec.library.uefi.common import EFI_GUID_STR
 from chipsec.library.logger import logger
@@ -139,86 +139,245 @@ class EFI_HOB_HANDOFF_INFO_TABLE(namedtuple('EFI_HOB_HANDOFF_INFO_TABLE',
                 f'  EfiEndOfHobList     : 0x{self.EfiEndOfHobList:016X}')
 
 
-class Hob:
-    """A single parsed Hand-Off Block."""
+# Registry of HOB type -> Hob subclass, populated by Hob.__init_subclass__
+HOB_CLASSES: Dict[int, Type['Hob']] = {}
 
-    def __init__(self, hob_type: int, hob_length: int, address: int, raw: bytes) -> None:
+
+class Hob:
+    """
+    A single parsed Hand-Off Block.
+
+    Subclasses decode the type-specific body that follows the generic header. A
+    subclass declares the HOB type it handles with HOB_TYPE and the layout of the
+    body it needs with BODY_FMT, then fills self.fields in decode_fields().
+    """
+
+    HOB_TYPE: Optional[int] = None      # EFI_HOB_TYPE_* handled by this class
+    BODY_FMT: str = ''                  # struct format of the body (after the generic header)
+    register = None                     # register view of the payload, when a definition is known
+
+    def __init_subclass__(cls, **kwargs) -> None:
+        super().__init_subclass__(**kwargs)
+        if cls.HOB_TYPE is not None:
+            HOB_CLASSES[cls.HOB_TYPE] = cls
+
+    def __init__(self, hob_type: int, hob_length: int, address: int, raw: bytes, definitions=None) -> None:
         self.HobType = hob_type
         self.HobLength = hob_length
         self.address = address                      # physical address of this HOB
         self.raw = raw                              # raw bytes of the whole HOB
-        self.name = HOB_TYPE_NAMES.get(hob_type, f'UNKNOWN(0x{hob_type:04X})')
+        self.type_name = HOB_TYPE_NAMES.get(hob_type, f'UNKNOWN(0x{hob_type:04X})')
         self.fields: Dict[str, object] = {}         # decoded, type-specific fields
+        self.definitions = definitions              # optional definition lookup (see walk_hob_list)
+        self.decode()
+
+    def decode(self) -> None:
+        """Unpack the type-specific body and populate self.fields."""
+        if not self.BODY_FMT:
+            return
+        body_size = struct.calcsize(self.BODY_FMT)
+        if len(self.raw) < EFI_HOB_GENERIC_HEADER_SIZE + body_size:
+            logger().log_hal(f'[hob] HOB type 0x{self.HobType:04X} at 0x{self.address:016X} is too short to decode '
+                             f'(0x{len(self.raw):X} bytes)')
+            return
+        try:
+            values = struct.unpack_from(self.BODY_FMT, self.raw, EFI_HOB_GENERIC_HEADER_SIZE)
+        except struct.error as err:
+            logger().log_hal(f'[hob] Unable to decode HOB type 0x{self.HobType:04X} at 0x{self.address:016X}: {err}')
+            return
+        self.decode_fields(values)
+
+    def decode_fields(self, values: Tuple) -> None:
+        """Populate self.fields from the values unpacked using BODY_FMT."""
+        pass
 
     def __str__(self) -> str:
-        line = f'[0x{self.address:016X}] type=0x{self.HobType:04X} len=0x{self.HobLength:04X}  {self.name}'
+        line = f'[0x{self.address:016X}] type=0x{self.HobType:04X} len=0x{self.HobLength:04X}  {self.type_name}'
         for key, value in self.fields.items():
             if isinstance(value, int):
                 line += f'\n        {key} = 0x{value:X}'
             else:
                 line += f'\n        {key} = {value}'
+        if self.register is not None:
+            for reg_line in str(self.register).splitlines():
+                line += f'\n        {reg_line}'
         return line
 
+    def __repr__(self) -> str:
+        return self.__str__()
 
-def _decode_hob(hob: Hob) -> None:
-    """Populate hob.fields with type-specific decoded values."""
-    body = hob.raw
-    body_off = EFI_HOB_GENERIC_HEADER_SIZE
-    try:
-        if hob.HobType == EFI_HOB_TYPE_HANDOFF and len(body) >= EFI_HOB_HANDOFF_INFO_TABLE_SIZE:
-            phit = EFI_HOB_HANDOFF_INFO_TABLE(*struct.unpack_from(EFI_HOB_HANDOFF_INFO_TABLE_FMT, body, body_off))
-            hob.fields['Version'] = phit.Version
-            hob.fields['BootMode'] = BOOT_MODES.get(phit.BootMode, f'0x{phit.BootMode:X}')
-            hob.fields['EfiMemoryTop'] = phit.EfiMemoryTop
-            hob.fields['EfiMemoryBottom'] = phit.EfiMemoryBottom
-            hob.fields['EfiFreeMemoryTop'] = phit.EfiFreeMemoryTop
-            hob.fields['EfiFreeMemoryBottom'] = phit.EfiFreeMemoryBottom
-            hob.fields['EfiEndOfHobList'] = phit.EfiEndOfHobList
-        elif hob.HobType == EFI_HOB_TYPE_MEMORY_ALLOCATION and len(body) >= body_off + 0x24:
-            name, base, length, mem_type = struct.unpack_from('<16sQQI', body, body_off)
-            hob.fields['Name'] = EFI_GUID_STR(name)
-            hob.fields['MemoryBaseAddress'] = base
-            hob.fields['MemoryLength'] = length
-            hob.fields['MemoryType'] = MEMORY_TYPES.get(mem_type, f'0x{mem_type:X}')
-        elif hob.HobType == EFI_HOB_TYPE_RESOURCE_DESCRIPTOR and len(body) >= body_off + 0x28:
-            owner, res_type, res_attr, start, length = struct.unpack_from('<16sIIQQ', body, body_off)
-            hob.fields['Owner'] = EFI_GUID_STR(owner)
-            hob.fields['ResourceType'] = RESOURCE_TYPES.get(res_type, f'0x{res_type:X}')
-            hob.fields['ResourceAttribute'] = res_attr
-            hob.fields['PhysicalStart'] = start
-            hob.fields['ResourceLength'] = length
-        elif hob.HobType == EFI_HOB_TYPE_GUID_EXTENSION and len(body) >= body_off + 16:
-            name = struct.unpack_from('<16s', body, body_off)[0]
-            hob.fields['Name'] = EFI_GUID_STR(name)
-            hob.fields['DataLength'] = hob.HobLength - body_off - 16
-        elif hob.HobType == EFI_HOB_TYPE_FV and len(body) >= body_off + 16:
-            base, length = struct.unpack_from('<QQ', body, body_off)
-            hob.fields['BaseAddress'] = base
-            hob.fields['Length'] = length
-        elif hob.HobType == EFI_HOB_TYPE_FV2 and len(body) >= body_off + 48:
-            base, length, fv_name, file_name = struct.unpack_from('<QQ16s16s', body, body_off)
-            hob.fields['BaseAddress'] = base
-            hob.fields['Length'] = length
-            hob.fields['FvName'] = EFI_GUID_STR(fv_name)
-            hob.fields['FileName'] = EFI_GUID_STR(file_name)
-        elif hob.HobType == EFI_HOB_TYPE_FV3 and len(body) >= body_off + 53:
-            base, length, auth, extracted, fv_name, file_name = struct.unpack_from('<QQIB16s16s', body, body_off)
-            hob.fields['BaseAddress'] = base
-            hob.fields['Length'] = length
-            hob.fields['AuthenticationStatus'] = auth
-            hob.fields['ExtractedFv'] = bool(extracted)
-            hob.fields['FvName'] = EFI_GUID_STR(fv_name)
-            hob.fields['FileName'] = EFI_GUID_STR(file_name)
-        elif hob.HobType == EFI_HOB_TYPE_CPU and len(body) >= body_off + 2:
-            mem_bits, io_bits = struct.unpack_from('<BB', body, body_off)
-            hob.fields['SizeOfMemorySpace'] = mem_bits
-            hob.fields['SizeOfIoSpace'] = io_bits
-        elif hob.HobType == EFI_HOB_TYPE_UEFI_CAPSULE and len(body) >= body_off + 16:
-            base, length = struct.unpack_from('<QQ', body, body_off)
-            hob.fields['BaseAddress'] = base
-            hob.fields['Length'] = length
-    except struct.error as err:
-        logger().log_hal(f'[hob] Unable to decode HOB type 0x{hob.HobType:04X} at 0x{hob.address:016X}: {err}')
+
+class HandoffInfoTableHob(Hob):
+    """EFI_HOB_HANDOFF_INFO_TABLE (PHIT)."""
+
+    HOB_TYPE = EFI_HOB_TYPE_HANDOFF
+    BODY_FMT = EFI_HOB_HANDOFF_INFO_TABLE_FMT
+    phit: Optional[EFI_HOB_HANDOFF_INFO_TABLE] = None
+
+    def decode_fields(self, values: Tuple) -> None:
+        phit = EFI_HOB_HANDOFF_INFO_TABLE(*values)
+        self.phit = phit
+        self.fields['Version'] = phit.Version
+        self.fields['BootMode'] = BOOT_MODES.get(phit.BootMode, f'0x{phit.BootMode:X}')
+        self.fields['EfiMemoryTop'] = phit.EfiMemoryTop
+        self.fields['EfiMemoryBottom'] = phit.EfiMemoryBottom
+        self.fields['EfiFreeMemoryTop'] = phit.EfiFreeMemoryTop
+        self.fields['EfiFreeMemoryBottom'] = phit.EfiFreeMemoryBottom
+        self.fields['EfiEndOfHobList'] = phit.EfiEndOfHobList
+
+
+class MemoryAllocationHob(Hob):
+    """EFI_HOB_MEMORY_ALLOCATION."""
+
+    HOB_TYPE = EFI_HOB_TYPE_MEMORY_ALLOCATION
+    BODY_FMT = '<16sQQI'
+
+    def decode_fields(self, values: Tuple) -> None:
+        name, base, length, mem_type = values
+        self.fields['GUID'] = EFI_GUID_STR(name)
+        self.fields['MemoryBaseAddress'] = base
+        self.fields['MemoryLength'] = length
+        self.fields['MemoryType'] = MEMORY_TYPES.get(mem_type, f'0x{mem_type:X}')
+
+
+class ResourceDescriptorHob(Hob):
+    """EFI_HOB_RESOURCE_DESCRIPTOR."""
+
+    HOB_TYPE = EFI_HOB_TYPE_RESOURCE_DESCRIPTOR
+    BODY_FMT = '<16sIIQQ'
+
+    def decode_fields(self, values: Tuple) -> None:
+        owner, res_type, res_attr, start, length = values
+        self.fields['Owner_GUID'] = EFI_GUID_STR(owner)
+        self.fields['ResourceType'] = RESOURCE_TYPES.get(res_type, f'0x{res_type:X}')
+        self.fields['ResourceAttribute'] = res_attr
+        self.fields['PhysicalStart'] = start
+        self.fields['ResourceLength'] = length
+
+
+class GuidExtensionHob(Hob):
+    """EFI_HOB_GUID_TYPE."""
+
+    HOB_TYPE = EFI_HOB_TYPE_GUID_EXTENSION
+    BODY_FMT = '<16s'
+    data: bytes = b''       # GUID-specific data following the Name GUID
+
+    def decode_fields(self, values: Tuple) -> None:
+        data_off = EFI_HOB_GENERIC_HEADER_SIZE + struct.calcsize(self.BODY_FMT)
+        self.data = self.raw[data_off:self.HobLength]
+        self.fields['GUID'] = EFI_GUID_STR(values[0])
+        self.fields['DataLength'] = self.HobLength - data_off
+        self.fields['Data'] = self.data
+        self.decode_payload()
+
+    def decode_payload(self) -> None:
+        """Build the register view of the payload if a matching definition was supplied."""
+        if self.definitions is None:
+            return
+        hob_def = self.definitions.get_by_guid(str(self.fields['GUID']))
+        if hob_def is None:
+            return
+        if len(self.data) < hob_def.size:
+            logger().log_hal(f'[hob] {hob_def.name} at 0x{self.address:016X} payload is 0x{len(self.data):X} bytes, '
+                             f'declaration needs 0x{hob_def.size:X}')
+            return
+        self.register = hob_def.create_register(self.data, address=self.address)
+
+    def get_formatted_data(self, struct_str: str, field_names: List[str]) -> Optional[Dict[str, object]]:
+        """
+        Unpack the GUID extension data using a struct format string and return a dict of field names to values.
+
+        Args:
+            struct_str: struct format string for the data (e.g., '<IIQQ')
+            field_names: list of field names corresponding to the unpacked values
+
+        Returns:
+            A dictionary mapping field names to unpacked values, or None if the data
+            length does not match the size of the format string.
+        """
+        expected_size = struct.calcsize(struct_str)
+        if len(self.data) != expected_size:
+            logger().log_hal(f'[hob] GUID extension HOB data length mismatch: expected {expected_size} bytes, '
+                             f'got {len(self.data)} bytes')
+            return None
+        values = struct.unpack(struct_str, self.data)
+        return dict(zip(field_names, values))
+
+class FirmwareVolumeHob(Hob):
+    """EFI_HOB_FIRMWARE_VOLUME."""
+
+    HOB_TYPE = EFI_HOB_TYPE_FV
+    BODY_FMT = '<QQ'
+
+    def decode_fields(self, values: Tuple) -> None:
+        base, length = values
+        self.fields['BaseAddress'] = base
+        self.fields['Length'] = length
+
+
+class FirmwareVolume2Hob(Hob):
+    """EFI_HOB_FIRMWARE_VOLUME2."""
+
+    HOB_TYPE = EFI_HOB_TYPE_FV2
+    BODY_FMT = '<QQ16s16s'
+
+    def decode_fields(self, values: Tuple) -> None:
+        base, length, fv_name, file_name = values
+        self.fields['BaseAddress'] = base
+        self.fields['Length'] = length
+        self.fields['FvName_GUID'] = EFI_GUID_STR(fv_name)
+        self.fields['FileName_GUID'] = EFI_GUID_STR(file_name)
+
+
+class FirmwareVolume3Hob(Hob):
+    """EFI_HOB_FIRMWARE_VOLUME3."""
+
+    HOB_TYPE = EFI_HOB_TYPE_FV3
+    BODY_FMT = '<QQIB16s16s'
+
+    def decode_fields(self, values: Tuple) -> None:
+        base, length, auth, extracted, fv_name, file_name = values
+        self.fields['BaseAddress'] = base
+        self.fields['Length'] = length
+        self.fields['AuthenticationStatus'] = auth
+        self.fields['ExtractedFv'] = bool(extracted)
+        self.fields['FvName_GUID'] = EFI_GUID_STR(fv_name)
+        self.fields['FileName_GUID'] = EFI_GUID_STR(file_name)
+
+
+class CpuHob(Hob):
+    """EFI_HOB_CPU."""
+
+    HOB_TYPE = EFI_HOB_TYPE_CPU
+    BODY_FMT = '<BB'
+
+    def decode_fields(self, values: Tuple) -> None:
+        mem_bits, io_bits = values
+        self.fields['SizeOfMemorySpace'] = mem_bits
+        self.fields['SizeOfIoSpace'] = io_bits
+
+
+class UefiCapsuleHob(Hob):
+    """EFI_HOB_UEFI_CAPSULE."""
+
+    HOB_TYPE = EFI_HOB_TYPE_UEFI_CAPSULE
+    BODY_FMT = '<QQ'
+
+    def decode_fields(self, values: Tuple) -> None:
+        base, length = values
+        self.fields['BaseAddress'] = base
+        self.fields['Length'] = length
+
+
+def create_hob(hob_type: int, hob_length: int, address: int, raw: bytes, definitions=None) -> Hob:
+    """
+    Factory returning the Hob subclass that handles hob_type.
+
+    HOB types without a dedicated class (e.g. MEMORY_POOL, UNUSED, END_OF_HOB_LIST)
+    fall back to the generic Hob, which exposes only the generic header and raw bytes.
+    """
+    hob_class = HOB_CLASSES.get(hob_type, Hob)
+    return hob_class(hob_type, hob_length, address, raw, definitions)
 
 
 def parse_phit(buffer: bytes) -> Optional[EFI_HOB_HANDOFF_INFO_TABLE]:
@@ -231,23 +390,24 @@ def parse_phit(buffer: bytes) -> Optional[EFI_HOB_HANDOFF_INFO_TABLE]:
     return EFI_HOB_HANDOFF_INFO_TABLE(*struct.unpack_from(EFI_HOB_HANDOFF_INFO_TABLE_FMT, buffer, EFI_HOB_GENERIC_HEADER_SIZE))
 
 
-def parse_hob_list(buffer: bytes, base_address: int = 0) -> List[Hob]:
+def parse_hob_list(buffer: bytes, base_address: int = 0, definitions=None) -> List[Hob]:
     """
     Walk a HOB list buffer and return the parsed HOBs.
 
     Args:
         buffer: Raw bytes of the HOB list, starting at the PHIT.
         base_address: Physical address the buffer was read from (for absolute HOB addresses).
+        definitions: Optional HOB definition lookup (see walk_hob_list).
 
     Returns:
         List of Hob objects. Parsing stops at EFI_HOB_TYPE_END_OF_HOB_LIST, at the end of
         the buffer, or when an invalid HOB length is encountered.
     """
-    hobs, _, _ = walk_hob_list(buffer, base_address)
+    hobs, _, _ = walk_hob_list(buffer, base_address, definitions)
     return hobs
 
 
-def walk_hob_list(buffer: bytes, base_address: int = 0):
+def walk_hob_list(buffer: bytes, base_address: int = 0, definitions=None):
     """
     Walk a HOB list buffer, returning parsed HOBs and walk status.
 
@@ -258,6 +418,10 @@ def walk_hob_list(buffer: bytes, base_address: int = 0):
     Args:
         buffer: Raw bytes of the HOB list, starting at the PHIT.
         base_address: Physical address the buffer was read from (for absolute HOB addresses).
+        definitions: Optional HOB definition lookup used to decode GUID extension HOB
+            payloads while walking. Any object providing get_by_guid(guid) that returns
+            a definition with size and create_register(data, address) works; in practice
+            this is a HOBCommands built from the XML <structure> declarations.
 
     Returns:
         Tuple of (hobs, complete, consumed) where:
@@ -278,9 +442,7 @@ def walk_hob_list(buffer: bytes, base_address: int = 0):
             # HOB spills past the end of the available buffer (needs more data).
             break
         raw = buffer[offset:offset + hob_length]
-        hob = Hob(hob_type, hob_length, base_address + offset, raw)
-        _decode_hob(hob)
-        hobs.append(hob)
+        hobs.append(create_hob(hob_type, hob_length, base_address + offset, raw, definitions))
         offset += hob_length
         if hob_type == EFI_HOB_TYPE_END_OF_HOB_LIST:
             complete = True

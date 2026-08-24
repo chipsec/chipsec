@@ -35,7 +35,7 @@ usage:
 
 from typing import Optional
 from chipsec.hal import hal_base
-from chipsec.library.exceptions import MMIOBarConfigError, RegisterNotFoundError
+from chipsec.library.exceptions import MMIOBarConfigError, RegisterNotFoundError, CSReadError
 
 
 class MMMsgBus(hal_base.HALBase):
@@ -89,13 +89,20 @@ class MMMsgBus(hal_base.HALBase):
         """
         Get the base address of the SBREG MMIO BAR.
         Returns:
-            None if the base address cannot be determined.
+            int: The base address of the SBREG MMIO BAR, or None if it cannot be determined.
         """
         try:
             mmio_addr = self.cs.hals.mmio.get_MMIO_BAR_base_address('8086.P2SBC.SBREGBAR')[0]
             return mmio_addr
-        except MMIOBarConfigError:
+        except (MMIOBarConfigError, CSReadError):
             self.logger.log_hal('Failed to read MMIO BAR base address for 8086.P2SBC.SBREGBAR')
+        try:
+            hobs = self.cs.hals.hob.get_list_by_name('8086.HOB.P2SB_HOB')
+            if hobs:
+                mmio_addr = hobs[0].get_field_value('PCI')
+                return mmio_addr
+        except Exception:
+            self.logger.log_hal('Failed to read SBREG_BAR from HOBs')
         self.logger.log_hal('Attempting to unhide and read MMIO BAR base address for 8086.P2SBC.SBREGBAR')
         self.__unhide_p2sb()
         mmio_addr = self.cs.hals.mmio.get_MMIO_BAR_base_address('8086.P2SBC.SBREGBAR')[0]
