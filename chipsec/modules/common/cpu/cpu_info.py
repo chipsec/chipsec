@@ -100,7 +100,7 @@ class cpu_info(BaseModule):
             if (family == 0x0F) or (family == 0x06):
                 model = ((eax >> 12) & 0xF0) | model
             if family == 0x0F:
-                family = ((eax >> 20) & 0xFF) | family
+                family = ((eax >> 20) & 0xFF) + family
             self.logger.log(f'[*]            Family: {family:02X} Model: {model:02X} Stepping: {stepping:01X}')
 
             self.logger.log(f'[*]            Microcode: {regdata:08X}')
@@ -151,7 +151,7 @@ class cpu_info(BaseModule):
             extFamily = (r_rax >> 20) & 0xF
             stepping = (r_rax) & 0xF
             family = baseFamily + extFamily
-            model = (extModel << 4) & baseModel
+            model = (extModel << 4) + baseModel
             self.logger.log(f'[*]            Family: {family:02X} Model: {model:02X} Stepping: {stepping:01X}')
 
 

@@ -269,7 +269,7 @@ class LegacyResults(ChipsecResults):
                     logger().log(f'[CHIPSEC] Modules with {result:11}{len(summary[result]):d}:')
                     for mod in summary[result]:
                         logger().log_error(mod)
-            elif result == 'archived':
+            elif result == 'archived' and not summary[result]:
                 continue
             else:
                 logger().log(f'[CHIPSEC] Modules {result:16}{len(summary[result]):d}:')
