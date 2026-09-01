@@ -571,10 +571,14 @@ class ObjList(list):
         return ret
 
     def write(self, value: int) -> None:
+        if not self:
+            logger().log_warning(f'ObjList.write of 0x{value:X} was ignored: no enabled register instances')
         for inst in self:
             inst.write(value)
 
     def write_field(self, field: str, value: int) -> None:
+        if not self:
+            logger().log_warning(f'ObjList.write_field of 0x{value:X} to {field} was ignored: no enabled register instances')
         for inst in self:
             inst.write_field(field, value)
 
