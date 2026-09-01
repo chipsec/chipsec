@@ -298,7 +298,16 @@ class TestNVARVariableExtraction(unittest.TestCase):
         self.assertEqual(header.TotalSize, total)
         self.assertEqual(attrs, 0x7)
         self.assertEqual(len(buf), total)
-        self.assertTrue(parsed.endswith(data))
+        self.assertEqual(parsed, data)
+
+    def test_a_name_without_a_terminator_is_rejected(self):
+        signature = struct.unpack('=I', varstore.NVAR_EFIvar_signature)[0]
+        total = varstore.NVAR_HDR_SIZE + 8
+        entry = struct.pack(
+            varstore.NVAR_HDR_FMT, signature, total, 0, 0, 0, 0x7, 0x7F)
+
+        self.assertEqual(
+            varstore.getEFIvariables_NVAR_simple(entry + b'NoNull!!'), {})
 
     def test_an_empty_buffer_yields_nothing(self):
         self.assertEqual(varstore.getEFIvariables_NVAR_simple(b'\x00' * 32), {})
@@ -428,7 +437,27 @@ class TestCertificateDatabases(unittest.TestCase):
             entries = varstore.parse_auth_var(db, path)
 
             self.assertEqual(entries, [cert])
-            self.assertEqual(len(os.listdir(path)), 1)
+            expected_name = f'{str(VENDOR_GUID).upper()}-certdb-00.bin'
+            self.assertEqual(os.listdir(path), [expected_name])
+            with open(os.path.join(path, expected_name), 'rb') as cert_file:
+                self.assertEqual(cert_file.read(), cert)
+
+    def test_auth_certificate_filename_replaces_unsafe_characters(self):
+        cert = b'\xAB' * 16
+        name = utf16('cert:db/name')
+        node = struct.pack(
+            varstore.AUTH_CERT_DB_DATA, VENDOR_GUID_BYTES,
+            varstore.AUTH_CERT_DB_DATA_size + len(name) + len(cert),
+            len(name) // 2, len(cert)) + name + cert
+        db = struct.pack(
+            varstore.AUTH_CERT_DB_LIST_HEAD,
+            varstore.AUTH_CERT_DB_LIST_HEAD_size + len(node)) + node
+
+        with tempfile.TemporaryDirectory() as path:
+            varstore.parse_auth_var(db, path)
+
+            expected_name = f'{str(VENDOR_GUID).upper()}-cert_db_name-00.bin'
+            self.assertEqual(os.listdir(path), [expected_name])
 
     def test_an_empty_auth_list_yields_no_entries(self):
         with tempfile.TemporaryDirectory() as path:

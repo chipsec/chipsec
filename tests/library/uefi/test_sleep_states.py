@@ -274,6 +274,32 @@ class TestOpcodeEncoding(unittest.TestCase):
 
         self.assertEqual(self._round_trip(DEFAULT_TYPE, data), data)
 
+    def test_default_pci_config_read_write_round_trips(self):
+        data = struct.pack(
+            '<BBHIQQQ', OPCODE.EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE,
+            UINT32, 0x11, 0, 0xF8, 0x1, 0xF)
+
+        self.assertEqual(self._round_trip(DEFAULT_TYPE, data), data)
+
+    def test_default_smbus_execute_round_trips(self):
+        data = struct.pack(
+            '<BBQBB', OPCODE.EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE,
+            0x50, 0x10, 0x04, 1)
+
+        self.assertEqual(self._round_trip(DEFAULT_TYPE, data), data)
+
+    def test_default_stall_round_trips(self):
+        data = struct.pack(
+            '<BBQ', OPCODE.EFI_BOOT_SCRIPT_STALL_OPCODE, 0, 0x1388)
+
+        self.assertEqual(self._round_trip(DEFAULT_TYPE, data), data)
+
+    def test_default_terminate_round_trips(self):
+        data = struct.pack(
+            '<B', OPCODE.EFI_BOOT_SCRIPT_TERMINATE_OPCODE)
+
+        self.assertEqual(self._round_trip(DEFAULT_TYPE, data), data)
+
     def test_default_dispatch_round_trips(self):
         data = struct.pack('<BBHIQ', OPCODE.EFI_BOOT_SCRIPT_DISPATCH_OPCODE, 0, 0, 0, 0x7A000000)
 
@@ -297,10 +323,19 @@ class TestOpcodeEncoding(unittest.TestCase):
 
         self.assertEqual(self._round_trip(EDKCOMPAT_TYPE, entry), payload)
 
-    def test_unsupported_opcodes_encode_to_nothing(self):
-        data = struct.pack('<BBQ', OPCODE.EFI_BOOT_SCRIPT_STALL_OPCODE, 0, 0x1388)
+    def test_edkcompat_stall_payload_round_trips(self):
+        payload = struct.pack('<Q', 0x1388)
+        entry = struct.pack(
+            '<HB', EDK.EFI_BOOT_SCRIPT_STALL_OPCODE,
+            len(payload) + 3) + payload
 
-        self.assertEqual(self._round_trip(DEFAULT_TYPE, data), b'')
+        self.assertEqual(self._round_trip(EDKCOMPAT_TYPE, entry), payload)
+
+    def test_edkcompat_terminate_has_no_payload(self):
+        entry = struct.pack(
+            '<HB', EDK.EFI_BOOT_SCRIPT_TERMINATE_OPCODE, 3)
+
+        self.assertEqual(self._round_trip(EDKCOMPAT_TYPE, entry), b'')
 
 
 class TestEntryBufferCreation(unittest.TestCase):
@@ -485,6 +520,15 @@ class TestOpcodeRendering(unittest.TestCase):
 
         self.assertIn('0xFED00000', rendered)
         self.assertIn('Width', rendered)
+
+    def test_write_opcode_dumps_a_payload_it_could_not_decode(self):
+        op = decode_s3bs_opcode(
+            DEFAULT_TYPE, io_write(count=4, values=(1, 2)))
+
+        rendered = str(op)
+
+        self.assertIn('Buffer', rendered)
+        self.assertIn('01 00 00 00', rendered)
 
     def test_read_write_opcode_shows_value_and_mask(self):
         data = struct.pack('<BBHIQQ', OPCODE.EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE, UINT32, 0xB2, 0, 0xAA, 0xFF)

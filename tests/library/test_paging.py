@@ -169,6 +169,45 @@ class TestTranslation(unittest.TestCase):
     def test_empty_translation_has_no_address_space(self):
         self.assertEqual(self.translation.get_address_space(), 0)
 
+    def test_2mb_page_expands_into_512_4kb_pages(self):
+        self.translation.add_page(0x200000, 0x400000, '2MB', 'RW')
+
+        self.translation.expand_pages('2MB')
+
+        self.assertEqual(len(self.translation.translation), 512)
+        self.assertEqual(
+            self.translation.translation[0x200000],
+            {'addr': 0x400000, 'size': '4KB', 'attr': 'RW'})
+        self.assertEqual(
+            self.translation.translation[0x3FF000],
+            {'addr': 0x5FF000, 'size': '4KB', 'attr': 'RW'})
+
+    def test_1gb_page_expands_into_512_2mb_pages(self):
+        self.translation.add_page(0x40000000, 0x80000000, '1GB', 'R')
+
+        self.translation.expand_pages('1GB')
+
+        self.assertEqual(len(self.translation.translation), 512)
+        self.assertEqual(
+            self.translation.translation[0x40000000],
+            {'addr': 0x80000000, 'size': '2MB', 'attr': 'R'})
+        self.assertEqual(
+            self.translation.translation[0x7FE00000],
+            {'addr': 0xBFE00000, 'size': '2MB', 'attr': 'R'})
+
+    def test_expansion_leaves_other_page_sizes_unchanged(self):
+        self.translation.add_page(0x1000, 0x500000, '4KB', 'RW')
+
+        self.translation.expand_pages('2MB')
+
+        self.assertEqual(
+            self.translation.translation,
+            {0x1000: {'addr': 0x500000, 'size': '4KB', 'attr': 'RW'}})
+
+    def test_unsupported_expansion_size_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, 'Unsupported page size'):
+            self.translation.expand_pages('4KB')
+
 
 class TestReverseTranslation(unittest.TestCase):
     """c_reverse_translation answers "which virtual pages map here?"."""
