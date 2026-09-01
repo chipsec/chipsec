@@ -33,9 +33,13 @@ usage:
     >>> write( port, register, data )
 """
 
-from typing import Optional
+from typing import Any, Optional, Tuple
 from chipsec.hal import hal_base
+from chipsec.library.defines import is_all_ones
 from chipsec.library.exceptions import MMIOBarConfigError, RegisterNotFoundError, CSReadError
+
+# BIOS hides P2SB before OS handoff, so it is absent from enumeration and its bus is never resolved.
+P2SB_DEFAULT_BUS = 0
 
 
 class MMMsgBus(hal_base.HALBase):
@@ -44,46 +48,115 @@ class MMMsgBus(hal_base.HALBase):
         super(MMMsgBus, self).__init__(cs)
         self.p2sbHide = None
 
-    def __hide_p2sb(self) -> bool:
+    def __get_unfiltered_register(self, reg_name: str) -> Any:
         """
-        Hide the P2SB device by writing to the HIDE field in the P2SBC register.
-        Returns:
-            bool: True if the P2SB device was hidden, False if it was not.
-        """
-        return self.__write_to_p2sb(1)
+        Get a register definition without filtering on device enablement.
 
-    def __unhide_p2sb(self) -> bool:
-        """
-        Unhide the P2SB device by writing to the HIDE field in the P2SBC register.
-        Returns:
-            bool: True if the P2SB device was unhidden, False if it was not.
-        """
-        return self.__write_to_p2sb(0)
+        The normal register lookup applies filter_enabled(), which drops every P2SB
+        register because the hidden device never gets a bus assigned during enumeration.
 
-    def __write_to_p2sb(self, value: int) -> bool:
-        """
-        Hide or unhide the P2SB device by writing to the HIDE field in the P2SBC register.
         Arguments:
-            value (int): If 1, hide the P2SB device; if 0, unhide it.
+            reg_name (str): Full scoped register name.
         Returns:
-            bool: True if the P2SB device was hidden, False if it was not.
+            Any: The register definition object.
+        Raises:
+            RegisterNotFoundError: If the register is not defined.
+        """
+        for reg in self.cs.Cfg.get_reglist(reg_name):
+            return reg
+        raise RegisterNotFoundError(f'RegisterNotFound: {reg_name}')
+
+    def __get_p2sb_bdf(self, reg: Any) -> Tuple[int, int, int]:
+        """
+        Get the B/D/F to use for direct config access to a P2SB register.
+
+        Arguments:
+            reg: A P2SB register definition object.
+        Returns:
+            Tuple[int, int, int]: (bus, device, function)
+        Raises:
+            RegisterNotFoundError: If the device or function is not defined.
+        """
+        bus = reg.pci.bus if reg.pci.bus is not None else P2SB_DEFAULT_BUS
+        if reg.pci.dev is None or reg.pci.fun is None:
+            raise RegisterNotFoundError(f'RegisterNotFound: no B/D/F defined for {reg.name}')
+        return bus, reg.pci.dev, reg.pci.fun
+
+    def __get_hide_register(self) -> Any:
+        """
+        Get the register definition holding the P2SB HIDE field.
+
+        Returns:
+            Any: The register definition object.
+        Raises:
+            RegisterNotFoundError: If neither hide register variant is defined.
         """
         if not self.p2sbHide:
-            if self.cs.register.has_field("8086.P2SBC.P2SBC", "HIDE"):
-                self.p2sbHide = {'reg': '8086.P2SBC.P2SBC', 'field': 'HIDE'}
-            elif self.cs.register.has_field("8086.P2SBC.P2SB_HIDE", "HIDE"):
-                self.p2sbHide = {'reg': '8086.P2SBC.P2SB_HIDE', 'field': 'HIDE'}
+            for reg_name in ('8086.P2SBC.P2SBC', '8086.P2SBC.P2SB_HIDE'):
+                try:
+                    reg = self.__get_unfiltered_register(reg_name)
+                except RegisterNotFoundError:
+                    continue
+                if reg.has_field('HIDE'):
+                    self.p2sbHide = {'reg': reg_name, 'field': 'HIDE'}
+                    break
             else:
                 raise RegisterNotFoundError('RegisterNotFound: 8086.P2SBC.P2SBC')
+        return self.__get_unfiltered_register(self.p2sbHide['reg'])
 
-        hidden = all(dev is None for dev in self.cs.device.get_bus('8086.P2SBC'))
+    def __unhide_p2sb(self) -> None:
+        """
+        Unhide the P2SB device by clearing the HIDE field.
 
-        p2sbc_reg = self.cs.register.get_list_by_name(self.p2sbHide['reg'])
-        try:
-            p2sbc_reg.write_field(self.p2sbHide['field'], value)
-        except MMIOBarConfigError as e:
-            self.logger.log_hal(f"Failed to write to P2SB register {self.p2sbHide['reg']}: {e}")
-        return hidden
+        The hidden device reads back all-ones, so the new value is seeded at 0 rather than
+        read-modify-written, to avoid writing the all-ones pattern into the other bits.
+        """
+        reg = self.__get_hide_register()
+        bus, dev, fun = self.__get_p2sb_bdf(reg)
+        reg.set_value(0)
+        value = reg.set_field(self.p2sbHide['field'], 0)
+        self.logger.log_hal(f'[mm_msgbus] Unhiding P2SB at {bus:02X}:{dev:02X}.{fun:X}')
+        self.cs.hals.pci.write(bus, dev, fun, reg.offset, reg.size, value)
+
+    def __hide_p2sb(self) -> None:
+        """
+        Hide the P2SB device by setting the HIDE field.
+        """
+        reg = self.__get_hide_register()
+        bus, dev, fun = self.__get_p2sb_bdf(reg)
+        current = self.cs.hals.pci.read(bus, dev, fun, reg.offset, reg.size)
+        if is_all_ones(current, reg.size):
+            self.logger.log_hal('[mm_msgbus] P2SB is already hidden; skipping re-hide')
+            return
+        reg.set_value(current)
+        value = reg.set_field(self.p2sbHide['field'], 1)
+        self.logger.log_hal(f'[mm_msgbus] Re-hiding P2SB at {bus:02X}:{dev:02X}.{fun:X}')
+        self.cs.hals.pci.write(bus, dev, fun, reg.offset, reg.size, value)
+
+    def __read_sbreg_bar_direct(self) -> int:
+        """
+        Read SBREG_BAR straight from PCI config space using the configured B/D/F.
+
+        Returns:
+            int: The base address decoded from the BAR.
+        Raises:
+            CSReadError: If the BAR still reads back as all-ones or zero.
+        """
+        reg = self.__get_unfiltered_register('8086.P2SBC.SBREG_BAR')
+        bus, dev, fun = self.__get_p2sb_bdf(reg)
+        raw = self.cs.hals.pci.read(bus, dev, fun, reg.offset, reg.size)
+        if is_all_ones(raw, reg.size):
+            raise CSReadError('[mm_msgbus] SBREG_BAR reads all ones; P2SB is still hidden')
+        bar = self.cs.register.mmio.get_def('8086.P2SBC.SBREGBAR')
+        base_field = bar.base_field if bar and bar.base_field else 'RBA'
+        preserve = not (bar and bar.reg_align)
+        reg.set_value(raw)
+        base = reg.get_field(base_field, preserve)
+        if not preserve:
+            base <<= bar.reg_align
+        if base == 0:
+            raise CSReadError('[mm_msgbus] SBREG_BAR base address was determined to be 0')
+        return base
 
     def get_sbreg_base_address(self) -> int:
         """
@@ -105,9 +178,10 @@ class MMMsgBus(hal_base.HALBase):
             self.logger.log_hal('Failed to read SBREG_BAR from HOBs')
         self.logger.log_hal('Attempting to unhide and read MMIO BAR base address for 8086.P2SBC.SBREGBAR')
         self.__unhide_p2sb()
-        mmio_addr = self.cs.hals.mmio.get_MMIO_BAR_base_address('8086.P2SBC.SBREGBAR')[0]
-        self.__hide_p2sb()
-        return mmio_addr
+        try:
+            return self.__read_sbreg_bar_direct()
+        finally:
+            self.__hide_p2sb()
 
     def read(self, port: int, register: int) -> int:
         """
