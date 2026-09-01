@@ -107,7 +107,7 @@ class TestStructureHeader(unittest.TestCase):
 class TestStringList(unittest.TestCase):
 
     def setUp(self):
-        self.hal, _cs = make_smbios()
+        self.hal = make_smbios()[0]
 
     def test_every_string_in_the_string_area_is_returned(self):
         data = smbios_struct(1, b'\x00' * 4, strings=('Intel', 'Board', 'A0'))
@@ -136,7 +136,7 @@ class TestStringList(unittest.TestCase):
 class TestRawStructureIteration(unittest.TestCase):
 
     def setUp(self):
-        self.hal, _cs = make_smbios()
+        self.hal = make_smbios()[0]
 
     def test_no_table_data_yields_nothing(self):
         self.assertIsNone(self.hal.get_raw_structs(None, False))
@@ -191,7 +191,7 @@ class TestRawStructureIteration(unittest.TestCase):
 class TestDecodedStructures(unittest.TestCase):
 
     def setUp(self):
-        self.hal, _cs = make_smbios()
+        self.hal = make_smbios()[0]
 
     def test_no_table_data_yields_nothing(self):
         self.assertIsNone(self.hal.get_decoded_structs())

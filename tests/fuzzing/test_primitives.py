@@ -202,6 +202,26 @@ class TestStatic(unittest.TestCase):
 
 class TestString(unittest.TestCase):
 
+    def test_instances_reuse_the_global_fuzz_library(self):
+        first = string('A')
+        second = string('B')
+
+        self.assertIs(first.string_fuzz_library, second.string_fuzz_library)
+        self.assertIs(first.string_fuzz_library, string.fuzz_library)
+        self.assertGreater(first.num_mutations(), len(first.this_library))
+
+    def test_max_length_filter_does_not_modify_the_global_library(self):
+        unconstrained = string('A')
+        global_count = len(unconstrained.string_fuzz_library)
+
+        constrained = string('A', max_len=32)
+
+        self.assertEqual(len(string.fuzz_library), global_count)
+        self.assertTrue(all(len(value) <= 32
+                    for value in constrained.string_fuzz_library))
+        self.assertTrue(any(len(value) > 32
+                    for value in unconstrained.string_fuzz_library))
+
     def test_mutation_count_matches_reported_number_of_mutations(self):
         primitive = string('A')
 

@@ -112,15 +112,23 @@ class c_translation:
         return
 
     def expand_pages(self, exp_size: str) -> None:
-        SIZE = {'1GB': '2MB', '2MB': '4KB'}
-        for virt in self.translation.keys():
-            size = self.translation[virt]['size']
-            attr = self.translation[virt]['attr']
-            phys = self.translation[virt]['addr']
-            pgsize = (1 << 12) if size == '2MB' else (1 << 20)
-            if size == exp_size:
-                for i in range(512):
-                    self.add_page(virt + i * pgsize, phys + i * pgsize, SIZE[exp_size], attr)
+        child_pages = {
+            '1GB': ('2MB', SIZE_2MB),
+            '2MB': ('4KB', SIZE_4KB),
+        }
+        if exp_size not in child_pages:
+            raise ValueError(f'Unsupported page size: {exp_size}')
+
+        child_size, page_size = child_pages[exp_size]
+        for virt, page in list(self.translation.items()):
+            if page['size'] != exp_size:
+                continue
+            for index in range(512):
+                self.add_page(
+                    virt + index * page_size,
+                    page['addr'] + index * page_size,
+                    child_size,
+                    page['attr'])
         return
 
 

@@ -24,6 +24,7 @@ To execute: python[3] -m unittest tests.utilcmd.ec_cmd.test_ec_cmd
 
 import unittest
 import os
+from unittest.mock import patch
 
 from chipsec.library.file import get_main_dir
 from tests.utilcmd.run_chipsec_util import setup_run_destroy_util
@@ -54,6 +55,8 @@ class TestEcUtilcmd(unittest.TestCase):
         retval = setup_run_destroy_util(init_replay_file, "ec", "write 0x2f 0x00", util_replay_file=ec_cmd_write_2f_0_replay_file)
         self.assertEqual(retval, ExitCode.OK)
 
+    @patch('chipsec.hal.common.ec.EC.read_idx',
+           new=lambda _ec, offset: offset & 0xFF)
     def test_index(self) -> None:
         init_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "adlenumerate.json")
         ec_cmd_index_replay_file = os.path.join(get_main_dir(), "tests", "utilcmd", "ec_cmd", "ec_cmd_index_1.json")

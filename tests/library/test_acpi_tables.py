@@ -646,6 +646,15 @@ class TestAPICStructureTypes(unittest.TestCase):
     def test_io_sapic(self):
         self.assertIn('I/O SAPIC', self._render(0x06, 'IOSAPIC', 6, 16, 1, 0, 0, 0xFEC00000))
 
+    def test_platform_interrupt_sources(self):
+        rendered = self._render(
+            0x08, 'PLATFORM_INTERRUPT_SOURCES',
+            8, 16, 0x1, 0x2, 0x3, 0x4, 0x5, 0x1234, 0x6)
+
+        self.assertIn('Platform Interrupt Sources', rendered)
+        self.assertIn('0x05', rendered)
+        self.assertIn('0x1234', rendered)
+
     def test_processor_local_x2apic(self):
         self.assertIn('Processor Local x2APIC',
                       self._render(0x09, 'PROCESSOR_Lx2APIC', 9, 16, 0, 4, 1, 4))

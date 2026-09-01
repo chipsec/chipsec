@@ -520,7 +520,7 @@ class APIC (ACPI_TABLE):
             "LAPIC_ADDRESS_OVERRIDE": '<BBHQ',
             "IOSAPIC": '<BBBBIQ',
             "PROCESSOR_LSAPIC": '<BBBBBHII',
-            "PLATFORM_INTERRUPT_SOURCES": '<BBHBBBII',
+            "PLATFORM_INTERRUPT_SOURCES": '<BBHBBBBII',
             "PROCESSOR_Lx2APIC": '<BBHIII',
             "Lx2APIC_NMI": '<BBHIB3s',
             "GICC_CPU": '<BBHIIIIIQQQQIQQ',
