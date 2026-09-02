@@ -98,7 +98,7 @@ class ACPICommand(BaseCommand):
         space_filter = getattr(self, '_space', 'systemmemory').lower()
         use_json = getattr(self, '_json', False)
 
-        regions = self._acpi.list_operation_regions()
+        regions = self._acpi.list_dsdtssdt_operation_regions()
 
         if not regions:
             self.logger.log('[CHIPSEC] No OperationRegions found in DSDT/SSDTs')

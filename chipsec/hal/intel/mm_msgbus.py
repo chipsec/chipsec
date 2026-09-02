@@ -35,7 +35,7 @@ usage:
 
 from typing import Optional
 from chipsec.hal import hal_base
-from chipsec.library.exceptions import MMIOBarConfigError, RegisterNotFoundError, CSReadError
+from chipsec.library.exceptions import MMIOBarConfigError, MMIOBARNotFoundError, RegisterNotFoundError, CSReadError
 
 
 class MMMsgBus(hal_base.HALBase):
@@ -43,6 +43,7 @@ class MMMsgBus(hal_base.HALBase):
     def __init__(self, cs):
         super(MMMsgBus, self).__init__(cs)
         self.p2sbHide = None
+        self._sbreg_base = None
 
     def __hide_p2sb(self) -> bool:
         """
@@ -85,29 +86,59 @@ class MMMsgBus(hal_base.HALBase):
             self.logger.log_hal(f"Failed to write to P2SB register {self.p2sbHide['reg']}: {e}")
         return hidden
 
-    def get_sbreg_base_address(self) -> int:
+    def __get_sbreg_from_mmio_bar(self) -> Optional[int]:
+        try:
+            return self.cs.hals.mmio.get_MMIO_BAR_base_address('8086.P2SBC.SBREGBAR')[0]
+        except (MMIOBarConfigError, MMIOBARNotFoundError, CSReadError):
+            self.logger.log_hal('Failed to read MMIO BAR base address for 8086.P2SBC.SBREGBAR')
+            return None
+
+    def __get_sbreg_from_acpi(self) -> Optional[int]:
+        try:
+            acpi_addr = self.cs.hals.acpi.get_sbreg_base_address()
+            if acpi_addr:
+                self.logger.log_hal(f'Discovered SBREG_BAR from ACPI: 0x{acpi_addr:016X}')
+            return acpi_addr
+        except Exception as e:
+            self.logger.log_hal(f'Failed to read SBREG_BAR from ACPI: {e}')
+            return None
+
+    def __get_sbreg_from_hob(self) -> Optional[int]:
+        try:
+            hobs = self.cs.hals.hob.get_list_by_name('8086.HOB.P2SB_HOB')
+            return hobs[0].get_field_value('PCI') if hobs else None
+        except Exception:
+            self.logger.log_hal('Failed to read SBREG_BAR from HOBs')
+            return None
+
+    def __get_sbreg_from_unhidden_mmio_bar(self) -> Optional[int]:
+        self.logger.log_hal('Attempting to unhide and read MMIO BAR base address for 8086.P2SBC.SBREGBAR')
+        self.__unhide_p2sb()
+        try:
+            return self.cs.hals.mmio.get_MMIO_BAR_base_address('8086.P2SBC.SBREGBAR')[0]
+        except Exception as e:
+            self.logger.log_hal(f'Failed to read unhidden SBREG_BAR: {e}')
+            return None
+        finally:
+            self.__hide_p2sb()
+
+    def get_sbreg_base_address(self) -> Optional[int]:
         """
         Get the base address of the SBREG MMIO BAR.
         Returns:
             int: The base address of the SBREG MMIO BAR, or None if it cannot be determined.
         """
-        try:
-            mmio_addr = self.cs.hals.mmio.get_MMIO_BAR_base_address('8086.P2SBC.SBREGBAR')[0]
-            return mmio_addr
-        except (MMIOBarConfigError, CSReadError):
-            self.logger.log_hal('Failed to read MMIO BAR base address for 8086.P2SBC.SBREGBAR')
-        try:
-            hobs = self.cs.hals.hob.get_list_by_name('8086.HOB.P2SB_HOB')
-            if hobs:
-                mmio_addr = hobs[0].get_field_value('PCI')
-                return mmio_addr
-        except Exception:
-            self.logger.log_hal('Failed to read SBREG_BAR from HOBs')
-        self.logger.log_hal('Attempting to unhide and read MMIO BAR base address for 8086.P2SBC.SBREGBAR')
-        self.__unhide_p2sb()
-        mmio_addr = self.cs.hals.mmio.get_MMIO_BAR_base_address('8086.P2SBC.SBREGBAR')[0]
-        self.__hide_p2sb()
-        return mmio_addr
+        if self._sbreg_base is not None:
+            return self._sbreg_base
+
+        for get_address in (self.__get_sbreg_from_mmio_bar, self.__get_sbreg_from_acpi, self.__get_sbreg_from_hob):
+            sbreg_base = get_address()
+            if sbreg_base:
+                self._sbreg_base = sbreg_base
+                return self._sbreg_base
+
+        self._sbreg_base = self.__get_sbreg_from_unhidden_mmio_bar()
+        return self._sbreg_base
 
     def read(self, port: int, register: int) -> int:
         """
