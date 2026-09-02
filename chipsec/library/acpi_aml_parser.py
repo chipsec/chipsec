@@ -201,11 +201,13 @@ class AMLParser:
                             if value is not None and val_len > 0:
                                 # Store in symbol table
                                 self.names[name] = value
-                    i += 5
+                                i = pos + val_len
+                                continue
+                    i += 1
                 else:
                     i += 1
             except Exception:
-                i += 5
+                i += 1
     def _decode_operation_region(self, aml_binary: bytes, offset: int) -> Optional[OperationRegion]:
         """
         Decode a single OperationRegion definition.
@@ -1016,3 +1018,136 @@ def parse_operation_regions(tables: List[bytes]) -> List[Dict]:
         }
         for r in regions
     ]
+
+
+def parse_aml_pkg_length(aml: bytes, pos: int) -> Tuple[int, int]:
+    """
+    Parse AML package length (variable-size encoding).
+    Returns (length, bytes_consumed).
+    """
+    if pos >= len(aml):
+        return 0, 0
+    lead = aml[pos]
+    byte_count = (lead >> 6) & 0x03
+    if byte_count == 0:
+        return (lead & 0x3F, 1)
+    elif byte_count == 1:
+        if pos + 1 >= len(aml):
+            return 0, 1
+        return ((lead & 0x0F) | (aml[pos + 1] << 4), 2)
+    elif byte_count == 2:
+        if pos + 2 >= len(aml):
+            return 0, 1
+        return ((lead & 0x0F) | (aml[pos + 1] << 4) | (aml[pos + 2] << 12), 3)
+    else:
+        if pos + 3 >= len(aml):
+            return 0, 1
+        return ((lead & 0x0F) | (aml[pos + 1] << 4) | (aml[pos + 2] << 12) | (aml[pos + 3] << 20), 4)
+
+
+def find_field_in_acpi_nvs(tables: List[bytes], target_field_names: List[str], mem_hal: Optional[object] = None) -> Optional[int]:
+    """
+    Locates target fields (e.g., SBRG, SBREG_BAR) within ACPI NVS / OperationRegions or Name objects
+    and retrieves their runtime physical memory values.
+
+    Args:
+        tables: List of raw ACPI table binaries (header + AML content)
+        target_field_names: Field names to search for (e.g., ['SBRG', 'SBREG_BAR'])
+        mem_hal: Memory HAL instance to read physical memory
+
+    Returns:
+        Base address as integer if found, None otherwise
+    """
+    target_names = set(target_field_names)
+
+    for table in tables:
+        aml = table[36:] if len(table) > 36 else table
+        parser = AMLParser()
+        parser._scan_for_names(aml)
+
+        # Check direct Name declarations
+        for tf in target_names:
+            if tf in parser.names:
+                val = parser.names[tf]
+                if val not in (0, 0xFFFFFFFF, 0xFFFFFFFFFFFFFFFF) and (val & 0xFFF) == 0 and val >= 0x100000:
+                    return val
+
+        # Collect SystemMemory OperationRegions
+        opregions: Dict[str, int] = {}
+        i = 0
+        while i < len(aml) - 7:
+            if aml[i] == 0x5B and aml[i + 1] == 0x80:  # OpRegionOp
+                name, name_len = parser._decode_name_string_simple(aml, i + 2)
+                if name and name_len > 0:
+                    pos = i + 2 + name_len
+                    if pos < len(aml):
+                        space = aml[pos]
+                        pos += 1
+                        base, base_len = parser._decode_aml_integer(aml, pos)
+                        if base is None and pos < len(aml):
+                            var_name, var_len = parser._decode_name_string_simple(aml, pos)
+                            if var_name and var_name in parser.names:
+                                base = parser.names[var_name]
+                        if space == 0 and base is not None:
+                            clean_name = name.lstrip('\\.').split('.')[-1]
+                            opregions[clean_name] = base
+                            opregions[name] = base
+            i += 1
+
+        # Scan FieldOp declarations (0x5B 0x81)
+        i = 0
+        while i < len(aml) - 8:
+            if aml[i] == 0x5B and aml[i + 1] == 0x81:
+                pkg_len, pkg_adv = parse_aml_pkg_length(aml, i + 2)
+                if pkg_len > 0:
+                    end_pos = i + 2 + pkg_len
+                    pos = i + 2 + pkg_adv
+                    reg_name, reg_len = parser._decode_name_string_simple(aml, pos)
+                    if reg_name and reg_len > 0:
+                        pos += reg_len
+                        # Skip flags byte
+                        pos += 1
+                        bit_offset = 0
+                        clean_reg_name = reg_name.lstrip('\\.').split('.')[-1]
+                        while pos < end_pos and pos < len(aml):
+                            elem = aml[pos]
+                            if elem == 0x00:  # ReservedField: 0x00 + PkgLength
+                                pos += 1
+                                f_bits, f_adv = parse_aml_pkg_length(aml, pos)
+                                pos += f_adv
+                                bit_offset += f_bits
+                            elif elem == 0x01:  # AccessField: 0x01 + AccessType + AccessAttrib
+                                pos += 3
+                            elif elem == 0x02:  # ConnectField: 0x02 + Name/Buffer
+                                pos += 1
+                                _, name_adv = parser._decode_name_string_simple(aml, pos)
+                                pos += name_adv if name_adv > 0 else 4
+                            elif elem == 0x03:  # ExtendedAccessField
+                                pos += 4
+                            else:
+                                f_name, f_name_len = parser._decode_name_string_simple(aml, pos)
+                                if f_name and f_name_len > 0:
+                                    pos += f_name_len
+                                    f_bits, f_adv = parse_aml_pkg_length(aml, pos)
+                                    pos += f_adv
+                                    clean_f_name = f_name.lstrip('\\.').split('.')[-1]
+                                    if clean_f_name in target_names:
+                                        target_base = opregions.get(clean_reg_name) or opregions.get(reg_name)
+                                        if target_base is not None and mem_hal is not None:
+                                            pa = target_base + (bit_offset // 8)
+                                            read_len = 8 if f_bits >= 64 else 4
+                                            try:
+                                                val_bytes = mem_hal.read_physical_mem(pa, read_len)
+                                                fmt = '<Q' if read_len == 8 else '<I'
+                                                val = struct.unpack(fmt, val_bytes)[0]
+                                                if val not in (0, 0xFFFFFFFF, 0xFFFFFFFFFFFFFFFF) and (val & 0xFFF) == 0:
+                                                    return val
+                                            except Exception:
+                                                pass
+                                    bit_offset += f_bits
+                                else:
+                                    pos += 1
+            i += 1
+
+    return None
+

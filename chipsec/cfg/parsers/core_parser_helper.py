@@ -427,18 +427,26 @@ class CoreParserHelper:
 
             device_dest = dest[vid_str][bar_attr['device']]
 
+            pci_config = self.cfg.CONFIG_PCI
+            instances = []
+            if (vid_str in pci_config and
+                bar_attr['device'] in pci_config[vid_str]):
+                [instances.extend(list(inst.instances.values())) for inst in pci_config[vid_str][bar_attr['device']]]
+
             # Handle existing configuration
             if bar_name in device_dest:
+                existing_bar = device_dest[bar_name]
                 if 'config' in bar_attr:
-                    device_dest[bar_name].add_config(bar_attr['config'])
+                    existing_bar.add_config(bar_attr['config'])
+                # Only extend coverage when the redeclaration describes the same BAR,
+                # since a device may reuse a bar name with a different base register
+                if bar_attr.get('register') == getattr(existing_bar, 'register', None):
+                    for instance in instances:
+                        if instance not in existing_bar.instances:
+                            existing_bar.add_obj(instance)
             else:
                 # Create new bar object
-                pci_config = self.cfg.CONFIG_PCI
-                if (vid_str in pci_config and
-                    bar_attr['device'] in pci_config[vid_str]):
-                    instances = []
-                    [instances.extend(list(inst.instances.values())) for inst in pci_config[vid_str][bar_attr['device']]]
-                    bar_attr['ids'] = instances
+                bar_attr['ids'] = instances
 
                 bar_obj = cfg_obj(bar_attr)
                 device_dest[bar_name] = bar_obj

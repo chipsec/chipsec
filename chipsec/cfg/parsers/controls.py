@@ -74,6 +74,15 @@ class CONTROLHelper(BaseConfigHelper):
         self.field = cfg_obj['field']
         self.logger = logger()
 
+    def get_instance(self) -> Any:
+        """
+        Get the instance the underlying register belongs to.
+
+        Returns:
+            The instance value, unwrapped to the owning device instance
+        """
+        return self.instance if not hasattr(self.instance, 'instance') else self.instance.instance
+
     def read(self) -> int:
         """
         Read the control value from the register field.
