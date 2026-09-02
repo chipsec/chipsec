@@ -43,6 +43,7 @@ class MMMsgBus(hal_base.HALBase):
     def __init__(self, cs):
         super(MMMsgBus, self).__init__(cs)
         self.p2sbHide = None
+        self._sbreg_base = None
 
     def __hide_p2sb(self) -> bool:
         """
@@ -91,23 +92,42 @@ class MMMsgBus(hal_base.HALBase):
         Returns:
             int: The base address of the SBREG MMIO BAR, or None if it cannot be determined.
         """
+        if self._sbreg_base is not None:
+            return self._sbreg_base
+
         try:
             mmio_addr = self.cs.hals.mmio.get_MMIO_BAR_base_address('8086.P2SBC.SBREGBAR')[0]
-            return mmio_addr
+            if mmio_addr:
+                self._sbreg_base = mmio_addr
+                return self._sbreg_base
         except (MMIOBarConfigError, CSReadError):
             self.logger.log_hal('Failed to read MMIO BAR base address for 8086.P2SBC.SBREGBAR')
+        try:
+            acpi_addr = self.cs.hals.acpi.get_sbreg_base_address()
+            if acpi_addr:
+                self.logger.log_hal(f'Discovered SBREG_BAR from ACPI: 0x{acpi_addr:016X}')
+                self._sbreg_base = acpi_addr
+                return self._sbreg_base
+        except Exception as e:
+            self.logger.log_hal(f'Failed to read SBREG_BAR from ACPI: {e}')
         try:
             hobs = self.cs.hals.hob.get_list_by_name('8086.HOB.P2SB_HOB')
             if hobs:
                 mmio_addr = hobs[0].get_field_value('PCI')
-                return mmio_addr
+                if mmio_addr:
+                    self._sbreg_base = mmio_addr
+                    return self._sbreg_base
         except Exception:
             self.logger.log_hal('Failed to read SBREG_BAR from HOBs')
         self.logger.log_hal('Attempting to unhide and read MMIO BAR base address for 8086.P2SBC.SBREGBAR')
         self.__unhide_p2sb()
-        mmio_addr = self.cs.hals.mmio.get_MMIO_BAR_base_address('8086.P2SBC.SBREGBAR')[0]
+        try:
+            mmio_addr = self.cs.hals.mmio.get_MMIO_BAR_base_address('8086.P2SBC.SBREGBAR')[0]
+        except Exception:
+            mmio_addr = None
         self.__hide_p2sb()
-        return mmio_addr
+        self._sbreg_base = mmio_addr
+        return self._sbreg_base
 
     def read(self, port: int, register: int) -> int:
         """

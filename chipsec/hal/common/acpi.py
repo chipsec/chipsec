@@ -620,6 +620,37 @@ class ACPI(HALBase):
 
         return regions
 
+    def get_sbreg_base_address(self) -> Optional[int]:
+        """
+        Extract Sideband Register Base (SBRG / SBREG_BAR) from ACPI DSDT / SSDT tables.
+        """
+        from chipsec.library.acpi_aml_parser import find_field_in_acpi_nvs
+
+        tables_to_parse = []
+        try:
+            if ACPI_TABLE_SIG_DSDT in self.tableList:
+                dsdt_tables = self.get_ACPI_table(ACPI_TABLE_SIG_DSDT)
+                if dsdt_tables:
+                    for dsdt_header, dsdt_content in dsdt_tables:
+                        tables_to_parse.append(dsdt_header + dsdt_content)
+        except Exception as e:
+            logger().log_hal(f"[acpi] Error reading DSDT: {e}")
+
+        try:
+            if ACPI_TABLE_SIG_SSDT in self.tableList:
+                ssdt_tables = self.get_ACPI_table(ACPI_TABLE_SIG_SSDT)
+                if ssdt_tables:
+                    for ssdt_header, ssdt_content in ssdt_tables:
+                        tables_to_parse.append(ssdt_header + ssdt_content)
+        except Exception as e:
+            logger().log_hal(f"[acpi] Error reading SSDTs: {e}")
+
+        if not tables_to_parse:
+            return None
+
+        target_fields = ['SBRG', 'SBREG', 'SBREG_BAR', 'SBR0', 'SBMB']
+        return find_field_in_acpi_nvs(tables_to_parse, target_fields, self.cs.hals.memory)
+
 
 
 haldata = {"arch":[HALBase.MfgIds.Any], 'name': {'acpi':'ACPI'}}
