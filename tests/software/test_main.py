@@ -42,6 +42,12 @@ class TestChipsecMain(unittest.TestCase):
         pars = chipsec_main.parse_args(['-I', 'chipsec/modules/common'])
         self.assertEqual(['chipsec/modules/common'], pars['IMPORT_PATHS'])
 
+    def test_include_accepts_multiple_paths(self):
+        pars = chipsec_main.parse_args(
+            ['-I', 'chipsec/modules/common', 'chipsec/modules/tools'])
+        self.assertEqual(['chipsec/modules/common', 'chipsec/modules/tools'],
+                         pars['IMPORT_PATHS'])
+
     def test_read_files_in_tool_folder(self):
         res = module_helper.enumerate_modules()
         expected = ['tools.wsmt', 'tools.cpu.sinkhole', 'tools.secureboot.te', 'tools.smm.rogue_mmio_bar', 'tools.smm.smm_ptr', 'tools.uefi.reputation', 'tools.uefi.s3script_modify', 'tools.uefi.scan_blocked', 'tools.uefi.scan_image', 'tools.uefi.uefivar_fuzz', 'tools.vmm.cpuid_fuzz', 'tools.vmm.ept_finder', 'tools.vmm.hypercallfuzz', 'tools.vmm.iofuzz', 'tools.vmm.msr_fuzz', 'tools.vmm.pcie_fuzz', 'tools.vmm.pcie_overlap_fuzz', 'tools.vmm.venom', 'tools.vmm.hv.define', 'tools.vmm.hv.hypercall', 'tools.vmm.hv.hypercallfuzz', 'tools.vmm.hv.synth_dev', 'tools.vmm.hv.synth_kbd', 'tools.vmm.hv.vmbus', 'tools.vmm.hv.vmbusfuzz', 'tools.vmm.vbox.vbox_crash_apicbase', 'tools.vmm.xen.define', 'tools.vmm.xen.hypercall', 'tools.vmm.xen.hypercallfuzz', 'tools.vmm.xen.xsa188']

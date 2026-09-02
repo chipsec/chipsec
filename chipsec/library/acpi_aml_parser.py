@@ -1059,21 +1059,23 @@ def find_field_in_acpi_nvs(tables: List[bytes], target_field_names: List[str], m
         Base address as integer if found, None otherwise
     """
     target_names = set(target_field_names)
+    aml_blobs = [table[36:] if len(table) > 36 else table for table in tables]
 
-    for table in tables:
-        aml = table[36:] if len(table) > 36 else table
-        parser = AMLParser()
+    # Pass 1: build a single namespace across all tables so SSDTs can reference DSDT symbols
+    parser = AMLParser()
+    for aml in aml_blobs:
         parser._scan_for_names(aml)
 
-        # Check direct Name declarations
-        for tf in target_names:
-            if tf in parser.names:
-                val = parser.names[tf]
-                if val not in (0, 0xFFFFFFFF, 0xFFFFFFFFFFFFFFFF) and (val & 0xFFF) == 0 and val >= 0x100000:
-                    return val
+    # Check direct Name declarations
+    for tf in target_names:
+        if tf in parser.names:
+            val = parser.names[tf]
+            if val not in (0, 0xFFFFFFFF, 0xFFFFFFFFFFFFFFFF) and (val & 0xFFF) == 0 and val >= 0x100000:
+                return val
 
-        # Collect SystemMemory OperationRegions
-        opregions: Dict[str, int] = {}
+    # Pass 2: collect SystemMemory OperationRegions from all tables
+    opregions: Dict[str, int] = {}
+    for aml in aml_blobs:
         i = 0
         while i < len(aml) - 7:
             if aml[i] == 0x5B and aml[i + 1] == 0x80:  # OpRegionOp
@@ -1094,7 +1096,8 @@ def find_field_in_acpi_nvs(tables: List[bytes], target_field_names: List[str], m
                             opregions[name] = base
             i += 1
 
-        # Scan FieldOp declarations (0x5B 0x81)
+    # Pass 3: scan FieldOp declarations (0x5B 0x81) against the merged region map
+    for aml in aml_blobs:
         i = 0
         while i < len(aml) - 8:
             if aml[i] == 0x5B and aml[i + 1] == 0x81:
@@ -1134,15 +1137,19 @@ def find_field_in_acpi_nvs(tables: List[bytes], target_field_names: List[str], m
                                     if clean_f_name in target_names:
                                         target_base = opregions.get(clean_reg_name) or opregions.get(reg_name)
                                         if target_base is not None and mem_hal is not None:
-                                            pa = target_base + (bit_offset // 8)
-                                            read_len = 8 if f_bits >= 64 else 4
+                                            byte_offset, bit_shift = divmod(bit_offset, 8)
+                                            pa = target_base + byte_offset
+                                            width_bits = 64 if f_bits >= 64 else 32
+                                            # Read an extra byte when the field is not byte-aligned
+                                            read_len = (bit_shift + width_bits + 7) // 8
                                             try:
                                                 val_bytes = mem_hal.read_physical_mem(pa, read_len)
-                                                fmt = '<Q' if read_len == 8 else '<I'
-                                                val = struct.unpack(fmt, val_bytes)[0]
+                                                raw = int.from_bytes(val_bytes, 'little')
+                                                val = (raw >> bit_shift) & ((1 << width_bits) - 1)
                                                 if val not in (0, 0xFFFFFFFF, 0xFFFFFFFFFFFFFFFF) and (val & 0xFFF) == 0:
                                                     return val
                                             except Exception:
+                                                # Address may be unmapped/unreadable; fall through to scan remaining fields
                                                 pass
                                     bit_offset += f_bits
                                 else:
