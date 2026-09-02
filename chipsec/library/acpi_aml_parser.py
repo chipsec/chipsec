@@ -26,8 +26,82 @@ Supports both static OperationRegion declarations and dynamic _CRS method resour
 """
 
 from dataclasses import dataclass
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Set, Tuple
 import struct
+
+ACPI_TABLE_HEADER_SIZE = 36
+AML_EXTENDED_OPCODE = 0x5B
+AML_OPERATION_REGION_OP = 0x80
+AML_FIELD_OP = 0x81
+AML_RESERVED_FIELD = 0x00
+AML_ACCESS_FIELD = 0x01
+AML_CONNECT_FIELD = 0x02
+AML_EXTENDED_ACCESS_FIELD = 0x03
+
+AML_ZERO_OP = 0x00
+AML_ONE_OP = 0x01
+AML_BYTE_PREFIX = 0x0A
+AML_WORD_PREFIX = 0x0B
+AML_DWORD_PREFIX = 0x0C
+AML_QWORD_PREFIX = 0x0E
+
+
+def _is_name_char(byte: int) -> bool:
+    return ((ord('A') <= byte <= ord('Z')) or
+            (ord('a') <= byte <= ord('z')) or
+            (ord('0') <= byte <= ord('9')) or
+            byte == ord('_'))
+
+
+def _decode_name_seg(data: bytes, offset: int) -> Optional[str]:
+    """Decode one four-byte AML NameSeg."""
+    if offset + 4 > len(data):
+        return None
+    segment = data[offset:offset + 4]
+    if not all(_is_name_char(byte) for byte in segment):
+        return None
+    name = segment.decode('ascii', errors='ignore').rstrip('_')
+    return name if name else None
+
+
+def _decode_aml_integer(data: bytes, offset: int) -> Tuple[Optional[int], int]:
+    """Decode an AML integer constant and return its value and encoded size."""
+    if offset >= len(data):
+        return None, 0
+
+    opcode = data[offset]
+    if opcode == AML_ZERO_OP:
+        return 0, 1
+    if opcode == AML_ONE_OP:
+        return 1, 1
+    if opcode == AML_BYTE_PREFIX and offset + 2 <= len(data):
+        return data[offset + 1], 2
+    if opcode == AML_WORD_PREFIX and offset + 3 <= len(data):
+        return struct.unpack('<H', data[offset + 1:offset + 3])[0], 3
+    if opcode == AML_DWORD_PREFIX and offset + 5 <= len(data):
+        return struct.unpack('<I', data[offset + 1:offset + 5])[0], 5
+    if opcode == AML_QWORD_PREFIX and offset + 9 <= len(data):
+        return struct.unpack('<Q', data[offset + 1:offset + 9])[0], 9
+    if 0x02 <= opcode <= 0x09:
+        return opcode, 1
+    return None, 0
+
+
+def parse_aml_pkg_length(aml: bytes, pos: int) -> Tuple[int, int]:
+    """Decode an AML package length and return its value and encoded size."""
+    if pos >= len(aml):
+        return 0, 0
+    lead = aml[pos]
+    byte_count = (lead >> 6) & 0x03
+    if byte_count == 0:
+        return lead & 0x3F, 1
+    if pos + byte_count >= len(aml):
+        return 0, 1
+
+    length = lead & 0x0F
+    for index in range(byte_count):
+        length |= aml[pos + index + 1] << (4 + 8 * index)
+    return length, byte_count + 1
 
 
 @dataclass
@@ -41,24 +115,35 @@ class OperationRegion:
     source: str = "OperationRegion"  # Track region source for debugging
 
 
+@dataclass(frozen=True)
+class AMLFieldLocation:
+    """Physical location of a named field in a SystemMemory OperationRegion."""
+    name: str
+    region_name: str
+    physical_address: int
+    bit_offset: int
+    bit_length: int
+
+
 class AMLParser:
     """Simple AML binary parser for OperationRegion enumeration."""
 
     # AML Opcodes
-    OPCODE_OPERATION_REGION = 0x5B
-    SUBOPCODE_OPERATION_REGION = 0x80
+    OPCODE_OPERATION_REGION = AML_EXTENDED_OPCODE
+    SUBOPCODE_OPERATION_REGION = AML_OPERATION_REGION_OP
+    SUBOPCODE_FIELD = AML_FIELD_OP
     OPCODE_NAME = 0x08
     OPCODE_STORE = 0x70
     OPCODE_METHOD = 0x14
     OPCODE_RETURN = 0xA4
 
     # Integer encoding opcodes
-    ZERO_OP = 0x00
-    ONE_OP = 0x01
-    BYTE_PREFIX = 0x0A
-    WORD_PREFIX = 0x0B
-    DWORD_PREFIX = 0x0C
-    QWORD_PREFIX = 0x0E
+    ZERO_OP = AML_ZERO_OP
+    ONE_OP = AML_ONE_OP
+    BYTE_PREFIX = AML_BYTE_PREFIX
+    WORD_PREFIX = AML_WORD_PREFIX
+    DWORD_PREFIX = AML_DWORD_PREFIX
+    QWORD_PREFIX = AML_QWORD_PREFIX
 
     # Space type names
     SPACE_TYPE_NAMES = {
@@ -81,6 +166,23 @@ class AMLParser:
     def __init__(self):
         self.regions: List[OperationRegion] = []
         self.names: Dict[str, int] = {}  # Symbol table for Name() declarations
+        self.aml_blobs: List[bytes] = []
+
+    def _load_namespace(self, tables: List[bytes]) -> None:
+        """Extract AML bodies and build their shared namespace."""
+        self.names = {}
+        self.aml_blobs = [table[ACPI_TABLE_HEADER_SIZE:] if len(table) > ACPI_TABLE_HEADER_SIZE else table
+                  for table in tables]
+
+        for aml_data in self.aml_blobs:
+            self._scan_for_names(aml_data)
+
+    def _load_tables(self, tables: List[bytes]) -> None:
+        """Build the shared namespace and decode static OperationRegions."""
+        self.regions = []
+        self._load_namespace(tables)
+        for aml_data in self.aml_blobs:
+            self._scan_for_regions(aml_data)
 
     def parse(self, dsdt_and_ssdts: List[bytes]) -> List[OperationRegion]:
         """
@@ -92,28 +194,10 @@ class AMLParser:
         Returns:
             List of OperationRegion objects
         """
-        self.regions = []
-        self.names = {}
-
-        # First pass: collect all Name() declarations for symbol resolution
-        for table_data in dsdt_and_ssdts:
-            if len(table_data) < 36:
-                continue
-            aml_data = table_data[36:]
-            self._scan_for_names(aml_data)
-
-        # Second pass: scan for OperationRegion definitions
-        for table_data in dsdt_and_ssdts:
-            if len(table_data) < 36:
-                continue
-            aml_data = table_data[36:]
-            self._scan_for_regions(aml_data)
+        self._load_tables(dsdt_and_ssdts)
 
         # Third pass: extract CRS Store field assignments (e.g., BAS1, LEN1, LIM1)
-        for table_data in dsdt_and_ssdts:
-            if len(table_data) < 36:
-                continue
-            aml_data = table_data[36:]
+        for aml_data in self.aml_blobs:
             crs_executor = CRSExecutor()
             crs_fields = crs_executor.extract_crs_fields(aml_data)
 
@@ -126,10 +210,8 @@ class AMLParser:
 
                     # Look for corresponding LEN and LIM fields
                     len_name = f'LEN{suffix}'
-                    lim_name = f'LIM{suffix}'
 
                     length = crs_fields.get(len_name, 0)
-                    limit = crs_fields.get(lim_name, 0)
 
                     if value > 0 and length > 0:
                         # Try to get the buffer name (PMCR, SPIR, P2BR) from mapping
@@ -201,11 +283,13 @@ class AMLParser:
                             if value is not None and val_len > 0:
                                 # Store in symbol table
                                 self.names[name] = value
-                    i += 5
+                                i = pos + val_len
+                                continue
+                    i += 1
                 else:
                     i += 1
             except Exception:
-                i += 5
+                i += 1
     def _decode_operation_region(self, aml_binary: bytes, offset: int) -> Optional[OperationRegion]:
         """
         Decode a single OperationRegion definition.
@@ -235,36 +319,20 @@ class AMLParser:
         if pos >= len(aml_binary):
             return None
 
-        # Extract Address (AML Integer)
-        base, int_len = self._decode_aml_integer(aml_binary, pos)
-        if base is None:
-            # Try to resolve as variable reference
-            var_name, var_len = self._decode_name_string_simple(aml_binary, pos)
-            if var_name and var_name in self.names:
-                base = self.names[var_name]
-                int_len = var_len
-            else:
-                return None
+        # Extract Address (AML Integer or Name reference)
+        base, int_len = self._decode_integer_term(aml_binary, pos)
 
-        if int_len <= 0 or int_len > 10:
+        if base is None or int_len <= 0 or int_len > 20:
             return None
 
         pos += int_len
         if pos >= len(aml_binary):
             return None
 
-        # Extract Length (AML Integer)
-        length, int_len = self._decode_aml_integer(aml_binary, pos)
-        if length is None:
-            # Try to resolve as variable reference
-            var_name, var_len = self._decode_name_string_simple(aml_binary, pos)
-            if var_name and var_name in self.names:
-                length = self.names[var_name]
-                int_len = var_len
-            else:
-                return None
+        # Extract Length (AML Integer or Name reference)
+        length, int_len = self._decode_integer_term(aml_binary, pos)
 
-        if int_len <= 0 or int_len > 10:
+        if length is None or int_len <= 0 or int_len > 20:
             return None
 
         # Sanity checks
@@ -359,30 +427,11 @@ class AMLParser:
         Read exactly 4 bytes as a NameSeg.
         Valid characters: A-Z, a-z, 0-9, _
         """
-        if offset + 4 > len(aml_binary):
-            return None
-
-        seg = b''
-        for i in range(4):
-            byte = aml_binary[offset + i]
-            if self._is_name_char(byte):
-                seg += bytes([byte])
-            elif byte == 0x5F:  # _ padding
-                seg += bytes([byte])
-            else:
-                # Invalid character in NameSeg
-                return None
-
-        # Decode and strip trailing underscores
-        name = seg.decode('ascii', errors='ignore').rstrip('_')
-        return name if name else None
+        return _decode_name_seg(aml_binary, offset)
 
     def _is_name_char(self, byte: int) -> bool:
         """Check if byte is valid in a name (A-Z, a-z, 0-9, _)."""
-        return ((ord('A') <= byte <= ord('Z')) or
-                (ord('a') <= byte <= ord('z')) or
-                (ord('0') <= byte <= ord('9')) or
-                byte == ord('_'))
+        return _is_name_char(byte)
 
     def _decode_aml_integer(self, aml_binary: bytes, offset: int) -> Tuple[Optional[int], int]:
         """
@@ -397,37 +446,127 @@ class AMLParser:
             0x0C = dword value follows (5 bytes total)
             0x0E = qword value follows (9 bytes total)
         """
-        if offset >= len(aml_binary):
+        return _decode_aml_integer(aml_binary, offset)
+
+    def _resolve_named_integer(self, name: str) -> Optional[int]:
+        """Resolve exact, root-qualified, or uniquely scoped AML integer names."""
+        candidates = [name]
+        if name.startswith('\\'):
+            candidates.append(name[1:])
+        elif not name.startswith('^'):
+            candidates.append(f'\\{name}')
+
+        for candidate in candidates:
+            if candidate in self.names:
+                return self.names[candidate]
+
+        name_seg = name.lstrip('\\^').split('.')[-1]
+        matches = [value for candidate, value in self.names.items()
+                   if candidate.lstrip('\\^').split('.')[-1] == name_seg]
+        return matches[0] if len(matches) == 1 else None
+
+    def _decode_integer_term(self, aml_binary: bytes, offset: int) -> Tuple[Optional[int], int]:
+        """Decode an AML integer constant or resolve an integer Name reference."""
+        value, consumed = self._decode_aml_integer(aml_binary, offset)
+        if value is not None:
+            return value, consumed
+
+        name, consumed = self._decode_name_string_simple(aml_binary, offset)
+        if not name or consumed <= 0:
             return None, 0
+        return self._resolve_named_integer(name), consumed
 
-        opcode = aml_binary[offset]
+    def _system_memory_opregions(self) -> Dict[str, List[int]]:
+        """Map full SystemMemory OperationRegion names to all decoded bases."""
+        opregions: Dict[str, List[int]] = {}
+        for region in self.regions:
+            if region.source == 'OperationRegion' and region.space_type == 0:
+                opregions.setdefault(region.name, []).append(region.base)
+        return opregions
 
-        # Zero and one
-        if opcode == self.ZERO_OP:
-            return 0, 1
-        elif opcode == self.ONE_OP:
-            return 1, 1
+    @staticmethod
+    def _resolve_opregion_base(opregions: Dict[str, List[int]], name: str) -> Optional[int]:
+        """Resolve an exact/root-qualified region name or an unambiguous NameSeg."""
+        candidates = [name]
+        if name.startswith('\\'):
+            candidates.append(name[1:])
+        elif not name.startswith('^'):
+            candidates.append(f'\\{name}')
 
-        # Prefixed integers
-        elif opcode == self.BYTE_PREFIX:
-            if offset + 2 <= len(aml_binary):
-                return aml_binary[offset + 1], 2
-        elif opcode == self.WORD_PREFIX:
-            if offset + 3 <= len(aml_binary):
-                return struct.unpack('<H', aml_binary[offset + 1:offset + 3])[0], 3
-        elif opcode == self.DWORD_PREFIX:
-            if offset + 5 <= len(aml_binary):
-                return struct.unpack('<I', aml_binary[offset + 1:offset + 5])[0], 5
-        elif opcode == self.QWORD_PREFIX:
-            if offset + 9 <= len(aml_binary):
-                return struct.unpack('<Q', aml_binary[offset + 1:offset + 9])[0], 9
+        for candidate in candidates:
+            bases = opregions.get(candidate, [])
+            if len(bases) == 1:
+                return bases[0]
+            if len(bases) > 1:
+                return None
 
-        # If it looks like a NameSeg or path, it's a variable reference
-        # Return None to indicate this can't be decoded statically
-        elif self._is_name_char(opcode) or opcode in (0x5C, 0x5E, 0x2E, 0x2F):
-            return None, 0
+        name_seg = name.lstrip('\\^').split('.')[-1]
+        matches = [base for region_name, bases in opregions.items()
+                   if region_name.lstrip('\\^').split('.')[-1] == name_seg
+                   for base in bases]
+        return matches[0] if len(matches) == 1 else None
 
-        return None, 0
+    def _find_fields(self, target_names: Set[str]) -> List[AMLFieldLocation]:
+        """Locate target FieldOp entries within decoded OperationRegions."""
+        opregions = self._system_memory_opregions()
+        fields = []
+        for aml in self.aml_blobs:
+            i = 0
+            while i < len(aml) - 8:
+                if aml[i] == self.OPCODE_OPERATION_REGION and aml[i + 1] == self.SUBOPCODE_FIELD:
+                    pkg_len, pkg_adv = parse_aml_pkg_length(aml, i + 2)
+                    if pkg_len > 0:
+                        end_pos = i + 2 + pkg_len
+                        pos = i + 2 + pkg_adv
+                        reg_name, reg_len = self._decode_name_string_simple(aml, pos)
+                        if reg_name and reg_len > 0:
+                            pos += reg_len + 1
+                            bit_offset = 0
+                            target_base = self._resolve_opregion_base(opregions, reg_name)
+                            while pos < end_pos and pos < len(aml):
+                                elem = aml[pos]
+                                if elem == AML_RESERVED_FIELD:
+                                    field_bits, field_adv = parse_aml_pkg_length(aml, pos + 1)
+                                    pos += 1 + field_adv
+                                    bit_offset += field_bits
+                                elif elem == AML_ACCESS_FIELD:
+                                    pos += 3
+                                elif elem == AML_CONNECT_FIELD:
+                                    _, name_adv = self._decode_name_string_simple(aml, pos + 1)
+                                    pos += 1 + (name_adv if name_adv > 0 else 4)
+                                elif elem == AML_EXTENDED_ACCESS_FIELD:
+                                    pos += 4
+                                else:
+                                    field_name, field_name_len = self._decode_name_string_simple(aml, pos)
+                                    if not field_name or field_name_len <= 0:
+                                        pos += 1
+                                        continue
+                                    pos += field_name_len
+                                    field_bits, field_adv = parse_aml_pkg_length(aml, pos)
+                                    pos += field_adv
+                                    clean_field_name = field_name.lstrip('\\.').split('.')[-1]
+                                    if clean_field_name in target_names and target_base is not None:
+                                        byte_offset, bit_shift = divmod(bit_offset, 8)
+                                        fields.append(AMLFieldLocation(
+                                            name=clean_field_name,
+                                            region_name=reg_name,
+                                            physical_address=target_base + byte_offset,
+                                            bit_offset=bit_shift,
+                                            bit_length=field_bits
+                                        ))
+                                    bit_offset += field_bits
+                i += 1
+        return fields
+
+    def find_named_objects(self, tables: List[bytes], target_names: List[str]) -> Tuple[List[int], List[AMLFieldLocation]]:
+        """Return matching integer Name objects and SystemMemory field locations."""
+        self._load_tables(tables)
+        named_integers = []
+        for name in target_names:
+            value = self._resolve_named_integer(name)
+            if value is not None:
+                named_integers.append(value)
+        return named_integers, self._find_fields(set(target_names))
 
 
 class ResourceDescriptorParser:
@@ -649,38 +788,12 @@ class CRSExecutor:
 
     def _decode_simple_int(self, data: bytes, offset: int) -> Tuple[Optional[int], int]:
         """Decode integer at offset."""
-        if offset >= len(data):
-            return None, 0
-
-        op = data[offset]
-        if op == 0x00:
-            return 0, 1
-        elif op == 0x01:
-            return 1, 1
-        elif op == 0x0A and offset + 2 <= len(data):  # Byte
-            return data[offset + 1], 2
-        elif op == 0x0B and offset + 3 <= len(data):  # Word
-            return struct.unpack('<H', data[offset + 1:offset + 3])[0], 3
-        elif op == 0x0C and offset + 5 <= len(data):  # DWord
-            return struct.unpack('<I', data[offset + 1:offset + 5])[0], 5
-        elif op == 0x0E and offset + 9 <= len(data):  # QWord
-            return struct.unpack('<Q', data[offset + 1:offset + 9])[0], 9
-        return None, 0
+        return _decode_aml_integer(data, offset)
 
     def _decode_simple_name(self, data: bytes, offset: int) -> Tuple[Optional[str], int]:
         """Decode a simple 4-byte name segment."""
-        if offset + 4 > len(data):
-            return None, 0
-
-        seg = data[offset:offset+4]
-        # Check if all bytes are valid name chars
-        for b in seg:
-            if not ((ord('A') <= b <= ord('Z')) or (ord('a') <= b <= ord('z')) or
-                    (ord('0') <= b <= ord('9')) or b == ord('_')):
-                return None, 0
-
-        name = seg.decode('ascii', errors='ignore').rstrip('_')
-        return name if name else None, 4
+        name = _decode_name_seg(data, offset)
+        return (name, 4) if name else (None, 0)
 
 
 class CRSResourceParser:
@@ -697,25 +810,8 @@ class CRSResourceParser:
         Returns:
             (length, new_pos)
         """
-        if pos >= len(aml):
-            return 0, pos
-
-        lead = aml[pos]
-        pos += 1
-
-        if lead < 0x40:
-            return lead, pos
-
-        byte_count = (lead >> 6) & 0x03
-        length = lead & 0x0F
-
-        for i in range(byte_count):
-            if pos >= len(aml):
-                return length, pos
-            length |= (aml[pos] << (4 + 8 * i))
-            pos += 1
-
-        return length, pos
+        length, consumed = parse_aml_pkg_length(aml, pos)
+        return length, pos + consumed
 
     @staticmethod
     def extract_crs_buffer(aml_bytes: bytes, target_name: bytes = b'_CRS') -> Optional[bytes]:
@@ -736,7 +832,8 @@ class CRSResourceParser:
 
                 if opcode == 0x14:  # MethodOp
                     pos += 1
-                    pkg_len, pos = CRSResourceParser.parse_pkg_length(aml_bytes, pos)
+                    pkg_len, pkg_len_size = parse_aml_pkg_length(aml_bytes, pos)
+                    pos += pkg_len_size
                     end_pos = pos + pkg_len
 
                     # NameString (4 bytes for simple name, or 0x00 0x00 for multi-segment)
@@ -771,7 +868,8 @@ class CRSResourceParser:
                                     break
                                 if aml_bytes[pos] == 0x11:
                                     pos += 1
-                                    buf_pkg_len, pos = CRSResourceParser.parse_pkg_length(aml_bytes, pos)
+                                    _, pkg_len_size = parse_aml_pkg_length(aml_bytes, pos)
+                                    pos += pkg_len_size
 
                                     # Parse BufferSize (assume simple ByteConst/WordConst)
                                     if pos >= len(aml_bytes):
@@ -1008,3 +1106,27 @@ def parse_operation_regions(tables: List[bytes]) -> List[Dict]:
         }
         for r in regions
     ]
+
+
+def find_named_objects(tables: List[bytes], target_names: List[str]) -> Tuple[List[int], List[AMLFieldLocation]]:
+    """Return matching integer Name objects and SystemMemory field locations."""
+    return AMLParser().find_named_objects(tables, target_names)
+
+
+def find_named_integers(tables: List[bytes], target_names: List[str]) -> List[int]:
+    """Return integer values from matching AML Name declarations."""
+    parser = AMLParser()
+    parser._load_namespace(tables)
+    values = []
+    for name in target_names:
+        value = parser._resolve_named_integer(name)
+        if value is not None:
+            values.append(value)
+    return values
+
+
+def find_fields_in_acpi_nvs(tables: List[bytes], target_field_names: List[str]) -> List[AMLFieldLocation]:
+    """Locate named fields within SystemMemory OperationRegions."""
+    _, fields = find_named_objects(tables, target_field_names)
+    return fields
+

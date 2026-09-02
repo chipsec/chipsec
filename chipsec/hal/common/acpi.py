@@ -545,7 +545,23 @@ class ACPI(HALBase):
     # ACPI OperationRegion Analysis
     # ========================================================================
 
+    def _get_acpi_tables(self, table_signatures: List[str]) -> List[bytes]:
+        """Return complete ACPI table binaries for the requested signatures."""
+        tables = []
+        for signature in table_signatures:
+            try:
+                if signature in self.tableList:
+                    for table_header, table_content in self.get_ACPI_table(signature) or []:
+                        tables.append(table_header + table_content)
+            except Exception as e:
+                logger().log_hal(f"[acpi] Error reading {signature}: {e}")
+        return tables
+
     def list_operation_regions(self, include_ssdt: bool = True, include_crs: bool = True) -> List[Dict]:
+        """Compatibility wrapper for DSDT/SSDT OperationRegion enumeration."""
+        return self.list_dsdtssdt_operation_regions(include_ssdt, include_crs)
+
+    def list_dsdtssdt_operation_regions(self, include_ssdt: bool = True, include_crs: bool = True) -> List[Dict]:
         """
         Extract all OperationRegion definitions and optionally _CRS resource descriptors from DSDT/SSDTs.
 
@@ -559,45 +575,23 @@ class ACPI(HALBase):
         """
         from chipsec.library.acpi_aml_parser import parse_operation_regions, CRSResourceParser
 
-        regions = []
-        tables_to_parse = []
-        aml_tables = []  # Keep track of AML content for CRS extraction
-
-        # Add DSDT
-        try:
-            if ACPI_TABLE_SIG_DSDT in self.tableList:
-                dsdt_tables = self.get_ACPI_table(ACPI_TABLE_SIG_DSDT)
-                if dsdt_tables:
-                    for dsdt_header, dsdt_content in dsdt_tables:
-                        full_table = dsdt_header + dsdt_content
-                        tables_to_parse.append(full_table)
-                        aml_tables.append(dsdt_content)
-        except Exception as e:
-            logger().log_warning(f"[acpi] Error reading DSDT: {e}")
-
-        # Add SSDTs if requested
+        table_signatures = [ACPI_TABLE_SIG_DSDT]
         if include_ssdt:
-            try:
-                if ACPI_TABLE_SIG_SSDT in self.tableList:
-                    ssdt_tables = self.get_ACPI_table(ACPI_TABLE_SIG_SSDT)
-                    if ssdt_tables:
-                        for ssdt_header, ssdt_content in ssdt_tables:
-                            full_table = ssdt_header + ssdt_content
-                            tables_to_parse.append(full_table)
-                            aml_tables.append(ssdt_content)
-            except Exception as e:
-                logger().log_warning(f"[acpi] Error reading SSDTs: {e}")
+            table_signatures.append(ACPI_TABLE_SIG_SSDT)
+
+        tables_to_parse = self._get_acpi_tables(table_signatures)
 
         if not tables_to_parse:
-            return regions
+            return []
 
         # Parse OperationRegion definitions
         regions = parse_operation_regions(tables_to_parse)
 
         # Extract _CRS resource descriptors if enabled
-        if include_crs and aml_tables:
+        if include_crs:
             try:
-                for aml_content in aml_tables:
+                for table in tables_to_parse:
+                    aml_content = table[ACPI_TABLE_HEADER_SIZE:]
                     # Extract _CRS buffer from each AML table
                     crs_buffer = CRSResourceParser.extract_crs_buffer(aml_content)
                     if crs_buffer:
@@ -619,6 +613,46 @@ class ACPI(HALBase):
                 logger().log_warning(f"[acpi] Error extracting _CRS resources: {e}")
 
         return regions
+
+    def get_sbreg_base_address(self) -> Optional[int]:
+        """
+        Extract Sideband Register Base (SBRG / SBREG_BAR) from ACPI DSDT / SSDT tables.
+        """
+        target_fields = ['SBRG', 'SBREG', 'SBREG_BAR', 'SBR0', 'SBMB']
+        table_signatures = [ACPI_TABLE_SIG_DSDT, ACPI_TABLE_SIG_SSDT]
+        for value in self.get_acpi_field_value(table_signatures, target_fields):
+            if self._is_valid_acpi_base(value, alignment_size=0x1000000):
+                return value
+        return None
+
+    def get_acpi_field_value(self, table_signatures: List[str], target_fields: List[str]) -> List[int]:
+        """Resolve named ACPI integers and SystemMemory fields to their raw values."""
+        from chipsec.library.acpi_aml_parser import find_named_objects
+        values = []
+        tables_to_parse = self._get_acpi_tables(table_signatures)
+        if not tables_to_parse:
+            return values
+        named_integers, fields = find_named_objects(tables_to_parse, target_fields)
+        values.extend(list(named_integers))
+
+        for field in fields:
+            read_len = (field.bit_offset + field.bit_length + 7) // 8
+            try:
+                value_bytes = self.cs.hals.memory.read_physical_mem(field.physical_address, read_len)
+            except Exception as e:
+                logger().log_hal(
+                    f'[acpi] Error reading {field.name} at 0x{field.physical_address:016X}: {e}')
+                continue
+
+            raw_value = int.from_bytes(value_bytes, 'little')
+            value = (raw_value >> field.bit_offset) & ((1 << field.bit_length) - 1)
+            values.append(value)
+
+        return values
+
+    @staticmethod
+    def _is_valid_acpi_base(value: int, alignment_size: int = 0x1000) -> bool:
+        return value not in (0, 0xFFFFFFFF, 0xFFFFFFFFFFFFFFFF) and (value & (alignment_size - 1)) == 0
 
 
 
