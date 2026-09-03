@@ -61,14 +61,25 @@ def system_info(manufacturer=1, product=2, version=3, serial=4,
 
 def entry_point_2x(table_addr=TABLE_ADDR, table_len=TABLE_LEN, entry_len=0x1F,
                    anchor=smbios.SMBIOS_2_x_SIG, int_anchor=smbios.SMBIOS_2_x_INT_SIG):
-    return struct.pack(smbios.SMBIOS_2_x_ENTRY_POINT_FMT, anchor, 0x5A, entry_len, 2, 8,
-                       0x100, 0, 0, 0, 0, 0, 0, int_anchor, 0xA5, table_len, table_addr, 4, 0x28)
+    entry = bytearray(struct.pack(
+        smbios.SMBIOS_2_x_ENTRY_POINT_FMT, anchor, 0, entry_len, 2, 8,
+        0x100, 0, 0, 0, 0, 0, 0, int_anchor, 0,
+        table_len, table_addr, 4, 0x28))
+    int_start = smbios.SMBIOS_2_x_INT_OFFSET
+    int_end = int_start + smbios.SMBIOS_2_x_INT_SIZE
+    entry[0x15] = (-sum(entry[int_start:int_end])) & 0xFF
+    entry[0x04] = (-sum(entry[:entry_len])) & 0xFF
+    return bytes(entry)
 
 
 def entry_point_3x(table_addr=TABLE_ADDR, max_size=TABLE_LEN, entry_len=0x18,
                    anchor=smbios.SMBIOS_3_x_SIG):
-    return struct.pack(smbios.SMBIOS_3_x_ENTRY_POINT_FMT, anchor, 0x5A, entry_len,
-                       3, 4, 0, 1, 0, max_size, table_addr)
+    entry = bytearray(struct.pack(
+        smbios.SMBIOS_3_x_ENTRY_POINT_FMT, anchor, 0, entry_len,
+        3, 4, 0, 1, 0, max_size, table_addr))
+    if entry_len <= len(entry):
+        entry[0x05] = (-sum(entry[:entry_len])) & 0xFF
+    return bytes(entry)
 
 
 def make_smbios():
@@ -297,6 +308,20 @@ class TestEntryPointValidation(unittest.TestCase):
     def test_a_2x_entry_point_with_an_unexpected_size_is_rejected(self):
         self.assertIsNone(self._validate_2x(entry_point_2x(entry_len=0x10)))
 
+    def test_a_2x_entry_point_with_a_bad_checksum_is_rejected(self):
+        entry = bytearray(entry_point_2x())
+        entry[0x06] ^= 0x01
+
+        self.assertIsNone(self._validate_2x(bytes(entry)))
+
+    def test_a_2x_entry_point_with_a_bad_intermediate_checksum_is_rejected(self):
+        entry = bytearray(entry_point_2x())
+        entry[0x15] ^= 0x01
+        entry[0x04] = 0
+        entry[0x04] = (-sum(entry)) & 0xFF
+
+        self.assertIsNone(self._validate_2x(bytes(entry)))
+
     def test_a_2x_entry_point_without_a_table_is_rejected(self):
         self.assertIsNone(self._validate_2x(entry_point_2x(table_addr=0)))
         self.assertIsNone(self._validate_2x(entry_point_2x(table_len=0)))
@@ -316,6 +341,12 @@ class TestEntryPointValidation(unittest.TestCase):
 
     def test_a_3x_entry_point_with_an_unexpected_size_is_rejected(self):
         self.assertIsNone(self._validate_3x(entry_point_3x(entry_len=0x20)))
+
+    def test_a_3x_entry_point_with_a_bad_checksum_is_rejected(self):
+        entry = bytearray(entry_point_3x())
+        entry[0x07] ^= 0x01
+
+        self.assertIsNone(self._validate_3x(bytes(entry)))
 
     def test_a_3x_entry_point_without_a_table_is_rejected(self):
         self.assertIsNone(self._validate_3x(entry_point_3x(table_addr=0)))

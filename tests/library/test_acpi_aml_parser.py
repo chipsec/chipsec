@@ -218,8 +218,11 @@ class TestAMLParserIntegerDecoding(unittest.TestCase):
         self.assertEqual(self.parser._decode_aml_integer(b'\x00', 0), (0, 1))
         self.assertEqual(self.parser._decode_aml_integer(b'\x01', 0), (1, 1))
 
-    def test_literal_single_byte_opcodes(self):
-        self.assertEqual(self.parser._decode_aml_integer(b'\x05', 0), (5, 1))
+    def test_non_integer_opcode_is_not_decoded_as_a_literal(self):
+        self.assertEqual(self.parser._decode_aml_integer(b'\x05', 0), (None, 0))
+
+    def test_value_five_uses_the_byte_prefix(self):
+        self.assertEqual(self.parser._decode_aml_integer(aml_byte(5), 0), (5, 2))
 
     def test_prefixed_widths(self):
         self.assertEqual(self.parser._decode_aml_integer(aml_byte(0xAB), 0), (0xAB, 2))
@@ -303,7 +306,7 @@ class TestCRSResourceDecoding(unittest.TestCase):
     """Resource descriptors inside a _CRS buffer map to address/size pairs."""
 
     def test_fixed_memory32_descriptor(self):
-        buf = (b'\x85\x09\x00' + b'\x00' + struct.pack('<I', 0xFED00000) +
+        buf = (b'\x86\x09\x00' + b'\x00' + struct.pack('<I', 0xFED00000) +
                struct.pack('<I', 0x1000) + b'\x79\x00')
 
         resources = CRSResourceParser.decode_crs_buffer(buf)
@@ -316,7 +319,7 @@ class TestCRSResourceDecoding(unittest.TestCase):
     def test_memory32_descriptor_derives_size_from_range_when_length_is_zero(self):
         data = (b'\x01' + struct.pack('<I', 0x1000) + struct.pack('<I', 0x1FFF) +
                 struct.pack('<I', 0) + struct.pack('<I', 0))
-        buf = b'\x84' + struct.pack('<H', len(data)) + data + b'\x79\x00'
+        buf = b'\x85' + struct.pack('<H', len(data)) + data + b'\x79\x00'
 
         resources = CRSResourceParser.decode_crs_buffer(buf)
 

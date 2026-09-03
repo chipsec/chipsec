@@ -41,6 +41,8 @@ SMBIOS_2_x_INT_SIG = b"_DMI_"
 SMBIOS_2_x_GUID = "EB9D2D31-2D88-11D3-9A16-0090273FC14D"
 SMBIOS_2_x_ENTRY_POINT_FMT = "=4sBBBBHB5B5sBHIHB"
 SMBIOS_2_x_ENTRY_POINT_SIZE = struct.calcsize(SMBIOS_2_x_ENTRY_POINT_FMT)
+SMBIOS_2_x_INT_OFFSET = 0x10
+SMBIOS_2_x_INT_SIZE = 0x0F
 
 
 class SMBIOS_2_x_ENTRY_POINT(namedtuple('SMBIOS_2_x_ENTRY_POINT', 'Anchor EntryCs EntryLen MajorVer MinorVer MaxSize EntryRev \
@@ -281,8 +283,15 @@ class SMBIOS(hal_base.HALBase):
         if not (ep_data.EntryLen == SMBIOS_2_x_ENTRY_SIZE or ep_data.EntryLen == SMBIOS_2_x_ENTRY_SIZE_OLD):
             logger().log_hal('- Invalid structure size')
             return None
+        if sum(mem_buffer[:ep_data.EntryLen]) & 0xFF:
+            logger().log_hal('- Invalid entry point checksum')
+            return None
         if ep_data.IntAnchor != SMBIOS_2_x_INT_SIG:
             logger().log_hal('- Invalid intermediate signature')
+            return None
+        int_end = SMBIOS_2_x_INT_OFFSET + SMBIOS_2_x_INT_SIZE
+        if sum(mem_buffer[SMBIOS_2_x_INT_OFFSET:int_end]) & 0xFF:
+            logger().log_hal('- Invalid intermediate checksum')
             return None
         if (ep_data.TableAddr == 0) or (ep_data.TableLen == 0):
             logger().log_hal('- Invalid table address or length')
@@ -304,6 +313,9 @@ class SMBIOS(hal_base.HALBase):
             return None
         if not (ep_data.EntryLen == SMBIOS_3_x_ENTRY_SIZE):
             logger().log_hal('- Invalid structure size')
+            return None
+        if sum(mem_buffer[:ep_data.EntryLen]) & 0xFF:
+            logger().log_hal('- Invalid entry point checksum')
             return None
         if ep_data.MaxSize == 0 or ep_data.TableAddr == 0:
             logger().log_hal('- Invalid table address or maximum size')

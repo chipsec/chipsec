@@ -693,17 +693,20 @@ def getEFIvariables_NVAR_simple(nvram_buf: bytes) -> Dict[str, Tuple[int, bytes,
 
     while (start + hdr_size) < nvsize:
         efi_var_hdr = EFI_HDR_NVAR1(*struct.unpack_from(hdr_fmt, nvram_buf[start:]))
+        next_var_offset = start + efi_var_hdr.TotalSize
+        if efi_var_hdr.TotalSize < hdr_size or next_var_offset > nvsize:
+            break
         name_size = 0
         name_terminator_size = 0
         efi_var_name = "NA"
         if not IS_VARIABLE_ATTRIBUTE(efi_var_hdr.Attributes, EFI_VARIABLE_HARDWARE_ERROR_RECORD):
-            name_size = nvram_buf[start + hdr_size:].find(b'\x00')
+            name_size = nvram_buf[
+                start + hdr_size:next_var_offset].find(b'\x00')
             if name_size < 0:
                 break
             efi_var_name = nvram_buf[start + hdr_size: start + hdr_size + name_size].decode('latin1')
             name_terminator_size = 1
 
-        next_var_offset = start + efi_var_hdr.TotalSize
         efi_var_buf = nvram_buf[start: next_var_offset]
         data_offset = start + hdr_size + name_size + name_terminator_size
         efi_var_data = nvram_buf[data_offset: next_var_offset]

@@ -32,6 +32,7 @@ from chipsec.library.acpi_tables import (
     XSDT,
     safe_struct_unpack,
 )
+from tests.helpers.acpi_utils import build_rsdp
 
 
 class TestACPITables(unittest.TestCase):
@@ -132,11 +133,27 @@ class TestACPITableBase(unittest.TestCase):
         self.assertIn('Table Content', str(ACPI_TABLE()))
 
 
+def legacy_rsdp(revision=0, signature=b'RSD PTR '):
+    return build_rsdp(
+        revision=revision,
+        rsdt_address=0x7A611000,
+        signature=signature)
+
+
+def extended_rsdp(revision=2, length=36, signature=b'RSD PTR '):
+    return build_rsdp(
+        revision=revision,
+        rsdt_address=0x7A611000,
+        xsdt_address=0x7A612000,
+        signature=signature,
+        length=length)
+
+
 class TestRSDP(unittest.TestCase):
     """The RSDP is the entry point that points at the RSDT and/or XSDT."""
 
-    LEGACY = struct.pack('<8sB6sBI', b'RSD PTR ', 0xA5, b'INTEL ', 0, 0x7A611000)
-    EXTENDED = LEGACY + struct.pack('<IQB3s', 36, 0x7A612000, 0x5A, b'\x00\x00\x00')
+    LEGACY = legacy_rsdp()
+    EXTENDED = extended_rsdp()
 
     def test_legacy_rsdp_exposes_the_rsdt_pointer(self):
         rsdp = RSDP()
@@ -183,15 +200,33 @@ class TestRSDP(unittest.TestCase):
 
         self.assertTrue(rsdp.is_RSDP_valid())
 
-    def test_zero_checksum_is_not_valid(self):
+    def test_bad_legacy_checksum_is_not_valid(self):
         rsdp = RSDP()
-        rsdp.parse(struct.pack('<8sB6sBI', b'RSD PTR ', 0, b'INTEL ', 0, 0x1000))
+        data = bytearray(self.LEGACY)
+        data[19] ^= 0x01
+        rsdp.parse(bytes(data))
+
+        self.assertFalse(rsdp.is_RSDP_valid())
+
+    def test_bad_extended_checksum_is_not_valid(self):
+        rsdp = RSDP()
+        data = bytearray(self.EXTENDED)
+        data[24] ^= 0x01
+        data[8] = 0
+        data[8] = (-sum(data[:20])) & 0xFF
+        rsdp.parse(bytes(data))
 
         self.assertFalse(rsdp.is_RSDP_valid())
 
     def test_unknown_revision_is_not_valid(self):
         rsdp = RSDP()
-        rsdp.parse(struct.pack('<8sB6sBI', b'RSD PTR ', 0xA5, b'INTEL ', 9, 0x1000))
+        rsdp.parse(legacy_rsdp(revision=9))
+
+        self.assertFalse(rsdp.is_RSDP_valid())
+
+    def test_bad_signature_is_not_valid(self):
+        rsdp = RSDP()
+        rsdp.parse(legacy_rsdp(signature=b'BAD PTR '))
 
         self.assertFalse(rsdp.is_RSDP_valid())
 
@@ -202,6 +237,25 @@ class TestRSDP(unittest.TestCase):
 
         self.assertNotIn('XSDT Address', str(legacy))
         self.assertIn('XSDT Address', str(extended))
+
+
+class TestRSDPBuilder(unittest.TestCase):
+
+    def test_legacy_rsdp_has_a_valid_checksum(self):
+        data = build_rsdp(revision=0, rsdt_address=0x12345678)
+
+        self.assertEqual(len(data), 20)
+        self.assertEqual(sum(data) & 0xFF, 0)
+
+    def test_extended_rsdp_has_valid_legacy_and_extended_checksums(self):
+        data = build_rsdp(
+            revision=2,
+            rsdt_address=0x12345678,
+            xsdt_address=0x123456789ABCDEF0)
+
+        self.assertEqual(len(data), 36)
+        self.assertEqual(sum(data[:20]) & 0xFF, 0)
+        self.assertEqual(sum(data) & 0xFF, 0)
 
 
 class TestRSDTAndXSDT(unittest.TestCase):
