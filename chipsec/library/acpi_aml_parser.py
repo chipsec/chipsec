@@ -396,7 +396,6 @@ class AMLParser:
             0x0B = word value follows (3 bytes total)
             0x0C = dword value follows (5 bytes total)
             0x0E = qword value follows (9 bytes total)
-            0x02-0x09 = literal single-byte values
         """
         if offset >= len(aml_binary):
             return None, 0
@@ -422,10 +421,6 @@ class AMLParser:
         elif opcode == self.QWORD_PREFIX:
             if offset + 9 <= len(aml_binary):
                 return struct.unpack('<Q', aml_binary[offset + 1:offset + 9])[0], 9
-
-        # Direct single-byte values (0x02-0x09)
-        elif 0x02 <= opcode <= 0x09:
-            return opcode, 1
 
         # If it looks like a NameSeg or path, it's a variable reference
         # Return None to indicate this can't be decoded statically
@@ -670,9 +665,6 @@ class CRSExecutor:
             return struct.unpack('<I', data[offset + 1:offset + 5])[0], 5
         elif op == 0x0E and offset + 9 <= len(data):  # QWord
             return struct.unpack('<Q', data[offset + 1:offset + 9])[0], 9
-        elif 0x02 <= op <= 0x09:
-            return op, 1
-
         return None, 0
 
     def _decode_simple_name(self, data: bytes, offset: int) -> Tuple[Optional[str], int]:
@@ -878,8 +870,8 @@ class CRSResourceParser:
         """Decode a single resource descriptor and extract address/size for memory resources."""
 
         try:
-            # 0x84: 32-bit Memory Range (large)
-            if item_type == 0x84:
+            # 0x85: 32-bit Memory Range (large)
+            if item_type == 0x85:
                 if len(data) >= 9:
                     flags = data[0]
                     min_addr = struct.unpack('<I', data[1:5])[0]
@@ -895,8 +887,8 @@ class CRSResourceParser:
                         'description': f'Memory32: base=0x{min_addr:08x}, size=0x{length:08x}'
                     }
 
-            # 0x85: 32-bit Fixed Memory (large)
-            elif item_type == 0x85:
+            # 0x86: 32-bit Fixed Memory (large)
+            elif item_type == 0x86:
                 if len(data) >= 9:
                     flags = data[0]
                     base = struct.unpack('<I', data[1:5])[0]

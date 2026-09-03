@@ -21,7 +21,7 @@
 import struct
 from typing import List, Dict, Optional, Tuple
 
-from chipsec.library.logger import print_buffer_bytes, logger, dump_buffer, dump_buffer_bytes
+from chipsec.library.logger import print_buffer_bytes, logger, dump_buffer_bytes
 
 ########################################################################################################
 #
@@ -217,7 +217,7 @@ class op_io_pci_mem:
             values_str = '  '.join([fmt.format(v) for v in self.values])
             str_r += f'  Values : {values_str}\n'
         elif self.buffer is not None:
-            str_r += f'  Buffer (size = 0x{len(self.buffer):X}):\n{dump_buffer(self.buffer, 16)}'
+            str_r += f'  Buffer (size = 0x{len(self.buffer):X}):\n{dump_buffer_bytes(self.buffer, 16)}'
         return str_r
 
 
@@ -475,16 +475,20 @@ def encode_s3bs_opcode_def(op) -> bytes:
             encoded_opcode = encoded_hdr + struct.pack(script_width_formats[op.width] * op.count, *op.values)
 
     elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE == op.opcode:
-        frmt = '<BBHIQQQ'
+        encoded_opcode = struct.pack(
+            '<BBHIQQQ', op.opcode, op.width, op.unknown, 0x0,
+            op.address, op.value, op.mask)
 
     elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE == op.opcode:
         encoded_opcode = struct.pack('<BBHIQQQ', op.opcode, op.width, op.unknown, 0x0, op.address, op.value, op.mask)
 
     elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE == op.opcode:
-        frmt = '<BBQBB'
+        encoded_opcode = struct.pack(
+            '<BBQBB', op.opcode, op.address, op.command,
+            op.operation, op.peccheck)
 
     elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_STALL_OPCODE == op.opcode:
-        frmt = '<BBQ'
+        encoded_opcode = struct.pack('<BBQ', op.opcode, 0x0, op.duration)
 
     elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_DISPATCH_OPCODE == op.opcode:
         encoded_opcode = struct.pack('<BBHIQ', op.opcode, 0x0, 0x0, 0x0, op.entrypoint)
@@ -493,7 +497,7 @@ def encode_s3bs_opcode_def(op) -> bytes:
         encoded_opcode = struct.pack('<BBHIQQ', op.opcode, 0x0, 0x0, 0x0, op.entrypoint, op.context)
 
     elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_TERMINATE_OPCODE == op.opcode:
-        frmt = '<B'
+        encoded_opcode = struct.pack('<B', op.opcode)
 
     else:
         if logger().HAL:
@@ -601,7 +605,7 @@ def encode_s3bs_opcode_edkcompat(op: S3BOOTSCRIPT_ENTRY) -> bytes:
         pass
 
     elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_STALL_OPCODE == op.opcode:
-        frmt = '<Q'
+        encoded_opcode = struct.pack('<Q', op.duration)
 
     elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_DISPATCH_OPCODE == op.opcode:
         encoded_opcode = struct.pack('<Q', op.entrypoint)
@@ -610,7 +614,7 @@ def encode_s3bs_opcode_edkcompat(op: S3BOOTSCRIPT_ENTRY) -> bytes:
         encoded_opcode = struct.pack('<IQQQ', op.width, op.address, op.duration, op.looptimes)
 
     elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_TERMINATE_OPCODE == op.opcode:
-        pass
+        encoded_opcode = b''
 
     return encoded_opcode
 

@@ -406,7 +406,7 @@ class string(base_primitive):
             ]
 
         # if the fuzz library has not yet been initialized, do so with all the global values.
-        if not self.fuzz_library:
+        if not string.fuzz_library:
             string.fuzz_library = \
                 [
                     # omission.
@@ -519,13 +519,15 @@ class string(base_primitive):
             except:
                 pass
 
+        self.string_fuzz_library = string.fuzz_library
+
         # delete strings which length is greater than max_len.
         if max_len > 0:
             if any(len(s) > max_len for s in self.this_library):
                 self.this_library = list(set([s[:max_len] for s in self.this_library]))
 
-            if any(len(s) > max_len for s in self.fuzz_library):
-                self.fuzz_library = list(set([s[:max_len] for s in self.fuzz_library]))
+            if any(len(s) > max_len for s in self.string_fuzz_library):
+                self.string_fuzz_library = list(set([s[:max_len] for s in self.string_fuzz_library]))
 
     def add_long_strings(self, sequence):
         '''
@@ -564,7 +566,7 @@ class string(base_primitive):
                 return False
 
             # update the current value from the fuzz library.
-            self.value = (self.fuzz_library + self.this_library)[self.mutant_index]
+            self.value = (self.string_fuzz_library + self.this_library)[self.mutant_index]
 
             # increment the mutation count.
             self.mutant_index += 1
@@ -593,7 +595,7 @@ class string(base_primitive):
         @return: Number of mutated forms this primitive can take
         '''
 
-        return len(self.fuzz_library) + len(self.this_library)
+        return len(self.string_fuzz_library) + len(self.this_library)
 
     def render(self):
         '''

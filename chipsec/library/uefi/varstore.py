@@ -272,6 +272,13 @@ AUTH_CERT_DB_DATA = "<16sIII"
 AUTH_CERT_DB_DATA_size = struct.calcsize(AUTH_CERT_DB_DATA)
 
 
+def _safe_filename_component(value: str) -> str:
+    invalid_chars = '<>:"/\\|?*'
+    return ''.join(
+        '_' if char in invalid_chars or ord(char) < 0x20 else char
+        for char in value).strip().rstrip('.') or 'unnamed'
+
+
 def parse_auth_var(db: bytes, decode_dir: str) -> List[bytes]:
     entries = []
     dof = 0
@@ -295,14 +302,16 @@ def parse_auth_var(db: bytes, decode_dir: str) -> List[bytes]:
         name_size *= 2  # Name size is actually the number of CHAR16 in the name array
         tof = dof + AUTH_CERT_DB_DATA_size
         try:
-            var_name = codecs.decode(db[tof:tof + name_size], 'utf-16')
+            var_name = codecs.decode(
+                db[tof:tof + name_size], 'utf-16-le').rstrip('\x00')
         except UnicodeDecodeError:
             logger().log_warning(f'Unable to decode {db[tof:tof + name_size]}')
             var_name = "chipsec.library.exceptions!"
         tof += name_size
         sig_data = db[tof:tof + cert_data_size]
         entries.append(sig_data)
-        sig_file_name = f'{vendor_guid}-{codecs.encode(var_name)}-{nsig:02X}.bin'
+        safe_var_name = _safe_filename_component(var_name)
+        sig_file_name = f'{vendor_guid}-{safe_var_name}-{nsig:02X}.bin'
         sig_file_name = os.path.join(decode_dir, sig_file_name)
         write_file(sig_file_name, sig_data)
         dof += cert_node_size
@@ -684,15 +693,23 @@ def getEFIvariables_NVAR_simple(nvram_buf: bytes) -> Dict[str, Tuple[int, bytes,
 
     while (start + hdr_size) < nvsize:
         efi_var_hdr = EFI_HDR_NVAR1(*struct.unpack_from(hdr_fmt, nvram_buf[start:]))
+        next_var_offset = start + efi_var_hdr.TotalSize
+        if efi_var_hdr.TotalSize < hdr_size or next_var_offset > nvsize:
+            break
         name_size = 0
+        name_terminator_size = 0
         efi_var_name = "NA"
         if not IS_VARIABLE_ATTRIBUTE(efi_var_hdr.Attributes, EFI_VARIABLE_HARDWARE_ERROR_RECORD):
-            name_size = nvram_buf[start + hdr_size:].find(b'\x00')
+            name_size = nvram_buf[
+                start + hdr_size:next_var_offset].find(b'\x00')
+            if name_size < 0:
+                break
             efi_var_name = nvram_buf[start + hdr_size: start + hdr_size + name_size].decode('latin1')
+            name_terminator_size = 1
 
-        next_var_offset = start + efi_var_hdr.TotalSize
         efi_var_buf = nvram_buf[start: next_var_offset]
-        efi_var_data = nvram_buf[start + hdr_size + name_size: next_var_offset]
+        data_offset = start + hdr_size + name_size + name_terminator_size
+        efi_var_data = nvram_buf[data_offset: next_var_offset]
 
         if efi_var_name not in variables.keys():
             variables[efi_var_name] = []

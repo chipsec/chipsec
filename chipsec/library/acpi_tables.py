@@ -104,6 +104,8 @@ class RSDP(ACPI_TABLE):
             raise ValueError(
                 f"Invalid RSDP table size: {len(table_content)}")
 
+        self.table_content = table_content
+
         # Validate signature
         if self.Signature != b'RSD PTR ':
             logger().log_warning(
@@ -138,7 +140,18 @@ class RSDP(ACPI_TABLE):
 
     # some sanity checking on RSDP
     def is_RSDP_valid(self) -> bool:
-        return 0 != self.Checksum and (0x0 == self.Revision or 0x2 == self.Revision)
+        if self.Signature != b'RSD PTR ' or self.Revision not in (0, 2):
+            return False
+        if sum(self.table_content[:ACPI_RSDP_SIZE]) & 0xFF:
+            return False
+        if self.Revision == 2:
+            if self.Length is None or self.Length < ACPI_RSDP_EXT_SIZE:
+                return False
+            if self.Length > len(self.table_content):
+                return False
+            if sum(self.table_content[:self.Length]) & 0xFF:
+                return False
+        return True
 
 
 ########################################################################################################
@@ -520,7 +533,7 @@ class APIC (ACPI_TABLE):
             "LAPIC_ADDRESS_OVERRIDE": '<BBHQ',
             "IOSAPIC": '<BBBBIQ',
             "PROCESSOR_LSAPIC": '<BBBBBHII',
-            "PLATFORM_INTERRUPT_SOURCES": '<BBHBBBII',
+            "PLATFORM_INTERRUPT_SOURCES": '<BBHBBBBII',
             "PROCESSOR_Lx2APIC": '<BBHIII',
             "Lx2APIC_NMI": '<BBHIB3s',
             "GICC_CPU": '<BBHIIIIIQQQQIQQ',
