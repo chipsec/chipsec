@@ -309,6 +309,22 @@ class TestNVARVariableExtraction(unittest.TestCase):
         self.assertEqual(
             varstore.getEFIvariables_NVAR_simple(entry + b'NoNull!!'), {})
 
+    def test_name_terminator_search_does_not_cross_entry_boundary(self):
+        signature = struct.unpack('=I', varstore.NVAR_EFIvar_signature)[0]
+        malformed_size = varstore.NVAR_HDR_SIZE + 8
+        malformed = struct.pack(
+            varstore.NVAR_HDR_FMT, signature, malformed_size,
+            0, 0, 0, 0x7, 0x7F) + b'NoNull!!'
+        valid_name = b'Valid\x00'
+        valid_data = b'\x01\x02'
+        valid_size = varstore.NVAR_HDR_SIZE + len(valid_name) + len(valid_data)
+        valid = struct.pack(
+            varstore.NVAR_HDR_FMT, signature, valid_size,
+            0, 0, 0, 0x7, 0x7F) + valid_name + valid_data
+
+        self.assertEqual(
+            varstore.getEFIvariables_NVAR_simple(malformed + valid), {})
+
     def test_an_empty_buffer_yields_nothing(self):
         self.assertEqual(varstore.getEFIvariables_NVAR_simple(b'\x00' * 32), {})
 

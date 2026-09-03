@@ -24,7 +24,6 @@ from unittest.mock import Mock
 
 import chipsec.helper.replay.replayhelper as rph
 from chipsec_main import ChipsecMain, parse_args
-from chipsec.chipset import clear_cs
 import chipsec.chipset as cs
 import chipsec.library.logger
 
@@ -49,7 +48,7 @@ def setup_run_destroy_module_with_mock_logger_output(init_replay_file: str, modu
     for func in logging_fucntions_to_capture:
         if hasattr(chipsec.library.logger._logger, func):
             logger_calls += getattr(chipsec.library.logger._logger, func).mock_calls
-    clear_cs()
+    cs.clear_cs()
     chipsec.library.logger._logger = chipsec.library.logger.Logger()
     return retval, "\n ---".join([str(call.args[0]) for call in logger_calls])
 
@@ -110,7 +109,7 @@ def setup_run_destroy_modules_with_mock_logger_output(
                 retval,
                 "\n ---".join(str(call.args[0]) for call in logger_calls)))
     finally:
-        clear_cs()
+        cs.clear_cs()
         chipsec.library.logger._logger = chipsec.library.logger.Logger()
 
     return results
@@ -124,5 +123,5 @@ def setup_run_destroy_module(init_replay_file: str, module_str: str, module_args
     replayHelper = rph.ReplayHelper(init_replay_file)
     csm._helper = replayHelper
     chipsec_return = run_chipsec_module(csm, module_replay_file)
-    clear_cs()
+    cs.clear_cs()
     return chipsec_return

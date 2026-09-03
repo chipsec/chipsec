@@ -20,13 +20,16 @@ import unittest
 from unittest.mock import MagicMock
 from chipsec.library.acpi_tables import RSDP
 from chipsec.hal.common.acpi import ACPI
+from tests.helpers.acpi_utils import build_rsdp
 
 class TestACPI(unittest.TestCase):
     def test_apci_read_rsdp(self):
         mock_cs = MagicMock()
-        rsdp_buf = b'RSD PTR \x93INTEL\x00\x02(\xd0^z'
-        rsdp_buf_ext = b'RSD PTR \x93INTEL\x00\x02(\xd0^z$\x00\x00\x00\xc0\xd0^z\x00\x00\x00\x00t\x00\x00\x00'
-        mock_cs.hals.memory.read_physical_mem.side_effect = [rsdp_buf, rsdp_buf_ext]
+        rsdp = build_rsdp(
+            revision=2,
+            rsdt_address=0x7A5ED028,
+            xsdt_address=0x7A5ED0C0)
+        mock_cs.hals.memory.read_physical_mem.side_effect = [rsdp[:20], rsdp]
         pa = 983056
         test_acpi = ACPI(mock_cs)
         self.assertIsInstance(test_acpi.read_RSDP(pa), RSDP)

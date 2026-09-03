@@ -29,6 +29,7 @@ from unittest.mock import patch
 from chipsec.library.acpi_tables import RSDP
 from chipsec.library.file import get_main_dir
 from chipsec.testcase import ExitCode
+from tests.helpers.acpi_utils import build_rsdp
 from tests.utilcmd.run_chipsec_util import setup_run_destroy_util
 
 class TestIommuUtilcmd(unittest.TestCase):
@@ -41,7 +42,10 @@ class TestIommuUtilcmd(unittest.TestCase):
     def mock_find_rsdp(self) -> None:
         # Mock the return value of _find_RSDP_in_EFI_config_table
         rsdp_pa = 0x56fa3014
-        rsdp_buf = b'RSD PTR \x93INTEL\x00\x02\x94\xf3\xf3V$\x00\x00\x00(\xf7\xf3V\x00\x00\x00\x00t\x00\x00\x00'
+        rsdp_buf = build_rsdp(
+            revision=2,
+            rsdt_address=0x56F3F394,
+            xsdt_address=0x56F3F728)
         rsdp = RSDP()
         rsdp.parse(rsdp_buf)
         return rsdp, rsdp_pa

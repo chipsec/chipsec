@@ -19,6 +19,7 @@ import struct
 
 from chipsec.helper.basehelper import Helper
 from chipsec.library.exceptions import UnimplementedAPIError
+from tests.helpers.acpi_utils import build_rsdp
 from typing import Optional, TYPE_CHECKING
 if TYPE_CHECKING:
     from ctypes import Array
@@ -232,26 +233,11 @@ class ACPIHelper(TestHelper):
     RSDT_ADDRESS = 0x200
 
     def _create_rsdp(self):
-        rsdp = b""
-        if self.USE_RSDP_REV_0:
-            # Emulate initial version of RSDP described in ACPI v1.0
-            rsdp = (b"RSD PTR " +                            # Signature
-                    struct.pack("<B", 0x1) +                # Checksum
-                    b"TEST00" +                              # OEMID
-                    struct.pack("<B", 0x0) +                # Revision
-                    struct.pack("<I", self.RSDT_ADDRESS))   # RSDT Address
-        else:
-            # Emulate RSDP described in ACPI v2.0 onwards
-            rsdp = (b"RSD PTR " +                            # Signature
-                    struct.pack("<B", 0x1) +                # Checksum
-                    b"TEST00" +                              # OEMID
-                    struct.pack("<B", 0x2) +                # Revision
-                    struct.pack("<I", self.RSDT_ADDRESS) +  # RSDT Address
-                    struct.pack("<I", 0x24) +               # Length
-                    struct.pack("<Q", self.XSDT_ADDRESS) +  # XSDT Address
-                    struct.pack("<B", 0x0) +                # Extended Checksum
-                    b"AAA")                                  # Reserved
-        return rsdp
+        return build_rsdp(
+            revision=0 if self.USE_RSDP_REV_0 else 2,
+            rsdt_address=self.RSDT_ADDRESS,
+            xsdt_address=None if self.USE_RSDP_REV_0 else self.XSDT_ADDRESS,
+            oem_id=b'TEST00')
 
     def _create_generic_acpi_table_header(self, signature, length):
         return (signature +                  # Signature
