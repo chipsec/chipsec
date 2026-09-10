@@ -82,8 +82,6 @@ def _decode_aml_integer(data: bytes, offset: int) -> Tuple[Optional[int], int]:
         return struct.unpack('<I', data[offset + 1:offset + 5])[0], 5
     if opcode == AML_QWORD_PREFIX and offset + 9 <= len(data):
         return struct.unpack('<Q', data[offset + 1:offset + 9])[0], 9
-    if 0x02 <= opcode <= 0x09:
-        return opcode, 1
     return None, 0
 
 

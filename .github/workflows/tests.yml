@@ -21,9 +21,10 @@ jobs:
           # - {name: "archlinux", tag: "latest", variant: "-zen", image_prefix: "docker.io/library/"}
           # - {name: "archlinux", tag: "base", image_prefix: "docker.io/library/"}
           - {name: "centos", tag: "stream9", image_prefix: "quay.io/centos/"}
+          - {name: "debian", tag: "13", image_prefix: "docker.io/library/"}
+          - {name: "debian", tag: "13-slim", image_prefix: "docker.io/library/"}
           - {name: "debian", tag: "12", image_prefix: "docker.io/library/"}
           - {name: "debian", tag: "12-slim", image_prefix: "docker.io/library/"}
-          - {name: "debian", tag: "11", image_prefix: "docker.io/library/"}
           - {name: "ubuntu", tag: "24.04", image_prefix: "docker.io/library/"}
           - {name: "ubuntu", tag: "22.04", image_prefix: "docker.io/library/"}
 
@@ -73,7 +74,7 @@ jobs:
       if: matrix.distro.name == 'debian'
       run: |
         apt-get update -q
-        apt-get install -qqy dkms nasm
+        apt-get install -qqy dkms nasm linux-headers-amd64
 
     - name: Install Ubuntu dependencies
       if: matrix.distro.name == 'ubuntu'
