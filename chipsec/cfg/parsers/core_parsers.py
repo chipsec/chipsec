@@ -161,6 +161,37 @@ class DevConfig(BaseConfigParser):
         if obj:
             self.cfg.platform.get_vendor(vid_str).add_ip(dev_name, obj)
 
+    def _get_shared_config(self, vid_str, name):
+        """Collect the configuration files already accumulated for a device name.
+
+        Devices that share a name (e.g. an MEI1 on both the CPU and the PCH) must
+        end up with the same configuration list regardless of the order in which
+        their XML nodes are processed.
+        """
+        shared = []
+        for pci_dev in self.cfg.CONFIG_PCI[vid_str].get(name, []):
+            for cfg in pci_dev.get_config_copy():
+                if cfg not in shared:
+                    shared.append(cfg)
+        return shared
+
+    def _sync_bar_instances(self, vid_str, name):
+        """Extend BARs already declared for a device name to cover every PCI instance.
+
+        A BAR captures its instance list when its subcomponent/bar node is parsed.
+        Devices registered under the same name afterwards (for example a PCH MEI1
+        processed after the CPU MEI1) would otherwise never be covered by it.
+        """
+        instances = []
+        for pci_dev in self.cfg.CONFIG_PCI[vid_str].get(name, []):
+            instances.extend(pci_dev.instances.values())
+        for key in ['MMIO_BARS', 'IO_BARS']:
+            bars = getattr(self.cfg, key).get(vid_str, {}).get(name, {})
+            for bar_obj in bars.values():
+                for instance in instances:
+                    if instance not in bar_obj.instances:
+                        bar_obj.add_obj(instance)
+
     def _add_dev(self, vid_str, name, pci_info, dev_attr):
         if name not in self.cfg.CONFIG_PCI[vid_str]:
             for key in ['MMIO_BARS', 'IO_BARS', 'REGISTERS']:
@@ -168,8 +199,10 @@ class DevConfig(BaseConfigParser):
                 if name not in node[vid_str]:
                     node[vid_str][name] = {}
             self.cfg.CONFIG_PCI[vid_str][name] = []
+        shared_config = self._get_shared_config(vid_str, name)
         if pci_info:
             pci_info.update_name(name)
+            pci_info.add_config(shared_config)
             if 'config' in dev_attr:
                 pci_info.add_config(dev_attr['config'])
             self.cfg.CONFIG_PCI[vid_str][name].append(pci_info)
@@ -183,9 +216,11 @@ class DevConfig(BaseConfigParser):
             if 'fun' not in dev_attr:
                 dev_attr['fun'] = None
             pci_obj = PCIConfig(dev_attr)
+            pci_obj.add_config(shared_config)
             if 'config' in dev_attr:
                 pci_obj.add_config(dev_attr['config'])
             self.cfg.CONFIG_PCI[vid_str][name].append(pci_obj)
+        self._sync_bar_instances(vid_str, name)
         return self.cfg.CONFIG_PCI[vid_str][name]
 
     def _add_ip(self, vid_str, ip_name, ip_obj=None):
@@ -544,10 +579,35 @@ class CoreConfigRegisters(BaseConfigParser):
                 parentobj.add_register(reg_name, reg_obj)
             else:
                 self.logger.log_debug(f"[*] No parent object found for {reg_name}")
-            self.cfg.REGISTERS[stage_data.vid_str][parent_name][reg_name] = reg_obj
+            self._store_register(stage_data.vid_str, parent_name, reg_name, reg_obj)
             hex_dict = make_dict_hex(reg_attr)
             fullname = '.'.join([stage_data.vid_str, parent_name, reg_name])
             self.logger.log_debug(f'    + {fullname:32}: {hex_dict}')
+
+    def _store_register(self, vid_str, parent_name, reg_name, reg_obj):
+        """Merge newly created register objects into the register store.
+
+        A device name can be backed by more than one PCI device (for example an
+        MEI1 on both the CPU and the PCH), and each of those produces its own
+        register objects.  Objects are merged by instance so every device is
+        covered, while a redefinition from a later configuration layer still
+        replaces the entry for the matching instance.
+        """
+        dest = self.cfg.REGISTERS[vid_str][parent_name]
+        existing = dest.get(reg_name)
+        if not reg_obj or not existing:
+            dest[reg_name] = reg_obj
+            return
+        merged = list(existing)
+        instances = [reg.get_instance() for reg in merged]
+        for reg in reg_obj:
+            instance = reg.get_instance()
+            if instance in instances:
+                merged[instances.index(instance)] = reg
+            elif reg not in merged:
+                merged.append(reg)
+                instances.append(instance)
+        dest[reg_name] = merged
 
     def create_register_object(self, objtype, regattr, instance_list):
         reg_obj = []
