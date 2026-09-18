@@ -34,7 +34,10 @@ def make_cfg(**overrides):
 def make_reg(name='CONTROL_REG', instance=0):
     reg = MagicMock()
     reg.name = name
-    reg.instance = instance
+    # BAR-relative registers hold the BAR object in ``instance`` and only unwrap
+    # it in ``get_instance()``; the control must use the latter.
+    reg.instance = MagicMock(instance=instance)
+    reg.get_instance.return_value = instance
     return reg
 
 
@@ -96,6 +99,17 @@ class TestControlHelperInit(unittest.TestCase):
         self.assertEqual(control.instance, 3)
         self.assertIs(control.get_register_object(), reg)
         self.assertIsNone(control.get_current_value())
+
+    def test_instance_is_the_registers_device_not_its_bar(self):
+        reg = make_reg(instance=3)
+        control = CONTROLHelper(make_cfg(), reg)
+        self.assertEqual(control.get_instance(), 3)
+        self.assertIsNot(control.instance, reg.instance)
+
+    def test_instance_falls_back_to_raw_attribute(self):
+        reg = _RegNoLookup()
+        control = CONTROLHelper(make_cfg(), reg)
+        self.assertEqual(control.get_instance(), 0)
 
     def test_missing_name_key_raises(self):
         cfg = make_cfg()

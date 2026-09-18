@@ -34,7 +34,9 @@ class TestControl(unittest.TestCase):
 
     def setUp(self):
         self.ctrl0 = MagicMock(instance=0)
+        self.ctrl0.get_instance.return_value = 0
         self.ctrl1 = MagicMock(instance=1)
+        self.ctrl1.get_instance.return_value = 1
         self.cs = make_cs({'LOCK_BIT': [self.ctrl0, self.ctrl1]})
         self.control = Control(self.cs)
 
