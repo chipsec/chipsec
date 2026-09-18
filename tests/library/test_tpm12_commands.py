@@ -80,6 +80,10 @@ class TestPcrRead(Tpm12TestBase):
     def test_out_of_range_pcr_returns_empty_command(self):
         self.assertEqual(tpm12_commands.pcrread(31), (b'', 0))
 
+    def test_missing_argument_is_handled(self):
+        self.assertEqual(tpm12_commands.pcrread(), (b'', 0))
+        self.mock_logger.return_value.log_bad.assert_called_once()
+
     def test_out_of_range_pcr_logs_when_hal_enabled(self):
         tpm12_commands.pcrread(31)
         self.mock_logger.return_value.log_bad.assert_called_once()

@@ -93,8 +93,24 @@ class TestGetIntArg(unittest.TestCase):
     def test_hex_string(self):
         self.assertEqual(vmm_common.get_int_arg('0x10'), 16)
 
-    def test_arithmetic_expression(self):
-        self.assertEqual(vmm_common.get_int_arg('1 << 4'), 16)
+    def test_binary_string(self):
+        self.assertEqual(vmm_common.get_int_arg('0b1010'), 10)
+
+    def test_arithmetic_expression_is_rejected(self):
+        with patch('sys.stdout', new=io.StringIO()):
+            with self.assertRaises(SystemExit):
+                vmm_common.get_int_arg('1 << 4')
+
+    def test_code_like_input_is_rejected_without_executing(self):
+        for arg in ("__import__('os').system('echo pwned')",
+                    "open('pwned.txt', 'w')",
+                    '1 if exit(0) else 2'):
+            with self.subTest(arg=arg):
+                with patch('sys.stdout', new=io.StringIO()) as out:
+                    with self.assertRaises(SystemExit) as ctx:
+                        vmm_common.get_int_arg(arg)
+                self.assertEqual(ctx.exception.code, 1)
+                self.assertIn('ERROR: Invalid parameter', out.getvalue())
 
     def test_invalid_argument_exits(self):
         with patch('sys.stdout', new=io.StringIO()) as out:
@@ -127,8 +143,16 @@ class TestWeightedChoice(unittest.TestCase):
         mock_uniform.assert_called_once_with(0, 6.0)
 
     def test_zero_weight_choice_is_skipped(self):
-        with patch('chipsec.library.intel.vmm_common.random.uniform', return_value=0.5):
-            self.assertEqual(vmm_common.weighted_choice([('a', 0.0), ('b', 1.0)]), 'b')
+        for draw in (0.0, 0.5, 1.0):
+            with self.subTest(draw=draw):
+                with patch('chipsec.library.intel.vmm_common.random.uniform', return_value=draw):
+                    self.assertEqual(vmm_common.weighted_choice([('a', 0.0), ('b', 1.0)]), 'b')
+
+    def test_trailing_zero_weight_choice_is_skipped(self):
+        for draw in (0.0, 1.0):
+            with self.subTest(draw=draw):
+                with patch('chipsec.library.intel.vmm_common.random.uniform', return_value=draw):
+                    self.assertEqual(vmm_common.weighted_choice([('a', 1.0), ('b', 0.0)]), 'a')
 
 
 class TestRandDd(unittest.TestCase):
@@ -242,14 +266,18 @@ class TestSessionLogger(unittest.TestCase):
         mock_open.return_value.flush.assert_called_once_with()
 
     def test_existing_log_directory_is_tolerated(self):
-        with patch('builtins.open'), patch('os.makedirs', side_effect=OSError):
+        with patch('builtins.open'), patch('os.makedirs', side_effect=FileExistsError):
             logger = vmm_common.session_logger(True, 'details')
         self.assertTrue(logger.log)
 
     def test_closefile_restores_stdout(self):
         with patch('builtins.open') as mock_open, patch('os.makedirs'):
-            logger = vmm_common.session_logger(True, 'details')
-        logger.closefile()
+            with patch('chipsec.library.intel.vmm_common.sys') as mock_sys:
+                original_stdout = mock_sys.stdout
+                logger = vmm_common.session_logger(True, 'details')
+                mock_sys.stdout = logger
+                logger.closefile()
+                self.assertIs(mock_sys.stdout, original_stdout)
         mock_open.return_value.close.assert_called_once_with()
 
 

@@ -244,7 +244,9 @@ class TestCheckMatchCriteria(SearchTestBase):
                 'exclude': {'patched': {}},
             }
         }
-        self.assertFalse(search.check_match_criteria(efi, criteria, self.log))
+        with patch.object(search, 'check_rules', wraps=search.check_rules) as mock_check_rules:
+            self.assertFalse(search.check_match_criteria(efi, criteria, self.log))
+        mock_check_rules.assert_called_once_with(efi, criteria['UEFI_rootkitX']['match'], 'UEFI_rootkitX', self.log, cpuid=None)
 
     def test_entry_without_match_key_is_skipped(self):
         efi = make_section(ui_string='rootkitX.efi')
