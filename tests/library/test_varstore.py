@@ -15,6 +15,7 @@
 #
 #
 
+import struct
 import unittest
 import tempfile
 import os
@@ -163,3 +164,78 @@ class TestVarStore(unittest.TestCase):
         NVstore_VSS = varstore._getNVstore_VSS(input_bytes, 'vss2')
 
         self.assertEqual(NVstore_VSS[0:2], (3, 33641898))
+
+
+class TestSecureBootSignatureParsers(unittest.TestCase):
+    """EFI_CERT_X509_SHA256/384/512 signature data.
+
+    UEFI spec, Secure Boot and Driver Signing: SignatureData for these formats is
+    the SHA hash of the TBS certificate followed by an EFI_TIME TimeOfRevocation.
+    The trailing bytes are NOT a DER certificate. The fixed SignatureSize values
+    in the signature type table (0x40/0x50/0x60) confirm this: 16 byte owner GUID
+    + hash + 16 byte EFI_TIME.
+    """
+
+    def setUp(self):
+        self._orig = varstore._log_sig
+        self.lines = []
+        varstore._log_sig = self.lines.append
+
+    def tearDown(self):
+        varstore._log_sig = self._orig
+
+    @staticmethod
+    def _efi_time(year=2016, month=8, day=9, hour=0, minute=0, second=0):
+        return struct.pack('<HBBBBBBIhBB', year, month, day, hour, minute, second, 0, 0, 0x07FF, 0, 0)
+
+    def test_efi_time_size_is_16(self):
+        self.assertEqual(varstore.EFI_TIME_SIZE, 16)
+        self.assertEqual(len(self._efi_time()), 16)
+
+    def test_x509_sha256_parses_time_of_revocation(self):
+        data = bytes(range(0x20)) + self._efi_time()
+        # 16 byte owner GUID + this payload == 0x40, the table's SignatureSize
+        self.assertEqual(16 + len(data), 0x40)
+        varstore.parse_x509_sha256(data)
+        joined = '\n'.join(self.lines)
+        self.assertIn('TBS hash', joined)
+        self.assertIn('TimeOfRevocation', joined)
+        self.assertIn('2016-08-09', joined)
+        self.assertNotIn('X.509 parse error', joined)
+        self.assertNotIn('X.509 Subject', joined)
+
+    def test_x509_sha384_parses_time_of_revocation(self):
+        data = bytes(range(0x30)) + self._efi_time(2018, 1, 2)
+        self.assertEqual(16 + len(data), 0x50)
+        varstore.parse_x509_sha384(data)
+        joined = '\n'.join(self.lines)
+        self.assertIn('2018-01-02', joined)
+        self.assertNotIn('X.509 parse error', joined)
+
+    def test_x509_sha512_parses_time_of_revocation(self):
+        data = bytes(range(0x40)) + self._efi_time(2020, 12, 31, 23, 59, 58)
+        self.assertEqual(16 + len(data), 0x60)
+        varstore.parse_x509_sha512(data)
+        joined = '\n'.join(self.lines)
+        self.assertIn('2020-12-31 23:59:58', joined)
+        self.assertNotIn('X.509 parse error', joined)
+
+    def test_all_zero_revocation_time_is_reported_as_unspecified(self):
+        varstore.parse_x509_sha256(bytes(range(0x20)) + b'\x00' * 16)
+        joined = '\n'.join(self.lines)
+        self.assertIn('not specified', joined)
+        self.assertNotIn('X.509 parse error', joined)
+
+    def test_trailing_bytes_beyond_efi_time_are_reported(self):
+        """Non-conforming entries must stay visible rather than being dropped."""
+        varstore.parse_x509_sha256(bytes(range(0x20)) + self._efi_time() + b'EXTRA')
+        joined = '\n'.join(self.lines)
+        self.assertIn('unexpected trailing data', joined)
+
+    def test_short_data_does_not_raise(self):
+        varstore.parse_x509_sha256(b'\x01' * 4)
+        self.assertTrue(self.lines)
+
+
+if __name__ == '__main__':
+    unittest.main()
