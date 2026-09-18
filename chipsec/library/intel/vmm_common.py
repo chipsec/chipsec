@@ -191,9 +191,15 @@ def weighted_choice(choices: List[Tuple[int, float]]) -> int:
     r = random.uniform(0, total)
     x = 0
     for c, w in choices:
-        if x + w >= r:
-            return c
+        if w <= 0:
+            continue
         x += w
+        if r <= x:
+            return c
+    # r can land above the accumulated total through floating point rounding
+    for c, w in reversed(choices):
+        if w > 0:
+            return c
     assert False, 'Invalid parameters'
 
 
@@ -219,7 +225,7 @@ def overwrite(buffer: bytes, string: bytes, position: int) -> bytes:
 
 def get_int_arg(arg: str) -> int:
     try:
-        ret = int(eval(arg))
+        ret = int(arg, 0)
     except Exception:
         sys.stdout.write('\n  ERROR: Invalid parameter\n')
         exit(1)

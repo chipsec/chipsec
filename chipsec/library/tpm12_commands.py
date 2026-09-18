@@ -99,7 +99,10 @@ def pcrread(*command_argv: str) -> Tuple[bytes, int]:
     """
     The TPM_PCRRead operation provides non-cryptographic reporting  of the contents of a named PCR
     """
-    Pcr = PCR.get(command_argv[0], None)
+    try:
+        Pcr = PCR.get(command_argv[0], None)
+    except IndexError:
+        Pcr = None
     if Pcr is None:
         if logger().HAL:
             logger().log_bad("Invalid PCR value\n")
