@@ -472,8 +472,8 @@ class EFI_SECTION(EFI_MODULE):
 
 def FvSum8(buffer: bytes) -> int:
     sum8 = 0
-    for b in bytestostring(buffer):
-        sum8 = (sum8 + ord(b)) & 0xff
+    for b in buffer:
+        sum8 = (sum8 + b) & 0xff
     return sum8
 
 
@@ -483,13 +483,10 @@ def FvChecksum8(buffer: bytes) -> int:
 
 def FvSum16(buffer: bytes) -> int:
     sum16 = 0
-    buffer_str = bytestostring(buffer)
     blen = len(buffer) // 2
-    i = 0
-    while i < blen:
-        el16 = ord(buffer_str[2 * i]) | (ord(buffer_str[2 * i + 1]) << 8)
+    for i in range(blen):
+        el16 = buffer[2 * i] | (buffer[2 * i + 1] << 8)
         sum16 = (sum16 + el16) & 0xffff
-        i = i + 1
     return sum16
 
 
@@ -521,10 +518,11 @@ def ValidateFwVolumeHeader(FsGuid: UUID, FvLength: int, HeaderLength: int, ExtHe
 
 
 def NextFwVolume(buffer: bytes, off: int = 0, last_fv_size: int = 0) -> Optional[EFI_FV]:
+    """Find and parse the next firmware volume in buffer starting after the previous one."""
     fof = off if last_fv_size == 0 else off + max(last_fv_size, EFI_FIRMWARE_VOLUME_HEADER_size)
     size = len(buffer)
     while (fof + EFI_FIRMWARE_VOLUME_HEADER_size) < size:
-        fof = bytestostring(buffer).find("_FVH", fof)
+        fof = buffer.find(b"_FVH", fof)
         if fof == -1 or size - fof < EFI_FIRMWARE_VOLUME_HEADER_size:
             break
         elif fof < 0x28:
@@ -594,6 +592,7 @@ def NextFwVolume(buffer: bytes, off: int = 0, last_fv_size: int = 0) -> Optional
 
 
 def GetFvHeader(buffer: bytes, off: int = 0) -> Tuple[int, int, int]:
+    """Parse and display a firmware volume header. Returns (size, header_size, attributes)."""
     EFI_FV_BLOCK_MAP_ENTRY_SZ = struct.calcsize(EFI_FV_BLOCK_MAP_ENTRY)
     header_size = EFI_FIRMWARE_VOLUME_HEADER_size + struct.calcsize(EFI_FV_BLOCK_MAP_ENTRY)
     if (len(buffer) < header_size):
@@ -645,6 +644,7 @@ def GetFvHeader(buffer: bytes, off: int = 0) -> Tuple[int, int, int]:
 
 
 def NextFwFile(FvImage: bytes, FvLength: int, fof: int, polarity: bool) -> Optional[EFI_FILE]:
+    """Find and parse the next FFS file in a firmware volume image."""
     file_header_size = struct.calcsize(EFI_FFS_FILE_HEADER)
     fof = align(fof, 8)
     cur_offset = fof
@@ -715,6 +715,7 @@ def NextFwFile(FvImage: bytes, FvLength: int, fof: int, polarity: bool) -> Optio
 
 
 def NextFwFileSection(sections: bytes, ssize: int, sof: int, polarity: bool) -> Optional[EFI_SECTION]:
+    """Find and parse the next section within an FFS file."""
     EFI_COMMON_SECTION_HEADER_size = struct.calcsize(EFI_COMMON_SECTION_HEADER)
     res = None
     curr_offset = sof
@@ -762,6 +763,9 @@ def get_guid_bin(guid: UUID) -> bytes:
 
 
 def assemble_uefi_file(guid: UUID, image: bytes) -> bytes:
+    """Assemble a UEFI FFS file (type FREEFORM) with proper checksums."""
+    # Local struct format packs Size (3 bytes) + State (1 byte) as a single L (uint32)
+    # for easier arithmetic assembly, unlike the module-level "<16sHBB3sB" used for parsing.
     EFI_FFS_FILE_HEADER = "<16sHBBL"
     FileHeaderSize = struct.calcsize(EFI_FFS_FILE_HEADER)
 
@@ -785,6 +789,7 @@ def assemble_uefi_file(guid: UUID, image: bytes) -> bytes:
 
 
 def assemble_uefi_section(image: bytes, uncomressed_size: int, compression_type: int) -> bytes:
+    """Assemble a UEFI compression section wrapping the given (compressed) image."""
     EFI_COMPRESSION_SECTION_HEADER = "<LLB"
     SectionType = EFI_SECTION_COMPRESSION
     SectionSize = struct.calcsize(EFI_COMPRESSION_SECTION_HEADER) + len(image)
@@ -799,8 +804,5 @@ def assemble_uefi_section(image: bytes, uncomressed_size: int, compression_type:
 
 
 def assemble_uefi_raw(image: bytes) -> bytes:
+    """Assemble a UEFI raw section from image data, with 8-byte alignment padding."""
     return align_image(struct.pack('<L', ((len(image) + 4) & 0x00FFFFFF) + (EFI_SECTION_RAW << 24)) + image)
-
-
-def DecodeSection(SecType, SecBody, SecHeaderSize) -> None:
-    pass

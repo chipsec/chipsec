@@ -346,7 +346,7 @@ class TestNVRAMIdentification(unittest.TestCase):
         self.assertEqual(varstore.identify_EFI_NVRAM(vss2_store()), FWType.EFI_FW_TYPE_VSS2)
 
     def test_an_unrecognized_buffer_is_not_identified(self):
-        self.assertEqual(varstore.identify_EFI_NVRAM(b'\x00' * 256), '')
+        self.assertIsNone(varstore.identify_EFI_NVRAM(b'\x00' * 256))
 
 
 class TestVariableStoreLookup(unittest.TestCase):
