@@ -67,7 +67,12 @@ class CONTROLHelper(BaseConfigHelper):
             self.value: Optional[int] = None
             self.desc = cfg_obj['desc']
             self.__reg = reg_obj
-            self.instance = getattr(reg_obj, 'instance', None)
+            # Normalize to the owning device instance. A register's raw
+            # ``instance`` is the BAR object when the register is BAR-relative,
+            # so defer to ``get_instance()``, which unwraps it, to stay
+            # comparable with the instance reported by any register.
+            self.instance = (reg_obj.get_instance() if hasattr(reg_obj, 'get_instance')
+                             else getattr(reg_obj, 'instance', None))
             self.field = cfg_obj['field']
             self._validate_control_config()
         except KeyError as e:
@@ -103,6 +108,15 @@ class CONTROLHelper(BaseConfigHelper):
             Name of the register containing this control field
         """
         return self.cfg.get('register', getattr(self.__reg, 'name', 'Unknown Register'))
+
+    def get_instance(self) -> Any:
+        """
+        Get the device instance this control belongs to.
+
+        Returns:
+            Device instance of the register backing this control, or None.
+        """
+        return self.instance
 
     def get_field_name(self) -> str:
         """

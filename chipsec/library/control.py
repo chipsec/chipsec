@@ -76,7 +76,7 @@ class Control:
         control_name = control_name.upper()
         if control_name in self.cs.Cfg.CONTROLS:
             for ctrl in self.cs.Cfg.CONTROLS[control_name]:
-                if instance == ctrl.instance:
+                if instance == ctrl.get_instance():
                     return ctrl
         return None
 
