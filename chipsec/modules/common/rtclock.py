@@ -72,10 +72,10 @@ class rtclock(BaseModule):
         return False
 
     def check_rtclock(self) -> int:
-        ll = ul = False
         rc_list = self.cs.register.get_list_by_name('RC')
         res = ModuleResult.FAILED
         for rc in rc_list:
+            ll_is_set = ul_is_set = False
             try:
                 check_config_regs = rc.read() != 0xFFFFFFFF
             except CSReadError as err:
@@ -84,15 +84,15 @@ class rtclock(BaseModule):
 
             if check_config_regs:
                 rc.print()
-                ll = rc.is_all_field_value(1, 'LL')
-                ul = rc.is_all_field_value(1, 'UL')
+                ll_is_set = rc.get_field('LL') == 1
+                ul_is_set = rc.get_field('UL') == 1
             elif self.user_request:
                 self.logger.log_important('Writing to CMOS to determine write protection (original values will be restored)')
 
                 original_val = self.cmos.read_cmos_low(self.test_offset)
                 self.cmos.write_cmos_low(self.test_offset, original_val ^ self.test_value)
                 if original_val == self.cmos.read_cmos_low(self.test_offset):
-                    ll = True
+                    ll_is_set = True
                 else:
                     self.logger.log_important('Restoring original value')
                     self.cmos.write_cmos_low(self.test_offset, original_val)
@@ -100,7 +100,7 @@ class rtclock(BaseModule):
                 original_val = self.cmos.read_cmos_high(self.test_offset)
                 self.cmos.write_cmos_high(self.test_offset, original_val ^ self.test_value)
                 if original_val == self.cmos.read_cmos_high(self.test_offset):
-                    ul = True
+                    ul_is_set = True
                 else:
                     self.logger.log_important('Restoring original value')
                     self.cmos.write_cmos_high(self.test_offset, original_val)
@@ -111,16 +111,16 @@ class rtclock(BaseModule):
                 self.result.setStatusBit(self.result.status.VERIFY)
                 return self.result.getReturnCode(ModuleResult.WARNING)
 
-            if ll:
+            if ll_is_set:
                 self.logger.log_good('Protected bytes (0x38-0x3F) in low 128-byte bank of RTC memory are locked')
             else:
                 self.logger.log_bad('Protected bytes (0x38-0x3F) in low 128-byte bank of RTC memory are not locked')
-            if ul:
+            if ul_is_set:
                 self.logger.log_good('Protected bytes (0x38-0x3F) in high 128-byte bank of RTC memory are locked')
             else:
                 self.logger.log_bad('Protected bytes (0x38-0x3F) in high 128-byte bank of RTC memory are not locked')
 
-            if ll and ul:
+            if ll_is_set and ul_is_set:
                 res = ModuleResult.PASSED
                 self.logger.log_passed('Protected locations in RTC memory are locked')
             else:
