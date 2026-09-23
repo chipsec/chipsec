@@ -75,7 +75,7 @@ class TestTglModules(unittest.TestCase):
                 self.modules_results, results):
             if retval != expected:
                 failed.append(
-                    f"{module}: expected {expected}, got {retval}\n{module_output}")
+                    f"{module}: expected {ExitCode.decode[expected]}({expected}), got {ExitCode.decode[retval]}({retval})\n{module_output}")
 
         self.assertFalse(failed, "\n\n".join(failed))
 

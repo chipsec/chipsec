@@ -81,11 +81,10 @@ class debugenabled(BaseModule):
             self.logger.log_important('ECTRL register not found. Skipping DCI check.')
             return ModuleResult.WARNING
         ectrl.read_and_verbose_print()
-        hdcien_mask = ectrl[0].get_field_mask('ENABLE', True)
 
         if ectrl.is_all_field_value(ectrl[0].get_field('ENABLE'), 'ENABLE'):
             self.logger.log_good('CPU debug enable is set consistently')
-        if ectrl.is_any_value(hdcien_mask, 'ENABLE'):
+        if ectrl.is_any_field_value(1, "ENABLE"):
             self.logger.log_bad('DCI Debug is enabled')
             TestFail = ModuleResult.FAILED
             self.result.setStatusBit(self.result.status.DEBUG_FEATURE)

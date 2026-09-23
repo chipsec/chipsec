@@ -121,7 +121,7 @@ class Chipset:
         return _cs
 
     def init(self, platform_code, req_pch_code, helper_name=None, start_helper=True,
-             load_config=True, ignore_platform=False):
+             load_config=True, ignore_platform=False, req_mfgid=None):
         """Initialize the chipset with platform detection and configuration.
 
         Args:
@@ -131,6 +131,7 @@ class Chipset:
             start_helper: Whether to start the helper immediately
             load_config: Whether to load platform configuration
             ignore_platform: Whether to skip platform detection
+            req_mfgid: Manufacturer ID to force instead of detecting it
 
         Raises:
             UnknownChipsetError: If platform cannot be detected
@@ -152,14 +153,18 @@ class Chipset:
 
         # Platform detection
         cpuid = 0
+        if req_mfgid:
+            # Set before any HAL is resolved so HAL dispatch uses the forced value
+            self.Cfg.set_mfgid(req_mfgid)
+            self.logger.log_important(f'Forcing manufacturer ID to "{req_mfgid}"')
         if start_helper:
             self.load_helper(helper_name)
             self.start_helper()
             # Get CPUID only if using driver (otherwise it will cause problems)
             cpuid = self.get_cpuid()
-            mfgid = self.get_mfgid()
             self.Cfg.set_cpuid(cpuid)
-            self.Cfg.set_mfgid(mfgid)
+            if not req_mfgid:
+                self.Cfg.set_mfgid(self.get_mfgid())
         else:
             self.load_helper(NoneHelper())
 
@@ -173,7 +178,8 @@ class Chipset:
                 # Seed a minimal topology so config parsers that reference CPU
                 # (e.g. MSR scope handling) don't fail when running without a helper.
                 self.Cfg.set_topology({'threads': 1, 'cores': {0: [0]}, 'packages': {0: [0]}})
-                self.Cfg.set_mfgid(_MFGID_BY_VID.get(self.Cfg.vid, 'GenuineIntel'))
+                if not req_mfgid:
+                    self.Cfg.set_mfgid(_MFGID_BY_VID.get(self.Cfg.vid, 'GenuineIntel'))
             if not ignore_platform:
                 self.Cfg.platform_detection(platform_code, req_pch_code, cpuid)
                 _unknown_proc = not bool(self.Cfg.get_chipset_code())
