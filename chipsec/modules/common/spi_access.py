@@ -45,7 +45,7 @@ Registers used:
 
 """
 
-from chipsec.library.exceptions import CSReadError
+from chipsec.library.exceptions import CSReadError, HALInitializationError, HALNotFoundError
 from chipsec.module_common import BaseModule, BIOS
 from chipsec.library.returncode import ModuleResult
 from chipsec.hal.intel.spi import SPI
@@ -66,61 +66,63 @@ class spi_access(BaseModule):
         })
 
     def is_supported(self) -> bool:
-        if self.cs.register.has_field('HSFS', 'FDV') and self.cs.register.has_field('FRAP', 'BRWA'):
+        try:
+            self.spi = self.cs.hals.spi
+            self.instance = self.spi.instance
+        except (HALNotFoundError, HALInitializationError, CSReadError) as err:
+            self.logger.log_important(f'SPI HAL is not initialized ({err}). Skipping module.')
+            return False
+        self.frap = self.cs.register.get_instance_by_name('FRAP', self.instance)
+        self.hsfs = self.cs.register.get_instance_by_name('HSFS', self.instance)
+        if self.frap and self.frap.has_field('BRWA') and self.hsfs and self.hsfs.has_field('FDV'):
             return True
-        self.logger.log_important('HSFS.FDV or FRAP.BRWA registers not defined for platform.  Skipping module.')
+        self.logger.log_important('HSFS.FDV or FRAP.BRWA registers not defined for the selected SPI controller.  Skipping module.')
         return False
 
     def check_flash_access_permissions(self) -> int:
-        frap_objs = self.cs.register.get_list_by_name('FRAP')
-        frap_objs.read()
-        for frap in frap_objs:
-            self.logger.log_verbose(frap)
-            fdv_obj = self.cs.register.get_instance_by_name('HSFS', frap.get_instance())
-            fdv = fdv_obj.read_field('FDV') == 1
-            brwa = frap.get_field('BRWA')
+        brwa = self.frap.read_field('BRWA')
+        fdv = self.hsfs.read_field('FDV') == 1
 
-            if not fdv:
-                self.logger.log("[*] Flash Descriptor Valid bit is not set")
+        if not fdv:
+            self.logger.log("[*] Flash Descriptor Valid bit is not set")
 
-            if brwa & (1 << PLATFORM_DATA):
-                self.logger.log("[*] Software has write access to Platform Data region in SPI flash (it's platform specific)")
+        if brwa & (1 << PLATFORM_DATA):
+            self.logger.log("[*] Software has write access to Platform Data region in SPI flash (it's platform specific)")
 
-            if brwa & (1 << GBE):
-                self.update_res(ModuleResult.WARNING)
-                self.result.setStatusBit(self.result.status.ACCESS_RW)
-                self.logger.log_warning("Software has write access to GBe region in SPI flash")
+        if brwa & (1 << GBE):
+            self.update_res(ModuleResult.WARNING)
+            self.result.setStatusBit(self.result.status.ACCESS_RW)
+            self.logger.log_warning("Software has write access to GBe region in SPI flash")
 
-            if brwa & (1 << FLASH_DESCRIPTOR):
-                self.update_res(ModuleResult.FAILED)
-                self.result.setStatusBit(self.result.status.ACCESS_RW)
-                self.logger.log_bad("Software has write access to SPI flash descriptor")
+        if brwa & (1 << FLASH_DESCRIPTOR):
+            self.update_res(ModuleResult.FAILED)
+            self.result.setStatusBit(self.result.status.ACCESS_RW)
+            self.logger.log_bad("Software has write access to SPI flash descriptor")
 
-            if brwa & (1 << ME):
-                self.update_res(ModuleResult.FAILED)
-                self.result.setStatusBit(self.result.status.ACCESS_RW)
-                self.logger.log_bad("Software has write access to Management Engine (ME) region in SPI flash")
+        if brwa & (1 << ME):
+            self.update_res(ModuleResult.FAILED)
+            self.result.setStatusBit(self.result.status.ACCESS_RW)
+            self.logger.log_bad("Software has write access to Management Engine (ME) region in SPI flash")
 
-            if fdv:
-                if ModuleResult.PASSED == self.res:
-                    self.logger.log_good("SPI Flash Region Access Permissions in flash descriptor look ok")
-                elif ModuleResult.FAILED == self.res:
-                    self.logger.log_failed('SPI Flash Region Access Permissions are not programmed securely in flash descriptor')
-                    self.logger.log_important('System may be using alternative protection by including descriptor region in SPI Protected Range Registers')
-                    self.logger.log_important('If using alternative protections, this can be considered a WARNING')
-                elif ModuleResult.WARNING == self.res:
-                    self.logger.log_warning("Certain SPI flash regions are writeable by software")
-            else:
-                self.update_res(ModuleResult.WARNING)
-                self.result.setStatusBit(self.result.status.UNSUPPORTED_FEATURE)
-                self.logger.log_warning("Either flash descriptor is not valid or not present on this system")
+        if fdv:
+            if ModuleResult.PASSED == self.res:
+                self.logger.log_good("SPI Flash Region Access Permissions in flash descriptor look ok")
+            elif ModuleResult.FAILED == self.res:
+                self.logger.log_failed('SPI Flash Region Access Permissions are not programmed securely in flash descriptor')
+                self.logger.log_important('System may be using alternative protection by including descriptor region in SPI Protected Range Registers')
+                self.logger.log_important('If using alternative protections, this can be considered a WARNING')
+            elif ModuleResult.WARNING == self.res:
+                self.logger.log_warning("Certain SPI flash regions are writeable by software")
+        else:
+            self.update_res(ModuleResult.WARNING)
+            self.result.setStatusBit(self.result.status.UNSUPPORTED_FEATURE)
+            self.logger.log_warning("Either flash descriptor is not valid or not present on this system")
 
         return self.result.getReturnCode(self.res)
 
     def run(self, module_argv: List[str]) -> int:
         self.logger.start_test('SPI Flash Region Access Control')
         try:
-            self.spi = SPI(self.cs)
             self.spi.display_SPI_Ranges_Access_Permissions()
             self.res = self.check_flash_access_permissions()
         except CSReadError as err:

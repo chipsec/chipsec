@@ -323,7 +323,7 @@ jobs:
     - name: Run chipsec_main test
       run: |
         PYTHONEXE="$(which python)"
-        CHIPSECEXIT="$($(sudo ${PYTHONEXE} chipsec_main.py -p PMC_I440FX 1>&2); echo $?)"
+        CHIPSECEXIT="$($(sudo ${PYTHONEXE} chipsec_main.py -p PMC_I440FX --mfgid GenuineIntel 1>&2); echo $?)"
         if echo "0 1 2 4 8" | grep -qw $CHIPSECEXIT; then $(exit 0); else $(exit $CHIPSECEXIT); fi
 
   qemu-uefi-test:

@@ -39,7 +39,7 @@ Registers used:
 
 """
 
-from chipsec.library.exceptions import CSReadError
+from chipsec.library.exceptions import CSReadError, HALInitializationError, HALNotFoundError
 from chipsec.module_common import BaseModule, BIOS
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.intel.spi import FLASH_DESCRIPTOR
@@ -58,25 +58,29 @@ class spi_desc(BaseModule):
         })
 
     def is_supported(self) -> bool:
-        if self.cs.register.has_all_fields('FRAP', ['BRRA', 'BRWA']):
+        try:
+            instance = self.cs.hals.spi.instance
+        except (HALNotFoundError, HALInitializationError, CSReadError) as err:
+            self.logger.log_important(f'SPI HAL is not initialized ({err}). Skipping module.')
+            return False
+        self.frap = self.cs.register.get_instance_by_name('FRAP', instance)
+        if self.frap.has_field('BRRA') and self.frap.has_field('BRWA'):
             return True
-        self.logger.log_important('FRAP.BRWA or FRAP.BRRA registers not defined for platform.  Skipping module.')
+        self.logger.log_important('FRAP register or FRAP.BRWA/FRAP.BRRA fields not defined for the selected SPI controller.  Skipping module.')
         return False
 
     def check_flash_access_permissions(self) -> int:
-
         res = ModuleResult.PASSED
-        frap_registers = self.cs.register.get_list_by_name('FRAP')
-        frap_registers.read_and_print()
-        for frap in frap_registers:
-            brra = frap.get_field('BRRA')
-            brwa = frap.get_field('BRWA')
+        self.frap.read()
+        self.frap.print()
+        brra = self.frap.get_field('BRRA')
+        brwa = self.frap.get_field('BRWA')
 
-            self.logger.log(f'[*] Software access to SPI flash regions: read = 0x{brra:02X}, write = 0x{brwa:02X}')
-            if brwa & (1 << FLASH_DESCRIPTOR):
-                res = ModuleResult.FAILED
-                self.result.setStatusBit(self.result.status.ACCESS_RW)
-                self.logger.log_bad('Software has write access to SPI flash descriptor')
+        self.logger.log(f'[*] Software access to SPI flash regions: read = 0x{brra:02X}, write = 0x{brwa:02X}')
+        if brwa & (1 << FLASH_DESCRIPTOR):
+            res = ModuleResult.FAILED
+            self.result.setStatusBit(self.result.status.ACCESS_RW)
+            self.logger.log_bad('Software has write access to SPI flash descriptor')
 
         self.logger.log('')
         if ModuleResult.PASSED == res:

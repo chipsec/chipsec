@@ -43,7 +43,7 @@ Registers used:
 
 """
 
-from chipsec.library.exceptions import CSReadError
+from chipsec.library.exceptions import CSReadError, HALInitializationError, HALNotFoundError
 from chipsec.module_common import BaseModule, BIOS
 from chipsec.library.returncode import ModuleResult
 from typing import List
@@ -58,27 +58,33 @@ class spi_lock(BaseModule):
         super(spi_lock, self).__init__()
 
     def is_supported(self) -> bool:
-        # breakpoint()
-        if self.cs.control.is_defined('FlashLockDown'):
-            return True
-        self.logger.log_important('FlashLockDown control not define for platform.  Skipping module.')
-        return False
+        try:
+            self.instance = self.cs.hals.spi.instance
+        except (HALNotFoundError, HALInitializationError, CSReadError) as err:
+            self.logger.log_important(f'SPI HAL is not initialized ({err}). Skipping module.')
+            return False
+        self.flockdn = self.cs.control.get_instance_by_name('FlashLockDown', self.instance)
+        if not self.flockdn:
+            self.logger.log_important('FlashLockDown control not defined for the selected SPI controller.  Skipping module.')
+            return False
+        self.wrsdis = self.cs.control.get_instance_by_name('SpiWriteStatusDis', self.instance)
+        return True
 
     def check_spi_lock(self) -> int:
         res = ModuleResult.PASSED
-        if self.cs.control.is_defined('SpiWriteStatusDis'):
-            wrsdis = self.cs.control.get_list_by_name('SpiWriteStatusDis')
-            wrsdis.read_and_print()
-            if wrsdis.is_all_value(1):
+        if self.wrsdis:
+            wsrdis_value = self.wrsdis.read()
+            self.wrsdis.print()
+            if wsrdis_value == 1:
                 self.logger.log_good('SPI write status disable set.')
             else:
                 res = ModuleResult.FAILED
                 self.result.setStatusBit(self.result.status.ACCESS_RW)
                 self.logger.log_bad('SPI write status disable not set.')
 
-        flockdn = self.cs.control.get_list_by_name('FlashLockDown')
-        flockdn.read_and_print()
-        if flockdn.is_all_value(1):
+        vlockdn_value = self.flockdn.read()
+        self.flockdn.print()
+        if vlockdn_value == 1:
             self.logger.log_good('SPI Flash Controller configuration is locked')
         else:
             res = ModuleResult.FAILED

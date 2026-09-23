@@ -140,6 +140,12 @@ class CONTROLHelper(BaseConfigHelper):
             self.logger.log_error(error_msg)
             raise ControlError(error_msg) from e
 
+    def print(self) -> None:
+        """
+        Print the current value of the control.
+        """
+        self.logger.log(str(self))
+
     def get_register_name(self) -> str:
         """
         Get the name of the register containing this control.

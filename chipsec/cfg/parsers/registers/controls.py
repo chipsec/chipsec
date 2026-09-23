@@ -192,6 +192,12 @@ class CONTROLHelper(BaseConfigHelper):
         except Exception as e:
             raise ControlHelperError(f"Failed to write to control field '{self.field}' in register '{self.get_register_name()}': {e}") from e
 
+    def print(self) -> None:
+        """
+        Print the current value of the control.
+        """
+        self.logger.log(str(self))
+
     def get_current_value(self) -> Optional[int]:
         """
         Get the current cached value without reading from hardware.

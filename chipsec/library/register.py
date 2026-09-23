@@ -716,3 +716,7 @@ class NullRegister:
 
     def read_field(self, field_name: str, preserve_field_position: bool = False) -> int:
         return self.get_field(field_name, preserve_field_position)
+
+    def __bool__(self) -> bool:
+        """Null register evaluates to False in boolean context."""
+        return False
