@@ -645,13 +645,28 @@ class CoreConfigRegisters(BaseConfigParser):
             for reg in regs:
                 cont_obj = CONTROLHelper(attrs, reg)
                 objs.append(cont_obj)
-            # Update storage location with new data
-            if name not in self.cfg.CONTROLS:
-                self.cfg.CONTROLS[name] = objs
-            elif len(set(self.cfg.CONTROLS[name]).intersection(objs)) == 0:
-                self.cfg.CONTROLS[name].extend(objs)
+            self._store_control(name, objs)
             hex_dict = make_dict_hex(attrs)
             self.logger.log_debug(f"    + {attrs['name']:16}: {hex_dict}")
+
+    def _store_control(self, name, objs):
+        """Merge newly created control objects into the control store.
+
+        A control can be backed by more than one device (for example the SPI
+        BIOS Control on both an SoC and a discrete PCH), and each device is
+        parsed separately.  Objects are merged by instance so every device is
+        covered, while a redefinition from a later configuration layer still
+        replaces the entry for the matching instance.
+        """
+        existing = self.cfg.CONTROLS.setdefault(name, [])
+        instances = [ctrl.get_instance() for ctrl in existing]
+        for ctrl in objs:
+            instance = ctrl.get_instance()
+            if instance in instances:
+                existing[instances.index(instance)] = ctrl
+            else:
+                existing.append(ctrl)
+                instances.append(instance)
 
     def handle_locks(self, et_node, stage_data):
         for node in et_node.iter('lock'):
