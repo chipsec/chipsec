@@ -28,6 +28,13 @@ from chipsec.library.exceptions import OsHelperError
 
 MOD = 'chipsec.helper.linuxnative.legacy_pci'
 
+# mmap.MAP_PRIVATE / mmap.PROT_* only exist on POSIX, so provide the Linux values
+# when the tests run on another OS.
+MAP_PRIVATE = getattr(mmap, 'MAP_PRIVATE', 0x02)
+PROT_READ = getattr(mmap, 'PROT_READ', 0x1)
+PROT_WRITE = getattr(mmap, 'PROT_WRITE', 0x2)
+PROT_EXEC = getattr(mmap, 'PROT_EXEC', 0x4)
+
 
 class PortsTest(unittest.TestCase):
 
@@ -47,6 +54,8 @@ class PortsTest(unittest.TestCase):
             'c_void_p': patch(f'{MOD}.c_void_p'),
             'addressof': patch(f'{MOD}.addressof', side_effect=[0x1000, 0x2000]),
             'cfunctype': patch(f'{MOD}.CFUNCTYPE'),
+            'constants': patch.multiple(mmap, MAP_PRIVATE=MAP_PRIVATE, PROT_READ=PROT_READ,
+                                        PROT_WRITE=PROT_WRITE, PROT_EXEC=PROT_EXEC, create=True),
         }
         started = {name: p.start() for name, p in patches.items()}
         self.addCleanup(lambda: [p.stop() for p in patches.values()])
@@ -58,8 +67,8 @@ class PortsTest(unittest.TestCase):
         ports, in_page, out_page, started = self._build_ports()
         started['cdll'].assert_called_once_with('libc.so.6', use_errno=True)
         started['cdll'].return_value.iopl.assert_called_once_with(3)
-        started['mmap'].assert_called_with(-1, mmap.PAGESIZE, flags=mmap.MAP_PRIVATE,
-                                           prot=mmap.PROT_READ | mmap.PROT_WRITE | mmap.PROT_EXEC)
+        started['mmap'].assert_called_with(-1, mmap.PAGESIZE, flags=MAP_PRIVATE,
+                                           prot=PROT_READ | PROT_WRITE | PROT_EXEC)
         in_page.write.assert_called_once_with(legacy_pci.IN_PORT)
         out_page.write.assert_called_once_with(legacy_pci.OUT_PORT)
         self.assertIs(ports.inl_addr, in_page)

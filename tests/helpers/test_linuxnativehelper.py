@@ -26,6 +26,10 @@ import sys
 import unittest
 from unittest.mock import MagicMock, mock_open, patch
 
+if not sys.platform.startswith('linux'):
+    # linuxnativehelper imports the Linux-only 'resource' module.
+    raise unittest.SkipTest('linuxnative helper tests require Linux')
+
 import chipsec.helper.linuxnative.linuxnativehelper as lnh
 from chipsec.library.exceptions import OsHelperError
 
@@ -301,8 +305,7 @@ class LinuxNativeHelperMmioTest(unittest.TestCase):
     def test_read_mmio_reg_unmappable_region(self, mock_logger):
         self.helper.memory_mapping = MagicMock(return_value=None)
         self.helper.map_io_space = MagicMock()
-        # The helper only logs the failure, so the following memoryview(None) raises.
-        with self.assertRaises(TypeError):
+        with self.assertRaises(lnh.OsHelperError):
             self.helper.read_mmio_reg(0x1000, 4)
         mock_logger.return_value.log_error.assert_called_once_with('Unable to map region 00001000')
 
@@ -340,7 +343,7 @@ class LinuxNativeHelperMmioTest(unittest.TestCase):
     def test_write_mmio_reg_unmappable_region(self, mock_logger):
         self.helper.memory_mapping = MagicMock(return_value=None)
         self.helper.map_io_space = MagicMock()
-        with self.assertRaises(TypeError):
+        with self.assertRaises(lnh.OsHelperError):
             self.helper.write_mmio_reg(0x1000, 4, 0x1)
         mock_logger.return_value.log_error.assert_called_once_with('Unable to map region 00001000')
 
@@ -360,7 +363,7 @@ class LinuxNativeHelperPhysMemTest(unittest.TestCase):
 
     def test_read_phys_mem_without_devmem(self):
         self.helper.devmem_available = MagicMock(return_value=False)
-        self.assertEqual(self.helper.read_phys_mem(0x5000, 2), b'\x00')
+        self.assertEqual(self.helper.read_phys_mem(0x5000, 2), b'\x00\x00')
 
     @patch(f'{MOD}.os.write', return_value=2)
     @patch(f'{MOD}.os.lseek')

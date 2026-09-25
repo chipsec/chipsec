@@ -125,18 +125,13 @@ class TestWindowsHelperModuleFunctions(WindowsHelperExtendedBase):
             return FakeBuffer(b'\x00' * length)
 
         self._patch('create_string_buffer', fake_create)
-        mock_pylong = self._patch('PyLong_AsByteArray', MagicMock())
         result = self.wh.packl_ctypes(0x100000, 32)
         self.assertEqual(created, [4])
-        self.assertEqual(result, b'\x00\x00\x00\x00')
-        args = mock_pylong.call_args[0]
-        self.assertEqual(args[0], 0x100000)
-        self.assertEqual(args[2:], (4, 1, 1))
+        self.assertEqual(result.raw, b'\x00\x00\x10\x00')
 
     def test_packl_ctypes_rounds_bitlength_up(self):
-        self._patch('create_string_buffer', lambda length: FakeBuffer(b'\xFF' * length))
-        self._patch('PyLong_AsByteArray', MagicMock())
-        self.assertEqual(self.wh.packl_ctypes(0xFF, 9), b'\xFF\xFF')
+        self._patch('create_string_buffer', lambda length: FakeBuffer(b'\x00' * length))
+        self.assertEqual(self.wh.packl_ctypes(0xFF, 9).raw, b'\xFF\x00')
 
     def test_efi_hdr_win_str(self):
         hdr = self.wh.EFI_HDR_WIN(Size=0x2A, DataOffset=0x26, DataSize=0x4,
@@ -179,7 +174,7 @@ class TestWindowsHelperModuleFunctions(WindowsHelperExtendedBase):
         terminator = struct.pack('<IIII16s', 0, header_size, 0, 0, guid)
         blob = make_efi_var_blob('AB', b'\x01', 0x1, guid) + terminator + b'\x00' * 64
         variables = self.wh.getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2(blob)
-        self.assertEqual(sorted(variables.keys()), ['', 'AB'])
+        self.assertEqual(sorted(variables.keys()), ['AB'])
 
     def test_get_efi_variables_empty_buffer(self):
         self.assertEqual(self.wh.getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2(b''), {})
@@ -332,22 +327,29 @@ class TestWindowsHelperService(WindowsHelperExtendedBase):
         self.assertEqual(self.win32service.OpenService.call_args[0][1], self.wh.SERVICE_NAME)
         self.win32service.CloseServiceHandle.assert_any_call(0x300)
 
-    def test_create_service_exists_but_open_fails(self):
+    def test_create_service_exists_but_open_fails_reports_the_error(self):
         self.win32service.OpenSCManager.return_value = 0x100
         self.win32service.CreateService.side_effect = FakeWin32Error(
             ERROR_SERVICE_EXISTS, 'CreateService', 'exists')
         self.win32service.OpenService.side_effect = FakeWin32Error(5, 'OpenService', 'Access is denied.')
         with patch('chipsec.helper.windows.windowshelper.os.path.isfile', return_value=True):
-            # The ``finally`` block dereferences the unassigned service handle
-            with self.assertRaises(UnboundLocalError):
+            with self.assertRaises(OsHelperError) as ctx:
                 self.helper.create()
+        self.assertEqual(str(ctx.exception), 'OpenService failed: Access is denied. (5)')
+        self.assertEqual(ctx.exception.errorcode, 5)
+        # No service handle was ever obtained, only the manager is closed.
+        self.win32service.CloseServiceHandle.assert_called_once_with(0x100)
 
-    def test_create_service_other_error(self):
+    def test_create_service_other_error_raises_oshelpererror(self):
         self.win32service.OpenSCManager.return_value = 0x100
         self.win32service.CreateService.side_effect = FakeWin32Error(5, 'CreateService', 'Access is denied.')
         with patch('chipsec.helper.windows.windowshelper.os.path.isfile', return_value=True):
-            with self.assertRaises(UnboundLocalError):
+            with self.assertRaises(OsHelperError) as ctx:
                 self.helper.create()
+        self.assertEqual(str(ctx.exception), 'CreateService failed: Access is denied. (5)')
+        self.assertEqual(ctx.exception.errorcode, 5)
+        self.win32service.OpenService.assert_not_called()
+        self.win32service.CloseServiceHandle.assert_called_once_with(0x100)
 
     def test_create_service_handle_falsy_skips_debug_log(self):
         self.win32service.OpenSCManager.return_value = 0x100
@@ -822,10 +824,15 @@ class TestWindowsHelperEfiVariables(WindowsHelperExtendedBase):
         guid = bytes(range(16))
         blob = make_efi_var_blob('AB', b'\x01', 0x1, guid)
         self.buffers[self.wh.EFI_VAR_MAX_BUFFER_SIZE] = b''
-        self.buffers[4] = struct.pack('<I', len(blob))
         self.buffers[len(blob)] = blob
-        self.helper.NtEnumerateSystemEnvironmentValuesEx.side_effect = [0xC0000023, 0]
-        self._patch('PyLong_AsByteArray', MagicMock())
+
+        def enumerate_values(infcls, efi_vars, length):
+            if self.helper.NtEnumerateSystemEnvironmentValuesEx.call_count == 1:
+                length.raw = struct.pack('<I', len(blob))
+                return 0xC0000023
+            return 0
+
+        self.helper.NtEnumerateSystemEnvironmentValuesEx.side_effect = enumerate_values
         variables = self.helper.list_EFI_variables()
         self.assertEqual(list(variables.keys()), ['AB'])
         self.assertEqual(self.helper.NtEnumerateSystemEnvironmentValuesEx.call_count, 2)
@@ -895,11 +902,11 @@ class TestWindowsHelperProcessAffinity(WindowsHelperExtendedBase):
         self.assertRaises(ValueError, self.helper._get_handle_for_pid, 1234)
         self.log.log.assert_called_once_with('unable to open a process handle')
 
-    def test_set_affinity_returns_current_mask(self):
+    def test_set_affinity_applies_requested_mask(self):
         self.win32process.GetProcessAffinityMask.return_value = (0xF, 0xFF)
-        self.assertEqual(self.helper.set_affinity(0x1), 0xF)
+        self.assertEqual(self.helper.set_affinity(0x1), 0x1)
         self.win32process.SetProcessAffinityMask.assert_called_once_with(
-            self.win32process.GetCurrentProcess.return_value, 0xF)
+            self.win32process.GetCurrentProcess.return_value, 0x1)
 
     def test_set_affinity_failure_raises_value_error(self):
         self.win32process.GetProcessAffinityMask.return_value = (0xF, 0xFF)

@@ -36,9 +36,9 @@ import winerror
 import win32service
 import win32api, win32process, win32security, win32serviceutil, win32file
 from collections import namedtuple
-from ctypes import windll, Structure, pythonapi, py_object,  Array, POINTER
+from ctypes import windll, Structure, Array, POINTER
 from ctypes import addressof, sizeof, create_string_buffer, WinError
-from ctypes import c_ulong, c_ushort, c_char_p, c_size_t, c_int, c_uint32, c_wchar_p, c_void_p, c_char
+from ctypes import c_ulong, c_ushort, c_int, c_uint32, c_wchar_p, c_void_p, c_char
 from typing import Dict, List, Optional, Tuple, AnyStr, TYPE_CHECKING
 from win32file import FILE_SHARE_READ, FILE_SHARE_WRITE, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, FILE_FLAG_OVERLAPPED, INVALID_HANDLE_VALUE
 from win32.lib import win32con
@@ -156,19 +156,18 @@ attributes: Dict[str, int] = {
     "EFI_VARIABLE_APPEND_WRITE": 0x00000040
 }
 
-PyLong_AsByteArray = pythonapi._PyLong_AsByteArray
-PyLong_AsByteArray.argtypes = [py_object,
-                               c_char_p,
-                               c_size_t,
-                               c_int,
-                               c_int]
 
+def packl_ctypes(lnum: int, bitlength: int):
+    """Return a mutable ctypes buffer holding lnum in little-endian byte order.
 
-def packl_ctypes(lnum: int, bitlength: int) -> bytes:
+    The buffer is passed to NtEnumerateSystemEnvironmentValuesEx as an in/out
+    parameter, so it must stay mutable for the caller to read back the length
+    reported by the kernel.
+    """
     length = (bitlength + 7) // 8
     a = create_string_buffer(length)
-    PyLong_AsByteArray(lnum, a, len(a), 1, 1)  # 4th param is for endianness 0 - big, non 0 - little
-    return a.raw
+    a.raw = lnum.to_bytes(length, 'little')
+    return a
 
 
 #
@@ -216,13 +215,15 @@ def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2(nvram_buf: bytes) -> D
         s, = struct.unpack(str_fmt, buffer[off + header_size: off + efi_var_hdr.DataOffset])
         efi_var_name = str(s, "utf-16-le", errors="replace").split(u'\u0000')[0]
 
+        # A zero-size record is the end-of-list terminator, not a variable.
+        if 0 == efi_var_hdr.Size:
+            break
+
         if efi_var_name not in variables.keys():
             variables[efi_var_name] = []
         #                                off, buf,         hdr,         data,         guid,                           attrs
         variables[efi_var_name].append((off, efi_var_buf, efi_var_hdr, efi_var_data, EFI_GUID_STR(efi_var_hdr.guid), efi_var_hdr.Attributes))
 
-        if 0 == efi_var_hdr.Size:
-            break
         off = next_var_offset
 
     return variables
@@ -361,6 +362,7 @@ class WindowsHelper(Helper):
         logger().log_debug(f'[helper] service control manager opened (handle = {hscm})')
         logger().log_debug(f"[helper] driver path: '{os.path.abspath(self.driver_path)}'")
 
+        hs = None
         try:
             hs = win32service.CreateService(
                 hscm,
@@ -385,7 +387,8 @@ class WindowsHelper(Helper):
                 _handle_winerror(err.args[1], err.args[2], err.args[0])
 
         finally:
-            win32service.CloseServiceHandle(hs)
+            if hs:
+                win32service.CloseServiceHandle(hs)
             win32service.CloseServiceHandle(hscm)
 
         return True
@@ -765,7 +768,7 @@ class WindowsHelper(Helper):
         status = self.NtEnumerateSystemEnvironmentValuesEx(infcls, efi_vars, length)
         status = (((1 << 32) - 1) & status)
         if (0xC0000023 == status):
-            retlength, = struct.unpack("<I", length)
+            retlength, = struct.unpack("<I", length.raw)
             efi_vars = create_string_buffer(retlength)
             status = self.NtEnumerateSystemEnvironmentValuesEx(infcls, efi_vars, length)
         elif (0xC0000002 == status):
@@ -819,13 +822,12 @@ class WindowsHelper(Helper):
 
     def set_affinity(self, value: int) -> Optional[int]:
         pHandle = self._get_handle_for_pid(0, False)
-        current = win32process.GetProcessAffinityMask(pHandle)[0]
         try:
-            win32process.SetProcessAffinityMask(pHandle, current)
+            win32process.SetProcessAffinityMask(pHandle, value)
         except win32process.error as e:
             logger().log("unable to set process affinity")
             raise ValueError(e)
-        return current
+        return value
 
     def get_affinity(self) -> Optional[int]:
         pHandle = self._get_handle_for_pid()

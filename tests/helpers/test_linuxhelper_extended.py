@@ -26,6 +26,10 @@ import sys
 import unittest
 from unittest.mock import MagicMock, patch
 
+if not sys.platform.startswith('linux'):
+    # linuxhelper imports the Linux-only 'fcntl' module.
+    raise unittest.SkipTest('Linux helper tests require Linux')
+
 import chipsec.helper.linux.linuxhelper as lh
 from chipsec.library.exceptions import OsHelperError, UnimplementedAPIError
 
@@ -99,7 +103,7 @@ class LinuxHelperModuleManagementTest(unittest.TestCase):
                 patch.object(lh.LinuxHelper, 'get_phys_mem_access_prot', return_value=b'ffff0002'):
             self.helper.load_chipsec_module()
         check_output.assert_called_once_with(
-            ['modprobe', 'chipsec', "a1=0xb'ffff0001'", "a2=0xb'ffff0002'"],
+            ['modprobe', 'chipsec', 'a1=0xffff0001', 'a2=0xffff0002'],
             stderr=lh.subprocess.STDOUT)
 
     @patch(f'{MOD}.os.chmod')
@@ -315,9 +319,17 @@ class LinuxHelperIoctlTest(unittest.TestCase):
         with patch(f'{MOD}.logger'):
             self.assertEqual(self.helper.write_pci_reg(0, 0, 0, 0, 0x1, 4), 0)
 
-    def test_load_ucode_update_uses_invalid_array_typecode(self):
+    def test_load_ucode_update_issues_ioctl(self):
         self.helper.ioctl = MagicMock(return_value=b'')
-        self.assertRaises(ValueError, self.helper.load_ucode_update, 0, b'\x55')
+        self.assertTrue(self.helper.load_ucode_update(0, b'\x55'))
+        self.assertEqual(self.helper.ioctl.call_args[0][0], lh.IOCTL_LOAD_UCODE_PATCH)
+        self.assertEqual(self.helper.ioctl.call_args[0][1],
+                         array.array('B', struct.pack('=BH', 0, 1) + b'\x55'))
+
+    def test_load_ucode_update_ioctl_error_returns_false(self):
+        self.helper.ioctl = MagicMock(side_effect=IOError(errno.EIO, 'Input/output error'))
+        with patch(f'{MOD}.logger'):
+            self.assertFalse(self.helper.load_ucode_update(0, b'\x55'))
 
     def test_read_io_port_bad_response(self):
         self.helper.ioctl = MagicMock(return_value=b'\x00')
