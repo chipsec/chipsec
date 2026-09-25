@@ -184,7 +184,7 @@ class TestHOBChipsecUtil(unittest.TestCase):
         cmd.hob_read()
 
         cmd.logger.log_important.assert_called_once()
-        self.assertIn('No HOB definition declared', cmd.logger.log_important.call_args.args[0])
+        self.assertIn('No HOB definition declared', cmd.logger.log_important.call_args[0][0])
 
     def test_read_declared_but_absent_reports_no_match(self):
         cmd = self._make_command(is_efi=True)
@@ -195,7 +195,7 @@ class TestHOBChipsecUtil(unittest.TestCase):
         cmd.hob_read()
 
         cmd.logger.log_important.assert_called_once()
-        self.assertIn('No HOBs found matching', cmd.logger.log_important.call_args.args[0])
+        self.assertIn('No HOBs found matching', cmd.logger.log_important.call_args[0][0])
 
 
 if __name__ == "__main__":
