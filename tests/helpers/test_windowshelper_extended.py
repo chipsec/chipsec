@@ -332,22 +332,29 @@ class TestWindowsHelperService(WindowsHelperExtendedBase):
         self.assertEqual(self.win32service.OpenService.call_args[0][1], self.wh.SERVICE_NAME)
         self.win32service.CloseServiceHandle.assert_any_call(0x300)
 
-    def test_create_service_exists_but_open_fails(self):
+    def test_create_service_exists_but_open_fails_reports_the_error(self):
         self.win32service.OpenSCManager.return_value = 0x100
         self.win32service.CreateService.side_effect = FakeWin32Error(
             ERROR_SERVICE_EXISTS, 'CreateService', 'exists')
         self.win32service.OpenService.side_effect = FakeWin32Error(5, 'OpenService', 'Access is denied.')
         with patch('chipsec.helper.windows.windowshelper.os.path.isfile', return_value=True):
-            # The ``finally`` block dereferences the unassigned service handle
-            with self.assertRaises(UnboundLocalError):
+            with self.assertRaises(OsHelperError) as ctx:
                 self.helper.create()
+        self.assertEqual(str(ctx.exception), 'OpenService failed: Access is denied. (5)')
+        self.assertEqual(ctx.exception.errorcode, 5)
+        # No service handle was ever obtained, only the manager is closed.
+        self.win32service.CloseServiceHandle.assert_called_once_with(0x100)
 
-    def test_create_service_other_error(self):
+    def test_create_service_other_error_raises_oshelpererror(self):
         self.win32service.OpenSCManager.return_value = 0x100
         self.win32service.CreateService.side_effect = FakeWin32Error(5, 'CreateService', 'Access is denied.')
         with patch('chipsec.helper.windows.windowshelper.os.path.isfile', return_value=True):
-            with self.assertRaises(UnboundLocalError):
+            with self.assertRaises(OsHelperError) as ctx:
                 self.helper.create()
+        self.assertEqual(str(ctx.exception), 'CreateService failed: Access is denied. (5)')
+        self.assertEqual(ctx.exception.errorcode, 5)
+        self.win32service.OpenService.assert_not_called()
+        self.win32service.CloseServiceHandle.assert_called_once_with(0x100)
 
     def test_create_service_handle_falsy_skips_debug_log(self):
         self.win32service.OpenSCManager.return_value = 0x100

@@ -361,6 +361,7 @@ class WindowsHelper(Helper):
         logger().log_debug(f'[helper] service control manager opened (handle = {hscm})')
         logger().log_debug(f"[helper] driver path: '{os.path.abspath(self.driver_path)}'")
 
+        hs = None
         try:
             hs = win32service.CreateService(
                 hscm,
@@ -385,7 +386,8 @@ class WindowsHelper(Helper):
                 _handle_winerror(err.args[1], err.args[2], err.args[0])
 
         finally:
-            win32service.CloseServiceHandle(hs)
+            if hs:
+                win32service.CloseServiceHandle(hs)
             win32service.CloseServiceHandle(hscm)
 
         return True
