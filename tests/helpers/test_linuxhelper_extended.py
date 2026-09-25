@@ -315,9 +315,17 @@ class LinuxHelperIoctlTest(unittest.TestCase):
         with patch(f'{MOD}.logger'):
             self.assertEqual(self.helper.write_pci_reg(0, 0, 0, 0, 0x1, 4), 0)
 
-    def test_load_ucode_update_uses_invalid_array_typecode(self):
+    def test_load_ucode_update_issues_ioctl(self):
         self.helper.ioctl = MagicMock(return_value=b'')
-        self.assertRaises(ValueError, self.helper.load_ucode_update, 0, b'\x55')
+        self.assertTrue(self.helper.load_ucode_update(0, b'\x55'))
+        self.assertEqual(self.helper.ioctl.call_args[0][0], lh.IOCTL_LOAD_UCODE_PATCH)
+        self.assertEqual(self.helper.ioctl.call_args[0][1],
+                         array.array('B', struct.pack('=BH', 0, 1) + b'\x55'))
+
+    def test_load_ucode_update_ioctl_error_returns_false(self):
+        self.helper.ioctl = MagicMock(side_effect=IOError(errno.EIO, 'Input/output error'))
+        with patch(f'{MOD}.logger'):
+            self.assertFalse(self.helper.load_ucode_update(0, b'\x55'))
 
     def test_read_io_port_bad_response(self):
         self.helper.ioctl = MagicMock(return_value=b'\x00')

@@ -162,21 +162,24 @@ class TestDMARExtended(unittest.TestCase):
         self.assertIn('Path: 1f00', rendered)
 
     def test_soc_translation_cache_lists_its_device_scope(self):
-        # Types 5 and 6 are returned unwrapped, so the caller renders them.
         structure = struct.pack('HHBBH', 5, 16, 1, 0, 0) + device_scope(ds_type=1)
 
-        rendered = str(self.dmar._get_structure_DMAR(0x05, structure))
+        rendered = self.dmar._get_structure_DMAR(0x05, structure)
 
+        self.assertIsInstance(rendered, str)
         self.assertIn('SoC Integrated Address Translation Cache', rendered)
         self.assertIn('PCI Endpoint Device', rendered)
+        self.assertIn('Path: 1f00', rendered)
 
     def test_soc_device_property_lists_its_device_scope(self):
         structure = struct.pack('HHHH', 6, 16, 0, 0) + device_scope(ds_type=5)
 
-        rendered = str(self.dmar._get_structure_DMAR(0x06, structure))
+        rendered = self.dmar._get_structure_DMAR(0x06, structure)
 
+        self.assertIsInstance(rendered, str)
         self.assertIn('Reporting Structure', rendered)
         self.assertIn('ACPI Namespace Device', rendered)
+        self.assertIn('Path: 1f00', rendered)
 
     def test_table_rendering_includes_every_structure(self):
         drhd = struct.pack('=HHBBHQ', 0, 24, 1, 0, 0, 0xFED90000) + device_scope(ds_type=3)
@@ -220,14 +223,30 @@ class TestAPICExtended(unittest.TestCase):
         self.assertIn('Processor Local APIC', rendered)
         self.assertIn('I/O APIC', rendered)
 
-    def test_local_sapic_string_field_cannot_be_rendered(self):
-        # The parser stores ACPIProcUIDString as bytes but renders it with an
-        # integer format specifier, so rendering the structure always fails.
+    def test_local_sapic_structure_is_decoded(self):
         apic = APIC()
         data = struct.pack('<BBBBBHII', 0x07, 20, 1, 2, 3, 0, 1, 7) + b'CPU0\x00'
 
-        with self.assertRaises(TypeError):
-            apic.get_structure_APIC(0x07, data)
+        rendered = apic.get_structure_APIC(0x07, data)
+
+        self.assertIn('Local SAPIC (0x07)', rendered)
+        self.assertIn('Type                 : 0x07', rendered)
+        self.assertIn('Length               : 0x14', rendered)
+        self.assertIn('ACPI Proc ID         : 0x01', rendered)
+        self.assertIn('Local SAPIC ID       : 0x02', rendered)
+        self.assertIn('Local SAPIC EID      : 0x03', rendered)
+        self.assertIn('Flags                : 0x01', rendered)
+        self.assertIn('ACPI Proc UID Value  : 0x07', rendered)
+        self.assertIn('ACPI Proc UID String : CPU0\n', rendered)
+
+    def test_local_sapic_uid_string_stops_at_the_null_terminator(self):
+        # The trailing 's' field soaks up whatever follows the NUL byte.
+        apic = APIC()
+        data = struct.pack('<BBBBBHII', 0x07, 23, 1, 2, 3, 0, 1, 7) + b'CPU0\x00PA'
+
+        rendered = apic.get_structure_APIC(0x07, data)
+
+        self.assertIn('ACPI Proc UID String : CPU0\n', rendered)
 
 
 ########################################################################################################
@@ -270,8 +289,8 @@ class TestFADTLogging(unittest.TestCase):
 
 def bert_error_entry(severity=1, revision=2, validation=1, flags=0x01,
                      err_data_len=0, fru=(0, 0, 0, 0), fru_text=b'FRU-TEXT',
-                     timestamp=(30, 45, 13, 1, 15, 6, 24, 20)):
-    """Build a 72 byte Generic Error Data Entry."""
+                     timestamp=(30, 45, 13, 1, 15, 6, 24, 20), payload=b''):
+    """Build a 72 byte Generic Error Data Entry plus its optional payload."""
     data = struct.pack('<4L', 0xA5BC1114, 0x4EDE6F64, 0x833E63B8, 0xB1837CED)
     data += struct.pack('<L', severity)
     data += struct.pack('<HBB', revision, validation, flags)
@@ -279,7 +298,7 @@ def bert_error_entry(severity=1, revision=2, validation=1, flags=0x01,
     data += struct.pack('<4L', *fru)
     data += struct.pack('<20s', fru_text)
     data += struct.pack('<8B', *timestamp)
-    return data
+    return data + payload
 
 
 def bert_boot_region(block_status=0x0000_0003, raw_offset=0x40, raw_len=0x10,
@@ -384,13 +403,28 @@ class TestBERT(unittest.TestCase):
         self.assertIn('Boot Region Address                               : 0x000000007ABC0000', rendered)
         self.assertIn('Generic Error Status Block', rendered)
 
-    def test_entry_payload_cannot_be_decoded(self):
-        # A non-zero error data length makes the parser unpack the payload with
-        # the native-only 'P' format under a little-endian prefix.
-        bert = BERT(bert_boot_region(entry=bert_error_entry(err_data_len=8)))
+    def test_entry_payload_is_hex_encoded(self):
+        entry = bert_error_entry(err_data_len=4, payload=b'\xde\xad\xbe\xef')
+        bert = BERT(bert_boot_region(entry=entry))
+        bert.parse(struct.pack('<LQ', 92, 0))
 
-        with self.assertRaises(struct.error):
-            bert.parse(struct.pack('<LQ', 92, 0))
+        self.assertIn('Error Data Length                             : 0x00000004 ( 4 )', bert.BootRegion)
+        self.assertIn('Data                                          : DEADBEEF', bert.BootRegion)
+
+    def test_entry_payload_is_truncated_to_the_declared_length(self):
+        entry = bert_error_entry(err_data_len=2, payload=b'\x01\x02\x03\x04')
+        bert = BERT(bert_boot_region(entry=entry))
+        bert.parse(struct.pack('<LQ', 92, 0))
+
+        self.assertIn('Data                                          : 0102', bert.BootRegion)
+        self.assertNotIn('01020304', bert.BootRegion)
+
+    def test_entry_without_a_payload_reports_no_data(self):
+        bert = BERT(bert_boot_region(entry=bert_error_entry(err_data_len=0)))
+        bert.parse(struct.pack('<LQ', 92, 0))
+
+        self.assertIn('Error Data Length                             : 0x00000000 ( 0 )', bert.BootRegion)
+        self.assertIn('Data                                          : None', bert.BootRegion)
 
 
 ########################################################################################################
@@ -578,15 +612,21 @@ class TestERST(unittest.TestCase):
 
         self.assertIn('Serialized Action                             : 0x20 - Unknown', str(erst))
 
-    def test_out_of_range_instruction_marks_the_action_unknown(self):
-        # The parser overwrites the action name instead of the instruction name
-        # when the instruction is out of range.
+    def test_out_of_range_instruction_is_unknown(self):
         erst = ERST()
         erst.parse(erst_table(entries=(erst_entry(action=0, instruction=0x20),)))
         rendered = str(erst)
 
-        self.assertIn('Serialized Action                             : 0x00 - Unknown', rendered)
-        self.assertIn('Instruction                                   : 0x20 - \n', rendered)
+        self.assertIn('Serialized Action                             : 0x00 - BEGIN_WRITE_OPERATION', rendered)
+        self.assertIn('Instruction                                   : 0x20 - Unknown', rendered)
+
+    def test_out_of_range_action_keeps_a_known_instruction_name(self):
+        erst = ERST()
+        erst.parse(erst_table(entries=(erst_entry(action=0x20, instruction=2),)))
+        rendered = str(erst)
+
+        self.assertIn('Serialized Action                             : 0x20 - Unknown', rendered)
+        self.assertIn('Instruction                                   : 0x02 - WRITE_REGISTER', rendered)
 
     def test_non_zero_reserved_byte_is_flagged(self):
         erst = ERST()
@@ -643,6 +683,16 @@ def hest_amcs(_type=1, source_id=2, flags=1, enabled=1, banks=0, notify=None):
             struct.pack('<LL', 1, 1) +
             (hest_notify() if notify is None else notify) +
             struct.pack('<B', banks) + b'\x00' * 3)
+
+
+def hest_bank(bank_num=1, clear_status=1, status_format=1, reserved=0,
+              control_msr=0x179, control_init=0xFFFFFFFFFFFFFFFF,
+              status_msr=0x17A, addr_msr=0x17B, misc_msr=0x17C):
+    """Build a 28 byte Machine Check Error Bank structure."""
+    return (struct.pack('<4B', bank_num, clear_status, status_format, reserved) +
+            struct.pack('<L', control_msr) +
+            struct.pack('<Q', control_init) +
+            struct.pack('<3L', status_msr, addr_msr, misc_msr))
 
 
 def hest_nmi(source_id=3, reserved=0):
@@ -739,18 +789,57 @@ class TestHEST(unittest.TestCase):
 
         self.assertIn('GHES_ASSIST                                 : 1 - Additional information given', hest.result_str)
 
-    def test_machine_check_error_banks_cannot_be_decoded(self):
-        # The bank parser unpacks a 4 byte reserved field from a single byte.
+    def test_machine_check_error_banks_are_decoded(self):
         hest = HEST()
 
-        with self.assertRaises(struct.error):
-            hest.parseAMCES(hest_amces(banks=1) + b'\x00' * 28)
+        size = hest.parseAMCES(hest_amces(banks=1) + hest_bank())
 
-    def test_corrected_machine_check_error_banks_cannot_be_decoded(self):
+        self.assertEqual(size, 68)
+        self.assertIn('Number of Hardware Banks                      : 0x01', hest.result_str)
+        self.assertIn('Machine Check Error Bank Structure', hest.result_str)
+        self.assertIn('Bank Number                                 : 0x0001', hest.result_str)
+        self.assertIn("Clear Status On Initialization              : 0x0001 - Don't Clear", hest.result_str)
+        self.assertIn('Status Data Format                          : 0x0001 - Intel 64 MCA', hest.result_str)
+        self.assertIn('Control Register MSR Address                : 0x0179\n', hest.result_str)
+        self.assertIn('Control Init Data                           : 0xFFFFFFFFFFFFFFFF', hest.result_str)
+        self.assertIn('Status Register MSR Address                 : 0x017A\n', hest.result_str)
+        self.assertIn('Address Register MSR Address                : 0x017B\n', hest.result_str)
+        self.assertIn('Misc Register MSR Address                   : 0x017C', hest.result_str)
+
+    def test_every_machine_check_error_bank_is_walked(self):
         hest = HEST()
 
-        with self.assertRaises(struct.error):
-            hest.parseAMCS(hest_amcs(banks=1) + b'\x00' * 28, 1)
+        size = hest.parseAMCES(hest_amces(banks=2) + hest_bank(bank_num=0) + hest_bank(bank_num=5))
+
+        self.assertEqual(size, 96)
+        self.assertEqual(hest.result_str.count('Machine Check Error Bank Structure'), 2)
+        self.assertIn('Bank Number                                 : 0x0000', hest.result_str)
+        self.assertIn('Bank Number                                 : 0x0005', hest.result_str)
+
+    def test_zeroed_bank_msr_addresses_are_flagged_as_ignored(self):
+        hest = HEST()
+        bank = hest_bank(clear_status=0, status_format=3, control_msr=0,
+                         status_msr=0, addr_msr=0, misc_msr=0)
+
+        hest.parseAMCES(hest_amces(banks=1) + bank)
+
+        self.assertIn('Clear Status On Initialization              : 0x0000 - Clear', hest.result_str)
+        self.assertIn('Status Data Format                          : 0x0003 - Reserved', hest.result_str)
+        self.assertIn('Control Register MSR Address                : 0x0000 - Ignore', hest.result_str)
+        self.assertIn('Status Register MSR Address                 : 0x0000 - Ignore', hest.result_str)
+        self.assertIn('Address Register MSR Address                : 0x0000 - Ignore', hest.result_str)
+        self.assertIn('Misc Register MSR Address                   : 0x0000 - Ignore', hest.result_str)
+
+    def test_corrected_machine_check_error_banks_are_decoded(self):
+        hest = HEST()
+
+        size = hest.parseAMCS(hest_amcs(banks=1) + hest_bank(bank_num=2, reserved=7), 1)
+
+        self.assertEqual(size, 76)
+        self.assertIn('Architecture Corrected Machine Check Structure', hest.result_str)
+        self.assertIn('Machine Check Error Bank Structure', hest.result_str)
+        self.assertIn('Bank Number                                 : 0x0002', hest.result_str)
+        self.assertIn('Reserved                                    : 0x0007', hest.result_str)
 
     def test_notification_type_is_named(self):
         hest = HEST()
@@ -875,10 +964,12 @@ class TestSPMI(unittest.TestCase):
     """SPMI describes the IPMI system interface."""
 
     @staticmethod
-    def _table(interface_type=1, pci_flag=1, interrupt_type=0x3):
+    def _table(interface_type=1, pci_flag=1, interrupt_type=0x3,
+               device=(0, 1, 0x1F, 3), reserved3=0):
+        # The PCI seg/bus/dev/func (or 4 byte UID) field sits at offset 24.
         return (struct.pack('<BBBHBBB', interface_type, 1, 0x10, interrupt_type, 0, 0, pci_flag) +
                 struct.pack('<L', 0x20) + gas(space_id=1, addr=0xCA2) +
-                b'\x00' * 4 + struct.pack('<4B', 0, 1, 0x1F, 0))
+                struct.pack('<4B', *device) + struct.pack('<B', reserved3))
 
     def test_pci_device_details_are_decoded(self):
         spmi = SPMI()
@@ -901,31 +992,71 @@ class TestSPMI(unittest.TestCase):
 
         self.assertIn('Generic Address Structure', spmi.parseAddress(gas(space_id=1, addr=0xCA2)))
 
-    def test_parse_cannot_decode_the_trailing_device_field(self):
-        # The parser slices only three bytes for the PCI/UID field but both
-        # decoders require four, so parsing always fails.
+    def test_parse_decodes_the_header_fields(self):
         spmi = SPMI()
+        spmi.parse(self._table())
+        rendered = str(spmi)
 
-        with self.assertRaises(struct.error):
-            spmi.parse(self._table(pci_flag=1))
+        self.assertIn('Service Processor Management Interface Description Table ( SPMI )', rendered)
+        self.assertIn('Interface Type                                          : 0x01 - Keyboard Controller Style (KCS)', rendered)
+        self.assertIn('Specification Revision (version)                        : 0x10', rendered)
+        self.assertIn('Interrupt Type                                          : 0x0003', rendered)
+        self.assertIn('Global System Interrupt                                 : 0x00000020\n', rendered)
+        self.assertIn('Generic Address Structure', rendered)
 
-    def test_parse_fails_for_non_pci_devices_as_well(self):
+    def test_parse_decodes_the_trailing_pci_device_field(self):
         spmi = SPMI()
+        spmi.parse(self._table(pci_flag=1, device=(0, 1, 0x1F, 3)))
+        rendered = str(spmi)
 
-        with self.assertRaises(struct.error):
-            spmi.parse(self._table(pci_flag=0))
+        self.assertIn('PCI Device Flag                                       : 1 For PCi IPMI devices', rendered)
+        self.assertIn('Reserved                                              : 0 - must be 0', rendered)
+        self.assertIn('PCI Segment GroupNumber                                 : 0x00', rendered)
+        self.assertIn('PCI Bus Number                                          : 0x01', rendered)
+        self.assertIn('PCI Device Number                                       : 0x1F', rendered)
+        self.assertIn('PCI Function Number                                     : 0x03', rendered)
 
-    def test_parse_fails_for_every_defined_interface_type(self):
-        for interface_type in (1, 2, 3, 4, 9):
+    def test_parse_decodes_the_uid_for_non_pci_devices(self):
+        spmi = SPMI()
+        spmi.parse(self._table(pci_flag=0, device=(0x78, 0x56, 0x34, 0x12)))
+        rendered = str(spmi)
+
+        self.assertIn('PCI Device Flag                                       : 0 non-PCI device', rendered)
+        self.assertIn('Reserved                                              : 1 - must be 0', rendered)
+        self.assertIn('UID                                                     : 0x12345678', rendered)
+        self.assertNotIn('PCI Bus Number', rendered)
+
+    def test_parse_names_every_defined_interface_type(self):
+        expected = {
+            1: 'Keyboard Controller Style (KCS)',
+            2: 'Server Management Interface Chip (SMIC)',
+            3: 'Block Transfer (BT)',
+            4: 'SMBus System Interface (SSIF)',
+            9: 'Reserved',
+        }
+        for interface_type, name in expected.items():
             with self.subTest(interface_type=interface_type):
-                with self.assertRaises(struct.error):
-                    SPMI().parse(self._table(interface_type=interface_type))
+                spmi = SPMI()
+                spmi.parse(self._table(interface_type=interface_type))
 
-    def test_parse_fails_when_no_interrupt_modes_are_advertised(self):
+                self.assertIn(f'Interface Type                                          : 0x{interface_type:02X} - {name}',
+                              str(spmi))
+
+    def test_parse_flags_missing_interrupt_modes(self):
         spmi = SPMI()
+        spmi.parse(self._table(interrupt_type=0))
+        rendered = str(spmi)
 
-        with self.assertRaises(struct.error):
-            spmi.parse(self._table(interrupt_type=0))
+        self.assertIn('SCI triggered through GPE                             : 0x00 - not supported', rendered)
+        self.assertIn('I/0 APIC/SAPIC interrupt (Global System Interrupt)    : 0x00 - not supported', rendered)
+        self.assertIn('GPE                                                     : 0x00 - should be set to 00h', rendered)
+        self.assertIn('Global System Interrupt                                 : 0x00000020 - this field should be 0', rendered)
+
+    def test_parse_decodes_the_trailing_reserved_byte(self):
+        spmi = SPMI()
+        spmi.parse(self._table(reserved3=0xAB))
+
+        self.assertIn('Reserved                                                : 0xAB', str(spmi))
 
     def test_rendering_before_a_successful_parse_is_not_possible(self):
         with self.assertRaises(AttributeError):

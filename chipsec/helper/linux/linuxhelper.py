@@ -321,7 +321,7 @@ class LinuxHelper(Helper):
         cpu_ucode_thread_id = ctypes.c_int(cpu_thread_id)
 
         in_buf = struct.pack('=BH', cpu_thread_id, len(ucode_update_buf)) + ucode_update_buf
-        in_buf_final = array.array('c', in_buf)
+        in_buf_final = array.array('B', in_buf)
         out_length = 0
         try:
             out_buf = self.ioctl(IOCTL_LOAD_UCODE_PATCH, in_buf_final)
