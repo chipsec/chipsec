@@ -70,8 +70,6 @@
     </registers>
 
     <locks>
-      <lock register="SVID" field="SVID" type="RW/O" value="0x1" desc="RW/O register" />
-      <lock register="SID" field="SID" type="RW/O" value="0x1" desc="RW/O register" />
       <lock register="INTR" field="IPIN" type="RW/O" value="0x1" desc="RW/O register" />
       <lock register="MAP" field="SPD7" value="0x1" type="RW/O" desc="RW/O Register"/>
       <lock register="MAP" field="SPD6" value="0x1" type="RW/O" desc="RW/O Register"/>
