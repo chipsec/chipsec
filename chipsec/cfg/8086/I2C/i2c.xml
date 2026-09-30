@@ -31,8 +31,6 @@
     </registers>
 
     <locks>
-        <lock register="SVID" field="SVID" type="RW/O" value="0x8086" desc="N/A"/> 
-        <lock register="SID" field="SID" type="RW/O" value="0x3024" desc="N/A"/>
         <lock register="D0I3_MAX_POW_LAT_PG_CONFIG" field="POW_LAT_SCALE" type="RW/O" value="0x1" desc="N/A"/>
         <lock register="D0I3_MAX_POW_LAT_PG_CONFIG" field="POW_LAT_VALUE" type="RW/O" value="0x1" desc="N/A"/>
     </locks>

@@ -172,8 +172,6 @@
         <lock register="LCAP2" field="LSOSGSSV" type="RW/O" value="0x1" desc="N/A"/>
         <lock register="MID" field="NEXT" type="RW/O" value="0x1" desc="N/A"/>
         <lock register="SVCAP" field="NEXT" type="RW/O" value="0x1" desc="N/A"/>
-        <lock register="SVID" field="SID" type="RW/O" value="0x1" desc="N/A"/>
-        <lock register="SVID" field="SVID" type="RW/O" value="0x1" desc="N/A"/>
         <lock register="PMCS" field="NSR" type="RW/O" value="0x1" desc="N/A"/>
         <lock register="MPC" field="SRL" type="RW/L" value="0x1" desc="N/A"/>
         <lock register="MPC" field="BT" type="RW/O" value="0x1" desc="N/A"/>
