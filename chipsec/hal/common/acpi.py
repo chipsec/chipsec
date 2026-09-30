@@ -180,6 +180,16 @@ ACPI_TABLES: Dict[str, Callable] = {
     ACPI_TABLE_SIG_NFIT: acpi_tables.NFIT
 }
 
+# MMIO BARs that can be recovered from the ACPI namespace when the defining register reads back invalid.
+# Keyed by unscoped BAR name; 'fields' are the AML object/field names that may hold the base address.
+ACPI_BAR_DEFINITIONS: Dict[str, Dict] = {
+    'SBREGBAR': {
+        'tables': [ACPI_TABLE_SIG_DSDT, ACPI_TABLE_SIG_SSDT],
+        'fields': ['SBRG', 'SBREG', 'SBREG_BAR', 'SBR0', 'SBMB'],
+        'alignment': 0x1000000,
+    },
+}
+
 ########################################################################################################
 #
 # RSDP
@@ -614,16 +624,30 @@ class ACPI(HALBase):
 
         return regions
 
+    def get_bar_base_address(self, bar_name: str) -> Optional[int]:
+        """
+        Extract an MMIO BAR base address from ACPI tables for BARs known to be described in AML.
+
+        Args:
+            bar_name: MMIO BAR name (scoped names such as '8086.HOSTCTL.SBREGBAR' are accepted)
+
+        Returns:
+            Base address if the BAR is known and a valid value was found, otherwise None
+        """
+        short_name = bar_name.split('.')[-1].upper()
+        bar_def = ACPI_BAR_DEFINITIONS.get(short_name)
+        if bar_def is None:
+            return None
+        for value in self.get_acpi_field_value(bar_def['tables'], bar_def['fields']):
+            if self._is_valid_acpi_base(value, bar_def['alignment']):
+                return value
+        return None
+
     def get_sbreg_base_address(self) -> Optional[int]:
         """
         Extract Sideband Register Base (SBRG / SBREG_BAR) from ACPI DSDT / SSDT tables.
         """
-        target_fields = ['SBRG', 'SBREG', 'SBREG_BAR', 'SBR0', 'SBMB']
-        table_signatures = [ACPI_TABLE_SIG_DSDT, ACPI_TABLE_SIG_SSDT]
-        for value in self.get_acpi_field_value(table_signatures, target_fields):
-            if self._is_valid_acpi_base(value, alignment_size=0x1000000):
-                return value
-        return None
+        return self.get_bar_base_address('SBREGBAR')
 
     def get_acpi_field_value(self, table_signatures: List[str], target_fields: List[str]) -> List[int]:
         """Resolve named ACPI integers and SystemMemory fields to their raw values."""

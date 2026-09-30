@@ -263,6 +263,15 @@ class MMIO(hal_base.HALBase):
                 limit_align = bar.limit_align
                 limit <<= limit_align
 
+        if base == 0 or base == reg_mask:
+            try:
+                acpi_addr = self.cs.hals.acpi.get_bar_base_address(bar_name)
+                if acpi_addr:
+                    self.logger.log_hal(f'[mmio] Discovered {bar_name} from ACPI: 0x{acpi_addr:016X}')
+                    base = acpi_addr
+            except Exception as e:
+                self.logger.log_hal(f'[mmio] Failed to read {bar_name} from ACPI: {e}')
+
         if bar.fixed_address and (base == reg_mask or base == 0):
             base = bar.fixed_address
             self.logger.log_hal('[mmio] Using fixed address for {}: 0x{:016X}'.format(bar_name, base))
