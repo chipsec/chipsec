@@ -223,6 +223,7 @@ class LinuxNativeHelper(Helper):
                 region = self.memory_mapping(phys_address, size)
                 if not region:
                     logger().log_error(f'Unable to map region {phys_address:08x}')
+                    raise OsHelperError(f'Unable to map region {phys_address:08x}', 1)
 
             # Create memoryview into mmap'ed region
             region_mv = memoryview(region)
@@ -249,6 +250,7 @@ class LinuxNativeHelper(Helper):
                 region = self.memory_mapping(phys_address, size)
                 if not region:
                     logger().log_error(f'Unable to map region {phys_address:08x}')
+                    raise OsHelperError(f'Unable to map region {phys_address:08x}', 1)
 
             # Create memoryview into mmap'ed region
             region_mv = memoryview(region)
@@ -290,7 +292,7 @@ class LinuxNativeHelper(Helper):
         if self.devmem_available():
             os.lseek(self.dev_mem, phys_address, os.SEEK_SET)
             return os.read(self.dev_mem, length)
-        return b'\x00'
+        return b'\x00' * length
 
     def write_phys_mem(self, phys_address, length: int, newval: bytes) -> int:
         if newval is None:
