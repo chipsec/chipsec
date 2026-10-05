@@ -192,6 +192,46 @@ class DevConfig(BaseConfigParser):
                     if instance not in bar_obj.instances:
                         bar_obj.add_obj(instance)
 
+    def _is_undetected_device(self, pci_dev):
+        """Return True when a device entry only holds placeholder (not enumerated) instances.
+
+        Placeholders are created when an XML device node could not be matched against an
+        enumerated PCI device; they carry bus=None and the default rid of 0xFF.
+        """
+        instances = list(pci_dev.instances.values())
+        return bool(instances) and all(inst.bus is None for inst in instances)
+
+    def _drop_undetected_devices(self, vid_str, name):
+        """Discard placeholder device entries once the device has actually been detected.
+
+        Several XML layers may declare the same device with different DID lists (for
+        example the public arlh.xml and the prerelease arlh_custom.xml HOSTCTL nodes).
+        The layer whose DIDs do not match the running system creates a placeholder
+        PCIConfig with bus=None/rid=0xFF.  Leaving it in place makes every BAR (and
+        therefore every register) of that device report a bogus second instance.
+
+        Pruning only happens when the device has at least one enumerated instance, so a
+        hidden or otherwise unavailable device keeps its placeholder (and with it any
+        fixed_address BARs that do not depend on PCI enumeration).
+        """
+        devices = self.cfg.CONFIG_PCI[vid_str].get(name, [])
+        placeholders = [dev for dev in devices if self._is_undetected_device(dev)]
+        if not placeholders:
+            return
+        has_enumerated = any(inst.bus is not None
+                             for dev in devices
+                             for inst in dev.instances.values())
+        if not has_enumerated:
+            return
+
+        self.cfg.CONFIG_PCI[vid_str][name] = [dev for dev in devices if dev not in placeholders]
+        stale_instances = [inst for dev in placeholders for inst in dev.instances.values()]
+        for key in ['MMIO_BARS', 'IO_BARS']:
+            bars = getattr(self.cfg, key).get(vid_str, {}).get(name, {})
+            for bar_obj in bars.values():
+                for instance in stale_instances:
+                    bar_obj.remove_instance(instance)
+
     def _add_dev(self, vid_str, name, pci_info, dev_attr):
         if name not in self.cfg.CONFIG_PCI[vid_str]:
             for key in ['MMIO_BARS', 'IO_BARS', 'REGISTERS']:
@@ -206,6 +246,7 @@ class DevConfig(BaseConfigParser):
             if 'config' in dev_attr:
                 pci_info.add_config(dev_attr['config'])
             self.cfg.CONFIG_PCI[vid_str][name].append(pci_info)
+            self._drop_undetected_devices(vid_str, name)
         else:
             dev_attr['bus'] = None
             if 'did' in dev_attr:
