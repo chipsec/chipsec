@@ -12,25 +12,25 @@ jobs:
       fail-fast: false
       matrix:
         distro:
-          - {name: "alpine", tag: "3.23", variant: "-lts", image_prefix: "docker.io/library/"}
-          - {name: "alpine", tag: "3.22", variant: "-lts", image_prefix: "docker.io/library/"}
-          - {name: "alpine", tag: "3.21", variant: "-lts", image_prefix: "docker.io/library/"}
-          - {name: "alpine", tag: "3.20", variant: "-lts", image_prefix: "docker.io/library/"}
-          # - {name: "archlinux", tag: "latest", image_prefix: "docker.io/library/"}
-          - {name: "archlinux", tag: "latest", variant: "-lts", image_prefix: "docker.io/library/"}
-          # - {name: "archlinux", tag: "latest", variant: "-zen", image_prefix: "docker.io/library/"}
-          # - {name: "archlinux", tag: "base", image_prefix: "docker.io/library/"}
-          - {name: "centos", tag: "stream9", image_prefix: "quay.io/centos/"}
-          - {name: "debian", tag: "13", image_prefix: "docker.io/library/"}
-          - {name: "debian", tag: "13-slim", image_prefix: "docker.io/library/"}
-          - {name: "debian", tag: "12", image_prefix: "docker.io/library/"}
-          - {name: "debian", tag: "12-slim", image_prefix: "docker.io/library/"}
-          - {name: "ubuntu", tag: "24.04", image_prefix: "docker.io/library/"}
-          - {name: "ubuntu", tag: "22.04", image_prefix: "docker.io/library/"}
+          - {name: "alpine", tag: "3.24", variant: "-lts"}
+          - {name: "alpine", tag: "3.23", variant: "-lts"}
+          - {name: "alpine", tag: "3.22", variant: "-lts"}
+          - {name: "alpine", tag: "3.21", variant: "-lts"}
+          - {name: "archlinux", tag: "latest"}
+          - {name: "archlinux", tag: "latest", variant: "-lts"}
+          - {name: "fedora", tag: "rawhide", experimental: true}
+          - {name: "fedora", tag: "44"}
+          - {name: "fedora", tag: "43"}
+          - {name: "debian", tag: "13"}
+          - {name: "debian", tag: "12"}
+          - {name: "ubuntu", tag: "26.04"}
+          - {name: "ubuntu", tag: "24.04"}
 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
+    # Rolling/dev images track mainline and break for reasons unrelated to chipsec
+    continue-on-error: ${{ matrix.distro.experimental || false }}
     container:
-      image: docker://${{ matrix.distro.image_prefix }}${{ matrix.distro.name }}:${{ matrix.distro.tag }}
+      image: docker://docker.io/library/${{ matrix.distro.name }}:${{ matrix.distro.tag }}
     steps:
     - name: Harden Runner
       uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
@@ -56,19 +56,11 @@ jobs:
       run: |
         pacman -Syu --noconfirm dkms linux${{ matrix.distro.variant }}-headers nasm
 
-    - name: Install CentOS dependencies
-      if: matrix.distro.name == 'centos'
+    - name: Install Fedora dependencies
+      if: matrix.distro.name == 'fedora'
       run: |
-        if [ "${{ matrix.distro.tag }}" = stream9 ] ; then
-            dnf install -y --enablerepo=crb kernel kernel-devel nasm
-            dnf install -y elfutils-libelf-devel gcc git make
-        fi
-
-        # DKMS is not longer packaged in CentOS Stream
-        if ! command -v dkms > /dev/null 2>&1 ; then
-            git clone --depth=1 --branch=v3.0.5 https://github.com/dell/dkms /opt/dkms
-            make -C /opt/dkms install
-        fi
+        # 'kernel' is required for the /lib/modules/<ver>/build symlink that DKMS resolves
+        dnf install -y kernel kernel-devel nasm dkms elfutils-libelf-devel gcc make
 
     - name: Install Debian dependencies
       if: matrix.distro.name == 'debian'
@@ -92,9 +84,9 @@ jobs:
         elif [ "${{ matrix.distro.name }}" = archlinux ] ; then
             # Parse "/usr/lib/modules/5.18.0-arch1-1/build/"
             KERNEL_VER="$(pacman -Qql "linux${{ matrix.distro.variant }}-headers" | sed -n 's:^/usr/lib/modules/\([^/]\+\)/.*:\1:p' | head -n 1)"
-        elif [ "${{ matrix.distro.name }}" = centos ] ; then
-            # Parse "Source RPM  : kernel-3.10.0-1160.71.1.el7.src.rpm"
-            KERNEL_VER="$(LANG=C rpm -qi kernel-devel | sed -n 's/^Source RPM *: kernel-\(.*\).src.rpm$/\1.x86_64/p' | tail -n 1)"
+        elif [ "${{ matrix.distro.name }}" = fedora ] ; then
+            # Parse "/usr/src/kernels/6.17.1-300.fc44.x86_64"
+            KERNEL_VER="$(rpm -ql kernel-devel | sed -n 's:^/usr/src/kernels/\([^/][^/]*\)$:\1:p' | head -n 1)"
         elif [ "${{ matrix.distro.name }}" = debian ] ; then
             # Parse "Depends: linux-headers-5.10.0-15-amd64 (= 5.10.120-1)"
             KERNEL_VER="$(LANG=C dpkg --status linux-headers-amd64 | sed -n 's/^Depends: linux-headers-\(\S*\)\( .*\)\?$/\1/p' | head -n 1)"
