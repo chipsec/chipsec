@@ -35,6 +35,9 @@ chipsec@intel.com
 #include <asm/io.h>
 #include <linux/smp.h>
 #include <linux/miscdevice.h>
+#ifdef CONFIG_X86
+    #include <asm/msr.h>
+#endif
 
 #include "include/chipsec.h"
 
@@ -63,6 +66,30 @@ MODULE_LICENSE("GPL");
 #else /* KERNEL_VERSION < 2.6.25 */
 #    define IOREMAP_PGPROT_CAST(address, size) ioremap_prot(address, size, 0)
 #endif
+
+#ifdef CONFIG_X86
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(7, 1, 0)
+/* The u32 low/high variants rdmsr_on_cpu()/wrmsr_on_cpu() were removed; only the
+   64-bit rdmsrq_on_cpu()/wrmsrq_on_cpu() (renamed from *l_on_cpu() in 6.16) remain. */
+static inline int chipsec_rdmsr_on_cpu(unsigned int cpu, u32 msr_no, u32 *l, u32 *h)
+{
+    u64 q = 0;
+    int err = rdmsrq_on_cpu(cpu, msr_no, &q);
+
+    *l = (u32)q;
+    *h = (u32)(q >> 32);
+    return err;
+}
+
+static inline int chipsec_wrmsr_on_cpu(unsigned int cpu, u32 msr_no, u32 l, u32 h)
+{
+    return wrmsrq_on_cpu(cpu, msr_no, ((u64)h << 32) | (u64)l);
+}
+#else
+#    define chipsec_rdmsr_on_cpu(cpu, msr_no, l, h) rdmsr_on_cpu(cpu, msr_no, l, h)
+#    define chipsec_wrmsr_on_cpu(cpu, msr_no, l, h) wrmsr_on_cpu(cpu, msr_no, l, h)
+#endif
+#endif /* CONFIG_X86 */
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5,10,0)
 #include <linux/static_call.h>
@@ -891,19 +918,19 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
             return -EFAULT;
 
         printk(KERN_INFO "[chipsec] [patch_apply_ucode] Checking current patch ID");
-        rdmsr_on_cpu(thread_id, MSR_IA32_BIOS_SIGN_ID, (u32*)&_eax[0], (u32*)&_edx[0]);
+        chipsec_rdmsr_on_cpu(thread_id, MSR_IA32_BIOS_SIGN_ID, (u32*)&_eax[0], (u32*)&_edx[0]);
 
         printk(KERN_INFO "[chipsec] [patch_apply_ucode] Applying patch in the processor id: %d", thread_id);
-        wrmsr_on_cpu(thread_id, MSR_IA32_BIOS_UPDT_TRIG, (u32)ucode_start, (u32)((ucode_start >> 32) & 0xffffffff));
+        chipsec_wrmsr_on_cpu(thread_id, MSR_IA32_BIOS_UPDT_TRIG, (u32)ucode_start, (u32)((ucode_start >> 32) & 0xffffffff));
 
         kfree(ucode_buf);
 
         printk(KERN_INFO "[chipsec] [patch_apply_ucode] checking ucode update was loaded..\n");
         printk(KERN_INFO "[chipsec] [patch_apply_ucode] clear IA32_BIOS_SIGN_ID, CPUID EAX=1, read back IA32_BIOS_SIGN_ID\n" );
 
-        wrmsr_on_cpu(thread_id, MSR_IA32_BIOS_SIGN_ID, (u32)_eax[1], (u32)_edx[1]);
+        chipsec_wrmsr_on_cpu(thread_id, MSR_IA32_BIOS_SIGN_ID, (u32)_eax[1], (u32)_edx[1]);
         smp_call_function_single(thread_id, apply_ucode_patch, (void *)CPUInfo,0);
-        rdmsr_on_cpu(thread_id, MSR_IA32_BIOS_SIGN_ID, (u32*)&_eax[1], (u32*)&_edx[1]);
+        chipsec_rdmsr_on_cpu(thread_id, MSR_IA32_BIOS_SIGN_ID, (u32*)&_eax[1], (u32*)&_edx[1]);
 
         if (_edx[1] != _edx[0])
             printk(KERN_INFO "[chipsec][IOCTL_LOAD_UCODE_UPDATE] Microcode update loaded (ID != %u)\n", _edx[0]);
@@ -926,7 +953,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
             return -EFAULT;
 
-        rdmsr_on_cpu(ptr[0], ptr[1], (u32*)&ptr[3], (u32*)&ptr[2]);
+        chipsec_rdmsr_on_cpu(ptr[0], ptr[1], (u32*)&ptr[3], (u32*)&ptr[2]);
         //_rdmsr(ptr[1],&ptr[3],&ptr[2]);
 
         if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
@@ -945,7 +972,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
             return -EFAULT;
 
-        wrmsr_on_cpu(ptr[0], ptr[1], (u32)ptr[3], (u32)ptr[2]);
+        chipsec_wrmsr_on_cpu(ptr[0], ptr[1], (u32)ptr[3], (u32)ptr[2]);
         //_wrmsr(ptr[1],ptr[3],ptr[2]);
 
         if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
