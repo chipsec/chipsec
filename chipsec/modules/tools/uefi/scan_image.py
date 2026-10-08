@@ -21,7 +21,7 @@ extracted from flash ROM, and then later check firmware image in flash ROM or
 file against this list of expected executables
 
 Usage:
-  ``chipsec_main -m tools.uefi.scan_image [-a generate|check,<json>,<fw_image>]``
+  ``chipsec_main -m tools.uefi.scan_image [-a generate|check,<json>,<fw_image>[,norm]]``
     - ``generate``	Generates a list of EFI executable binaries from the UEFI
                         firmware image (default)
     - ``check``		Decodes UEFI firmware image and checks all EFI executable
@@ -30,6 +30,14 @@ Usage:
                         executables (default = ``efilist.json``)
     - ``fw_image``	Full file path to UEFI firmware image. If not specified,
                         the module will dump firmware image directly from ROM
+    - ``norm``		Optional, ``generate`` with ``fw_image`` only. Adds
+                        ``sha256_norm`` to each PE32 and TE entry: the SHA-256 of
+                        the module with its placement undone (relocations reversed;
+                        ImageBase, TimeDateStamp, CheckSum and section relocation
+                        pointers zeroed), prefixed with the normalization used
+                        (``uefi-pe-rebase0.v1:sha256:...`` or
+                        ``uefi-te-rebase0.v1:sha256:...``). Omitted where the module
+                        cannot be normalized exactly. ``check`` ignores the field
 
 Examples:
 
@@ -42,6 +50,11 @@ image extracted from ROM
 
 Creates a list of EFI executable binaries in ``efilist.json`` from ``uefi.rom``
 firmware binary
+
+>>> chipsec_main -i -n -m tools.uefi.scan_image -a generate,efilist.json,uefi.rom,norm
+
+Same, and also records each module's ``sha256_norm``, which stays the same
+wherever the module is placed in flash
 
 >>> chipsec_main -i -n -m tools.uefi.scan_image -a check,efilist.json,uefi.rom
 
@@ -62,7 +75,7 @@ from chipsec.library.returncode import ModuleResult
 from chipsec.hal.common.uefi import UEFI
 from chipsec.hal.intel.spi import SPI
 from chipsec.library.intel.spi import BIOS as BIOS_REGION
-from chipsec.library.uefi.fv import EFI_MODULE, EFI_SECTION
+from chipsec.library.uefi.fv import EFI_MODULE, EFI_SECTION, normalized_sha256
 from chipsec.library.uefi.spi import build_efi_model, search_efi_tree, EFIModuleType, UUIDEncoder
 from chipsec.library.file import write_file, read_file
 
@@ -82,6 +95,7 @@ class scan_image(BaseModule):
         self.efi_list = {}
         self.suspect_modules = {}
         self.duplicate_list = []
+        self.include_norm = False
 
     def is_supported(self):
         return True
@@ -100,6 +114,11 @@ class scan_image(BaseModule):
                 md["name"] = efi_module.ui_string
             if efi_module.Name:
                 md["type"] = efi_module.Name
+            if self.include_norm:
+                payload = efi_module.Image[efi_module.HeaderSize:]
+                sha256_norm = normalized_sha256(efi_module.Type, payload)
+                if sha256_norm:
+                    md["sha256_norm"] = sha256_norm
             if efi_module.SHA256 in self.efi_list.keys():
                 self.duplicate_list.append(efi_module.SHA256)
             else:
@@ -152,6 +171,19 @@ class scan_image(BaseModule):
             self.logger.log_passed(f'All EFI executables match the list \'{json_pth}\'')
             return ModuleResult.PASSED
 
+    def parse_norm_arg(self, op: str, module_argv) -> bool:
+        if op not in ('generate', 'check') or len(module_argv) <= 3:
+            return False
+        if len(module_argv) > 4:
+            self.logger.log_warning(f'Ignoring {len(module_argv) - 4} extra argument(s)')
+        if module_argv[3] != 'norm':
+            self.logger.log_warning(f"Ignoring unrecognized argument '{module_argv[3]}'")
+            return False
+        if op != 'generate':
+            self.logger.log_warning("'norm' only applies to 'generate'; ignoring it")
+            return False
+        return True
+
     def usage(self):
         self.logger.log(__doc__.replace('`', ''))
 
@@ -161,6 +193,7 @@ class scan_image(BaseModule):
         self.res = ModuleResult.NOTAPPLICABLE
 
         op = module_argv[0] if len(module_argv) > 0 else 'generate'
+        self.include_norm = self.parse_norm_arg(op, module_argv)
 
         if op in ['generate', 'check']:
 
