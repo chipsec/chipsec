@@ -227,14 +227,24 @@ class sgx_check(BaseModule):
         debug_result = None
         self.logger.log('\n[*] Check SGX debug feature settings')
         sgx_debug_mode_reg = self.cs.register.get_list_by_name('SGX_DEBUG_MODE')
-        sgx_debug_mode_reg.read_and_verbose_print()
-        sgx_debug_enabled = sgx_debug_mode_reg.is_all_field_value(1, 'SGX_DEBUG_MODE_STATUS_BIT')
-        if sgx_debug_enabled:
-            self.logger.log_bad('SGX debug mode is enabled')
-            debug_res = ModuleResult.FAILED
-            debug_result = self.result.status.DEBUG_FEATURE
+        sgx_debug_mode_available = bool(sgx_debug_mode_reg) and sgx_debug_mode_reg.all_has_field(
+            'SGX_DEBUG_MODE_STATUS_BIT'
+        )
+        sgx_debug_enabled = None
+        if not sgx_debug_mode_available:
+            self.logger.log_warning('SGX debug mode register or field is not defined. Unable to verify SGX debug mode.')
+            debug_result = self.result.status.VERIFY
+            if debug_res == ModuleResult.PASSED:
+                debug_res = ModuleResult.WARNING
         else:
-            self.logger.log_good('SGX debug mode is disabled')
+            sgx_debug_mode_reg.read_and_verbose_print()
+            sgx_debug_enabled = sgx_debug_mode_reg.is_all_field_value(1, 'SGX_DEBUG_MODE_STATUS_BIT')
+            if sgx_debug_enabled:
+                self.logger.log_bad('SGX debug mode is enabled')
+                debug_res = ModuleResult.FAILED
+                debug_result = self.result.status.DEBUG_FEATURE
+            else:
+                self.logger.log_good('SGX debug mode is disabled')
 
         self.logger.log('[*] Check Silicon debug feature settings')
         debug_interface_reg = self.cs.register.get_list_by_name('IA32_DEBUG_INTERFACE')
