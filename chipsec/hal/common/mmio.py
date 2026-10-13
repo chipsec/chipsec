@@ -191,6 +191,7 @@ class MMIO(hal_base.HALBase):
         limit = 0
         size = 0
         mmioaddr = 0
+        resolved_instance = instance
 
         if bar.register:
             preserve = True
@@ -213,13 +214,16 @@ class MMIO(hal_base.HALBase):
                         reg_mask = bar_reg.get_field_mask(base_field, preserve)
                     except (CSReadError, AttributeError):
                         continue
+                    if resolved_instance is None:
+                        resolved_instance = bar_reg.get_instance()
                     break
             if not preserve:
                 base <<= bar.reg_align
                 reg_mask <<= bar.reg_align
-        if bar.registerh and instance is not None:
+        if bar.registerh and resolved_instance is not None:
             preserve = True
-            bar_reg = self.cs.register.get_instance_by_name(bar.registerh, instance)
+            bar_reg = self.cs.register.get_instance_by_name(
+                bar.registerh, resolved_instance)
             if bar_reg:
                 if bar.regh_align:
                     preserve = False
@@ -293,7 +297,7 @@ class MMIO(hal_base.HALBase):
 
         if self.cache_bar_addresses_resolution:
             self.cached_bar_addresses[(bar_name, instance)] = (base, size)
-        bar.update_base_address(base, instance)
+        bar.update_base_address(base, resolved_instance)
         return base, size
 
     #
@@ -401,5 +405,6 @@ class MMIO(hal_base.HALBase):
                 bar_reg = self.cs.register.get_list_by_name(bar.register).filter_by_instance(instance)
                 is_valid = bar_reg.is_all_field_value(1, bar_en_field)
         return is_valid
+
 
 haldata = {"arch": [hal_base.HALBase.MfgIds.Any], 'name': {'mmio': "MMIO"}}
