@@ -31,6 +31,8 @@ import uuid
 from chipsec.library.logger import logger
 from chipsec.library.file import get_main_dir
 from chipsec.testcase import ExitCode
+from chipsec.command import toLoad
+from chipsec.utilcmd.uefi_cmd import UEFICommand
 from tests.utilcmd.run_chipsec_util import setup_run_destroy_util
 
 
@@ -85,6 +87,21 @@ class TestUEFIDecodeChipsecUtil(unittest.TestCase):
             self.init_replay_file, "uefi", f"decode {missing_path}"
         )
         self.assertEqual(retval, ExitCode.ERROR)
+
+
+class TestUEFIDbxCheckCommand(unittest.TestCase):
+    """Test command registration and argument handling for uefi dbx-check."""
+
+    def test_dbx_check_is_registered_as_a_driver_command(self):
+        command = UEFICommand(
+            ['dbx-check', 'x64', 'dbx_info_msft_latest.json']
+        )
+        command.parse_arguments()
+
+        self.assertEqual(command.architecture, 'x64')
+        self.assertEqual(command.reference_file, 'dbx_info_msft_latest.json')
+        self.assertEqual(command.func.__name__, 'dbx_check')
+        self.assertEqual(command.requirements(), toLoad.Driver)
 
 
 if __name__ == "__main__":

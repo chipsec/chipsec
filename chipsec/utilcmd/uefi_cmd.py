@@ -27,6 +27,7 @@ The uefi command provides access to UEFI variables, both on the live system and 
 >>> chipsec_util uefi var-list-spi [rom_file]
 >>> chipsec_util uefi var-find <name>|<GUID>
 >>> chipsec_util uefi var-read|var-write|var-delete <name> <GUID> <efi_variable_file>
+>>> chipsec_util uefi dbx-check <architecture> <microsoft_dbx_json>
 >>> chipsec_util uefi decode <rom_file> [filetypes]
 >>> chipsec_util uefi nvram[-auth] <rom_file> [fwtype]
 >>> chipsec_util uefi keys <keyvar_file>
@@ -44,6 +45,7 @@ Examples:
 >>> chipsec_util uefi var-read db D719B2CB-3D3A-4596-A3BC-DAD00E67656F db.bin
 >>> chipsec_util uefi var-write db D719B2CB-3D3A-4596-A3BC-DAD00E67656F db.bin
 >>> chipsec_util uefi var-delete db D719B2CB-3D3A-4596-A3BC-DAD00E67656F
+>>> chipsec_util uefi dbx-check x64 dbx_info_msft_latest.json
 >>> chipsec_util uefi decode uefi.rom
 >>> chipsec_util uefi decode uefi.rom FV_MM
 >>> chipsec_util uefi nvram uefi.rom vss_auth
@@ -71,6 +73,10 @@ from chipsec.library.uefi.varstore import parse_efivar_file, decode_EFI_variable
 from chipsec.library.uefi.fv import get_guid_bin, assemble_uefi_file, assemble_uefi_section, assemble_uefi_raw
 from chipsec.library.uefi.fv import FILE_TYPE_NAMES
 from chipsec.library.uefi.platform import fw_types
+from chipsec.library.uefi.dbx import DBX_ARCHITECTURES, find_missing_entries
+from chipsec.library.uefi.dbx import parse_dbx_entries, parse_microsoft_dbx_json
+from chipsec.library.uefi.variables import EFI_GLOBAL_VARIABLE_GUID
+from chipsec.library.uefi.variables import EFI_IMAGE_SECURITY_DATABASE_GUID
 
 
 # Unified Extensible Firmware Interface (UEFI)
@@ -125,6 +131,18 @@ class UEFICommand(BaseCommand):
         parser_var_find = subparsers.add_parser('var-find')
         parser_var_find.add_argument('name_guid', type=str, help='name or guid of variable to find')
         parser_var_find.set_defaults(func=self.var_find)
+
+        # dbx reference check arguments
+        parser_dbx_check = subparsers.add_parser('dbx-check')
+        parser_dbx_check.add_argument(
+            'architecture', choices=DBX_ARCHITECTURES,
+            help='Target firmware architecture'
+        )
+        parser_dbx_check.add_argument(
+            'reference_file', type=str,
+            help='Local Microsoft dbx_info_msft_latest.json; download it first'
+        )
+        parser_dbx_check.set_defaults(func=self.dbx_check)
 
         # nvram command args
         parser_nvram = subparsers.add_parser('nvram')
@@ -294,6 +312,85 @@ class UEFICommand(BaseCommand):
                     self.logger.log_good(f"Found UEFI variable {guid}:{name}. Dumped to '{var_fname}'")
                     write_file(var_fname, data)
                     n += 1
+
+    def dbx_check(self):
+        if not os.path.isfile(self.reference_file):
+            self.logger.log_error(
+                f"Could not find reference file '{self.reference_file}'. "
+                'Download dbx_info_msft_latest.json from Microsoft '
+                'secureboot_objects and retry.'
+            )
+            self.ExitCode = ExitCode.ERROR
+            return
+
+        try:
+            with open(
+                self.reference_file, 'r', encoding='ascii'
+            ) as reference_file:
+                reference = parse_microsoft_dbx_json(
+                    reference_file.read(), self.architecture
+                )
+        except (OSError, UnicodeError, ValueError) as error:
+            self.logger.log_error(
+                f'Unable to read Microsoft DBX reference: {error}'
+            )
+            self.ExitCode = ExitCode.ERROR
+            return
+
+        secure_boot = self._uefi.get_EFI_variable(
+            'SecureBoot', EFI_GLOBAL_VARIABLE_GUID
+        )
+        if secure_boot == b'\x01':
+            self.logger.log('[CHIPSEC] Secure Boot is enabled.')
+        else:
+            self.logger.log_important(
+                'Secure Boot is disabled or its state could not be read.'
+            )
+
+        dbx_data = self._uefi.get_EFI_variable(
+            'dbx', EFI_IMAGE_SECURITY_DATABASE_GUID
+        )
+        if dbx_data is None:
+            self.logger.log_error('Could not read the UEFI dbx variable.')
+            self.ExitCode = ExitCode.ERROR
+            return
+
+        try:
+            dbx_entries = parse_dbx_entries(dbx_data)
+        except ValueError as error:
+            self.logger.log_error(f'Unable to parse the UEFI dbx variable: {error}')
+            self.ExitCode = ExitCode.ERROR
+            return
+
+        missing = find_missing_entries(reference, dbx_entries)
+        self.logger.log(
+            f'[CHIPSEC] Comparing Microsoft DBX entries for {self.architecture}.'
+        )
+        if missing:
+            missing_count = sum(len(values) for values in missing.values())
+            self.logger.log_warning(
+                f'{missing_count} supplied reference entries are absent from dbx.'
+            )
+            for kind, values in missing.items():
+                kind_name = {
+                    'sha256': 'SHA-256 hashes',
+                    'x509_sha1': 'X.509 certificate thumbprints',
+                }.get(kind, kind)
+                self.logger.log(f'  Missing {kind_name}: {len(values)}')
+                for value in sorted(values)[:5]:
+                    self.logger.log(f'    {value.hex()}')
+        else:
+            entry_count = sum(len(values) for values in reference.values())
+            self.logger.log_good(
+                f'All {entry_count} {self.architecture} image hashes and '
+                'certificate thumbprints from the supplied reference are present.'
+            )
+
+        self.logger.log_important(
+            'This checks only the supplied local JSON snapshot; SVN records '
+            'are not checked. CHIPSEC does not download updates or inspect '
+            'the active bootloader.'
+        )
 
     def nvram(self):
         authvars = 0
