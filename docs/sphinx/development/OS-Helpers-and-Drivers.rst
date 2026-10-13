@@ -3,38 +3,28 @@
 OS Helpers and Drivers
 ======================
 
-Provide common interfaces to interact with system drivers/commands
+OS helpers provide low-level, operating-system-specific access to drivers and
+system interfaces such as PCI configuration space, MSRs, physical memory and
+UEFI variables. HAL implementations use the active helper to perform these
+operations. Module authors should normally use the HAL API rather than invoke
+the helper directly.
 
-Mostly invoked by HAL modules
------------------------------
+OS helper backends live in ``chipsec/helper/<name>/<name>helper.py``. During
+initialization, ``OsHelper`` discovers these packages and selects the backend
+for the current environment. Each backend exports a ``get_helper()`` factory
+that returns its helper instance.
 
-Directly invoking helpers from modules should be minimized
+Implementing a new backend
+--------------------------
 
-Helpers import from BaseHelper
-------------------------------
-
-Override applicable functions – default is to generate exception
-
-I/O, PCI, MSR, UEFI Variables, etc.
-
-Create a New Helper
--------------------
-
-Helper needs to be added into the helper folder with a folder structure like: ``chipsec/helper/<type>/<type>helper.py``
-
-Example
-~~~~~~~
-
-The new helper should be added to ``chipsec/helper/new/newhelper.py`` and should import from Helper Base Class
-
-::
-
-   from chipsec.helper.basehelper import Helper
-   class NewHelper(Helper):
-
-       def __init__(self):
-           super(NewHelper, self).__init__()
-           self.name = "NewHelper"
+Subclass ``Helper`` from ``chipsec.helper.basehelper`` and implement its
+abstract operations. The interface includes driver lifecycle, PCI/MMIO,
+physical memory, I/O ports, CPU registers, CPUID, and UEFI/ACPI services.
+Implement only the behavior the target environment supports, and follow an
+existing backend such as ``chipsec/helper/linux/linuxhelper.py`` for its
+module structure and ``get_helper()`` factory. A helper backend is a
+platform-integration change; ordinary security checks should be implemented
+as modules and use the existing HALs.
 
 Helper components
 -----------------
