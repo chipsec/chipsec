@@ -1,56 +1,144 @@
-Writing Your Own Modules
-========================
+Developer Guide
+===============
 
-Your module class should subclass BaseModule and implement at least the methods named ``is_supported`` and ``run``. When chipsec_main runs, it will first run ``is_supported`` and if that returns true, then it will call ``run``.
+CHIPSEC modules are Python classes that assess or exercise a platform through
+the CHIPSEC framework. Module code runs with privileged hardware access on
+supported systems. Develop and test on a dedicated test system, and understand
+the effect of every hardware read or write before running a module.
 
-As of CHIPSEC version 1.2.0, CHIPSEC implements an abstract name for platform *controls*. Module authors are encouraged to create controls in the XML configuration files for important platform configuration information and then use ``get_control`` and ``set_control`` within modules. This abstraction allows modules to test for the abstract control without knowing which register provides it. (This is especially important for test reuse across platform generations.)
+Module layout and lifecycle
+---------------------------
 
-Most modules read some platform configuration and then pass or fail based on the result. For example:
+Place modules under ``chipsec/modules/``. Use ``common/`` for checks intended
+to work across supported platforms, or a platform-code directory for a
+platform-specific check. The module name is its path relative to
+``chipsec/modules`` without the ``.py`` suffix; for example,
+``chipsec/modules/common/bios_wp.py`` is run as ``common.bios_wp``. The module
+class name must match the Python file's base name.
 
-1. Define the control in the platform XML file (in ``chipsec/cfg``):
+Subclass ``BaseModule`` from ``chipsec.module_common``. CHIPSEC calls
+``is_supported()`` before ``run(module_argv)``. Return ``False`` from
+``is_supported`` when required hardware or configuration is unavailable; the
+module is then reported as not applicable. ``run`` receives the arguments
+provided with ``-a`` and returns the module result/return code. See
+:doc:`Sample-Module-Code` for a starting point.
 
-   .. code-block:: xml
+Core APIs
+---------
 
-    <control name="BiosLockEnable"     register="BC"    field="BLE"    desc="BIOS Lock Enable"/>
+``BaseModule`` provides these commonly used objects:
 
-2. Get the current status of the control:
+* ``self.cs`` is the active chipset object. Use its configuration interfaces
+    to resolve platform-specific registers and controls instead of duplicating
+    platform detection in a module.
+* ``self.cs.register`` accesses configured registers. Check whether required
+    names are defined before reading them; ``get_list_by_name(name)`` returns
+    the configured register list.
+* ``self.cs.control`` accesses abstract controls. A control maps a logical
+    security setting to the register and field used by a platform. Check
+    ``is_defined(name)`` and use ``get_list_by_name(name)`` to read it.
+* ``self.cs.device`` provides configured device information. For common
+    hardware operations, use the corresponding HAL exposed under
+    ``self.cs.hals`` (for example, ``self.cs.hals.spi`` or
+    ``self.cs.hals.uefi``). See :doc:`Architecture-Overview` and the generated
+    CHIPSEC HAL API documentation for the available HALs.
+* ``self.logger`` provides ``start_test``, ``log``, ``log_verbose``,
+    ``log_warning``, ``log_passed``, ``log_failed`` and ``log_important`` for
+    consistent output.
+* ``self.result`` tracks return-code status bits. Use
+    ``self.result.setStatusBit(...)`` to add a meaningful status such as
+    ``LOCKS``, ``CONFIGURATION`` or ``VERIFY``. Follow nearby modules for the
+    result style used in that part of the codebase; CHIPSEC retains the legacy
+    ``ModuleResult`` interface for compatibility.
 
-   .. code-block:: python
+Platform controls are declared in configuration XML, not hard-coded into a
+portable module. For example:
 
-    ble = self.cs.control.get_list_by_name('BiosLockEnable').is_all_value(1)
+.. code-block:: xml
 
-3. React based on the status of the control:
+     <control name="BiosLockEnable" register="BC" field="BLE"
+                        desc="BIOS Lock Enable"/>
 
-   .. code-block:: python
+A module can then query the abstract control without knowing which register
+implements it on each platform:
 
-    if ble:
-        self.logger.log_passed("BIOS Lock is set.")
-    else:
-        self.logger.log_failed("BIOS Lock is not set.")
+.. code-block:: python
 
-4. Set and Return ``self.res``:
+     lock = self.cs.control.get_list_by_name('BiosLockEnable')
+     lock.read_and_verbose_print()
+     if lock.is_all_value(1):
+             self.logger.log_passed('BIOS Lock is set.')
+     else:
+             self.logger.log_failed('BIOS Lock is not set.')
 
-   .. code-block:: python
+See :doc:`Configuration-Files` for configuration structure and examples.
 
-    if ble:
-        self.res = ModuleResult.PASSED
-    else:
-        self.res = ModuleResult.FAILED
-    return self.res
+Development practices
+---------------------
 
-The CHIPSEC HAL and other APIs are also available within these modules. See the next sections for details about the available functionality.
+* Prefer read-only checks. If a check must modify hardware state, make the
+    change explicit, preserve the original value, and restore it on every exit
+    path. Document the risk and require an appropriate test platform.
+* Use abstract controls and existing HALs so modules can be reused across
+    platform generations. Put platform-specific register mappings in
+    configuration XML.
+* Treat missing definitions, disabled devices, failed reads and all-ones
+    reads as unknown or unsupported input, not as evidence that a protection
+    passed or failed. Report a warning or not-applicable result as appropriate.
+* Validate assumptions and ranges before using hardware-derived values. Keep
+    parsing and result handling explicit, and avoid swallowing exceptions that
+    indicate a programming error.
+* Keep checks focused, log the observed state and expected state, and add
+    unit tests for parsing, decision logic and error paths. Follow the Python
+    version and style rules in :doc:`../contribution/code-style-python`.
+* Add module tags and metadata that accurately describe the module. Use
+    existing modules in the same directory as examples of repository
+    conventions.
 
-Copy your module into the ``chipsec/modules/`` directory structure.
+Debugging and testing
+---------------------
 
-- Modules specific to a certain platform should implement ``is_supported`` function which returns ``True`` for the platforms the module is applicable to.
+Start with a focused run from the CHIPSEC repository root:
 
-- Modules specific to a certain platform can also be located in ``chipsec/modules/<platform_code>`` directory, for example ``chipsec/modules/hsw``. Supported platforms and their code can be found by running ``chipsec_main.py --help``.
+.. code-block:: console
 
-- Modules common to all platform which CHIPSEC supports can be located in ``chipsec/modules/common`` directory.
+     python chipsec_main.py -m common.example
 
-If a new platform needs to be added:
+Increase diagnostic output with ``-v`` or ``-vv`` (verbose, HAL and debug
+logging), and save it with ``-l example.log``. Use ``--failfast`` when you
+need exceptions to stop the run rather than be masked by normal module
+handling. ``--no-driver`` is only suitable for operations that do not need
+kernel-driver access.
 
-- Review the platform datasheet and include appropriate information in an XML configuration file for the platform. Place this file in chipsec/cfg/8086. Registers that are correctly defined in ``common.xml`` will be inherited and do not need to be added. Use ``common.xml`` as an example. It is based on the 4th Generation Intel Core platform (Haswell).
+When diagnosing a module:
+
+* If it is not found, check the module path/name, class name, and any
+    additional module path passed with ``-I``.
+* If it is not applicable, inspect ``is_supported`` and verify that the
+    platform configuration defines and enables each required device, register
+    and control.
+* If a result is unexpected, use verbose output to inspect the values read,
+    then confirm the register mapping and expected semantics against the
+    platform documentation.
+* If the module raises an exception, reproduce it with a single-module run
+    and ``--failfast``; add a focused test for the failing input or decision
+    path.
+
+Run a focused unit test from the repository root, for example:
+
+.. code-block:: console
+
+     python -m pytest tests/modules/test_example.py -q
+
+Hardware validation is separate from unit testing and must be performed only
+on an appropriate test system. See :doc:`../usage/Running-Chipsec` for command
+line options and the `contribution guide
+<https://github.com/chipsec/chipsec/blob/master/CONTRIBUTING.md>`_ for
+contribution requirements.
 
 .. seealso::
-    `Creating CHIPSEC modules and commands <https://github.com/chipsec/chipsec/wiki/files/training/OSFC_2018_CHIPSEC_Workshop.pdf>`_
+
+     * :doc:`Architecture-Overview`
+     * :doc:`Configuration-Files`
+     * :doc:`Sample-Module-Code`
+     * `Creating CHIPSEC modules and commands <https://github.com/chipsec/chipsec/wiki/files/training/OSFC_2018_CHIPSEC_Workshop.pdf>`_

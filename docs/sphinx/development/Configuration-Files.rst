@@ -3,40 +3,45 @@
 Configuration Files
 ===================
 
-Provide a human readable abstraction for registers in the system
+CHIPSEC configuration maps platform and device identities to register,
+field, control and BAR definitions. Platform files are stored under
+``chipsec/cfg/<vendor-id>/``; reusable definitions are grouped into XML
+fragments under the same directory. Platform detection selects the platform
+files, whose device entries refer to those fragments with ``config``.
 
-    ==================================== ================================================
-    ``chipsec/cfg/8086``                   platform specific configuration xml files
-    ``chipsec/cfg/8086/common.xml``        common configuration
-    ``chipsec/cfg/8086/<platform>.xml``    configuration for a specific <platform>
-    ==================================== ================================================
-
-Broken into common and platform specific configuration files.
-
-Used to define controls, registers and bit fields.
-
-Common files always loaded first so the platform files can override values.
-
-Correct platform configuration files loaded based off of platform detection.
-
-Configuration File Example
---------------------------
+For example, ``chipsec/cfg/8086/kbl.xml`` selects a configuration fragment
+for the SPI device:
 
 .. code-block:: xml
 
-   <mmio>
-   <bar name="SPIBAR" bus="0" dev="0x1F" fun="5" reg="0x10" width="4" mask="0xFFFFF000" size="0x1000" desc="SPI Controller Register Range" offset="0x0"/>
-   </mmio>
-   <registers>
-   <register name="BC" type="pcicfg" bus="0" dev="0x1F" fun="5" offset="0xDC" size="4" desc="BIOS Control">
-   <field name="BIOSWE" bit="0" size="1" desc="BIOS Write Enable" />
-   …
-   <field name="BILD" bit="7" size="1" desc="BIOS Interface Lock Down"/>
-   </register>
-   </registers>
-   <controls>
-   <control name="BiosInterfaceLockDown" register="BC" field="BILD" desc="BIOS Interface Lock-Down"/>
-   </controls>
+    <pci>
+       <device name="SPI" bus="0x00" dev="0x1F" fun="5"
+                   config="SPI.spi0.xml" />
+    </pci>
+
+The referenced ``chipsec/cfg/8086/SPI/spi0.xml`` contains the register and
+control definitions:
+
+.. code-block:: xml
+
+    <configuration>
+       <registers>
+          <register name="BC" type="pcicfg" offset="0xDC" size="4"
+                         desc="BIOS Control">
+             <field name="BLE" bit="1" size="1" desc="BIOS Lock Enable" />
+          </register>
+       </registers>
+       <controls>
+          <control name="BiosLockEnable" register="BC" field="BLE"
+                        desc="BIOS Lock Enable" />
+       </controls>
+    </configuration>
+
+The platform XML is parsed for device and other platform configuration
+sections; register, control and lock definitions belong in referenced
+configuration fragments. Placing those sections directly in a platform XML
+does not load them in the current configuration pipeline. Follow a nearby
+platform and its referenced fragments when adding definitions.
 
 List of Cfg components
 ----------------------
