@@ -67,7 +67,7 @@ Known vulnerabilities can be mapped to CHIPSEC modules as follows:
      - smm_dma
      -
    * - Graphics aperture redirection of SMRAM
-     - chipsec_util memconfig remap
+     - Manual analysis (no dedicated current utility command)
      -
    * - Memory sinkhole vulnerability
      - tools.cpu.sinkhole
