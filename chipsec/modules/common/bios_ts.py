@@ -60,6 +60,8 @@ class bios_ts(BaseModule):
     def check_bios_iface_lock(self) -> int:
         bild = self.cs.control.get_list_by_name('BiosInterfaceLockDown')
         bild.read_and_print()
+        lock_failed = bild.is_any_value(0)
+        lock_unverified = False
 
         if self.cs.control.is_defined('TopSwapStatus'):
             top_swap_status = self.cs.control.get_list_by_name('TopSwapStatus')
@@ -69,10 +71,40 @@ class bios_ts(BaseModule):
             top_swap = self.cs.control.get_list_by_name('TopSwap')
             top_swap.read_and_print()
 
-        if bild.is_any_value(0):
+        rtc_regs = self.cs.register.get_list_by_name('RC')
+        rtc_bild_regs = rtc_regs.filter_with_field('BILD')
+        if rtc_bild_regs:
+            for reg in rtc_bild_regs:
+                try:
+                    reg.read()
+                except Exception as err:
+                    lock_unverified = True
+                    self.logger.log_debug(
+                        f'Unable to read RC.BILD register: {err}'
+                    )
+            invalid_values = lock_unverified or any(
+                reg.value is None or reg.value == (1 << (reg.size * 8)) - 1
+                for reg in rtc_bild_regs
+            )
+            if invalid_values:
+                lock_unverified = True
+                self.logger.log_warning(
+                    'Unable to verify RTC BIOS Interface Lock-Down (RC.BILD)'
+                )
+                self.result.setStatusBit(self.result.status.VERIFY)
+            elif not rtc_bild_regs.is_all_field_value(1, 'BILD'):
+                lock_failed = True
+                self.logger.log_bad(
+                    'RTC BIOS Interface Lock-Down (RC.BILD) is not set'
+                )
+
+        if lock_failed:
             res = ModuleResult.FAILED
             self.result.setStatusBit(self.result.status.LOCKS)
             self.logger.log_failed('BIOS Interface is not locked (including Top Swap Mode)')
+        elif lock_unverified:
+            res = ModuleResult.WARNING
+            self.logger.log_warning('BIOS Interface lock status could not be fully verified')
         else:
             res = ModuleResult.PASSED
             self.logger.log_passed('BIOS Interface is locked (including Top Swap Mode)')
