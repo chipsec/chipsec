@@ -183,36 +183,61 @@ class remap(BaseModule):
         return self.result.getReturnCode(res)
 
     def check_remap_base_and_limit(self, remapbase_regs: list, remaplimit_regs: list, touud: int, is_warning: bool, remap_ok: bool) -> Tuple[bool, bool]:
-        bars = set([reg.bar for reg in remapbase_regs])
+        bars = {reg.bar for reg in remapbase_regs}
+        bars.update(reg.bar for reg in remaplimit_regs)
 
         for bar in bars:
-            remapbase_reg = [reg for reg in remapbase_regs if reg.bar == bar]
-            remaplimit_reg = [reg for reg in remaplimit_regs if reg.bar == bar]
+            base_regs = [reg for reg in remapbase_regs if reg.bar == bar]
+            limit_regs = [reg for reg in remaplimit_regs if reg.bar == bar]
 
-            if len(remapbase_reg) == len(remaplimit_reg) == 1:
-                remapbase_reg = remapbase_reg[0]
-                remaplimit_reg = remaplimit_reg[0]
-
-            remapbase = remapbase_reg.get_field('REMAPBASE', preserve_field_position=True)
-            remaplimit = remaplimit_reg.get_field('REMAPLMT', preserve_field_position=True)
-
-            if remapbase == remaplimit:
-                self.logger.log('[!]   Memory Remap status is Unknown')
+            if len(base_regs) != len(limit_regs):
+                self.logger.log_warning(
+                    f'Unpaired REMAPBASE/REMAPLIMIT registers for {bar}'
+                )
                 is_warning = True
-            elif remapbase > remaplimit:
-                self.logger.log('[*]   Memory Remap is disabled')
-            else:
-                self.logger.log('[*]   Memory Remap is enabled')
-                remaplimit_addr = (remaplimit | 0xFFFFF)
-                if self.is_ibecc_enabled():
-                    ok = (remaplimit_addr > touud) and (remapbase < touud)
+
+            for remapbase_reg, remaplimit_reg in zip(base_regs, limit_regs):
+                instance = remapbase_reg.get_instance()
+                limit_instance = remaplimit_reg.get_instance()
+                if any(
+                    reg_instance is not None
+                    and hasattr(reg_instance, 'bus')
+                    and reg_instance.bus is None
+                    for reg_instance in (instance, limit_instance)
+                ):
+                    self.logger.log_warning(
+                        f'Unbound BAR instance {bar}; remap not verified'
+                    )
+                    is_warning = True
+                    continue
+
+                remapbase = remapbase_reg.get_field(
+                    'REMAPBASE', preserve_field_position=True
+                )
+                remaplimit = remaplimit_reg.get_field(
+                    'REMAPLMT', preserve_field_position=True
+                )
+
+                if remapbase == remaplimit:
+                    self.logger.log('[!]   Memory Remap status is Unknown')
+                    is_warning = True
+                elif remapbase > remaplimit:
+                    self.logger.log('[*]   Memory Remap is disabled')
                 else:
-                    ok = ((remaplimit_addr + 1) == touud)
-                remap_ok = remap_ok and ok
-                if ok:
-                    self.logger.log_good('  Remap window configuration is correct: REMAPBASE <= REMAPLIMIT < TOUUD')
-                else:
-                    self.logger.log_bad('  Remap window configuration is not correct')
+                    self.logger.log('[*]   Memory Remap is enabled')
+                    remaplimit_addr = (remaplimit | 0xFFFFF)
+                    if self.is_ibecc_enabled():
+                        ok = (remaplimit_addr > touud) and (remapbase < touud)
+                    else:
+                        ok = ((remaplimit_addr + 1) == touud)
+                    remap_ok = remap_ok and ok
+                    if ok:
+                        self.logger.log_good(
+                            '  Remap window configuration is correct: '
+                            'REMAPBASE <= REMAPLIMIT < TOUUD'
+                        )
+                    else:
+                        self.logger.log_bad('  Remap window configuration is not correct')
         return is_warning, remap_ok
 
     def run(self, _) -> int:
