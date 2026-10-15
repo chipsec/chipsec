@@ -37,7 +37,7 @@ class TestTglModules(unittest.TestCase):
 
     modules_results = [
         ("common.bios_smi", ExitCode.OK),
-        ("common.bios_ts", ExitCode.OK),
+        ("common.bios_ts", ExitCode.WARNING),
         ("common.bios_wp", ExitCode.OK),
         ("common.cpu.cpu_info", ExitCode.INFORMATION),
         ("common.cpu.ia_untrusted", ExitCode.OK),
