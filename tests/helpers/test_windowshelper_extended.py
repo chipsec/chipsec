@@ -254,7 +254,7 @@ class TestWindowsHelperInit(WindowsHelperExtendedBase):
         helper = self._new_helper()
         mock_api = self._patch('win32api', MagicMock())
         helper.driver_handle = 0x1234
-        helper.__del__()
+        helper.close()
         mock_api.CloseHandle.assert_called_once_with(0x1234)
         self.assertIsNone(helper.driver_handle)
 
@@ -262,7 +262,7 @@ class TestWindowsHelperInit(WindowsHelperExtendedBase):
         helper = self._new_helper()
         mock_api = self._patch('win32api', MagicMock())
         helper.driver_handle = None
-        helper.__del__()
+        helper.close()
         mock_api.CloseHandle.assert_not_called()
 
     def test_show_warning(self):

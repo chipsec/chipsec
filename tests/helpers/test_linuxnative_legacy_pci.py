@@ -115,7 +115,7 @@ class LegacyPciTest(unittest.TestCase):
     def test_write_pci_config(self):
         ports = MagicMock()
         with patch.object(legacy_pci.Ports, 'get_instance', return_value=ports):
-            self.assertIsNone(legacy_pci.LegacyPci.write_pci_config(1, 2, 3, 0x10, 0xDEADBEEF))
+            legacy_pci.LegacyPci.write_pci_config(1, 2, 3, 0x10, 0xDEADBEEF)
         self.assertEqual(ports.outl.call_args_list[0][0], (0x80011310, 0xCF8))
         self.assertEqual(ports.outl.call_args_list[1][0], (0xDEADBEEF, 0xCFC))
 

@@ -92,7 +92,7 @@ class CPUIDTest(unittest.TestCase):
 
     def test_del_closes_page(self):
         instance, page, _mmap, _c_void_p, _addressof, _cfunctype = build_cpuid()
-        instance.__del__()
+        instance.close()
         page.close.assert_called_once_with()
         self.assertFalse(hasattr(instance, 'fp'))
         # Restore the attribute so the interpreter's own finalization stays quiet.

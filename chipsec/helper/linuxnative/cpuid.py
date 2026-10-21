@@ -95,9 +95,16 @@ class CPUID:
         self.func_ptr(struct, eax, ecx)
         return struct.eax, struct.ebx, struct.ecx, struct.edx
 
+    def close(self) -> None:
+        if hasattr(self, 'fp'):
+            del self.fp
+        addr = getattr(self, 'addr', None)
+        if addr is not None:
+            addr.close()
+            del self.addr
+
     def __del__(self) -> None:
-        del self.fp
-        self.addr.close()
+        self.close()
 
 
 if __name__ == "__main__":

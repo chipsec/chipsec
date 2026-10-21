@@ -321,10 +321,14 @@ class WindowsHelper(Helper):
         except AttributeError as msg:
             logger().log_warning("NtQuerySystemInformation function doesn't seem to exist")
 
-    def __del__(self):
-        if self.driver_handle:
-            win32api.CloseHandle(self.driver_handle)
+    def close(self):
+        driver_handle = getattr(self, 'driver_handle', None)
+        if driver_handle:
+            win32api.CloseHandle(driver_handle)
             self.driver_handle = None
+
+    def __del__(self):
+        self.close()
 
 
 ###############################################################################################

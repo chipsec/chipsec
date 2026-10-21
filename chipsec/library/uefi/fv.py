@@ -373,9 +373,12 @@ class EFI_MODULE:
     def calc_hashes(self, off: int = 0) -> None:
         if self.Image is None:
             return
+        # These legacy digests are firmware fingerprints for rule matching, not security decisions.
+        # lgtm[py/weak-sensitive-data-hashing]
         hmd5 = hashlib.md5()
         hmd5.update(self.Image[off:])
         self.MD5 = hmd5.hexdigest()
+        # lgtm[py/weak-sensitive-data-hashing]
         hsha1 = hashlib.sha1()
         hsha1.update(self.Image[off:])
         self.SHA1 = hsha1.hexdigest()
