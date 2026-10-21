@@ -120,13 +120,13 @@ class LinuxHelper(Helper):
             if not page_is_ram:
                 logger().log_debug("Cannot find symbol 'page_is_ram'")
             else:
-                a1 = f'a1=0x{page_is_ram}'
+                a1 = f'a1=0x{page_is_ram.decode("ascii", errors="replace")}'
         if self.SUPPORT_KERNEL26_GET_PHYS_MEM_ACCESS_PROT:
             phys_mem_access_prot = self.get_phys_mem_access_prot()
             if not phys_mem_access_prot:
                 logger().log_debug("Cannot find symbol 'phys_mem_access_prot'")
             else:
-                a2 = f'a2=0x{phys_mem_access_prot}'
+                a2 = f'a2=0x{phys_mem_access_prot.decode("ascii", errors="replace")}'
 
         # Prefer modprobe, which resolves the module by name through the kernel's own
         # search path. The file probing below only recognises 'chipsec.ko' and
@@ -321,7 +321,7 @@ class LinuxHelper(Helper):
         cpu_ucode_thread_id = ctypes.c_int(cpu_thread_id)
 
         in_buf = struct.pack('=BH', cpu_thread_id, len(ucode_update_buf)) + ucode_update_buf
-        in_buf_final = array.array('c', in_buf)
+        in_buf_final = array.array('B', in_buf)
         out_length = 0
         try:
             out_buf = self.ioctl(IOCTL_LOAD_UCODE_PATCH, in_buf_final)

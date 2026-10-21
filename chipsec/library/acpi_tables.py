@@ -260,9 +260,9 @@ class DMAR (ACPI_TABLE):
         elif DMAR_TYPE_ANDD == _type:
             ret = self._get_DMAR_structure_ANDD(DataStructure)
         elif DMAR_TYPE_SATC == _type:
-            return self._get_DMAR_structure_SATC(DataStructure)
+            ret = self._get_DMAR_structure_SATC(DataStructure)
         elif DMAR_TYPE_SIDP == _type:
-            return self._get_DMAR_structure_SIDP(DataStructure)
+            ret = self._get_DMAR_structure_SIDP(DataStructure)
         else:
             ret = (f"\n  Unknown DMAR structure 0x{_type:02X}\n")
         return str(ret)
@@ -744,7 +744,7 @@ class ACPI_TABLE_APIC_PROCESSOR_LSAPIC(namedtuple('ACPI_TABLE_APIC_PROCESSOR_LSA
     Reserved             : 0x{self.Reserved:02X}
     Flags                : 0x{self.Flags:02X}
     ACPI Proc UID Value  : 0x{self.ACPIProcUIDValue:02X}
-    ACPI Proc UID String : 0x{self.ACPIProcUIDString:02X}
+    ACPI Proc UID String : {self.ACPIProcUIDString.decode('latin-1').split(chr(0))[0]}
 """
 
 
@@ -1139,7 +1139,7 @@ class BERT (ACPI_TABLE):
         timestamp = struct.unpack('<Q', table_content[64:72])[0]
         timestamp_str = self.parseTime(table_content[64:72])
         if errDataLen > 0:
-            data = str(struct.unpack('<P', table_content[72:errDataLen + 72])[0])
+            data = table_content[72:errDataLen + 72].hex().upper()
         else:
             data = 'None'
         errorSeverity_str = errorSeverities[4]
@@ -1348,7 +1348,7 @@ class ERST (ACPI_TABLE):
         if instruction < 17:
             serializationInstr_str = serializationInstructions[instruction]
         else:
-            serializationAction_str = 'Unknown'
+            serializationInstr_str = 'Unknown'
         if reserved != 0:
             reserved_str = ' - Error, this should be 0'
         else:
@@ -1458,9 +1458,9 @@ class HEST (ACPI_TABLE):
         bankNum = struct.unpack('<B', table_content[0:1])[0]
         clearStatus = struct.unpack('<B', table_content[1:2])[0]
         statusDataFormat = struct.unpack('<B', table_content[2:3])[0]
-        reserved1 = struct.unpack('<L', table_content[3:4])[0]
+        reserved1 = struct.unpack('<B', table_content[3:4])[0]
         controlRegMsrAddr = struct.unpack('<L', table_content[4:8])[0]
-        controlInitData = struct.unpack('<L', table_content[8:16])[0]
+        controlInitData = struct.unpack('<Q', table_content[8:16])[0]
         statusRegMSRAddr = struct.unpack('<L', table_content[16:20])[0]
         addrRegMSRAddr = struct.unpack('<L', table_content[20:24])[0]
         miscRegMSTAddr = struct.unpack('<L', table_content[24:28])[0]
@@ -1860,10 +1860,10 @@ class SPMI (ACPI_TABLE):
         pciDeviceFlag_0 = pciDeviceFlag & 1
         if pciDeviceFlag_0 == 1:
             pci_str = 'For PCi IPMI devices'
-            otherStr = self.parseNonUID(table_content[25:28])
+            otherStr = self.parseNonUID(table_content[24:28])
         else:
             pci_str = 'non-PCI device'
-            otherStr = self.parseUID(table_content[25:28])
+            otherStr = self.parseUID(table_content[24:28])
         pciDeviceFlag_reserved = 1 ^ pciDeviceFlag_0
         globalSysInt_str = ''
         if intType_1 != 1:
