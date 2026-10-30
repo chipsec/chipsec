@@ -122,10 +122,18 @@ class MMMsgBus(hal_base.HALBase):
     def __hide_p2sb(self) -> None:
         """
         Hide the P2SB device by setting the HIDE field.
+
+        If the device is not visible (the unhide never took effect, or BIOS re-hid it), there is
+        nothing to re-hide. This is called from ``finally`` blocks, so it must not raise and mask
+        the original error.
         """
         reg = self.__get_hide_register()
         bus, dev, fun = self.__get_p2sb_bdf(reg)
-        current = self.cs.hals.pci.read(bus, dev, fun, reg.offset, reg.size)
+        try:
+            current = self.cs.hals.pci.read(bus, dev, fun, reg.offset, reg.size)
+        except CSReadError:
+            self.logger.log_hal(f'[mm_msgbus] P2SB at {bus:02X}:{dev:02X}.{fun:X} is not visible; skipping re-hide')
+            return
         if is_all_ones(current, reg.size):
             self.logger.log_hal('[mm_msgbus] P2SB is already hidden; skipping re-hide')
             return
@@ -141,11 +149,14 @@ class MMMsgBus(hal_base.HALBase):
         Returns:
             int: The base address decoded from the BAR.
         Raises:
-            CSReadError: If the BAR still reads back as all-ones or zero.
+            CSReadError: If the device is still not visible, or the BAR reads back as all-ones or zero.
         """
         reg = self.__get_unfiltered_register('8086.P2SBC.SBREG_BAR')
         bus, dev, fun = self.__get_p2sb_bdf(reg)
-        raw = self.cs.hals.pci.read(bus, dev, fun, reg.offset, reg.size)
+        try:
+            raw = self.cs.hals.pci.read(bus, dev, fun, reg.offset, reg.size)
+        except CSReadError as e:
+            raise CSReadError(f'[mm_msgbus] P2SB at {bus:02X}:{dev:02X}.{fun:X} is still hidden after unhide attempt: {e}') from e
         if is_all_ones(raw, reg.size):
             raise CSReadError('[mm_msgbus] SBREG_BAR reads all ones; P2SB is still hidden')
         bar = self.cs.register.mmio.get_def('8086.P2SBC.SBREGBAR')

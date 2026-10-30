@@ -202,13 +202,15 @@ class MMCFGRegisters(BaseConfigRegisterHelper):
             Current register value
 
         Raises:
-            MMCFGRegisterError: If read operation fails or device is not present
+            CSReadError: If the device is not present or the hardware access fails
+                (propagated so callers can degrade gracefully, consistent with pcicfg registers)
+            MMCFGRegisterError: If read operation fails for any other reason
         """
         try:
             self.logger.log_debug(f'reading {self.name}')
 
             if not self.is_device_present():
-                raise MMCFGRegisterError(
+                raise CSReadError(
                     f'PCI Device is not available ({self.get_pci_address()})'
                 )
 
@@ -217,8 +219,8 @@ class MMCFGRegisters(BaseConfigRegisterHelper):
                 self.pci.bus, self.pci.dev, self.pci.fun, self.offset, self.size
             )
             return self.value
-        except CSReadError as e:
-            raise MMCFGRegisterError(f"Failed to read MMCFG register {self.name}: {e}") from e
+        except CSReadError:
+            raise
         except Exception as e:
             raise MMCFGRegisterError(f"Failed to read MMCFG register {self.name}: {e}") from e
 
@@ -230,13 +232,15 @@ class MMCFGRegisters(BaseConfigRegisterHelper):
             value: Value to write to the register
 
         Raises:
-            MMCFGRegisterError: If write operation fails or device is not present
+            CSReadError: If the device is not present or the hardware access fails
+                (propagated so callers can degrade gracefully, consistent with pcicfg registers)
+            MMCFGRegisterError: If write operation fails for any other reason
         """
         try:
             self.logger.log_debug(f'writing 0x{value:X} to {self.name}')
 
             if not self.is_device_present():
-                raise MMCFGRegisterError(
+                raise CSReadError(
                     f'PCI Device is not available ({self.get_pci_address()})'
                 )
 
@@ -245,7 +249,7 @@ class MMCFGRegisters(BaseConfigRegisterHelper):
                 self.pci.bus, self.pci.dev, self.pci.fun, self.offset, self.size, value
             )
             self.value = value
-        except CSReadError as e:
-            raise MMCFGRegisterError(f"Failed to write to MMCFG register {self.name}: {e}") from e
+        except CSReadError:
+            raise
         except Exception as e:
             raise MMCFGRegisterError(f"Failed to write to MMCFG register {self.name}: {e}") from e

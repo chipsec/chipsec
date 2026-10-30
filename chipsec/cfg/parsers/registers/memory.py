@@ -25,7 +25,7 @@ in the CHIPSEC framework. Memory registers can be accessed through DRAM or MMIO 
 """
 
 from typing import Dict, Any
-from chipsec.library.exceptions import MemoryRegisterError
+from chipsec.library.exceptions import CSReadError, MemoryRegisterError
 from chipsec.library.register import BaseConfigRegisterHelper
 from chipsec.chipset import cs
 
@@ -189,7 +189,8 @@ class MEMORYRegisters(BaseConfigRegisterHelper):
             Current register value
 
         Raises:
-            MemoryRegisterError: If read operation fails
+            CSReadError: If the underlying hardware access fails (propagated so callers can degrade gracefully)
+            MemoryRegisterError: If read operation fails for any other reason
         """
         try:
             self.logger.log_debug(f'reading {self.name}')
@@ -203,6 +204,8 @@ class MEMORYRegisters(BaseConfigRegisterHelper):
                 raise MemoryRegisterError(f"Unsupported access method: {self.access}")
 
             return self.value
+        except CSReadError:
+            raise
         except Exception as e:
             raise MemoryRegisterError(f"Failed to read memory register {self.name} at {self.get_address_hex()}: {e}") from e
 
@@ -228,5 +231,7 @@ class MEMORYRegisters(BaseConfigRegisterHelper):
                 raise MemoryRegisterError(f"Unsupported access method: {self.access}")
 
             self.value = value
+        except CSReadError:
+            raise
         except Exception as e:
             raise MemoryRegisterError(f"Failed to write to memory register {self.name} at {self.get_address_hex()}: {e}") from e
