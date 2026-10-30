@@ -28,7 +28,7 @@ memory-mapped address spaces.
 from typing import Dict, Any
 from chipsec.chipset import cs
 from chipsec.library.register import BaseConfigRegisterHelper
-from chipsec.library.exceptions import MMIORegisterError
+from chipsec.library.exceptions import CSReadError, MMIORegisterError
 
 class MMIORegisters(BaseConfigRegisterHelper):
     """
@@ -233,6 +233,8 @@ class MMIORegisters(BaseConfigRegisterHelper):
                     raise MMIORegisterError(f"Memory Range ({self.range}) cannot be found.")
             else:
                 raise MMIORegisterError(f"Unable to populate MMIO Base Address: {self.name}")
+        except CSReadError:
+            raise
         except Exception as e:
             raise MMIORegisterError(f"Failed to populate base address for {self.name}: {e}") from e
 
@@ -244,7 +246,8 @@ class MMIORegisters(BaseConfigRegisterHelper):
             Current register value
 
         Raises:
-            MMIORegisterError: If read operation fails
+            CSReadError: If the underlying hardware access fails (propagated so callers can degrade gracefully)
+            MMIORegisterError: If read operation fails for any other reason
         """
         try:
             self.logger.log_debug(f'reading {self.name}')
@@ -252,6 +255,8 @@ class MMIORegisters(BaseConfigRegisterHelper):
             self.value = self.cs.hals.mmio.read_MMIO_reg(self.bar_base, self.offset, self.size)
             self.logger.log_debug('done reading')
             return self.value
+        except CSReadError:
+            raise
         except Exception as e:
             raise MMIORegisterError(f"Failed to read MMIO register {self.name}: {e}") from e
 
@@ -263,7 +268,8 @@ class MMIORegisters(BaseConfigRegisterHelper):
             value: Value to write to the register
 
         Raises:
-            MMIORegisterError: If write operation fails
+            CSReadError: If the underlying hardware access fails (propagated so callers can degrade gracefully)
+            MMIORegisterError: If write operation fails for any other reason
         """
         try:
             reg_name = self.name if self.name else "UNKNOWN"
@@ -271,6 +277,8 @@ class MMIORegisters(BaseConfigRegisterHelper):
             self.populate_base_address()
             self.cs.hals.mmio.write_MMIO_reg(self.bar_base, self.offset, value, self.size)
             self.value = value
+        except CSReadError:
+            raise
         except Exception as e:
             reg_name = self.name if self.name else "UNKNOWN"
             raise MMIORegisterError(f"Failed to write to MMIO register {reg_name}: {e}") from e
@@ -300,5 +308,7 @@ class MMIORegisters(BaseConfigRegisterHelper):
             self.logger.log_debug(f'writing subset 0x{value:X} to {self.name} at offset {offset}, size {size}')
             self.populate_base_address()
             self.cs.hals.mmio.write_MMIO_reg(self.bar_base, self.offset + offset, value, size)
+        except CSReadError:
+            raise
         except Exception as e:
             raise MMIORegisterError(f"Failed to write subset to MMIO register {self.name}: {e}") from e

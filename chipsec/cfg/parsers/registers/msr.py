@@ -28,7 +28,7 @@ control settings.
 from typing import Dict, Any, Tuple
 from chipsec.chipset import cs
 from chipsec.library.register import BaseConfigRegisterHelper
-from chipsec.library.exceptions import MSRRegisterError
+from chipsec.library.exceptions import CSReadError, MSRRegisterError
 
 class MSRRegisters(BaseConfigRegisterHelper):
     """
@@ -202,7 +202,8 @@ class MSRRegisters(BaseConfigRegisterHelper):
             Current register value
 
         Raises:
-            MSRRegisterError: If read operation fails
+            CSReadError: If the underlying hardware access fails (propagated so callers can degrade gracefully)
+            MSRRegisterError: If read operation fails for any other reason
         """
         try:
             self.logger.log_debug(f'reading {self.name}')
@@ -210,6 +211,8 @@ class MSRRegisters(BaseConfigRegisterHelper):
             eax, edx = _cs.hals.msr.read_msr(self.thread, self.msr)
             self.value = self._combine_32bit_values(eax, edx)
             return self.value
+        except CSReadError:
+            raise
         except Exception as e:
             raise MSRRegisterError(
                 f"Failed to read MSR register {self.name} at {self.get_address_info()}: {e}"
@@ -223,7 +226,8 @@ class MSRRegisters(BaseConfigRegisterHelper):
             value: Value to write to the register
 
         Raises:
-            MSRRegisterError: If write operation fails
+            CSReadError: If the underlying hardware access fails (propagated so callers can degrade gracefully)
+            MSRRegisterError: If write operation fails for any other reason
         """
         try:
             self.logger.log_debug(f'writing 0x{value:X} to {self.name}')
@@ -231,6 +235,8 @@ class MSRRegisters(BaseConfigRegisterHelper):
             eax, edx = self._split_64bit_value(value)
             _cs.hals.msr.write(self.thread, self.msr, eax, edx)
             self.value = value
+        except CSReadError:
+            raise
         except Exception as e:
             raise MSRRegisterError(
                 f"Failed to write to MSR register {self.name} at {self.get_address_info()}: {e}"

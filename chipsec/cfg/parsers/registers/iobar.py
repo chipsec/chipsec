@@ -26,7 +26,7 @@ in the CHIPSEC framework. I/O BAR registers provide access to device registers t
 
 from typing import Dict, Any, Optional, Tuple
 from chipsec.library.register import BaseConfigRegisterHelper
-from chipsec.library.exceptions import IOBARRegisterError
+from chipsec.library.exceptions import CSReadError, IOBARRegisterError
 from chipsec.chipset import cs
 
 
@@ -168,6 +168,7 @@ class IOBARRegisters(BaseConfigRegisterHelper):
         Resolve the BAR base address using CHIPSEC HAL if not already done.
 
         Raises:
+            CSReadError: If the underlying hardware access fails
             IOBARRegisterError: If BAR resolution fails
         """
         if self.io_port is not None:
@@ -176,6 +177,8 @@ class IOBARRegisters(BaseConfigRegisterHelper):
             _cs = cs()
             (self.bar_base, self.bar_size) = _cs.hals.iobar.get_IO_BAR_base_address(self.bar, self.get_instance())
             self.io_port = self.bar_base + self.offset
+        except CSReadError:
+            raise
         except Exception as e:
             raise IOBARRegisterError(f"Failed to resolve BAR {self.bar} for register {self.name}: {e}") from e
 
@@ -230,7 +233,8 @@ class IOBARRegisters(BaseConfigRegisterHelper):
             Current register value
 
         Raises:
-            IOBARRegisterError: If read operation fails
+            CSReadError: If the underlying hardware access fails (propagated so callers can degrade gracefully)
+            IOBARRegisterError: If read operation fails for any other reason
         """
         try:
             self.logger.log_debug(f'reading {self.name}')
@@ -246,6 +250,8 @@ class IOBARRegisters(BaseConfigRegisterHelper):
             self.logger.log_debug('done reading')
 
             return self.value
+        except CSReadError:
+            raise
         except Exception as e:
             raise IOBARRegisterError(f"Failed to read I/O BAR register {self.name}: {e}") from e
 
@@ -257,7 +263,8 @@ class IOBARRegisters(BaseConfigRegisterHelper):
             value: Value to write to the register
 
         Raises:
-            IOBARRegisterError: If write operation fails
+            CSReadError: If the underlying hardware access fails (propagated so callers can degrade gracefully)
+            IOBARRegisterError: If write operation fails for any other reason
         """
         try:
             self.logger.log_debug(f'writing 0x{value:X} to {self.name}')
@@ -272,5 +279,7 @@ class IOBARRegisters(BaseConfigRegisterHelper):
             _cs.hals.io.write(self.io_port, value, self.size)
             self.value = value
 
+        except CSReadError:
+            raise
         except Exception as e:
             raise IOBARRegisterError(f"Failed to write to I/O BAR register {self.name}: {e}") from e

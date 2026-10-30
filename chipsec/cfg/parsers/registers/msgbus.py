@@ -28,7 +28,7 @@ through Intel's Message Bus protocol.
 from typing import Dict, Any
 from chipsec.chipset import cs
 from chipsec.library.register import BaseConfigRegisterHelper
-from chipsec.library.exceptions import MSGBUSRegisterError
+from chipsec.library.exceptions import CSReadError, MSGBUSRegisterError
 
 class MSGBUSRegisters(BaseConfigRegisterHelper):
     """
@@ -169,13 +169,16 @@ class MSGBUSRegisters(BaseConfigRegisterHelper):
             Current register value
 
         Raises:
-            MSGBUSRegisterError: If read operation fails
+            CSReadError: If the underlying hardware access fails (propagated so callers can degrade gracefully)
+            MSGBUSRegisterError: If read operation fails for any other reason
         """
         try:
             self.logger.log_debug(f'reading {self.name}')
             _cs = cs()
             self.value = _cs.hals.msgbus.msgbus_reg_read(self.port, self.offset)
             return self.value
+        except CSReadError:
+            raise
         except Exception as e:
             raise MSGBUSRegisterError(
                 f"Failed to read MSGBUS register {self.name} at {self.get_address_info()}: {e}"
@@ -189,13 +192,16 @@ class MSGBUSRegisters(BaseConfigRegisterHelper):
             value: Value to write to the register
 
         Raises:
-            MSGBUSRegisterError: If write operation fails
+            CSReadError: If the underlying hardware access fails (propagated so callers can degrade gracefully)
+            MSGBUSRegisterError: If write operation fails for any other reason
         """
         try:
             self.logger.log_debug(f'writing 0x{value:X} to {self.name}')
             _cs = cs()
             _cs.hals.msgbus.msgbus_reg_write(self.port, self.offset, value)
             self.value = value
+        except CSReadError:
+            raise
         except Exception as e:
             raise MSGBUSRegisterError(
                 f"Failed to write to MSGBUS register {self.name} at {self.get_address_info()}: {e}"

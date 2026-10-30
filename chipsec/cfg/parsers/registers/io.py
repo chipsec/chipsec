@@ -26,7 +26,7 @@ in the CHIPSEC framework. I/O registers are accessed through CPU I/O port instru
 
 from typing import Dict, Any
 from chipsec.library.register import BaseConfigRegisterHelper
-from chipsec.library.exceptions import IORegisterError
+from chipsec.library.exceptions import CSReadError, IORegisterError
 from chipsec.chipset import cs
 
 class IORegisters(BaseConfigRegisterHelper):
@@ -164,13 +164,16 @@ class IORegisters(BaseConfigRegisterHelper):
             Current register value
 
         Raises:
-            IORegisterError: If read operation fails
+            CSReadError: If the underlying hardware access fails (propagated so callers can degrade gracefully)
+            IORegisterError: If read operation fails for any other reason
         """
         try:
             self.logger.log_debug(f'reading {self.name}')
             _cs = cs()
             self.value = _cs.hals.io.read(self.io_port, self.size)
             return self.value
+        except CSReadError:
+            raise
         except Exception as e:
             raise IORegisterError(f"Failed to read I/O register {self.name} at port 0x{self.io_port:X}: {e}") from e
 
@@ -182,12 +185,15 @@ class IORegisters(BaseConfigRegisterHelper):
             value: Value to write to the register
 
         Raises:
-            IORegisterError: If write operation fails
+            CSReadError: If the underlying hardware access fails (propagated so callers can degrade gracefully)
+            IORegisterError: If write operation fails for any other reason
         """
         try:
             self.logger.log_debug(f'writing 0x{value:X} to {self.name}')
             _cs = cs()
             _cs.hals.io.write(self.io_port, value, self.size)
             self.value = value
+        except CSReadError:
+            raise
         except Exception as e:
             raise IORegisterError(f"Failed to write to I/O register {self.name} at port 0x{self.io_port:X}: {e}") from e

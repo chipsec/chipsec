@@ -27,7 +27,7 @@ memory-mapped message bus protocols.
 
 from typing import Dict, Any
 from chipsec.library.register import BaseConfigRegisterHelper
-from chipsec.library.exceptions import MM_MSGBUSRegisterError
+from chipsec.library.exceptions import CSReadError, MM_MSGBUSRegisterError
 from chipsec.chipset import cs
 
 class MM_MSGBUSRegisters(BaseConfigRegisterHelper):
@@ -174,13 +174,16 @@ class MM_MSGBUSRegisters(BaseConfigRegisterHelper):
             Current register value
 
         Raises:
-            MM_MSGBUSRegisterError: If read operation fails
+            CSReadError: If the underlying hardware access fails (propagated so callers can degrade gracefully)
+            MM_MSGBUSRegisterError: If read operation fails for any other reason
         """
         try:
             self.logger.log_debug(f'reading {self.name}')
             _cs = cs()
             self.value = _cs.hals.mmmsgbus.read(self.port, self.offset)
             return self.value
+        except CSReadError:
+            raise
         except Exception as e:
             raise MM_MSGBUSRegisterError(
                 f"Failed to read MM_MSGBUS register {self.name} at {self.get_address_info()}: {e}"
@@ -194,13 +197,16 @@ class MM_MSGBUSRegisters(BaseConfigRegisterHelper):
             value: Value to write to the register
 
         Raises:
-            MM_MSGBUSRegisterError: If write operation fails
+            CSReadError: If the underlying hardware access fails (propagated so callers can degrade gracefully)
+            MM_MSGBUSRegisterError: If write operation fails for any other reason
         """
         try:
             self.logger.log_debug(f'writing 0x{value:X} to {self.name}')
             _cs = cs()
             _cs.hals.mmmsgbus.write(self.port, self.offset, value)
             self.value = value
+        except CSReadError:
+            raise
         except Exception as e:
             raise MM_MSGBUSRegisterError(
                 f"Failed to write to MM_MSGBUS register {self.name} at {self.get_address_info()}: {e}"
