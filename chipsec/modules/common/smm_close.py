@@ -51,7 +51,7 @@ class smm_close(BaseModule):
     def is_supported(self) -> bool:
         if self.cs.is_amd():
             return self.cs.register.is_defined('SMMMASK')
-        self.logger.log("smm_lose is an AMD only module. Skipping module.")
+        self.logger.log("smm_close is an AMD only module. Skipping module.")
         return False
 
     def check_SMMClose(self) -> int:
