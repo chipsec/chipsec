@@ -142,6 +142,13 @@ def EFI_ERROR_STR(error: int) -> str:
         return "UNKNOWN"
 
 
+EFI_PAGE_SIZE = 0x1000
+
+# Memory attributes (EFI_MEMORY_DESCRIPTOR.Attribute / EFI_MEMORY_ATTRIBUTE_PROTOCOL)
+EFI_MEMORY_RP = 0x2000  # Read-protected; reads fault
+EFI_MEMORY_RO = 0x20000  # Read-only; writes fault
+
+
 EFI_GUID_FMT = "16s"
 EFI_GUID_SIZE = struct.calcsize(EFI_GUID_FMT)
 

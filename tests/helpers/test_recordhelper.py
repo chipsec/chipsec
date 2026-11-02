@@ -20,9 +20,11 @@
 # To execute: python -m unittest tests.helpers.test_recordhelper
 from os import remove
 import unittest
+from unittest.mock import Mock
 from os.path import join, isfile
 import chipsec.helper.replay.replayhelper as rph
 import chipsec.helper.record.recordhelper as rch
+from chipsec.library.exceptions import PhysicalMemoryAccessError
 
 
 class RecordHelperTest(unittest.TestCase):
@@ -31,6 +33,73 @@ class RecordHelperTest(unittest.TestCase):
         unittest.TestCase.tearDown(self)
         if isfile(self.temp_file):
             remove(self.temp_file)
+
+    def test_unsafe_phys_mem_calls_are_forwarded_and_recorded(self):
+        self.temp_file = join("tests", "helpers", "kblrecordtest_unsafe_temp.json")
+        recordhelper = rch.RecordHelper(self.temp_file)
+        subhelper = Mock()
+        subhelper.read_phys_mem_unsafe.return_value = b'\xaa'
+        subhelper.write_phys_mem_unsafe.return_value = 1
+        recordhelper.switch_subhelper(subhelper)
+
+        self.assertEqual(recordhelper.read_phys_mem_unsafe(0xF0000, 1), b'\xaa')
+        self.assertEqual(recordhelper.write_phys_mem_unsafe(0x1000, 1, b'\x01'), 1)
+
+        subhelper.read_phys_mem_unsafe.assert_called_once_with(0xF0000, 1)
+        subhelper.write_phys_mem_unsafe.assert_called_once_with(0x1000, 1, b'\x01')
+        subhelper.read_phys_mem.assert_not_called()
+        subhelper.write_phys_mem.assert_not_called()
+        self.assertEqual(recordhelper._data['read_phys_mem_unsafe'], {'(983040,1)': ['\xaa']})
+        self.assertEqual(recordhelper._data['write_phys_mem_unsafe'], {"(4096,1,b'\\x01')": ['1']})
+
+    def test_efi_system_table_address_is_forwarded_and_recorded(self):
+        self.temp_file = join("tests", "helpers", "kblrecordtest_systab_temp.json")
+        recordhelper = rch.RecordHelper(self.temp_file)
+        subhelper = Mock()
+        subhelper.get_EFI_System_Table_address.return_value = 0x7FEE0018
+        recordhelper.switch_subhelper(subhelper)
+
+        self.assertEqual(recordhelper.get_EFI_System_Table_address(), 0x7FEE0018)
+
+        subhelper.get_EFI_System_Table_address.assert_called_once_with()
+        self.assertEqual(recordhelper._data['get_EFI_System_Table_address'], {'()': [str(0x7FEE0018)]})
+
+    def test_a_recorded_phys_mem_error_is_raised_on_replay(self):
+        self.temp_file = join("tests", "helpers", "kblrecordtest_pma_temp.json")
+        recordhelper = rch.RecordHelper(self.temp_file)
+        subhelper = Mock()
+        subhelper.read_phys_mem.side_effect = PhysicalMemoryAccessError('read refused', 17)
+        subhelper.write_phys_mem.side_effect = PhysicalMemoryAccessError('write refused', 17)
+        recordhelper.switch_subhelper(subhelper)
+        with self.assertRaises(PhysicalMemoryAccessError):
+            recordhelper.read_phys_mem(0xA0000, 0x10)
+        with self.assertRaises(PhysicalMemoryAccessError):
+            recordhelper.write_phys_mem(0xA0000, 1, b'\x01')
+        recordhelper._save()
+
+        replayhelper = rph.ReplayHelper(self.temp_file)
+        replayhelper.start()
+        with self.assertRaisesRegex(PhysicalMemoryAccessError, 'read refused'):
+            replayhelper.read_phys_mem(0xA0000, 0x10)
+        with self.assertRaisesRegex(PhysicalMemoryAccessError, 'write refused'):
+            replayhelper.write_phys_mem(0xA0000, 1, b'\x01')
+
+    def test_memory_that_looks_like_a_recorded_error_replays_as_data(self):
+        self.temp_file = join("tests", "helpers", "kblrecordtest_escape_temp.json")
+        payload = b"!! <class 'builtins.ValueError'>: data"
+        recordhelper = rch.RecordHelper(self.temp_file)
+        subhelper = Mock()
+        subhelper.read_phys_mem.return_value = payload
+        subhelper.read_phys_mem_unsafe.return_value = b'!!!x'
+        recordhelper.switch_subhelper(subhelper)
+        self.assertEqual(recordhelper.read_phys_mem(0x1000, len(payload)), payload)
+        self.assertEqual(recordhelper.read_phys_mem_unsafe(0x2000, 4), b'!!!x')
+        recordhelper._save()
+
+        replayhelper = rph.ReplayHelper(self.temp_file)
+        replayhelper.start()
+        self.assertEqual(replayhelper.read_phys_mem(0x1000, len(payload)), payload)
+        self.assertEqual(replayhelper.read_phys_mem_unsafe(0x2000, 4), b'!!!x')
 
     def test_record(self):
         self.original_file = join("tests", "helpers", "kblreplaytest.json")

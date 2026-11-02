@@ -30,7 +30,7 @@ from collections.abc import Callable
 from typing import Dict, List, Tuple, Optional, Union, TYPE_CHECKING
 
 from chipsec.library.defines import bytestostring
-from chipsec.library.exceptions import UnimplementedAPIError
+from chipsec.library.exceptions import OsHelperError, UnimplementedAPIError
 from chipsec.library.file import read_file
 from chipsec.library import acpi_tables
 from chipsec.hal.hal_base import HALBase
@@ -232,9 +232,17 @@ class ACPI(HALBase):
         rsdp = None
         logger().log_hal('[acpi] searching RSDP in EBDA...')
         ebda_ptr_addr = 0x40E
-        ebda_addr = struct.unpack('<H', self.cs.hals.memory.read_physical_mem(ebda_ptr_addr, 2))[0] << 4
+        try:
+            ebda_addr = struct.unpack('<H', self.cs.hals.memory.read_physical_mem(ebda_ptr_addr, 2))[0] << 4
+        except OsHelperError as err:
+            logger().log_hal(f'[acpi] Unable to read EBDA pointer: {err}')
+            return rsdp, rsdp_pa
         if ebda_addr > 0x400 and ebda_addr < 0xA0000:
-            membuf = self.cs.hals.memory.read_physical_mem(ebda_addr, 0xA0000 - ebda_addr)
+            try:
+                membuf = self.cs.hals.memory.read_physical_mem(ebda_addr, 0xA0000 - ebda_addr)
+            except OsHelperError as err:
+                logger().log_hal(f'[acpi] Unable to read EBDA at 0x{ebda_addr:X}: {err}')
+                return rsdp, rsdp_pa
             pos = bytestostring(membuf).find(ACPI_RSDP_SIG)
             if -1 != pos:
                 rsdp_pa = ebda_addr + pos
@@ -251,7 +259,11 @@ class ACPI(HALBase):
     def _find_RSDP_in_legacy_BIOS_segments(self) -> Tuple[Optional[acpi_tables.RSDP], Optional[int]]:
         rsdp_pa = None
         rsdp = None
-        membuf = self.cs.hals.memory.read_physical_mem(0xE0000, 0x20000)
+        try:
+            membuf = self.cs.hals.memory.read_physical_mem(0xE0000, 0x20000)
+        except OsHelperError as err:
+            logger().log_hal(f'[acpi] Unable to read legacy BIOS E/F segments: {err}')
+            return rsdp, rsdp_pa
         membuf = bytestostring(membuf)
         pos = bytestostring(membuf).find(ACPI_RSDP_SIG)
         if -1 != pos:
@@ -277,7 +289,7 @@ class ACPI(HALBase):
                 logger().log_hal(f'[acpi] ACPI 2.0+ RSDP {{{RSDP_GUID_ACPI2_0}}} in EFI Config Table: 0x{rsdp_pa:016X}')
             elif RSDP_GUID_ACPI1_0 in ect.VendorTables:
                 rsdp_pa = ect.VendorTables[RSDP_GUID_ACPI1_0]
-                logger().log_hal('[acpi] ACPI 1.0 RSDP {{{RSDP_GUID_ACPI1_0}}} in EFI Config Table: 0x{rsdp_pa:016X}')
+                logger().log_hal(f'[acpi] ACPI 1.0 RSDP {{{RSDP_GUID_ACPI1_0}}} in EFI Config Table: 0x{rsdp_pa:016X}')
 
         if rsdp_pa:
             rsdp = self.read_RSDP(rsdp_pa)
@@ -298,12 +310,24 @@ class ACPI(HALBase):
         (smram_base, _, _) = self.cs.hals.cpu.get_SMRAM()
         pa = smram_base - CHUNK_SZ
         while pa > CHUNK_SZ:
-            membuf = self.cs.hals.memory.read_physical_mem(pa, CHUNK_SZ)
+            try:
+                membuf = self.cs.hals.memory.read_physical_mem(pa, CHUNK_SZ)
+            except OsHelperError as err:
+                logger().log_hal(f'[acpi] Unable to read memory at pa: {pa:016X} Error: {err}')
+                pa -= CHUNK_SZ
+                continue
             pos = bytestostring(membuf).find(ACPI_RSDP_SIG)
             if -1 != pos:
                 rsdp_pa = pa + pos
-                logger().log_hal(f"[acpi] Found '{ACPI_RSDP_SIG}' signature at 0x{rsdp_pa:16X}. Checking if valid RSDP.")
-                rsdp = self.read_RSDP(rsdp_pa)
+                logger().log_hal(f"[acpi] Found '{ACPI_RSDP_SIG}' signature at 0x{rsdp_pa:016X}. Checking if valid RSDP.")
+                try:
+                    rsdp = self.read_RSDP(rsdp_pa)
+                except OsHelperError as err:
+                    # A candidate near the end of the chunk can extend into an unreadable page.
+                    logger().log_hal(f'[acpi] Unable to read RSDP candidate at 0x{rsdp_pa:016X}. Error: {err}')
+                    rsdp, rsdp_pa = None, None
+                    pa -= CHUNK_SZ
+                    continue
                 if rsdp.is_RSDP_valid():
                     logger().log_hal(f'[acpi] Found RSDP in EFI memory: 0x{rsdp_pa:016X}')
                     break
@@ -314,16 +338,26 @@ class ACPI(HALBase):
     # Searches for Root System Description Pointer (RSDP) in various locations for legacy/EFI systems
     #
     def find_RSDP(self) -> Tuple[Optional[int], Optional[acpi_tables.RSDP]]:
-        rsdp, rsdp_pa = self._find_RSDP_in_EBDA()
+        searches = [self._find_RSDP_in_EBDA,
+                    self._find_RSDP_in_legacy_BIOS_segments,
+                    self._find_RSDP_in_EFI_config_table,
+                    self._find_RSDP_in_EFI]
+        if self.cs.helper.get_EFI_System_Table_address():
+            # The Configuration Table can be reached without scanning memory, so check it
+            # before the EBDA and E/F segments. Those live in page 0 and the legacy hole,
+            # which firmware enforcing NULL-pointer detection leaves unmapped.
+            searches.insert(0, searches.pop(2))
 
-        if rsdp_pa is None:
-            rsdp, rsdp_pa = self._find_RSDP_in_legacy_BIOS_segments()
-
-        if rsdp_pa is None:
-            rsdp, rsdp_pa = self._find_RSDP_in_EFI_config_table()
-
-        if rsdp_pa is None:
-            rsdp, rsdp_pa = self._find_RSDP_in_EFI()
+        rsdp, rsdp_pa = None, None
+        for search in searches:
+            try:
+                rsdp, rsdp_pa = search()
+            except OsHelperError as err:
+                # One unreadable location must not stop the remaining ones being searched.
+                logger().log_hal(f'[acpi] RSDP search failed, trying the next location: {err}')
+                continue
+            if rsdp_pa is not None:
+                break
 
         if rsdp is not None:
             logger().log_hal(str(rsdp))

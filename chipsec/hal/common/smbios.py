@@ -28,6 +28,7 @@ from typing import Dict, List, Optional, Tuple, Any, Union, Type
 from chipsec.library.defines import BOUNDARY_1MB, bytestostring
 from chipsec.hal import hal_base
 from chipsec.hal.common import uefi
+from chipsec.library.exceptions import OsHelperError
 from chipsec.library.logger import logger
 
 SCAN_LOW_LIMIT = 0xF0000
@@ -356,7 +357,14 @@ class SMBIOS(hal_base.HALBase):
             logger().log_hal('Scanning legacy BIOS region for SMBIOS signatures')
             pa = BOUNDARY_1MB - SCAN_SIZE
             while (pa >= SCAN_LOW_LIMIT):
-                mem_buffer = self.cs.hals.memory.read_physical_mem(pa, SCAN_SIZE)
+                try:
+                    mem_buffer = self.cs.hals.memory.read_physical_mem(pa, SCAN_SIZE)
+                except OsHelperError as err:
+                    # The helper refuses unmapped or protected pages (e.g. a legacy-free
+                    # platform has no BIOS region below 1MB); skip rather than abort.
+                    logger().log_hal(f'- Unable to read 0x{pa:08X}, skipping. Error: {err}')
+                    pa -= SCAN_SIZE
+                    continue
                 sig_pa = mem_buffer.find(SMBIOS_2_x_SIG) + pa
                 if sig_pa >= pa and self.smbios_2_pa is None:
                     logger().log_hal(f'+ Found SMBIOS 2.x signature @ 0x{sig_pa:08X}')

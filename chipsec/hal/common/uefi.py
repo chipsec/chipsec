@@ -249,7 +249,40 @@ class UEFI(hal_base.HALBase):
 
     EfiTable = Tuple[bool, int, Optional[EFI_TABLE_HEADER], Optional['EFI_SYSTEM_TABLE'], bytes]
 
+    def _read_EFI_Table_at(self, table_pa: int, table_sig: str) -> Optional[EfiTable]:
+        """Decode an EFI table at a known address, or None if it is not there."""
+        if not table_pa:
+            return None
+        table_size = struct.calcsize(EFI_TABLES[table_sig]['fmt'])
+        try:
+            table_buf = self.cs.hals.memory.read_physical_mem(table_pa, EFI_TABLE_HEADER_SIZE + table_size)
+        except OsHelperError as err:
+            logger().log_hal(f'[uefi] Unable to read EFI table at 0x{table_pa:016X}. Error: {err}')
+            return None
+        if len(table_buf) < EFI_TABLE_HEADER_SIZE + table_size:
+            logger().log_hal(f'[uefi] Short read of EFI table at 0x{table_pa:016X}')
+            return None
+
+        table_header = EFI_TABLE_HEADER(*struct.unpack_from(EFI_TABLE_HEADER_FMT, table_buf))
+        if bytestostring(table_header.Signature) != table_sig:
+            logger().log_hal(f"[uefi] No '{table_sig}' signature at 0x{table_pa:016X}")
+            return None
+
+        table = EFI_TABLES[table_sig]['struct'](*struct.unpack_from(EFI_TABLES[table_sig]['fmt'], table_buf[EFI_TABLE_HEADER_SIZE:]))
+        logger().log_hal(f"[uefi] Found EFI table at 0x{table_pa:016X} with signature '{table_sig}'")
+        logger().log_hal(str(table_header))
+        logger().log_hal(str(table))
+        return (True, table_pa, table_header, table, table_buf)
+
     def find_EFI_Table(self, table_sig: str) -> EfiTable:
+        # Prefer the firmware-reported System Table address over scanning memory
+        # a megabyte at a time. The scan can touch pages that newer firmware
+        # leaves unmapped, which is a fatal page fault in the UEFI shell.
+        if table_sig == EFI_SYSTEM_TABLE_SIGNATURE:
+            est = self._read_EFI_Table_at(self.helper.get_EFI_System_Table_address(), table_sig)
+            if est is not None:
+                return est
+
         (smram_base, _, _) = self.cs.hals.cpu.get_SMRAM()
         CHUNK_SZ = 1024 * 1024  # 1MB
         logger().log_hal(f"[uefi] Searching memory for EFI table with signature '{table_sig}'...")

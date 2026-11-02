@@ -21,6 +21,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 from chipsec.library.acpi_tables import RSDP
 from chipsec.hal.common.acpi import ACPI, ACPI_TABLE_SIG_DSDT
+from chipsec.library.exceptions import PhysicalMemoryAccessError
 from chipsec.library.acpi_aml_parser import (
     AMLFieldLocation,
     CRSExecutor,
@@ -152,3 +153,76 @@ class TestACPI(unittest.TestCase):
         self.assertEqual(test_acpi.get_acpi_field_value([ACPI_TABLE_SIG_DSDT], ['SBRG']), [])
         mock_logger().log_hal.assert_called_once_with(
             '[acpi] Error reading SBRG at 0x0000000070000000: unmapped')
+
+
+class TestFindRSDP(unittest.TestCase):
+    SEARCHES = ('_find_RSDP_in_EBDA', '_find_RSDP_in_legacy_BIOS_segments',
+                '_find_RSDP_in_EFI_config_table', '_find_RSDP_in_EFI')
+
+    def _acpi(self, system_table_address):
+        acpi = ACPI.__new__(ACPI)
+        acpi.cs = MagicMock()
+        acpi.cs.helper.get_EFI_System_Table_address.return_value = system_table_address
+        self.calls = []
+        for name in self.SEARCHES:
+            setattr(acpi, name, MagicMock(side_effect=lambda n=name: self.calls.append(n) or (None, None)))
+        return acpi
+
+    @patch('chipsec.hal.common.acpi.logger')
+    def test_legacy_locations_searched_first_without_system_table(self, _):
+        acpi = self._acpi(None)
+        self.assertEqual(acpi.find_RSDP(), (None, None))
+        self.assertEqual(self.calls, list(self.SEARCHES))
+
+    @patch('chipsec.hal.common.acpi.logger')
+    def test_config_table_searched_first_with_system_table(self, _):
+        acpi = self._acpi(0x7FEE0018)
+        rsdp = MagicMock()
+        acpi._find_RSDP_in_EFI_config_table.side_effect = None
+        acpi._find_RSDP_in_EFI_config_table.return_value = (rsdp, 0x7FF7E014)
+        self.assertEqual(acpi.find_RSDP(), (0x7FF7E014, rsdp))
+        acpi._find_RSDP_in_EBDA.assert_not_called()
+        acpi._find_RSDP_in_legacy_BIOS_segments.assert_not_called()
+        acpi._find_RSDP_in_EFI.assert_not_called()
+
+    @patch('chipsec.hal.common.acpi.logger')
+    def test_unreadable_legacy_memory_is_skipped(self, _):
+        acpi = ACPI.__new__(ACPI)
+        acpi.cs = MagicMock()
+        acpi.cs.hals.memory.read_physical_mem.side_effect = PhysicalMemoryAccessError('not mapped', 17)
+        self.assertEqual(acpi._find_RSDP_in_EBDA(), (None, None))
+        self.assertEqual(acpi._find_RSDP_in_legacy_BIOS_segments(), (None, None))
+
+    @patch('chipsec.hal.common.acpi.logger')
+    def test_a_search_that_cannot_read_memory_does_not_stop_the_others(self, _):
+        acpi = self._acpi(0x7FEE0018)
+        rsdp = MagicMock()
+        acpi._find_RSDP_in_EFI_config_table.side_effect = PhysicalMemoryAccessError('not mapped', 17)
+        acpi._find_RSDP_in_EBDA.side_effect = None
+        acpi._find_RSDP_in_EBDA.return_value = (rsdp, 0x9FC10)
+        self.assertEqual(acpi.find_RSDP(), (0x9FC10, rsdp))
+
+    @patch('chipsec.hal.common.acpi.logger')
+    def test_no_rsdp_when_every_search_cannot_read_memory(self, _):
+        acpi = self._acpi(None)
+        for name in self.SEARCHES:
+            getattr(acpi, name).side_effect = PhysicalMemoryAccessError('not mapped', 17)
+        self.assertEqual(acpi.find_RSDP(), (None, None))
+        for name in self.SEARCHES:
+            getattr(acpi, name).assert_called_once_with()
+
+    @patch('chipsec.hal.common.acpi.logger')
+    def test_an_unreadable_rsdp_candidate_does_not_stop_the_efi_scan(self, _):
+        # SMRAM at 4 MiB: the scan reads the chunks at 3 MiB and then 2 MiB. The
+        # candidate in the first cannot be read; the one in the second is valid.
+        acpi = ACPI.__new__(ACPI)
+        acpi.cs = MagicMock()
+        acpi.cs.hals.cpu.get_SMRAM.return_value = (0x400000, 0, 0)
+        chunk = b'\x00' * 0x10 + b'RSD PTR ' + b'\x00' * (0x100000 - 0x18)
+        acpi.cs.hals.memory.read_physical_mem.return_value = chunk
+        rsdp = MagicMock()
+        rsdp.is_RSDP_valid.return_value = True
+        acpi.read_RSDP = MagicMock(side_effect=[PhysicalMemoryAccessError('not mapped', 17), rsdp])
+
+        self.assertEqual(acpi._find_RSDP_in_EFI(), (rsdp, 0x200010))
+        acpi.read_RSDP.assert_any_call(0x300010)

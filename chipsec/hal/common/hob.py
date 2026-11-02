@@ -26,17 +26,20 @@ The HOB list is published in the EFI Configuration Table under the gEfiHobListGu
 still resident in memory (i.e. when running in the EFI environment).
 """
 
+import struct
 from typing import Tuple, List, Dict, Optional
 
 from chipsec.hal import hal_base
 from chipsec.cfg.parsers.hob_parser import HOBCommands, HobDefinition
-from chipsec.library.exceptions import PlatformConfigError
+from chipsec.library.exceptions import OsHelperError, PlatformConfigError
 from chipsec.library.register import ObjList
 from chipsec.library.uefi.hob import EFI_HOB_LIST_GUID, EFI_HOB_HANDOFF_INFO_TABLE_SIZE, MAX_HOB_LIST_SIZE, EFI_HOB_TYPE_GUID_EXTENSION
+from chipsec.library.uefi.hob import EFI_HOB_GENERIC_HEADER_FMT, EFI_HOB_GENERIC_HEADER_SIZE
 from chipsec.library.uefi.hob import Hob, parse_phit, walk_hob_list
 
-# Size of each incremental physical memory read while walking the HOB list (64KB)
-HOB_READ_CHUNK_SIZE = 0x10000
+# Reads of the HOB list are rounded up to this boundary, never beyond the page
+# holding the end of the HOB currently being parsed.
+HOB_PAGE_SIZE = 0x1000
 
 # Decoded fields that hold a GUID, searched when filtering the list by GUID
 HOB_GUID_FIELDS = ('GUID', 'FvName_GUID', 'FileName_GUID', 'Owner_GUID')
@@ -97,25 +100,48 @@ class HOB(hal_base.HALBase):
             return (False, b'')
 
         # Validate that the data at hob_pa starts with a PHIT (HANDOFF) HOB.
-        hdr_buf = self.cs.hals.memory.read_physical_mem(self.hob_pa, EFI_HOB_HANDOFF_INFO_TABLE_SIZE)
+        try:
+            hdr_buf = self.cs.hals.memory.read_physical_mem(self.hob_pa, EFI_HOB_HANDOFF_INFO_TABLE_SIZE)
+        except OsHelperError as err:
+            self.logger.log_hal(f'[hob] Unable to read PHIT HOB at 0x{self.hob_pa:016X}: {err}')
+            return (False, b'')
         phit = parse_phit(hdr_buf)
         if phit is None:
             self.logger.log_error(f'[hob] Data at 0x{self.hob_pa:016X} does not start with a valid PHIT HOB')
             return (False, b'')
         self.logger.log_hal(str(phit))
 
-        # Walk the list in chunks until END_OF_HOB_LIST is found.
+        # Walk the list until END_OF_HOB_LIST is found. Each read stops at the page
+        # boundary after the end of the next HOB, so pages past the end of the list
+        # (which firmware may leave unmapped) are never touched.
         hob_buf = bytearray(hdr_buf)
+        consumed = 0
         while len(hob_buf) < MAX_HOB_LIST_SIZE:
-            chunk = self.cs.hals.memory.read_physical_mem(self.hob_pa + len(hob_buf), HOB_READ_CHUNK_SIZE)
-            if not chunk:
-                break
-            hob_buf += chunk
-            _, complete, consumed = walk_hob_list(hob_buf, self.hob_pa)
+            _, complete, walked = walk_hob_list(bytes(hob_buf[consumed:]))
+            consumed += walked
             if complete:
                 del hob_buf[consumed:]
                 break
-            if len(chunk) < HOB_READ_CHUNK_SIZE:
+            needed = consumed + EFI_HOB_GENERIC_HEADER_SIZE
+            if len(hob_buf) >= needed:
+                _, hob_length, _ = struct.unpack_from(EFI_HOB_GENERIC_HEADER_FMT, hob_buf, consumed)
+                if hob_length < EFI_HOB_GENERIC_HEADER_SIZE:
+                    # Malformed HOB; reading further would only walk unrelated memory.
+                    break
+                needed = consumed + hob_length
+            read_pa = self.hob_pa + len(hob_buf)
+            read_end = (self.hob_pa + needed + HOB_PAGE_SIZE - 1) & ~(HOB_PAGE_SIZE - 1)
+            read_size = min(read_end - read_pa, MAX_HOB_LIST_SIZE - len(hob_buf))
+            try:
+                chunk = self.cs.hals.memory.read_physical_mem(read_pa, read_size)
+            except OsHelperError as err:
+                # Keep what has been read so far; the caller reports the list as truncated.
+                self.logger.log_hal(f'[hob] Unable to read HOB list at 0x{read_pa:016X}: {err}')
+                break
+            if not chunk:
+                break
+            hob_buf += chunk
+            if len(chunk) < read_size:
                 # Could not read a full chunk; no more memory to consume.
                 break
 

@@ -71,8 +71,8 @@ class OsHelper:
                 helper_path = f'chipsec.helper.{helper}.{helper}helper'
                 hlpr = importlib.import_module(helper_path)
                 self.avail_helpers[f'{helper}helper'] = hlpr
-            except ImportError:
-                logger().log_debug(f'Unable to load helper: {helper}')
+            except Exception as e:
+                logger().log_debug(f'Unable to load helper: {helper} ({e})')
 
     def get_helper(self, name: str) -> Any:
         ret = None
