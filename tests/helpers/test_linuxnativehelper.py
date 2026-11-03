@@ -26,12 +26,27 @@ import sys
 import unittest
 from unittest.mock import MagicMock, mock_open, patch
 
-import chipsec.helper.linuxnative.linuxnativehelper as lnh
-from chipsec.library.exceptions import OsHelperError
+from tests.helpers.helper_utils import POSIX_MMAP, fake_mmap_module, stub_posix_only_modules, stub_posix_only_os_functions
+
+stub_posix_only_modules()
+
+import chipsec.helper.linuxnative.linuxnativehelper as lnh  # noqa: E402
+from chipsec.library.exceptions import OsHelperError  # noqa: E402
 
 MOD = 'chipsec.helper.linuxnative.linuxnativehelper'
 
 PACK = 'Q' if sys.maxsize > 2 ** 32 else 'I'
+
+_os_stubs = []
+
+
+def setUpModule():
+    _os_stubs.extend(stub_posix_only_os_functions())
+
+
+def tearDownModule():
+    for patcher in _os_stubs:
+        patcher.stop()
 
 
 class FakeMapping(bytearray):
@@ -85,13 +100,12 @@ class LinuxNativeHelperLifecycleTest(unittest.TestCase):
         self.assertIsInstance(lnh.get_helper(), lnh.LinuxNativeHelper)
 
     def test_memory_mapping_tracks_boundaries(self):
-        region = lnh.MemoryMapping(-1, mmap.PAGESIZE,
-                                   mmap.MAP_SHARED | mmap.MAP_ANONYMOUS,
-                                   mmap.PROT_READ | mmap.PROT_WRITE,
-                                   offset=0)
+        # Build the base anonymous mapping portably; MemoryMapping.__init__ only records the bounds.
+        region = lnh.MemoryMapping.__new__(lnh.MemoryMapping, -1, mmap.PAGESIZE)
         try:
-            self.assertEqual(region.start, 0)
-            self.assertEqual(region.end, mmap.PAGESIZE)
+            region.__init__(-1, mmap.PAGESIZE, POSIX_MMAP.MAP_SHARED, POSIX_MMAP.PROT_READ, offset=0x3000)
+            self.assertEqual(region.start, 0x3000)
+            self.assertEqual(region.end, 0x3000 + mmap.PAGESIZE)
             self.assertEqual(len(region), mmap.PAGESIZE)
         finally:
             region.close()
@@ -250,13 +264,14 @@ class LinuxNativeHelperMmioTest(unittest.TestCase):
         self.assertIsNone(self.helper.memory_mapping(0x1FFE, 4))
         self.assertIsNone(self.helper.memory_mapping(0x0FFF, 4))
 
+    @patch(f'{MOD}.mmap', new_callable=fake_mmap_module)
     @patch(f'{MOD}.resource.getpagesize', return_value=0x1000)
     @patch(f'{MOD}.MemoryMapping')
-    def test_map_io_space_creates_mapping(self, memory_mapping, _getpagesize):
+    def test_map_io_space_creates_mapping(self, memory_mapping, _getpagesize, _mmap):
         memory_mapping.return_value = make_region(0x2000, 0x1000)
         self.helper.map_io_space(0x2004, 4, 0)
-        memory_mapping.assert_called_once_with(9, 0x1000, mmap.MAP_SHARED,
-                                               mmap.PROT_READ | mmap.PROT_WRITE,
+        memory_mapping.assert_called_once_with(9, 0x1000, POSIX_MMAP.MAP_SHARED,
+                                               POSIX_MMAP.PROT_READ | POSIX_MMAP.PROT_WRITE,
                                                offset=0x2000)
         self.assertEqual(len(self.helper.mappings), 1)
 
@@ -297,14 +312,12 @@ class LinuxNativeHelperMmioTest(unittest.TestCase):
         self.helper.devmem_available = MagicMock(return_value=False)
         self.assertEqual(self.helper.read_mmio_reg(0x1000, 4), 0)
 
-    @patch(f'{MOD}.logger')
-    def test_read_mmio_reg_unmappable_region(self, mock_logger):
+    def test_read_mmio_reg_unmappable_region(self):
         self.helper.memory_mapping = MagicMock(return_value=None)
         self.helper.map_io_space = MagicMock()
-        # The helper only logs the failure, so the following memoryview(None) raises.
-        with self.assertRaises(TypeError):
+        with self.assertRaises(OsHelperError) as ctx:
             self.helper.read_mmio_reg(0x1000, 4)
-        mock_logger.return_value.log_error.assert_called_once_with('Unable to map region 00001000')
+        self.assertEqual(str(ctx.exception), 'Unable to map region 00001000')
 
     def test_write_mmio_reg_byte(self):
         region = make_region(0x1000, 16)
@@ -336,13 +349,12 @@ class LinuxNativeHelperMmioTest(unittest.TestCase):
         self.helper.devmem_available = MagicMock(return_value=False)
         self.assertIsNone(self.helper.write_mmio_reg(0x1000, 4, 0x1))
 
-    @patch(f'{MOD}.logger')
-    def test_write_mmio_reg_unmappable_region(self, mock_logger):
+    def test_write_mmio_reg_unmappable_region(self):
         self.helper.memory_mapping = MagicMock(return_value=None)
         self.helper.map_io_space = MagicMock()
-        with self.assertRaises(TypeError):
+        with self.assertRaises(OsHelperError) as ctx:
             self.helper.write_mmio_reg(0x1000, 4, 0x1)
-        mock_logger.return_value.log_error.assert_called_once_with('Unable to map region 00001000')
+        self.assertEqual(str(ctx.exception), 'Unable to map region 00001000')
 
 
 class LinuxNativeHelperPhysMemTest(unittest.TestCase):
@@ -360,7 +372,7 @@ class LinuxNativeHelperPhysMemTest(unittest.TestCase):
 
     def test_read_phys_mem_without_devmem(self):
         self.helper.devmem_available = MagicMock(return_value=False)
-        self.assertEqual(self.helper.read_phys_mem(0x5000, 2), b'\x00')
+        self.assertEqual(self.helper.read_phys_mem(0x5000, 2), b'\x00\x00')
 
     @patch(f'{MOD}.os.write', return_value=2)
     @patch(f'{MOD}.os.lseek')

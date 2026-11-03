@@ -19,12 +19,12 @@
 
 # To execute: python[3] -m unittest tests.helpers.test_linuxnative_legacy_pci
 
-import mmap
 import unittest
 from unittest.mock import MagicMock, patch
 
 import chipsec.helper.linuxnative.legacy_pci as legacy_pci
 from chipsec.library.exceptions import OsHelperError
+from tests.helpers.helper_utils import POSIX_MMAP, fake_mmap_module
 
 MOD = 'chipsec.helper.linuxnative.legacy_pci'
 
@@ -41,9 +41,11 @@ class PortsTest(unittest.TestCase):
     def _build_ports(self, iopl_result=0):
         in_page = MagicMock(name='in_page')
         out_page = MagicMock(name='out_page')
+        mmap_mod = fake_mmap_module()
+        mmap_mod.mmap.side_effect = [in_page, out_page]
         patches = {
             'cdll': patch(f'{MOD}.CDLL'),
-            'mmap': patch(f'{MOD}.mmap.mmap', side_effect=[in_page, out_page]),
+            'mmap': patch(f'{MOD}.mmap', mmap_mod),
             'c_void_p': patch(f'{MOD}.c_void_p'),
             'addressof': patch(f'{MOD}.addressof', side_effect=[0x1000, 0x2000]),
             'cfunctype': patch(f'{MOD}.CFUNCTYPE'),
@@ -58,8 +60,8 @@ class PortsTest(unittest.TestCase):
         ports, in_page, out_page, started = self._build_ports()
         started['cdll'].assert_called_once_with('libc.so.6', use_errno=True)
         started['cdll'].return_value.iopl.assert_called_once_with(3)
-        started['mmap'].assert_called_with(-1, mmap.PAGESIZE, flags=mmap.MAP_PRIVATE,
-                                           prot=mmap.PROT_READ | mmap.PROT_WRITE | mmap.PROT_EXEC)
+        started['mmap'].mmap.assert_called_with(-1, POSIX_MMAP.PAGESIZE, flags=POSIX_MMAP.MAP_PRIVATE,
+                                                prot=POSIX_MMAP.PROT_READ | POSIX_MMAP.PROT_WRITE | POSIX_MMAP.PROT_EXEC)
         in_page.write.assert_called_once_with(legacy_pci.IN_PORT)
         out_page.write.assert_called_once_with(legacy_pci.OUT_PORT)
         self.assertIs(ports.inl_addr, in_page)

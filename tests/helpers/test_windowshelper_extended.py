@@ -54,12 +54,12 @@ class FakeBuffer:
         return self.raw
 
 
-def make_efi_var_blob(name: str, data: bytes, attributes: int, guid: bytes) -> bytes:
+def make_efi_var_blob(name: str, data: bytes, attributes: int, guid: bytes, last: bool = False) -> bytes:
     """Build a single NtEnumerateSystemEnvironmentValuesEx variable record."""
     header_size = struct.calcsize('<IIII16s')
     name_bytes = name.encode('utf-16-le') + b'\x00\x00'
     data_offset = header_size + len(name_bytes)
-    size = data_offset + len(data)
+    size = 0 if last else data_offset + len(data)
     return struct.pack('<IIII16s', size, data_offset, len(data), attributes, guid) + name_bytes + data
 
 
@@ -151,13 +151,13 @@ class TestWindowsHelperModuleFunctions(WindowsHelperExtendedBase):
 
     def test_get_efi_variables_parses_single_record(self):
         guid = bytes(range(16))
-        blob = make_efi_var_blob('AB', b'\xDE\xAD\xBE\xEF', 0x7, guid)
+        blob = make_efi_var_blob('AB', b'\xDE\xAD\xBE\xEF', 0x7, guid, last=True)
         variables = self.wh.getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2(blob)
         self.assertEqual(list(variables.keys()), ['AB'])
         (off, var_buf, hdr, data, guid_str, attrs) = variables['AB'][0]
         self.assertEqual(off, 0)
         self.assertEqual(var_buf, blob)
-        self.assertEqual(hdr.Size, len(blob))
+        self.assertEqual(hdr.Size, 0)
         self.assertEqual(hdr.DataOffset, 38)
         self.assertEqual(hdr.DataSize, 4)
         self.assertEqual(data, b'\xDE\xAD\xBE\xEF')
@@ -167,19 +167,20 @@ class TestWindowsHelperModuleFunctions(WindowsHelperExtendedBase):
     def test_get_efi_variables_parses_two_records(self):
         guid = bytes(range(16))
         blob = (make_efi_var_blob('AB', b'\x01\x02', 0x1, guid) +
-                make_efi_var_blob('CD', b'\x03', 0x2, guid))
+                make_efi_var_blob('CD', b'\x03', 0x2, guid, last=True))
         variables = self.wh.getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2(blob + b'\x00' * 8)
         self.assertEqual(sorted(variables.keys()), ['AB', 'CD'])
         self.assertEqual(variables['CD'][0][3], b'\x03')
+        self.assertEqual(variables['CD'][0][1], make_efi_var_blob('CD', b'\x03', 0x2, guid, last=True))
         self.assertEqual(variables['CD'][0][0], len(make_efi_var_blob('AB', b'\x01\x02', 0x1, guid)))
 
-    def test_get_efi_variables_stops_on_zero_size(self):
+    def test_get_efi_variables_stops_after_final_record(self):
         guid = bytes(range(16))
-        header_size = struct.calcsize('<IIII16s')
-        terminator = struct.pack('<IIII16s', 0, header_size, 0, 0, guid)
-        blob = make_efi_var_blob('AB', b'\x01', 0x1, guid) + terminator + b'\x00' * 64
+        blob = (make_efi_var_blob('AB', b'\x01', 0x1, guid, last=True) +
+                make_efi_var_blob('XX', b'\x02', 0x1, guid) + b'\x00' * 64)
         variables = self.wh.getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2(blob)
-        self.assertEqual(sorted(variables.keys()), ['', 'AB'])
+        self.assertEqual(sorted(variables.keys()), ['AB'])
+        self.assertEqual(variables['AB'][0][3], b'\x01')
 
     def test_get_efi_variables_empty_buffer(self):
         self.assertEqual(self.wh.getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2(b''), {})
@@ -677,7 +678,8 @@ class TestWindowsHelperHwApi(WindowsHelperExtendedBase):
     def test_send_sw_smi_architecture_mismatch_logs(self):
         self.helper.os_machine = 'i386'
         self.ioctl.return_value = b''
-        self.helper.send_sw_smi(0, 0, 0, 0, 0, 0, 0, 0)
+        with patch.object(self.wh.sys, 'maxsize', (1 << 63) - 1):
+            self.helper.send_sw_smi(0, 0, 0, 0, 0, 0, 0, 0)
         self.log.log.assert_called_once_with(
             '[helper] Python architecture must match OS architecture.  Run with i386 architecture of python')
 
@@ -692,6 +694,8 @@ class TestWindowsHelperEfiVariables(WindowsHelperExtendedBase):
         self._patch('WinError', MagicMock(return_value='winerr'))
         self.buffers = {}
         self._patch('create_string_buffer', self._create_buffer)
+        # The real ctypes is used on Windows and rejects FakeBuffer.
+        self._patch('PyLong_AsByteArray', MagicMock())
         self.helper.GetFirmwareEnvironmentVariable = MagicMock()
         self.helper.GetFirmwareEnvironmentVariableEx = MagicMock()
         self.helper.SetFirmwareEnvironmentVariable = MagicMock()
@@ -832,7 +836,6 @@ class TestWindowsHelperEfiVariables(WindowsHelperExtendedBase):
         self.buffers[4] = struct.pack('<I', len(blob))
         self.buffers[len(blob)] = blob
         self.helper.NtEnumerateSystemEnvironmentValuesEx.side_effect = [0xC0000023, 0]
-        self._patch('PyLong_AsByteArray', MagicMock())
         variables = self.helper.list_EFI_variables()
         self.assertEqual(list(variables.keys()), ['AB'])
         self.assertEqual(self.helper.NtEnumerateSystemEnvironmentValuesEx.call_count, 2)

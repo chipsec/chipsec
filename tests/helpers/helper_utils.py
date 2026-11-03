@@ -16,7 +16,40 @@
 #
 #
 
+import importlib.util
+import os
+import sys
 from struct import pack
+from types import SimpleNamespace
+from typing import List
+from unittest.mock import MagicMock, patch
+
+POSIX_ONLY_MODULES = ('fcntl', 'resource')
+POSIX_ONLY_OS_FUNCTIONS = ('chown', 'sched_getaffinity', 'sched_setaffinity')
+# Linux values; Windows' mmap module lacks the MAP_* and PROT_* constants.
+POSIX_MMAP = SimpleNamespace(PAGESIZE=0x1000, MAP_SHARED=0x01, MAP_PRIVATE=0x02, MAP_ANONYMOUS=0x20,
+                             PROT_READ=0x1, PROT_WRITE=0x2, PROT_EXEC=0x4)
+
+
+def stub_posix_only_modules() -> None:
+    """Make POSIX-only modules importable on every OS so Linux helpers can be tested anywhere."""
+    for name in POSIX_ONLY_MODULES:
+        if sys.modules.get(name) is None and importlib.util.find_spec(name) is None:
+            sys.modules[name] = MagicMock(name=name)
+
+
+def stub_posix_only_os_functions() -> List:
+    """Add missing POSIX-only os functions so tests can patch them; stop the returned patchers when done."""
+    patchers = [patch.object(os, name, create=True) for name in POSIX_ONLY_OS_FUNCTIONS if not hasattr(os, name)]
+    for patcher in patchers:
+        patcher.start()
+    return patchers
+
+
+def fake_mmap_module() -> MagicMock:
+    return MagicMock(name='mmap', **vars(POSIX_MMAP))
+
+
 class packer():
     def __init__(self, default_size_char = 'Q') -> None:
         self.size_char = default_size_char

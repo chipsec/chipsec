@@ -931,10 +931,19 @@ class TestHEST(unittest.TestCase):
         hest = HEST()
         size = hest.parseGHESS(hest_ghess(_type=10, related=1), 10)
 
-        self.assertEqual(size, 64)
+        self.assertEqual(size, 92)
         self.assertIn('Generic Hardware Error Source Version 2', hest.result_str)
         self.assertIn('Read Ack Preserve                             : 0x0000000000000001', hest.result_str)
         self.assertIn('Read Ack Write                                : 0x0000000000000002', hest.result_str)
+
+    def test_source_after_generic_error_source_v2_is_decoded(self):
+        hest = HEST()
+        hest.parse(struct.pack('<L', 2) + hest_ghess(_type=10) + hest_nmi(source_id=0x77))
+        rendered = str(hest)
+
+        self.assertIn('Generic Hardware Error Source Version 2', rendered)
+        self.assertIn('Architecture NMI Error Structure', rendered)
+        self.assertIn('Source ID                                     : 0x0077', rendered)
 
     def test_unknown_error_source_type_is_skipped(self):
         hest = HEST()
@@ -1243,7 +1252,7 @@ def nfit_platform_capabilities(capabilities=7):
 
 def nfit_table(*structures):
     body = b''.join(structures)
-    return NFIT(nfit_header(len(body))), struct.pack('<L', 0) + body
+    return NFIT(nfit_header(40 + len(body))), struct.pack('<L', 0) + body
 
 
 class TestNFIT(unittest.TestCase):
@@ -1312,12 +1321,19 @@ class TestNFIT(unittest.TestCase):
                 self.assertIn(name, str(nfit))
 
     def test_unknown_structure_type_is_skipped(self):
-        nfit = NFIT(nfit_header(0))
-        nfit.parse(struct.pack('<L', 0) + struct.pack('<HH', 9, 8) + b'\x00' * 4)
+        nfit, content = nfit_table(struct.pack('<HH', 9, 8) + b'\x00' * 4, nfit_smbios())
+        nfit.parse(content)
         rendered = str(nfit)
 
         self.assertIn('NVDIMM Firmware Interface Table ( NFIT )', rendered)
-        self.assertNotIn('[Type', rendered)
+        self.assertNotIn('[Type 9', rendered)
+        self.assertIn('SMBIOS Management Information Structure [Type 3]', rendered)
+
+    def test_zero_length_structure_stops_the_walk(self):
+        nfit, content = nfit_table(struct.pack('<HH', 9, 0) + b'\x00' * 4)
+        nfit.parse(content)
+
+        self.assertNotIn('[Type', str(nfit))
 
     def test_region_mapping_structure_is_decoded(self):
         nfit, content = nfit_table(nfit_map())
@@ -1419,7 +1435,13 @@ class TestNFIT(unittest.TestCase):
 
         self.assertIn('System Physical Address (SPA) Range Structure', rendered)
         self.assertIn('Platform Capabilities Structure [Type 7]', rendered)
-        self.assertEqual(rendered.count('Length:                    72'), 2)
+        self.assertEqual(rendered.count('Length:                    112'), 2)
+
+    def test_walk_stops_at_the_end_of_the_structure_bytes(self):
+        nfit, content = nfit_table(nfit_smbios())
+        nfit.parse(content + b'\x00' * 8)
+
+        self.assertEqual(str(nfit).count('[Type'), 1)
 
 
 if __name__ == '__main__':

@@ -19,11 +19,11 @@
 
 # To execute: python[3] -m unittest tests.helpers.test_linuxnative_cpuid
 
-import mmap
 import unittest
 from unittest.mock import MagicMock, patch
 
 import chipsec.helper.linuxnative.cpuid as cpuid_mod
+from tests.helpers.helper_utils import POSIX_MMAP, fake_mmap_module
 
 MOD = 'chipsec.helper.linuxnative.cpuid'
 
@@ -31,8 +31,11 @@ MOD = 'chipsec.helper.linuxnative.cpuid'
 def build_cpuid(machine='x86_64'):
     """Create a CPUID object whose executable page and function pointer are mocked out."""
     page = MagicMock()
+    mmap_mod = fake_mmap_module()
+    mmap_mod.mmap.return_value = page
+    mmap_mmap = mmap_mod.mmap
     with patch(f'{MOD}.platform.machine', return_value=machine), \
-            patch(f'{MOD}.mmap.mmap', return_value=page) as mmap_mmap, \
+            patch(f'{MOD}.mmap', mmap_mod), \
             patch(f'{MOD}.c_void_p') as c_void_p, \
             patch(f'{MOD}.addressof', return_value=0x1000) as addressof, \
             patch(f'{MOD}.CFUNCTYPE') as cfunctype:
@@ -52,8 +55,8 @@ class CPUIDTest(unittest.TestCase):
     def test_init_writes_opcodes_into_executable_page(self):
         instance, page, mmap_mmap, c_void_p, addressof, cfunctype = build_cpuid()
         try:
-            mmap_mmap.assert_called_once_with(-1, mmap.PAGESIZE, flags=mmap.MAP_PRIVATE,
-                                              prot=mmap.PROT_READ | mmap.PROT_WRITE | mmap.PROT_EXEC)
+            mmap_mmap.assert_called_once_with(-1, POSIX_MMAP.PAGESIZE, flags=POSIX_MMAP.MAP_PRIVATE,
+                                              prot=POSIX_MMAP.PROT_READ | POSIX_MMAP.PROT_WRITE | POSIX_MMAP.PROT_EXEC)
             expected_code = cpuid_mod._POSIX_64_OPC if cpuid_mod.is_64bit else cpuid_mod._CDECL_32_OPC
             page.write.assert_called_once_with(expected_code)
             c_void_p.from_buffer.assert_called_once_with(page)

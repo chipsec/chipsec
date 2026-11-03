@@ -207,8 +207,11 @@ def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2(nvram_buf: bytes) -> D
     off = 0
     while (off + header_size) < bsize:
         efi_var_hdr = EFI_HDR_WIN(*struct.unpack_from(header_fmt, buffer[off: off + header_size]))
-
-        next_var_offset = off + efi_var_hdr.Size
+        # Size is NextEntryOffset; 0 marks the final record, which still holds a variable.
+        if efi_var_hdr.Size:
+            next_var_offset = off + efi_var_hdr.Size
+        else:
+            next_var_offset = off + efi_var_hdr.DataOffset + efi_var_hdr.DataSize
         efi_var_buf = buffer[off: next_var_offset]
         efi_var_data = buffer[off + efi_var_hdr.DataOffset: off + efi_var_hdr.DataOffset + efi_var_hdr.DataSize]
 

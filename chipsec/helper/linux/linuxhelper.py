@@ -120,13 +120,13 @@ class LinuxHelper(Helper):
             if not page_is_ram:
                 logger().log_debug("Cannot find symbol 'page_is_ram'")
             else:
-                a1 = f'a1=0x{page_is_ram}'
+                a1 = f'a1=0x{page_is_ram.decode()}'
         if self.SUPPORT_KERNEL26_GET_PHYS_MEM_ACCESS_PROT:
             phys_mem_access_prot = self.get_phys_mem_access_prot()
             if not phys_mem_access_prot:
                 logger().log_debug("Cannot find symbol 'phys_mem_access_prot'")
             else:
-                a2 = f'a2=0x{phys_mem_access_prot}'
+                a2 = f'a2=0x{phys_mem_access_prot.decode()}'
 
         # Prefer modprobe, which resolves the module by name through the kernel's own
         # search path. The file probing below only recognises 'chipsec.ko' and

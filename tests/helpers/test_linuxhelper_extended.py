@@ -21,19 +21,35 @@
 
 import array
 import errno
+import os
 import struct
 import sys
 import unittest
 from unittest.mock import MagicMock, patch
 
-import chipsec.helper.linux.linuxhelper as lh
-from chipsec.library.exceptions import OsHelperError, UnimplementedAPIError
+from tests.helpers.helper_utils import stub_posix_only_modules, stub_posix_only_os_functions
+
+stub_posix_only_modules()
+
+import chipsec.helper.linux.linuxhelper as lh  # noqa: E402
+from chipsec.library.exceptions import OsHelperError, UnimplementedAPIError  # noqa: E402
 
 MOD = 'chipsec.helper.linux.linuxhelper'
 
 PACK = 'Q' if sys.maxsize > 2 ** 32 else 'I'
 
 TEST_GUID = '12345678-1234-1234-1234-123456789ABC'
+
+_os_stubs = []
+
+
+def setUpModule():
+    _os_stubs.extend(stub_posix_only_os_functions())
+
+
+def tearDownModule():
+    for patcher in _os_stubs:
+        patcher.stop()
 
 
 def new_helper() -> 'lh.LinuxHelper':
@@ -75,7 +91,8 @@ class LinuxHelperModuleManagementTest(unittest.TestCase):
     @patch(f'{MOD}.defines.get_version', return_value='1.13.0')
     def test_get_dkms_module_location(self, _get_version, _listdir, _isdir):
         self.assertEqual(self.helper.get_dkms_module_location(),
-                         f'/var/lib/dkms/chipsec/1.13.0/{self.helper.os_release}/x86_64/module/chipsec.ko')
+                         os.path.join(self.helper.DKMS_DIR, 'chipsec', '1.13.0', self.helper.os_release,
+                                      'x86_64', 'module', 'chipsec.ko'))
 
     @patch(f'{MOD}.os.chmod')
     @patch(f'{MOD}.os.chown')
@@ -99,7 +116,7 @@ class LinuxHelperModuleManagementTest(unittest.TestCase):
                 patch.object(lh.LinuxHelper, 'get_phys_mem_access_prot', return_value=b'ffff0002'):
             self.helper.load_chipsec_module()
         check_output.assert_called_once_with(
-            ['modprobe', 'chipsec', "a1=0xb'ffff0001'", "a2=0xb'ffff0002'"],
+            ['modprobe', 'chipsec', 'a1=0xffff0001', 'a2=0xffff0002'],
             stderr=lh.subprocess.STDOUT)
 
     @patch(f'{MOD}.os.chmod')
@@ -124,7 +141,7 @@ class LinuxHelperModuleManagementTest(unittest.TestCase):
         self.assertEqual(check_output.call_count, 2)
         insmod_args = check_output.call_args_list[1][0][0]
         self.assertEqual(insmod_args[0], 'insmod')
-        self.assertTrue(insmod_args[1].endswith('chipsec/helper/linux/chipsec.ko'))
+        self.assertTrue(insmod_args[1].endswith(os.path.join('chipsec', 'helper', 'linux', 'chipsec.ko')))
         chown.assert_called_once_with('/dev/chipsec', 0, 0)
         chmod.assert_called_once_with('/dev/chipsec', 0o600)
         self.assertEqual(self.helper.driverpath, f'({insmod_args[1]})')
@@ -295,10 +312,10 @@ class LinuxHelperIoctlTest(unittest.TestCase):
         self.assertEqual(self.helper.va2pa(0x7FFF0000), (0x1000, 0))
 
     def test_va2pa_above_max_physical_address(self):
-        self.helper.ioctl = MagicMock(side_effect=[struct.pack(PACK, 1 << 40),
-                                                   struct.pack(f'4{PACK}', 39, 0, 0, 0)])
+        self.helper.ioctl = MagicMock(side_effect=[struct.pack(PACK, 1 << 30),
+                                                   struct.pack(f'4{PACK}', 29, 0, 0, 0)])
         with patch(f'{MOD}.logger'):
-            self.assertEqual(self.helper.va2pa(0x7FFF0000), (1 << 40, 1))
+            self.assertEqual(self.helper.va2pa(0x7FFF0000), (1 << 30, 1))
 
     def test_va2pa_ioctl_error(self):
         self.helper.ioctl = MagicMock(side_effect=IOError(errno.EIO, 'Input/output error'))
@@ -431,7 +448,7 @@ class LinuxHelperAffinityAndInfoTest(unittest.TestCase):
     def test_get_tool_info_unknown_tool(self, _get_tools_path):
         name, path = self.helper.get_tool_info('unknown')
         self.assertIsNone(name)
-        self.assertEqual(path, f'/opt/chipsec/tools/{self.helper.os_system.lower()}')
+        self.assertEqual(path, os.path.join('/opt/chipsec/tools', self.helper.os_system.lower()))
 
     @patch(f'{MOD}.get_tools_path', return_value='/opt/chipsec/tools')
     def test_get_tool_info_known_tool(self, _get_tools_path):

@@ -1774,7 +1774,7 @@ class HEST (ACPI_TABLE):
     {notification_str}
     Error Status Block Length                     : 0x{errStatusBlockLen:08X}{extra_str}
     """
-        return 64
+        return 64 if _type == 9 else 92
 
     def parse(self, table_content: bytes) -> None:
         self.ErrorSourceCount = struct.unpack('<L', table_content[0:4])[0]
@@ -2317,12 +2317,15 @@ class NFIT (ACPI_TABLE):
 '''
 
     def parseStructures(self, table_content: bytes) -> str:
-        notFinished = True
+        # total_length covers the 36-byte ACPI header and 4 reserved bytes preceding the structures.
+        end = min(self.total_length - 40, len(table_content))
         curPos = 0
         result = ''
-        while notFinished:
+        while curPos + 4 <= end:
             tableType = struct.unpack('<H', table_content[curPos:curPos + 2])[0]
             tableLen = struct.unpack('<H', table_content[curPos + 2:curPos + 4])[0]
+            if tableLen == 0:
+                break
             result += f''' Length:                    {self.total_length:d}'''
             if tableType == 0:
                 result += self.parseSPA(tableLen, table_content[curPos:])
@@ -2351,9 +2354,7 @@ class NFIT (ACPI_TABLE):
                 result += self.platCapStruct(tableLen, table_content[curPos:])
                 curPos = curPos + tableLen
             else:
-                pass
-            if curPos >= self.total_length:
-                notFinished = False
+                curPos = curPos + tableLen
         return result
 
     def parse(self, table_content: bytes) -> None:
