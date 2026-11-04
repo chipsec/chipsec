@@ -531,7 +531,7 @@ class TestGuidDefinedSections(unittest.TestCase):
         self.assertEqual(sec.Comments, 'Unable to decompress image')
         self.assertEqual(sec.children, [])
         # LZMA attempt, then a final COMPRESSION_TYPE_UNKNOWN attempt.
-        self.assertEqual([c.args[2] for c in dsd.call_args_list],
+        self.assertEqual([c[0][2] for c in dsd.call_args_list],
                          [COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_UNKNOWN])
 
     def test_each_compression_guid_selects_its_algorithm(self):
@@ -636,7 +636,8 @@ class TestGuidDefinedSections(unittest.TestCase):
         blob = _make_section(EFI_SECTION_GUID_DEFINED, guid.bytes_le + b'\x00\x00')
         sec = self._one_section(blob)
         self.assertEqual(sec.Guid, guid)
-        self.assertEqual(sec.DataOffset, len(sec.Image) - 1)
+        self.assertEqual(sec.DataOffset, len(sec.Image))
+        self.assertEqual(sec.children, [])
 
 
 # ===========================================================================
@@ -774,7 +775,7 @@ class TestDumpEfiModule(unittest.TestCase):
 
 class TestSearchEfiTreeRecursion(unittest.TestCase):
 
-    def test_first_match_in_children_returns_the_parent(self):
+    def test_first_match_in_children_returns_the_match(self):
         fv = _make_fv(0x2000, body=_make_ffs_file(
             UUID('ABABABAB-ABAB-ABAB-ABAB-ABABABABABAB'), EFI_FV_FILETYPE_DRIVER,
             _make_section(EFI_SECTION_PE32, _make_pe())))
@@ -782,9 +783,9 @@ class TestSearchEfiTreeRecursion(unittest.TestCase):
         result = search_efi_tree(model, lambda m: m.Type == EFI_SECTION_PE32,
                                  match_module_types=EFIModuleType.SECTION_EXE,
                                  findall=False)
-        # findall=False unwinds by returning the node that owns the match.
         self.assertEqual(len(result), 1)
-        self.assertIs(result[0], model[0])
+        self.assertIsInstance(result[0], EFI_SECTION)
+        self.assertEqual(result[0].Type, EFI_SECTION_PE32)
 
     def test_callback_none_never_matches(self):
         fv = _make_fv(0x2000, body=_make_ffs_file(

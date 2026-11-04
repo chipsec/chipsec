@@ -37,7 +37,7 @@ import win32service
 import win32api, win32process, win32security, win32serviceutil, win32file
 from collections import namedtuple
 from ctypes import windll, Structure, pythonapi, py_object,  Array, POINTER
-from ctypes import addressof, sizeof, create_string_buffer, WinError
+from ctypes import addressof, byref, sizeof, create_string_buffer, WinError
 from ctypes import c_ulong, c_ushort, c_char_p, c_size_t, c_int, c_uint32, c_wchar_p, c_void_p, c_char
 from typing import Dict, List, Optional, Tuple, AnyStr, TYPE_CHECKING
 from win32file import FILE_SHARE_READ, FILE_SHARE_WRITE, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, FILE_FLAG_OVERLAPPED, INVALID_HANDLE_VALUE
@@ -58,6 +58,14 @@ class PCI_BDF(Structure):
                 ("DEV", c_ushort, 16),  # Device
                 ("FUNC", c_ushort, 16),  # Function
                 ("OFF", c_ushort, 16)]  # Offset
+
+
+class GROUP_AFFINITY(Structure):
+    _fields_ = [("Mask", c_size_t),
+                ("Group", c_ushort),
+                ("Reserved0", c_ushort),
+                ("Reserved1", c_ushort),
+                ("Reserved2", c_ushort)]
 
 
 kernel32 = windll.kernel32
@@ -822,23 +830,32 @@ class WindowsHelper(Helper):
                 raise ValueError(e)
         return pHandle
 
+    def _cpu_to_group(self, cpu: int) -> Tuple[int, int]:
+        remaining = cpu
+        for group in range(kernel32.GetActiveProcessorGroupCount() & 0xFFFF):
+            count = kernel32.GetActiveProcessorCount(group)
+            if remaining < count:
+                return group, remaining
+            remaining -= count
+        raise ValueError(f'CPU {cpu} is out of range')
+
     def set_affinity(self, value: int) -> Optional[int]:
-        pHandle = self._get_handle_for_pid(0, False)
-        current = win32process.GetProcessAffinityMask(pHandle)[0]
-        try:
-            win32process.SetProcessAffinityMask(pHandle, current)
-        except win32process.error as e:
-            logger().log("unable to set process affinity")
-            raise ValueError(e)
-        return current
+        group, index = self._cpu_to_group(value)
+        affinity = GROUP_AFFINITY(Mask=1 << index, Group=group)
+        thread = c_void_p(kernel32.GetCurrentThread())
+        if not kernel32.SetThreadGroupAffinity(thread, byref(affinity), None):
+            logger().log("unable to set thread affinity")
+            raise ValueError(f'SetThreadGroupAffinity failed (GetLastError = 0x{kernel32.GetLastError():X})')
+        return value
 
     def get_affinity(self) -> Optional[int]:
-        pHandle = self._get_handle_for_pid()
-        try:
-            return win32process.GetProcessAffinityMask(pHandle)[0]
-        except win32process.error as e:
+        affinity = GROUP_AFFINITY()
+        thread = c_void_p(kernel32.GetCurrentThread())
+        if not kernel32.GetThreadGroupAffinity(thread, byref(affinity)):
             logger().log("unable to get the running cpu")
-            raise ValueError(e)
+            raise ValueError(f'GetThreadGroupAffinity failed (GetLastError = 0x{kernel32.GetLastError():X})')
+        group_base = sum(kernel32.GetActiveProcessorCount(group) for group in range(affinity.Group))
+        return group_base + (affinity.Mask & -affinity.Mask).bit_length() - 1
 
     #
     # CPUID

@@ -171,7 +171,7 @@ class TestHOBChipsecUtil(unittest.TestCase):
         cmd.hob_read()
 
         cmd.cs.hals.hob.get_list_by_name.assert_called_once_with('8086.HOB.PEI_PCD_DATABASE')
-        logged = [call.args[0] for call in cmd.logger.log.call_args_list]
+        logged = [call[0][0] for call in cmd.logger.log.call_args_list]
         self.assertIn('PEI_PCD_DATABASE fields', logged)
         self.assertIn('[0x0000000000001000]', logged)
 

@@ -532,7 +532,7 @@ class APIC (ACPI_TABLE):
             "LAPIC_NMI": '<BBBHB',
             "LAPIC_ADDRESS_OVERRIDE": '<BBHQ',
             "IOSAPIC": '<BBBBIQ',
-            "PROCESSOR_LSAPIC": '<BBBBBHII',
+            "PROCESSOR_LSAPIC": '<BBBBB3sII',
             "PLATFORM_INTERRUPT_SOURCES": '<BBHBBBBII',
             "PROCESSOR_Lx2APIC": '<BBHIII',
             "Lx2APIC_NMI": '<BBHIB3s',
@@ -741,7 +741,7 @@ class ACPI_TABLE_APIC_PROCESSOR_LSAPIC(namedtuple('ACPI_TABLE_APIC_PROCESSOR_LSA
     ACPI Proc ID         : 0x{self.ACPIProcID:02X}
     Local SAPIC ID       : 0x{self.LocalSAPICID:02X}
     Local SAPIC EID      : 0x{self.LocalSAPICEID:02X}
-    Reserved             : 0x{self.Reserved:02X}
+    Reserved             : 0x{int.from_bytes(self.Reserved, 'little'):06X}
     Flags                : 0x{self.Flags:02X}
     ACPI Proc UID Value  : 0x{self.ACPIProcUIDValue:02X}
     ACPI Proc UID String : {self.ACPIProcUIDString.decode('latin-1').split(chr(0))[0]}
@@ -1824,8 +1824,8 @@ class SPMI (ACPI_TABLE):
     def parse(self, table_content: bytes) -> None:
         interfaceType = struct.unpack('<B', table_content[0:1])[0]
         reserved1 = struct.unpack('<B', table_content[1:2])[0]
-        specRev = struct.unpack('<B', table_content[2:3])[0]
-        interruptType = struct.unpack('<H', table_content[3:5])[0]
+        specRev = struct.unpack('<H', table_content[2:4])[0]
+        interruptType = struct.unpack('<B', table_content[4:5])[0]
         gpe = struct.unpack('<B', table_content[5:6])[0]
         reserved2 = struct.unpack('<B', table_content[6:7])[0]
         pciDeviceFlag = struct.unpack('<B', table_content[7:8])[0]
@@ -1842,10 +1842,10 @@ class SPMI (ACPI_TABLE):
             intTypeStr = "SMBus System Interface (SSIF)"
         else:
             intTypeStr = "Reserved"
-        specRevStr = (f'0x{specRev:02X}')
+        specRevStr = (f'0x{specRev:04X}')
         intType_0 = interruptType & 1
-        intType_1 = interruptType & 2 >> 1
-        intType_other = interruptType ^ 3 >> 2
+        intType_1 = (interruptType & 2) >> 1
+        intType_other = interruptType >> 2
         if intType_0 == 1:
             intTypeSCIGPE = "supported"
         else:
@@ -1855,7 +1855,7 @@ class SPMI (ACPI_TABLE):
         else:
             intTypeIO = "not supported"
         GPE_str = ''
-        if (interruptType & 1) != 1:
+        if intType_0 != 1 and gpe != 0:
             GPE_str = " - should be set to 00h"
         pciDeviceFlag_0 = pciDeviceFlag & 1
         if pciDeviceFlag_0 == 1:
@@ -1864,9 +1864,9 @@ class SPMI (ACPI_TABLE):
         else:
             pci_str = 'non-PCI device'
             otherStr = self.parseUID(table_content[24:28])
-        pciDeviceFlag_reserved = 1 ^ pciDeviceFlag_0
+        pciDeviceFlag_reserved = pciDeviceFlag >> 1
         globalSysInt_str = ''
-        if intType_1 != 1:
+        if intType_1 != 1 and globalSysInter != 0:
             globalSysInt_str = ' - this field should be 0'
         self.results = f'''==================================================================
   Service Processor Management Interface Description Table ( SPMI )
@@ -1874,7 +1874,7 @@ class SPMI (ACPI_TABLE):
   Interface Type                                          : 0x{interfaceType:02X} - {intTypeStr}
   Reserved                                                : 0x{reserved1:02X} - Must always be 01h to be compatible with any software implementing previous versions of the spec
   Specification Revision (version)                        : {specRevStr}
-  Interrupt Type                                          : 0x{interruptType:04X}
+  Interrupt Type                                          : 0x{interruptType:02X}
     SCI triggered through GPE                             : 0x{intType_0:02X} - {intTypeSCIGPE}
     I/0 APIC/SAPIC interrupt (Global System Interrupt)    : 0x{intType_1:02X} - {intTypeIO}
     Reserved                                              : 0x{intType_other:02X} - Must be 0
@@ -1882,7 +1882,7 @@ class SPMI (ACPI_TABLE):
   Reserved                                                : 0x{reserved2:02X} - should be 00h
   PCI Device Flag                                         : 0x{pciDeviceFlag:02X}
     PCI Device Flag                                       : {pciDeviceFlag_0:d} {pci_str}
-    Reserved                                              : {pciDeviceFlag_reserved:d} - must be 0
+    Reserved                                              : 0x{pciDeviceFlag_reserved:02X} - must be 0
   Global System Interrupt                                 : 0x{globalSysInter:08X}{globalSysInt_str}
   Base Address - {baseAdder}
 {otherStr}
@@ -2044,21 +2044,21 @@ class NFIT (ACPI_TABLE):
 
     def flushHintAddrStruct(self, tableLen: int, table_content: bytes) -> Tuple[int, str]:
         nfitDevHandle = struct.unpack('<L', table_content[4:8])[0]
-        numFlushHintAddr = struct.unpack('<L', table_content[4:8])[0]
-        reserved = struct.unpack('<L', table_content[4:8])[0]
+        numFlushHintAddr = struct.unpack('<H', table_content[8:10])[0]
+        reserved = int.from_bytes(table_content[10:16], 'little')
         curLine = 0
         lines = ''
         while curLine < numFlushHintAddr:
-            lineInfo = struct.unpack('<Q', table_content[curLine * 8 + 8:curLine * 8 + 16])[0]
+            lineInfo = struct.unpack('<Q', table_content[curLine * 8 + 16:curLine * 8 + 24])[0]
             lines += f'''
         Flush Hint Address {curLine + 1:d}                                     : 0x{lineInfo:016X} '''
             curLine += 1
-        return (curLine - 1) * 8 + 16, f'''
+        return 16 + numFlushHintAddr * 8, f'''
     Flush Hint Address Structure [Type 6]
       Length                                                      : 0x{tableLen:04X} ( {tableLen:d} bytes )
       NFIT Device Handle                                          : 0x{nfitDevHandle:08X}
-      Number of Flush Hint Addresses in this Structure            : 0x{numFlushHintAddr:08X} ( {numFlushHintAddr:d} )
-      Reserved                                                    : 0x{reserved:08X}
+      Number of Flush Hint Addresses in this Structure            : 0x{numFlushHintAddr:04X} ( {numFlushHintAddr:d} )
+      Reserved                                                    : 0x{reserved:012X}
       Flush Hint Addresses{lines}
 '''
 
@@ -2324,7 +2324,7 @@ class NFIT (ACPI_TABLE):
         while curPos + 4 <= end:
             tableType = struct.unpack('<H', table_content[curPos:curPos + 2])[0]
             tableLen = struct.unpack('<H', table_content[curPos + 2:curPos + 4])[0]
-            if tableLen == 0:
+            if tableLen < 4 or curPos + tableLen > end:
                 break
             result += f''' Length:                    {self.total_length:d}'''
             if tableType == 0:
@@ -2509,7 +2509,7 @@ class GAS:
 
     def __str__(self) -> str:
         return f"""  Generic Address Structure
-    Address Space ID                            : {self.addrSpaceID:02X} - {self.accessSize_str}
+    Address Space ID                            : {self.addrSpaceID:02X} - {self.addrSpaceID_str}
     Register Bit Width                          : {self.regBitWidth:02X}
     Register Bit Offset                         : {self.regBitOffset:02X}
     Access Size                                 : {self.accessSize:02X} - {self.accessSize_str}

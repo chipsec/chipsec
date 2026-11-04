@@ -565,6 +565,11 @@ class TestGenericAddressStructure(unittest.TestCase):
     def test_rendering_includes_the_address(self):
         self.assertIn('FED40000', str(GAS(self._gas())))
 
+    def test_rendering_labels_address_space_and_access_size(self):
+        rendered = str(GAS(self._gas(space_id=1, access_size=2)))
+        self.assertRegex(rendered, r'Address Space ID\s+: 01 - System I/O Space')
+        self.assertRegex(rendered, r'Access Size\s+: 02 - Word Access')
+
 
 class TestSafeStructUnpack(unittest.TestCase):
 

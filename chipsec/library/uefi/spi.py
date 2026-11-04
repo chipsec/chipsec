@@ -341,7 +341,7 @@ def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset
                     guid0 = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
                 else:
                     guid0 = struct.unpack(EFI_GUID_FMT, sec.Image[sec.HeaderSize:sec.HeaderSize + EFI_GUID_SIZE])[0]
-                    sec.DataOffset = len(sec.Image) - 1
+                    sec.DataOffset = len(sec.Image)
             else:
                 guid0, sec.DataOffset, sec.Attributes = struct.unpack(EFI_GUID_DEFINED_SECTION, sec.Image[sec.HeaderSize:sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size])
             if not isinstance(guid0, bytes):
@@ -767,7 +767,7 @@ def search_efi_tree(modules: List['EFI_MODULE'],
             if len(matches) > 0:
                 matching_modules.extend(matches)
                 if not findall:
-                    return [module]
+                    return matches
 
     return matching_modules
 

@@ -22,6 +22,7 @@ import errno
 import struct
 import sys
 import unittest
+from types import SimpleNamespace
 from unittest.mock import MagicMock, Mock, patch
 
 from chipsec.library.exceptions import HWAccessViolationError, OsHelperError, UnimplementedAPIError
@@ -240,7 +241,7 @@ class TestWindowsHelperInit(WindowsHelperExtendedBase):
         self._patch('kernel32', Mock(spec=[]))
         self._patch('windll', Mock(spec=[]))
         helper = self._new_helper()
-        warnings = [c.args[0] for c in self.log.log_warning.call_args_list]
+        warnings = [c[0][0] for c in self.log.log_warning.call_args_list]
         self.assertIn("G[S]etFirmwareEnvironmentVariableW function doesn't seem to exist", warnings)
         self.assertIn("NtEnumerateSystemEnvironmentValuesEx function doesn't seem to exist", warnings)
         self.assertIn("G[S]etFirmwareEnvironmentVariableExW function doesn't seem to exist", warnings)
@@ -253,7 +254,7 @@ class TestWindowsHelperInit(WindowsHelperExtendedBase):
         self._patch('kernel32', Mock(spec=[]))
         self._patch('windll', Mock(spec=[]))
         self._new_helper()
-        warnings = [c.args[0] for c in self.log.log_warning.call_args_list]
+        warnings = [c[0][0] for c in self.log.log_warning.call_args_list]
         self.assertNotIn("G[S]etFirmwareEnvironmentVariableExW function doesn't seem to exist", warnings)
 
     def test_del_closes_driver_handle(self):
@@ -274,7 +275,7 @@ class TestWindowsHelperInit(WindowsHelperExtendedBase):
     def test_show_warning(self):
         helper = self._new_helper()
         helper.show_warning()
-        warnings = [c.args[0] for c in self.log.log_warning.call_args_list]
+        warnings = [c[0][0] for c in self.log.log_warning.call_args_list]
         self.assertIn('Chipsec should only be used on test systems!', warnings)
         self.assertIn('See WARNING.txt', warnings)
 
@@ -513,7 +514,7 @@ class TestWindowsHelperDriverHandle(WindowsHelperExtendedBase):
         self.kernel32.GetActiveProcessorGroupCount.return_value = 0x10003
         self.kernel32.GetActiveProcessorCount.side_effect = [4, 8, 16]
         self.assertEqual(self.helper.get_threads_count(), 28)
-        self.assertEqual([c.args[0] for c in self.kernel32.GetActiveProcessorCount.call_args_list],
+        self.assertEqual([c[0][0] for c in self.kernel32.GetActiveProcessorCount.call_args_list],
                          [0, 1, 2])
 
 
@@ -852,7 +853,7 @@ class TestWindowsHelperEfiVariables(WindowsHelperExtendedBase):
         self.helper.NtEnumerateSystemEnvironmentValuesEx.return_value = 0xC0000001
         self.kernel32.GetLastError.return_value = 5
         self.assertIsNone(self.helper.list_EFI_variables())
-        warnings = [c.args[0] for c in self.log.log_warning.call_args_list]
+        warnings = [c[0][0] for c in self.log.log_warning.call_args_list]
         self.assertIn('NtEnumerateSystemEnvironmentValuesEx was not successful', warnings)
 
     def test_list_efi_variables_other_failure(self):
@@ -860,7 +861,7 @@ class TestWindowsHelperEfiVariables(WindowsHelperExtendedBase):
         self.helper.NtEnumerateSystemEnvironmentValuesEx.return_value = 0xC0000005
         self.kernel32.GetLastError.return_value = 87
         self.assertIsNone(self.helper.list_EFI_variables())
-        errors = [c.args[0] for c in self.log.log_error.call_args_list]
+        errors = [c[0][0] for c in self.log.log_error.call_args_list]
         self.assertIn('NtEnumerateSystemEnvironmentValuesEx failed (GetLastError = 0x57)', errors)
         self.assertIn('*** NTSTATUS: C0000005', errors)
 
@@ -884,6 +885,27 @@ class TestWindowsHelperProcessAffinity(WindowsHelperExtendedBase):
         win32con.PROCESS_QUERY_INFORMATION = 0x0400
         win32con.PROCESS_SET_INFORMATION = 0x0200
         self._patch('win32con', win32con)
+        self.kernel32 = self._patch('kernel32', MagicMock())
+        self.kernel32.GetActiveProcessorGroupCount.return_value = 2
+        self.kernel32.GetActiveProcessorCount.side_effect = lambda group: 4
+        self.kernel32.GetCurrentThread.return_value = -2
+        self.kernel32.SetThreadGroupAffinity.return_value = 1
+        self.affinity = {}
+
+        def fake_group_affinity(**fields):
+            self.affinity.update(fields)
+            affinity = SimpleNamespace(Mask=0, Group=0)
+            affinity.__dict__.update(fields)
+            return affinity
+
+        def fake_get_thread_group_affinity(thread, affinity):
+            affinity.Mask = self.affinity.get('Mask', 0xF)
+            affinity.Group = self.affinity.get('Group', 0)
+            return 1
+        self.kernel32.GetThreadGroupAffinity.side_effect = fake_get_thread_group_affinity
+        self._patch('GROUP_AFFINITY', fake_group_affinity)
+        self._patch('byref', lambda obj: obj)
+        self._patch('c_void_p', lambda value: value)
 
     def test_get_handle_for_current_process(self):
         self.win32process.GetCurrentProcess.return_value = 0xFFFF
@@ -905,24 +927,43 @@ class TestWindowsHelperProcessAffinity(WindowsHelperExtendedBase):
         self.assertRaises(ValueError, self.helper._get_handle_for_pid, 1234)
         self.log.log.assert_called_once_with('unable to open a process handle')
 
-    def test_set_affinity_returns_current_mask(self):
-        self.win32process.GetProcessAffinityMask.return_value = (0xF, 0xFF)
-        self.assertEqual(self.helper.set_affinity(0x1), 0xF)
-        self.win32process.SetProcessAffinityMask.assert_called_once_with(
-            self.win32process.GetCurrentProcess.return_value, 0xF)
+    def test_set_affinity_pins_to_requested_cpu(self):
+        self.assertEqual(self.helper.set_affinity(1), 1)
+        self.assertEqual(self.affinity, {'Mask': 0x2, 'Group': 0})
+        self.kernel32.SetThreadGroupAffinity.assert_called_once()
+
+    def test_set_affinity_maps_global_cpu_to_its_group(self):
+        self.assertEqual(self.helper.set_affinity(5), 5)
+        self.assertEqual(self.affinity, {'Mask': 0x2, 'Group': 1})
+
+    def test_set_affinity_supports_more_than_64_cpus(self):
+        self.kernel32.GetActiveProcessorCount.side_effect = lambda group: 64
+        self.helper.set_affinity(64)
+        self.assertEqual(self.affinity, {'Mask': 0x1, 'Group': 1})
+
+    def test_set_affinity_out_of_range_raises_value_error(self):
+        self.assertRaises(ValueError, self.helper.set_affinity, 12)
+        self.kernel32.SetThreadGroupAffinity.assert_not_called()
 
     def test_set_affinity_failure_raises_value_error(self):
-        self.win32process.GetProcessAffinityMask.return_value = (0xF, 0xFF)
-        self.win32process.SetProcessAffinityMask.side_effect = FakeWin32Error(5, 'Set', 'denied')
-        self.assertRaises(ValueError, self.helper.set_affinity, 0x1)
-        self.log.log.assert_called_once_with('unable to set process affinity')
+        self.kernel32.SetThreadGroupAffinity.return_value = 0
+        self.kernel32.GetLastError.return_value = 87
+        self.assertRaises(ValueError, self.helper.set_affinity, 1)
+        self.log.log.assert_called_once_with('unable to set thread affinity')
 
-    def test_get_affinity_returns_mask(self):
-        self.win32process.GetProcessAffinityMask.return_value = (0x3, 0xFF)
-        self.assertEqual(self.helper.get_affinity(), 0x3)
+    def test_get_affinity_returns_lowest_cpu_in_thread_mask(self):
+        self.assertEqual(self.helper.get_affinity(), 0)
+
+    def test_get_affinity_round_trips_set_affinity(self):
+        for cpu in (1, 5, 7):
+            with self.subTest(cpu=cpu):
+                self.helper.set_affinity(cpu)
+                self.assertEqual(self.helper.get_affinity(), cpu)
 
     def test_get_affinity_failure_raises_value_error(self):
-        self.win32process.GetProcessAffinityMask.side_effect = FakeWin32Error(5, 'Get', 'denied')
+        self.kernel32.GetThreadGroupAffinity.side_effect = None
+        self.kernel32.GetThreadGroupAffinity.return_value = 0
+        self.kernel32.GetLastError.return_value = 5
         self.assertRaises(ValueError, self.helper.get_affinity)
         self.log.log.assert_called_once_with('unable to get the running cpu')
 

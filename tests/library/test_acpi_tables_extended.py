@@ -225,13 +225,13 @@ class TestAPICExtended(unittest.TestCase):
 
     def test_local_sapic_structure_is_decoded(self):
         apic = APIC()
-        data = struct.pack('<BBBBBHII', 0x07, 20, 1, 2, 3, 0, 1, 7) + b'CPU0\x00'
+        data = struct.pack('<BBBBB3sII', 0x07, 21, 1, 2, 3, b'\x00' * 3, 1, 7) + b'CPU0\x00'
 
         rendered = apic.get_structure_APIC(0x07, data)
 
         self.assertIn('Local SAPIC (0x07)', rendered)
         self.assertIn('Type                 : 0x07', rendered)
-        self.assertIn('Length               : 0x14', rendered)
+        self.assertIn('Length               : 0x15', rendered)
         self.assertIn('ACPI Proc ID         : 0x01', rendered)
         self.assertIn('Local SAPIC ID       : 0x02', rendered)
         self.assertIn('Local SAPIC EID      : 0x03', rendered)
@@ -242,7 +242,7 @@ class TestAPICExtended(unittest.TestCase):
     def test_local_sapic_uid_string_stops_at_the_null_terminator(self):
         # The trailing 's' field soaks up whatever follows the NUL byte.
         apic = APIC()
-        data = struct.pack('<BBBBBHII', 0x07, 23, 1, 2, 3, 0, 1, 7) + b'CPU0\x00PA'
+        data = struct.pack('<BBBBB3sII', 0x07, 23, 1, 2, 3, b'\x00' * 3, 1, 7) + b'CPU0\x00PA'
 
         rendered = apic.get_structure_APIC(0x07, data)
 
@@ -973,11 +973,11 @@ class TestSPMI(unittest.TestCase):
     """SPMI describes the IPMI system interface."""
 
     @staticmethod
-    def _table(interface_type=1, pci_flag=1, interrupt_type=0x3,
+    def _table(interface_type=1, pci_flag=1, interrupt_type=0x3, gpe=0, gsi=0x20,
                device=(0, 1, 0x1F, 3), reserved3=0):
         # The PCI seg/bus/dev/func (or 4 byte UID) field sits at offset 24.
-        return (struct.pack('<BBBHBBB', interface_type, 1, 0x10, interrupt_type, 0, 0, pci_flag) +
-                struct.pack('<L', 0x20) + gas(space_id=1, addr=0xCA2) +
+        return (struct.pack('<BBHBBBB', interface_type, 1, 0x0200, interrupt_type, gpe, 0, pci_flag) +
+                struct.pack('<L', gsi) + gas(space_id=1, addr=0xCA2) +
                 struct.pack('<4B', *device) + struct.pack('<B', reserved3))
 
     def test_pci_device_details_are_decoded(self):
@@ -1008,8 +1008,11 @@ class TestSPMI(unittest.TestCase):
 
         self.assertIn('Service Processor Management Interface Description Table ( SPMI )', rendered)
         self.assertIn('Interface Type                                          : 0x01 - Keyboard Controller Style (KCS)', rendered)
-        self.assertIn('Specification Revision (version)                        : 0x10', rendered)
-        self.assertIn('Interrupt Type                                          : 0x0003', rendered)
+        self.assertIn('Specification Revision (version)                        : 0x0200', rendered)
+        self.assertIn('Interrupt Type                                          : 0x03', rendered)
+        self.assertIn('SCI triggered through GPE                             : 0x01 - supported', rendered)
+        self.assertIn('I/0 APIC/SAPIC interrupt (Global System Interrupt)    : 0x01 - supported', rendered)
+        self.assertIn('Reserved                                              : 0x00 - Must be 0', rendered)
         self.assertIn('Global System Interrupt                                 : 0x00000020\n', rendered)
         self.assertIn('Generic Address Structure', rendered)
 
@@ -1019,7 +1022,7 @@ class TestSPMI(unittest.TestCase):
         rendered = str(spmi)
 
         self.assertIn('PCI Device Flag                                       : 1 For PCi IPMI devices', rendered)
-        self.assertIn('Reserved                                              : 0 - must be 0', rendered)
+        self.assertIn('Reserved                                              : 0x00 - must be 0', rendered)
         self.assertIn('PCI Segment GroupNumber                                 : 0x00', rendered)
         self.assertIn('PCI Bus Number                                          : 0x01', rendered)
         self.assertIn('PCI Device Number                                       : 0x1F', rendered)
@@ -1031,9 +1034,28 @@ class TestSPMI(unittest.TestCase):
         rendered = str(spmi)
 
         self.assertIn('PCI Device Flag                                       : 0 non-PCI device', rendered)
-        self.assertIn('Reserved                                              : 1 - must be 0', rendered)
+        self.assertIn('Reserved                                              : 0x00 - must be 0', rendered)
         self.assertIn('UID                                                     : 0x12345678', rendered)
         self.assertNotIn('PCI Bus Number', rendered)
+
+    def test_parse_reports_reserved_pci_device_flag_bits(self):
+        spmi = SPMI()
+        spmi.parse(self._table(pci_flag=0x81))
+        rendered = str(spmi)
+
+        self.assertIn('PCI Device Flag                                       : 1 For PCi IPMI devices', rendered)
+        self.assertIn('Reserved                                              : 0x40 - must be 0', rendered)
+
+    def test_parse_decodes_each_interrupt_type_bit(self):
+        for interrupt_type, sci, gsi, reserved in ((1, 1, 0, 0), (2, 0, 1, 0), (0x07, 1, 1, 1)):
+            with self.subTest(interrupt_type=interrupt_type):
+                spmi = SPMI()
+                spmi.parse(self._table(interrupt_type=interrupt_type))
+                rendered = str(spmi)
+
+                self.assertRegex(rendered, rf'SCI triggered through GPE\s+: 0x{sci:02X}')
+                self.assertRegex(rendered, rf'Global System Interrupt\)\s+: 0x{gsi:02X}')
+                self.assertRegex(rendered, rf'Reserved\s+: 0x{reserved:02X} - Must be 0')
 
     def test_parse_names_every_defined_interface_type(self):
         expected = {
@@ -1053,13 +1075,21 @@ class TestSPMI(unittest.TestCase):
 
     def test_parse_flags_missing_interrupt_modes(self):
         spmi = SPMI()
-        spmi.parse(self._table(interrupt_type=0))
+        spmi.parse(self._table(interrupt_type=0, gpe=5))
         rendered = str(spmi)
 
         self.assertIn('SCI triggered through GPE                             : 0x00 - not supported', rendered)
         self.assertIn('I/0 APIC/SAPIC interrupt (Global System Interrupt)    : 0x00 - not supported', rendered)
-        self.assertIn('GPE                                                     : 0x00 - should be set to 00h', rendered)
+        self.assertIn('GPE                                                     : 0x05 - should be set to 00h', rendered)
         self.assertIn('Global System Interrupt                                 : 0x00000020 - this field should be 0', rendered)
+
+    def test_parse_does_not_flag_zeroed_unused_interrupt_fields(self):
+        spmi = SPMI()
+        spmi.parse(self._table(interrupt_type=0, gpe=0, gsi=0))
+        rendered = str(spmi)
+
+        self.assertIn('GPE                                                     : 0x00\n', rendered)
+        self.assertIn('Global System Interrupt                                 : 0x00000000\n', rendered)
 
     def test_parse_decodes_the_trailing_reserved_byte(self):
         spmi = SPMI()
@@ -1235,11 +1265,10 @@ def nfit_block_data_window():
             struct.pack('<4Q', 0x1000, 0x2000, 0x3000, 0x4000))
 
 
-def nfit_flush_hint(addresses=(0xFED10000,)):
+def nfit_flush_hint(addresses=(0xFED10000,), device_handle=0x00010203):
     """Build a Flush Hint Address structure."""
-    length = 16 + 8 * (len(addresses) - 1)
-    return (struct.pack('<HH', 6, length) +
-            struct.pack('<L', len(addresses)) +
+    length = 16 + 8 * len(addresses)
+    return (struct.pack('<HHLH6s', 6, length, device_handle, len(addresses), b'\x00' * 6) +
             b''.join(struct.pack('<Q', addr) for addr in addresses))
 
 
@@ -1395,13 +1424,17 @@ class TestNFIT(unittest.TestCase):
         self.assertIn('Number of Block Data Windows                                : 0x0004 ( 4 )', rendered)
 
     def test_flush_hint_structure_lists_its_addresses(self):
-        nfit, content = nfit_table(nfit_flush_hint(addresses=(0xFED10000,)))
+        nfit, content = nfit_table(nfit_flush_hint(addresses=(0xFED10000, 0xFED20000)))
         nfit.parse(content)
         rendered = str(nfit)
 
         self.assertIn('Flush Hint Address Structure [Type 6]', rendered)
+        self.assertIn('NFIT Device Handle                                          : 0x00010203', rendered)
+        self.assertIn('Number of Flush Hint Addresses in this Structure            : 0x0002 ( 2 )', rendered)
         self.assertIn('Flush Hint Address 1', rendered)
         self.assertIn('0x00000000FED10000', rendered)
+        self.assertIn('Flush Hint Address 2', rendered)
+        self.assertIn('0x00000000FED20000', rendered)
 
     def test_platform_capabilities_structure_is_decoded(self):
         nfit, content = nfit_table(nfit_platform_capabilities(capabilities=7))
@@ -1442,6 +1475,19 @@ class TestNFIT(unittest.TestCase):
         nfit.parse(content + b'\x00' * 8)
 
         self.assertEqual(str(nfit).count('[Type'), 1)
+
+    def test_structure_extending_past_the_table_is_not_decoded(self):
+        body = nfit_platform_capabilities()
+        nfit = NFIT(nfit_header(40 + 8))
+        nfit.parse(struct.pack('<L', 0) + body)
+
+        self.assertNotIn('[Type 7]', str(nfit))
+
+    def test_structure_shorter_than_its_header_stops_the_walk(self):
+        nfit, content = nfit_table(struct.pack('<HH', 3, 2) + b'\x00' * 4, nfit_smbios())
+        nfit.parse(content)
+
+        self.assertNotIn('[Type', str(nfit))
 
 
 if __name__ == '__main__':

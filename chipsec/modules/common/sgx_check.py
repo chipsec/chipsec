@@ -91,9 +91,13 @@ class sgx_check(BaseModule):
             self.logger.log_important('IA32_FEATURE_CONTROL.SGX_GLOBAL_EN not defined for platform.  Skipping module.')
         else:
             for tid in range(self.cs.hals.msr.get_cpu_thread_count()):
-                status = self.helper.set_affinity(tid)
-                if status == -1:
+                try:
+                    affinity_set = self.helper.set_affinity(tid) is not None
+                except Exception:
+                    affinity_set = False
+                if not affinity_set:
                     self.logger.log_verbose(f'[*] Failed to set affinity to CPU{tid:d}')
+                    continue
                 (_, r_ebx, _, _) = self.cs.hals.cpu.cpuid(0x07, 0x00)
                 if r_ebx & BIT2:
                     self.logger.log_verbose(f'[*] CPU{tid:d}: does support SGX')
@@ -165,9 +169,13 @@ class sgx_check(BaseModule):
             sgx2_instr_support = False
             self.logger.log('\n[*] Verifying if SGX instructions are supported')
             for tid in range(self.cs.hals.msr.get_cpu_thread_count()):
-                status = self.helper.set_affinity(tid)
-                if status == -1:
+                try:
+                    affinity_set = self.helper.set_affinity(tid) is not None
+                except Exception:
+                    affinity_set = False
+                if not affinity_set:
                     self.logger.log_verbose(f'[*] Failed to set affinity to CPU{tid:d}')
+                    continue
                 (r_eax, _, _, _) = self.cs.hals.cpu.cpuid(0x012, 0x00)
                 if r_eax & BIT0:
                     self.logger.log_verbose(f'[*] CPU{tid:d} SGX-1 instructions are supported')
