@@ -64,7 +64,8 @@ class rtclock(BaseModule):
 
     def is_supported(self) -> bool:
         if self.cs.is_core(): #or (self.cs.Cfg.get_chipset_code() == CHIPSET_CODE_AVN):
-            if self.cs.register.is_defined('RC'):
+            self.rc_list = self.cs.register.get_list_by_name('RC')
+            if self.rc_list:
                 return True
             self.logger.log_important('RC register not defined for platform.  Skipping module.')
         else:
@@ -72,9 +73,8 @@ class rtclock(BaseModule):
         return False
 
     def check_rtclock(self) -> int:
-        rc_list = self.cs.register.get_list_by_name('RC')
         res = ModuleResult.FAILED
-        for rc in rc_list:
+        for rc in self.rc_list:
             ll_is_set = ul_is_set = False
             try:
                 check_config_regs = rc.read() != 0xFFFFFFFF

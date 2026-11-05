@@ -48,6 +48,7 @@ class MMMsgBus(hal_base.HALBase):
         super(MMMsgBus, self).__init__(cs)
         self.p2sbHide = None
         self._sbreg_base = None
+        self._sbreg_searched = False
 
     def __get_unfiltered_register(self, reg_name: str) -> Any:
         """
@@ -170,6 +171,13 @@ class MMMsgBus(hal_base.HALBase):
             raise CSReadError('[mm_msgbus] SBREG_BAR base address was determined to be 0')
         return base
 
+    def __get_sbreg_from_fixed_address(self) -> Optional[int]:
+        bar = self.cs.register.mmio.get_def('8086.P2SBC.SBREGBAR')
+        fixed_address = bar.fixed_address if bar else None
+        if fixed_address:
+            self.logger.log_hal(f'Using fixed SBREG_BAR address: 0x{fixed_address:016X}')
+        return fixed_address
+
     def __get_sbreg_from_mmio_bar(self) -> Optional[int]:
         try:
             return self.cs.hals.mmio.get_MMIO_BAR_base_address('8086.P2SBC.SBREGBAR')[0]
@@ -197,22 +205,25 @@ class MMMsgBus(hal_base.HALBase):
 
     def __get_sbreg_from_unhidden_mmio_bar(self) -> Optional[int]:
         self.logger.log_hal('Attempting to unhide and read MMIO BAR base address for 8086.P2SBC.SBREGBAR')
-        self.__unhide_p2sb()
+        unhidden = False
         try:
-            return self.cs.hals.mmio.get_MMIO_BAR_base_address('8086.P2SBC.SBREGBAR')[0]
+            self.__unhide_p2sb()
+            unhidden = True
+            return self.__read_sbreg_bar_direct()
         except Exception as e:
             self.logger.log_hal(f'Failed to read unhidden SBREG_BAR: {e}')
             return None
         finally:
-            self.__hide_p2sb()
+            if unhidden:
+                self.__hide_p2sb()
 
     def get_sbreg_base_address(self) -> Optional[int]:
         """
-        Get the base address of the SBREG MMIO BAR. If already found, return without searching again.
+        Get the base address of the SBREG MMIO BAR. Discovery runs once; call find_sbreg_base_address() to retry.
         Returns:
             int: The base address of the SBREG MMIO BAR, or None if it cannot be determined.
         """
-        if self._sbreg_base is None:
+        if self._sbreg_base is None and not self._sbreg_searched:
             return self.find_sbreg_base_address()
         return self._sbreg_base
 
@@ -223,7 +234,9 @@ class MMMsgBus(hal_base.HALBase):
         Returns:
             int: The base address of the SBREG MMIO BAR, or None if it cannot be determined.
         """
-        sbreg_funcs = [self.__get_sbreg_from_mmio_bar, 
+        self._sbreg_searched = True
+        sbreg_funcs = [self.__get_sbreg_from_fixed_address,
+                       self.__get_sbreg_from_mmio_bar, 
                        self.__get_sbreg_from_hob, 
                        self.__get_sbreg_from_acpi, 
                        self.__get_sbreg_from_unhidden_mmio_bar]
@@ -240,7 +253,18 @@ class MMMsgBus(hal_base.HALBase):
         Returns:
             bool: True if the MMMsgBus is enabled, False otherwise.
         """
-        return self.get_sbreg_base_address() is not None
+        try:
+            return self.get_sbreg_base_address() is not None
+        except (RegisterNotFoundError, PCIConfigError, CSReadError) as err:
+            self.logger.log_hal(f'[mm_msgbus] Failed to determine MMMsgBus enablement: {err}')
+            return False
+
+    def __get_sbreg_base_for_access(self, port: int, register: int) -> int:
+        mmio_addr = self.get_sbreg_base_address()
+        if mmio_addr is None:
+            raise CSReadError(f'[mm_msgbus] SBREG_BAR base address could not be determined; '
+                              f'cannot access port 0x{port:02X} register 0x{register:04X}')
+        return mmio_addr
 
     def read(self, port: int, register: int) -> int:
         """
@@ -250,8 +274,10 @@ class MMMsgBus(hal_base.HALBase):
             register (int): The register number to read.
         Returns:
             int: The value read from the register.
+        Raises:
+            CSReadError: If the SBREG_BAR base address could not be determined.
         """
-        mmio_addr = self.get_sbreg_base_address()
+        mmio_addr = self.__get_sbreg_base_for_access(port, register)
         reg_val = self.cs.hals.mmio.read_MMIO_reg_dword(mmio_addr, ((port & 0xFF) << 16) | (register & 0xFFFF))
         return reg_val
 
@@ -264,8 +290,10 @@ class MMMsgBus(hal_base.HALBase):
             data (int): The data to write to the register.
         Returns:
             Optional[int]: The value written to the register, or None if the write operation fails.
+        Raises:
+            CSReadError: If the SBREG_BAR base address could not be determined.
         """
-        mmio_addr = self.get_sbreg_base_address()
+        mmio_addr = self.__get_sbreg_base_for_access(port, register)
         reg_val = self.cs.hals.mmio.write_MMIO_reg_dword(mmio_addr, ((port & 0xFF) << 16) | (register & 0xFFFF), data)
         return reg_val
 
