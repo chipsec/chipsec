@@ -208,28 +208,39 @@ class MMMsgBus(hal_base.HALBase):
 
     def get_sbreg_base_address(self) -> Optional[int]:
         """
-        Get the base address of the SBREG MMIO BAR.
+        Get the base address of the SBREG MMIO BAR. If already found, return without searching again.
         Returns:
             int: The base address of the SBREG MMIO BAR, or None if it cannot be determined.
         """
-        try:
-            mmio_addr = self.cs.hals.mmio.get_MMIO_BAR_base_address('8086.P2SBC.SBREGBAR')[0]
-            return mmio_addr
-        except (MMIOBarConfigError, CSReadError):
-            self.logger.log_hal('Failed to read MMIO BAR base address for 8086.P2SBC.SBREGBAR')
-        try:
-            hobs = self.cs.hals.hob.get_list_by_name('8086.HOB.P2SB_HOB')
-            if hobs:
-                mmio_addr = hobs[0].get_field_value('PCI')
-                return mmio_addr
-        except Exception:
-            self.logger.log_hal('Failed to read SBREG_BAR from HOBs')
-        self.logger.log_hal('Attempting to unhide and read MMIO BAR base address for 8086.P2SBC.SBREGBAR')
-        self.__unhide_p2sb()
-        try:
-            return self.__read_sbreg_bar_direct()
-        finally:
-            self.__hide_p2sb()
+        if self._sbreg_base is None:
+            return self.find_sbreg_base_address()
+        return self._sbreg_base
+
+    def find_sbreg_base_address(self) -> Optional[int]:
+        """
+        Find the base address of the SBREG MMIO BAR using various methods.
+
+        Returns:
+            int: The base address of the SBREG MMIO BAR, or None if it cannot be determined.
+        """
+        sbreg_funcs = [self.__get_sbreg_from_mmio_bar, 
+                       self.__get_sbreg_from_hob, 
+                       self.__get_sbreg_from_acpi, 
+                       self.__get_sbreg_from_unhidden_mmio_bar]
+        for sbreg_func in sbreg_funcs:
+            self._sbreg_base = sbreg_func()
+            if self._sbreg_base:
+                return self._sbreg_base
+        return None
+
+    def is_enabled(self) -> bool:
+        """
+        Check if the MMMsgBus is enabled.
+
+        Returns:
+            bool: True if the MMMsgBus is enabled, False otherwise.
+        """
+        return self.get_sbreg_base_address() is not None
 
     def read(self, port: int, register: int) -> int:
         """
