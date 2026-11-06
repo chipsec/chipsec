@@ -182,7 +182,7 @@ class MMIOBarConfig(GenericConfig, RegisterList):
             self.desc = cfg_obj.get('desc', self.name)
             self.reg_align = cfg_obj.get('reg_align')
             self.registerh = cfg_obj.get('registerh')
-            self.reg_alignh = cfg_obj.get('reg_alignh')
+            self.regh_align = cfg_obj.get('regh_align')
             self.baseh_field = cfg_obj.get('baseh_field')
             self.registertype = cfg_obj.get('registertype')
             self.offset = cfg_obj.get('offset', 0)
@@ -351,7 +351,7 @@ class MMIOBarConfig(GenericConfig, RegisterList):
         optional_fields = [
             ('reg_align', self.reg_align),
             ('registerh', self.registerh),
-            ('reg_alignh', self.reg_alignh),
+            ('regh_align', self.regh_align),
             ('baseh_field', self.baseh_field),
             ('registertype', self.registertype),
             ('mmio_base', self.mmio_base),
