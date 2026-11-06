@@ -327,57 +327,58 @@ class SMBIOS(hal_base.HALBase):
         if self.smbios_2_ep is not None or self.smbios_3_ep is not None:
             return True
 
-        # Initialize search parameters
-        entries_to_find = entries_found = 0
-
-        # Fist get the configuration table using the UEFI HAL.  You may not be able to use the addresses
-        # in the table because in some cases they have been converted to a VA and are not mapped.
+        # Config table addresses may be unmapped VAs at OS runtime, so validate before use.
         logger().log_hal('Checking UEFI Configuration Table for SMBIOS entry')
         (ect_found, _, ect, _) = self.uefi.find_EFI_Configuration_Table()
         if ect_found and (ect is not None):
             logger().log_hal(str(ect))
             if SMBIOS_2_x_GUID in ect.VendorTables:
+                ep_pa = ect.VendorTables[SMBIOS_2_x_GUID]
                 logger().log_hal('+ Found 32bit SMBIOS entry')
-                logger().log_hal(f'+ Potential 2.x table address: 0x{ect.VendorTables[SMBIOS_2_x_GUID]:016X}')
+                logger().log_hal(f'+ Potential 2.x table address: 0x{ep_pa:016X}')
                 self.smbios_2_guid_found = True
-                entries_to_find += 1
-            if SMBIOS_3_x_GUID in ect.VendorTables:
-                logger().log_hal('+ Found 64bit SMBIOS entry')
-                logger().log_hal(f'+ Potential 3.x table address: 0x{ect.VendorTables[SMBIOS_3_x_GUID]:016X}')
-                self.smbios_3_guid_found = True
-                entries_to_find += 1
-
-        # Determine regions to scan
-        if self.smbios_2_guid_found or self.smbios_3_guid_found:
-            (smm_base, _, _) = self.cs.hals.cpu.get_SMRAM()
-            pa = smm_base - SCAN_SIZE
-        else:
-            entries_to_find = 2
-            pa = BOUNDARY_1MB - SCAN_SIZE
-
-        # Scan memory for the signature
-        logger().log_hal(f'Scanning memory for {entries_to_find:d} signature(s)')
-        while (pa >= SCAN_LOW_LIMIT):
-            mem_buffer = self.cs.hals.memory.read_physical_mem(pa, SCAN_SIZE)
-            sig_pa = mem_buffer.find(SMBIOS_2_x_SIG) + pa
-            if sig_pa >= pa and self.smbios_2_pa is None:
-                logger().log_hal(f'+ Found SMBIOS 2.x signature @ 0x{sig_pa:08X}')
-                self.smbios_2_ep = self.__validate_ep_2_values(sig_pa)
+                self.smbios_2_ep = self.__validate_ep_2_values(ep_pa)
                 if self.smbios_2_ep is not None:
                     logger().log_hal('+ Verified SMBIOS 2.x Entry Point structure')
-                    self.smbios_2_pa = sig_pa
-                    entries_found += 1
-            sig_pa = mem_buffer.find(SMBIOS_3_x_SIG) + pa
-            if sig_pa >= pa and self.smbios_3_pa is None:
-                logger().log_hal(f'+ Found SMBIOS 3.x signature @ 0x{sig_pa:08X}')
-                self.smbios_3_ep = self.__validate_ep_3_values(sig_pa)
+                    self.smbios_2_pa = ep_pa
+            if SMBIOS_3_x_GUID in ect.VendorTables:
+                ep_pa = ect.VendorTables[SMBIOS_3_x_GUID]
+                logger().log_hal('+ Found 64bit SMBIOS entry')
+                logger().log_hal(f'+ Potential 3.x table address: 0x{ep_pa:016X}')
+                self.smbios_3_guid_found = True
+                self.smbios_3_ep = self.__validate_ep_3_values(ep_pa)
                 if self.smbios_3_ep is not None:
                     logger().log_hal('+ Verified SMBIOS 3.x Entry Point structure')
-                    self.smbios_3_pa = sig_pa
-                    entries_found += 1
-            if entries_found >= entries_to_find:
-                break
-            pa -= SCAN_SIZE
+                    self.smbios_3_pa = ep_pa
+
+        # Fall back to scanning only the legacy BIOS region; scanning below SMRAM can fault on unmapped pages.
+        if self.smbios_2_pa is None and self.smbios_3_pa is None:
+            logger().log_hal('Scanning legacy BIOS region for SMBIOS signatures')
+            pa = BOUNDARY_1MB - SCAN_SIZE
+            while (pa >= SCAN_LOW_LIMIT):
+                mem_buffer = self.cs.hals.memory.read_physical_mem(pa, SCAN_SIZE)
+                sig_pa = mem_buffer.find(SMBIOS_2_x_SIG) + pa
+                if sig_pa >= pa and self.smbios_2_pa is None:
+                    logger().log_hal(f'+ Found SMBIOS 2.x signature @ 0x{sig_pa:08X}')
+                    self.smbios_2_ep = self.__validate_ep_2_values(sig_pa)
+                    if self.smbios_2_ep is not None:
+                        logger().log_hal('+ Verified SMBIOS 2.x Entry Point structure')
+                        self.smbios_2_pa = sig_pa
+                sig_pa = mem_buffer.find(SMBIOS_3_x_SIG) + pa
+                if sig_pa >= pa and self.smbios_3_pa is None:
+                    logger().log_hal(f'+ Found SMBIOS 3.x signature @ 0x{sig_pa:08X}')
+                    self.smbios_3_ep = self.__validate_ep_3_values(sig_pa)
+                    if self.smbios_3_ep is not None:
+                        logger().log_hal('+ Verified SMBIOS 3.x Entry Point structure')
+                        self.smbios_3_pa = sig_pa
+                if self.smbios_2_pa is not None and self.smbios_3_pa is not None:
+                    break
+                pa -= SCAN_SIZE
+        else:
+            if self.smbios_2_guid_found and self.smbios_2_pa is None:
+                logger().log_hal('- SMBIOS 2.x entry point from UEFI Configuration Table failed validation; not scanning legacy region')
+            if self.smbios_3_guid_found and self.smbios_3_pa is None:
+                logger().log_hal('- SMBIOS 3.x entry point from UEFI Configuration Table failed validation; not scanning legacy region')
 
         # Check to see if we thing we found the structure
         if self.smbios_2_pa is None and self.smbios_3_pa is None:
