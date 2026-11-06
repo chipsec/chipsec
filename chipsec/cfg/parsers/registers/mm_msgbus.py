@@ -71,6 +71,7 @@ class MM_MSGBUSRegisters(BaseConfigRegisterHelper):
             self.port = cfg_obj['port']
             self.size = cfg_obj.get('size', 4)  # Default to 4 bytes
             self.bar_size = None
+            self.cs = cs()
             self._validate_mm_msgbus_config()
         except KeyError as e:
             raise MM_MSGBUSRegisterError(f"Missing required field in MM_MSGBUS register configuration: {e}") from e
@@ -166,6 +167,10 @@ class MM_MSGBUSRegisters(BaseConfigRegisterHelper):
         reg_str += self._register_fields_str()
         return reg_str
 
+    def is_enabled(self) -> bool:
+        """Check if the MM_MSGBUS register is enabled."""
+        return self.cs.hals.mmmsgbus.is_enabled()
+
     def read(self) -> int:
         """
         Read the MM_MSGBUS register value.
@@ -179,8 +184,8 @@ class MM_MSGBUSRegisters(BaseConfigRegisterHelper):
         """
         try:
             self.logger.log_debug(f'reading {self.name}')
-            _cs = cs()
-            self.value = _cs.hals.mmmsgbus.read(self.port, self.offset)
+            
+            self.value = self.cs.hals.mmmsgbus.read(self.port, self.offset)
             return self.value
         except CSReadError:
             raise
@@ -202,8 +207,7 @@ class MM_MSGBUSRegisters(BaseConfigRegisterHelper):
         """
         try:
             self.logger.log_debug(f'writing 0x{value:X} to {self.name}')
-            _cs = cs()
-            _cs.hals.mmmsgbus.write(self.port, self.offset, value)
+            self.cs.hals.mmmsgbus.write(self.port, self.offset, value)
             self.value = value
         except CSReadError:
             raise
