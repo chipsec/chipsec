@@ -55,7 +55,7 @@ class rtclock(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.cmos = CMOS(self.cs)
-        self.user_request = False
+        self.attempt_modify = False
         self.test_offset = 0x38
         self.test_value = 0xAA
         self.cs.set_scope({
@@ -63,19 +63,19 @@ class rtclock(BaseModule):
         })
 
     def is_supported(self) -> bool:
-        if self.cs.is_core(): #or (self.cs.Cfg.get_chipset_code() == CHIPSET_CODE_AVN):
+        if self.cs.is_core():
             self.rc_list = self.cs.register.get_list_by_name('RC')
-            if self.rc_list:
-                return True
-            self.logger.log_important('RC register not defined for platform.  Skipping module.')
+            if not self.rc_list:
+                self.logger.log_important('RC register not defined for platform.')
+            return True
         else:
             self.logger.log_important('Not a Core platform.  Skipping check.')
         return False
 
     def check_rtclock(self) -> int:
-        res = ModuleResult.FAILED
+        ll_is_set = ul_is_set = True
+        check_has_run = False
         for rc in self.rc_list:
-            ll_is_set = ul_is_set = False
             try:
                 check_config_regs = rc.read() != 0xFFFFFFFF
             except CSReadError as err:
@@ -83,58 +83,73 @@ class rtclock(BaseModule):
                 self.logger.log_debug(f'Error reading RC register: {err}')
 
             if check_config_regs:
+                check_has_run = True
                 rc.print()
-                ll_is_set = rc.get_field('LL') == 1
-                ul_is_set = rc.get_field('UL') == 1
-            elif self.user_request:
-                self.logger.log_important('Writing to CMOS to determine write protection (original values will be restored)')
+                ll_is_set &= rc.get_field('LL') == 1
+                ul_is_set &= rc.get_field('UL') == 1
+        if not check_has_run:
+            self.logger.log_important('Unable to test lock bits without attempting to modify CMOS.')
+            self.logger.log('[*] Run chipsec_main manually with the following commandline flags.')
+            self.logger.log('[*] python chipsec_main -m common.rtclock -a modify')
+            self.result.setStatusBit(self.result.status.VERIFY)
+            return self.result.getReturnCode(ModuleResult.WARNING)
+        return self.check_locks(ll_is_set, ul_is_set)
 
-                original_val = self.cmos.read_cmos_low(self.test_offset)
-                self.cmos.write_cmos_low(self.test_offset, original_val ^ self.test_value)
-                if original_val == self.cmos.read_cmos_low(self.test_offset):
-                    ll_is_set = True
-                else:
-                    self.logger.log_important('Restoring original value')
-                    self.cmos.write_cmos_low(self.test_offset, original_val)
+    def attempt_modification(self) -> int:
+            ll_is_set = ul_is_set = False
+            self.logger.log_important('Writing to CMOS to determine write protection (original values will be restored)')
 
-                original_val = self.cmos.read_cmos_high(self.test_offset)
-                self.cmos.write_cmos_high(self.test_offset, original_val ^ self.test_value)
-                if original_val == self.cmos.read_cmos_high(self.test_offset):
-                    ul_is_set = True
-                else:
-                    self.logger.log_important('Restoring original value')
-                    self.cmos.write_cmos_high(self.test_offset, original_val)
+            original_val = self.cmos.read_cmos_low(self.test_offset)
+            self.cmos.write_cmos_low(self.test_offset, original_val ^ self.test_value)
+            if original_val == self.cmos.read_cmos_low(self.test_offset):
+                ll_is_set = True
             else:
-                self.logger.log_important('Unable to test lock bits without attempting to modify CMOS.')
-                self.logger.log('[*] Run chipsec_main manually with the following commandline flags.')
-                self.logger.log('[*] python chipsec_main -m common.rtclock -a modify')
-                self.result.setStatusBit(self.result.status.VERIFY)
-                return self.result.getReturnCode(ModuleResult.WARNING)
+                self.logger.log_important('Restoring original value')
+                self.cmos.write_cmos_low(self.test_offset, original_val)
 
-            if ll_is_set:
-                self.logger.log_good('Protected bytes (0x38-0x3F) in low 128-byte bank of RTC memory are locked')
+            original_val = self.cmos.read_cmos_high(self.test_offset)
+            self.cmos.write_cmos_high(self.test_offset, original_val ^ self.test_value)
+            if original_val == self.cmos.read_cmos_high(self.test_offset):
+                ul_is_set = True
             else:
-                self.logger.log_bad('Protected bytes (0x38-0x3F) in low 128-byte bank of RTC memory are not locked')
-            if ul_is_set:
-                self.logger.log_good('Protected bytes (0x38-0x3F) in high 128-byte bank of RTC memory are locked')
-            else:
-                self.logger.log_bad('Protected bytes (0x38-0x3F) in high 128-byte bank of RTC memory are not locked')
+                self.logger.log_important('Restoring original value')
+                self.cmos.write_cmos_high(self.test_offset, original_val)
 
-            if ll_is_set and ul_is_set:
-                res = ModuleResult.PASSED
-                self.logger.log_passed('Protected locations in RTC memory are locked')
-            else:
-                res = ModuleResult.WARNING
-                self.result.setStatusBit(self.result.status.POTENTIALLY_VULNERABLE)
-                self.logger.log_warning('Protected locations in RTC memory are accessible (BIOS may not be using them)')
+            return self.check_locks(ll_is_set, ul_is_set)
+
+    def check_locks(self, ll_is_set, ul_is_set):
+        if ll_is_set:
+            self.logger.log_good('Protected bytes (0x38-0x3F) in low 128-byte bank of RTC memory are locked')
+        else:
+            self.logger.log_bad('Protected bytes (0x38-0x3F) in low 128-byte bank of RTC memory are not locked')
+        if ul_is_set:
+            self.logger.log_good('Protected bytes (0x38-0x3F) in high 128-byte bank of RTC memory are locked')
+        else:
+            self.logger.log_bad('Protected bytes (0x38-0x3F) in high 128-byte bank of RTC memory are not locked')
+
+        if ll_is_set and ul_is_set:
+            res = ModuleResult.PASSED
+            self.logger.log_passed('Protected locations in RTC memory are locked')
+        else:
+            res = ModuleResult.WARNING
+            self.result.setStatusBit(self.result.status.POTENTIALLY_VULNERABLE)
+            self.logger.log_warning('Protected locations in RTC memory are accessible (BIOS may not be using them)')
 
         return self.result.getReturnCode(res)
 
     def run(self, module_argv: List[str]) -> int:
         self.logger.start_test('Protected RTC memory locations')
-
+        
         if len(module_argv) >= 1:
             if module_argv[0].lower() == 'modify':
-                self.user_request = True
-        self.res = self.check_rtclock()
+                self.attempt_modify = True
+        if self.attempt_modify:
+            self.res = self.attempt_modification()
+        elif self.rc_list:
+            self.res = self.check_rtclock()
+        else:
+            self.logger.log_important('Cannot determine lock status without attempting to modify CMOS. Use the -a modify flag to attempt to modify CMOS. Skipping module.')
+            self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
+            self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
+
         return self.res
