@@ -81,5 +81,8 @@ https://edc.intel.com/content/www/us/en/design/publications/800-series-chipset-f
     <definition name="IO" port="0xCF9" config="IO.io0.xml" />
   </io>
 
+  <mm_msgbus>
+    <definition name="GPIO_COM1" port="0x6D" config="GPIO.pltrst_gpio-pch8xx.xml" />
+  </mm_msgbus>
 
 </configuration>
