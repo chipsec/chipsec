@@ -55,6 +55,10 @@ chipsec@intel.com
     <definition name="MSR" config="MSR.msr2.xml" />
   </msr>
 
+  <mm_msgbus>
+    <definition name="GPIO_COM5" port="0xD5" config="GPIO.pltrst_gpio-mtl.xml" />
+  </mm_msgbus>
+
     <!-- #################################### -->
   <!--                                      -->
   <!-- Memory ranges                        -->
