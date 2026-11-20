@@ -64,6 +64,7 @@ chipsec@intel.com
 
   <mm_msgbus>
     <definition name="RTC" port="0xC3" config="RTC.rtc0.xml" />
+    <definition name="GPIO_COM0" port="0x6E" config="GPIO.pltrst_gpio-pch5xxlp.xml" />
   </mm_msgbus>
 
 </configuration>
