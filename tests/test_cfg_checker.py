@@ -58,6 +58,28 @@ class TestConfigChecker(unittest.TestCase):
         self.assertTrue(self.checker.inconsistency_found)
         self.assertTrue(self._log_contains('referenced config file does not exist: PMC.missing.xml'))
 
+    def test_gpio_pad_config_attribute_is_not_a_config_file_reference(self) -> None:
+        self._write_xml('GPIO/gpio0.xml', '''<?xml version="1.0"?>
+<configuration code="TST">
+  <community port_id="0x10">
+    <group name="GPP_A">
+      <registers>
+        <register name="PAD_CFG_DW0_GPP_A_0" offset="0x700" />
+        <register name="PADCFGLOCK_GPP_A_0" offset="0x80" />
+      </registers>
+      <pads>
+        <pad name="A_0" config="PAD_CFG_DW0_GPP_A_0" lock="PADCFGLOCK_GPP_A_0" />
+      </pads>
+    </group>
+  </community>
+</configuration>
+''')
+
+        self._check_file('GPIO/gpio0.xml')
+
+        self.assertFalse(self.checker.inconsistency_found)
+        self.assertFalse(self._log_contains('referenced config file does not exist'))
+
     def test_invalid_subcomponent_type_is_reported(self) -> None:
         self._write_xml('SPI/spi0.xml', '''<?xml version="1.0"?>
 <configuration>
