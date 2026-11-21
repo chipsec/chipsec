@@ -42,6 +42,7 @@ from chipsec.library import defines
 from chipsec.helper.oshelper import get_tools_path
 from chipsec.library.exceptions import OsHelperError, UnimplementedAPIError
 from chipsec.helper.basehelper import Helper
+from chipsec.library.linux_boot_params import get_efi_system_table_address
 from chipsec.library.logger import logger
 import chipsec.library.file
 
@@ -290,6 +291,9 @@ class LinuxHelper(Helper):
                 logger().log_error(f'[helper] Error in va2pa: PA higher that max physical address: VA (0x{va:016X}) -> PA (0x{pa:016X})')
             error_code = 1
         return (pa, error_code)
+
+    def get_EFI_System_Table_address(self) -> Optional[int]:
+        return get_efi_system_table_address()
 
     def read_pci_reg(self, bus: int, device: int, function: int, offset: int, size: int = 4) -> int:
         _PCI_DOM = 0  # Change PCI domain, if there is more than one.

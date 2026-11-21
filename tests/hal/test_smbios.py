@@ -23,6 +23,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from chipsec.hal.common import smbios
+from chipsec.library.exceptions import PhysicalMemoryAccessError
 from chipsec.hal.common.smbios import (
     SMBIOS,
     SMBIOS_2_x_ENTRY_POINT,
@@ -462,6 +463,14 @@ class TestTableDiscovery(unittest.TestCase):
         scanned = [c[0][0] for c in cs.hals.memory.read_physical_mem.call_args_list if c[0][1] == smbios.SCAN_SIZE]
         self.assertTrue(scanned)
         self.assertTrue(all(smbios.SCAN_LOW_LIMIT <= pa < smbios.BOUNDARY_1MB for pa in scanned))
+
+    def test_an_unreadable_legacy_region_is_skipped_rather_than_aborting_the_scan(self):
+        hal, cs = make_smbios()
+        hal.uefi.find_EFI_Configuration_Table.return_value = (False, None, None, None)
+        cs.hals.memory.read_physical_mem.side_effect = PhysicalMemoryAccessError('not accessible', 17)
+
+        self.assertFalse(hal.find_smbios_table())
+        cs.hals.memory.read_physical_mem.assert_called_with(smbios.SCAN_LOW_LIMIT, smbios.SCAN_SIZE)
 
     def test_one_invalid_advertised_entry_point_is_logged_without_scanning(self):
         valid_addr, invalid_addr = 0x7A500000, 0x7A510000

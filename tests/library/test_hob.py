@@ -24,6 +24,7 @@ from uuid import UUID
 
 from chipsec.cfg.parsers.hob_parser import HOBParser, HOBCommands
 from chipsec.hal.common.hob import HOB
+from chipsec.library.exceptions import PhysicalMemoryAccessError
 from chipsec.library.register import ObjList
 from chipsec.library.uefi.hob import (
     parse_phit,
@@ -286,6 +287,93 @@ class TestHobHalContract(unittest.TestCase):
         registers = self._hal_with_registers().get_list_by_name('8086.OTHER.T')
         self.assertIsInstance(registers, ObjList)
         self.assertEqual(len(registers), 0)
+
+
+class TestReadHobList(unittest.TestCase):
+    """read_HOB_list() must never read past the page holding the end of the list."""
+
+    def _hal(self, hob_pa, hob_list, mapped_end):
+        memory = bytearray(mapped_end - BASE)
+        memory[hob_pa - BASE:hob_pa - BASE + len(hob_list)] = hob_list
+        self.reads = []
+
+        def read_physical_mem(pa, length):
+            self.reads.append((pa, length))
+            if pa < BASE or pa + length > mapped_end:
+                raise AssertionError(f'read of unmapped memory 0x{pa:X}+0x{length:X}')
+            return bytes(memory[pa - BASE:pa - BASE + length])
+
+        hal = HOB.__new__(HOB)
+        hal.hob_pa = hob_pa
+        hal.logger = MagicMock()
+        hal.cs = MagicMock()
+        hal.cs.hals.memory.read_physical_mem.side_effect = read_physical_mem
+        hal.find_HOB_list = MagicMock(return_value=True)
+        return hal
+
+    def test_list_within_one_page_reads_only_that_page(self):
+        buf, _ = _build_list()
+        hal = self._hal(BASE + 0xF00, buf, BASE + 0x1000)
+        found, hob_buf = hal.read_HOB_list()
+        self.assertTrue(found)
+        self.assertEqual(hob_buf, buf)
+
+    def test_list_spanning_pages_stops_at_page_holding_end(self):
+        buf, _ = _build_list()
+        hob_pa = BASE + 0xFC0
+        hal = self._hal(hob_pa, buf, BASE + 0x2000)
+        found, hob_buf = hal.read_HOB_list()
+        self.assertTrue(found)
+        self.assertEqual(hob_buf, buf)
+        self.assertLessEqual(max(pa + length for pa, length in self.reads), BASE + 0x2000)
+
+    def test_large_hob_is_read_up_to_its_end_page(self):
+        guid = 'AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE'
+        body = struct.pack('<16s', UUID(guid).bytes_le) + b'\x5A' * 0x2400
+        guid_hob = _hdr(EFI_HOB_TYPE_GUID_EXTENSION, EFI_HOB_GENERIC_HEADER_SIZE + len(body)) + body
+        buf = _phit(0) + guid_hob + _end()
+        hal = self._hal(BASE, buf, BASE + 0x3000)
+        found, hob_buf = hal.read_HOB_list()
+        self.assertTrue(found)
+        self.assertEqual(hob_buf, buf)
+
+    def test_invalid_hob_length_stops_reading(self):
+        buf = _phit(0) + _hdr(EFI_HOB_TYPE_FV, 0) + b'\xFF' * 0x40
+        hal = self._hal(BASE + 0xF00, buf, BASE + 0x1000)
+        found, _ = hal.read_HOB_list()
+        self.assertTrue(found)
+        self.assertLessEqual(max(pa + length for pa, length in self.reads), BASE + 0x1000)
+
+    def test_missing_end_hob_stops_at_short_read(self):
+        buf, _ = _build_list()
+        buf = buf[:-EFI_HOB_GENERIC_HEADER_SIZE]
+        hal = self._hal(BASE, buf, BASE + 0x1000)
+        hal.cs.hals.memory.read_physical_mem.side_effect = [buf[:0x38], b'']
+        found, hob_buf = hal.read_HOB_list()
+        self.assertTrue(found)
+        self.assertEqual(hob_buf, buf[:0x38])
+
+    def test_unreadable_page_returns_the_list_read_so_far(self):
+        buf, _ = _build_list()
+        hob_pa = BASE + 0xFC0
+        hal = self._hal(hob_pa, buf, BASE + 0x2000)
+
+        def read_physical_mem(pa, length):
+            if pa + length > BASE + 0x1000:
+                raise PhysicalMemoryAccessError('not mapped', 17)
+            return buf[pa - hob_pa:pa - hob_pa + length]
+
+        hal.cs.hals.memory.read_physical_mem.side_effect = read_physical_mem
+        found, hob_buf = hal.read_HOB_list()
+        self.assertTrue(found)
+        self.assertEqual(hob_buf, buf[:0x40])
+
+    def test_unreadable_phit_returns_not_found(self):
+        buf, _ = _build_list()
+        hal = self._hal(BASE, buf, BASE + 0x1000)
+        hal.cs.hals.memory.read_physical_mem.side_effect = PhysicalMemoryAccessError('not mapped', 17)
+        self.assertEqual(hal.read_HOB_list(), (False, b''))
+        hal.logger.log_hal.assert_called_once()
 
 
 if __name__ == '__main__':

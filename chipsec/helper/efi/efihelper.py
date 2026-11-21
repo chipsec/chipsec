@@ -41,17 +41,23 @@ if TYPE_CHECKING:
 from chipsec.library.logger import logger
 from chipsec.helper.oshelper import get_tools_path
 from chipsec.helper.basehelper import Helper
-from chipsec.library.exceptions import UnimplementedAPIError
+from chipsec.library.exceptions import PhysicalMemoryAccessError, UnimplementedAPIError
+from chipsec.library.uefi.common import StatusCode, EFI_MEMORY_RO, EFI_MEMORY_RP, EFI_PAGE_SIZE
 
 
 _tools = {
 }
+
+# Only the first 1 MiB is checked against the UEFI memory map. Above it, MMIO is legitimately
+# absent from the memory map, so page attributes are the only check applied.
+LEGACY_REGION_END = 0x100000
 
 class EfiHelper(Helper):
 
     def __init__(self):
         super(EfiHelper, self).__init__()
         self.name = "EfiHelper"
+        self._memory_map: Optional[List[Tuple[int, int]]] = None
         if sys.platform.startswith('EFI'):
             self.os_system = sys.platform
             self.os_release = "0.0"
@@ -106,14 +112,115 @@ class EfiHelper(Helper):
     def split_address(self, pa: int) -> Tuple[int, int]:
         return (pa & 0xFFFFFFFF, (pa >> 32) & 0xFFFFFFFF)
 
+    def _get_memory_map(self) -> List[Tuple[int, int]]:
+        """
+        Physical ranges described by the UEFI memory map, as merged, sorted (start, end) pairs.
+
+        Empty if the interpreter has no edk2.GetMemoryMap() or the call fails.
+        """
+        if self._memory_map is None:
+            self._memory_map = []
+            if not hasattr(edk2, 'GetMemoryMap'):
+                logger().log_debug('[helper] edk2.GetMemoryMap() unavailable; memory map not used to validate access')
+                return self._memory_map
+            (status, entries) = edk2.GetMemoryMap()
+            if status != StatusCode.EFI_SUCCESS:
+                logger().log_debug(f'[helper] GetMemoryMap() failed with status {status:d}')
+                return self._memory_map
+            ranges = sorted((start, start + pages * EFI_PAGE_SIZE) for (_, start, pages, _) in entries)
+            for (start, end) in ranges:
+                if self._memory_map and start <= self._memory_map[-1][1]:
+                    self._memory_map[-1] = (self._memory_map[-1][0], max(self._memory_map[-1][1], end))
+                else:
+                    self._memory_map.append((start, end))
+        return self._memory_map
+
+    def _in_memory_map(self, start: int, end: int) -> bool:
+        """
+        Return False if the memory map is known and [start, end) is not entirely within it.
+
+        Firmware such as Patina reports memory that does not exist (e.g. the 0xA0000-0x100000
+        legacy hole) with no access attributes, so GetMemoryAttributes() alone cannot reject it.
+        """
+        memory_map = self._get_memory_map()
+        if not memory_map:
+            return True
+        for (map_start, map_end) in memory_map:
+            if map_start <= start and end <= map_end:
+                return True
+            if map_start >= end:
+                break
+        return False
+
+    def _check_access(self, phys_address: int, length: int, write: bool = False) -> None:
+        """
+        Raise PhysicalMemoryAccessError if any page in the range would fault when accessed.
+
+        In the UEFI shell edk2.readmem/writemem dereference the address directly, so an
+        unmapped or read-protected page takes down the whole firmware. Any part of the range
+        below LEGACY_REGION_END must lie within the UEFI memory map (when available), and page
+        attributes come from EFI_MEMORY_ATTRIBUTE_PROTOCOL; if the interpreter or firmware
+        cannot provide either, that check is skipped and the access is allowed as before.
+        """
+        if length <= 0:
+            return
+        access = 'write' if write else 'read'
+        legacy_end = min(phys_address + length, LEGACY_REGION_END)
+        if phys_address < legacy_end and not self._in_memory_map(phys_address, legacy_end):
+            raise PhysicalMemoryAccessError(f'Physical address 0x{phys_address:016X} (0x{length:X} bytes) is not accessible for {access}: '
+                                            'range is not in the UEFI memory map', StatusCode.EFI_NO_MAPPING)
+        if not hasattr(edk2, 'GetMemoryAttributes'):
+            return
+        page_start = phys_address & ~(EFI_PAGE_SIZE - 1)
+        page_end = (phys_address + length + EFI_PAGE_SIZE - 1) & ~(EFI_PAGE_SIZE - 1)
+        denied = EFI_MEMORY_RP | (EFI_MEMORY_RO if write else 0)
+        bad_page = self._find_inaccessible_page(page_start, page_end, denied)
+        if bad_page is not None:
+            raise PhysicalMemoryAccessError(f'Physical address 0x{phys_address:016X} (0x{length:X} bytes) is not accessible for {access}: '
+                                            f'page 0x{bad_page:016X} is not mapped or is protected', StatusCode.EFI_NO_MAPPING)
+
+    def _find_inaccessible_page(self, start: int, end: int, denied: int) -> Optional[int]:
+        """
+        Return the first page in [start, end) that is unmapped or has any of the denied attributes.
+
+        GetMemoryAttributes() reports EFI_NO_MAPPING both for unmapped pages and for ranges
+        whose attributes differ between pages, so such ranges are split in half until each
+        part is uniform. A large read over uniform memory costs a single query.
+        """
+        (status, attributes) = edk2.GetMemoryAttributes(start, end - start)
+        if status == StatusCode.EFI_SUCCESS:
+            return start if attributes & denied else None
+        if status != StatusCode.EFI_NO_MAPPING:
+            logger().log_debug(f'[helper] GetMemoryAttributes(0x{start:016X}, 0x{end - start:X}) returned {status:d}; unable to validate access')
+            return None
+        if end - start <= EFI_PAGE_SIZE:
+            return start
+        mid = start + ((end - start) // (2 * EFI_PAGE_SIZE)) * EFI_PAGE_SIZE
+        bad_page = self._find_inaccessible_page(start, mid, denied)
+        if bad_page is None:
+            bad_page = self._find_inaccessible_page(mid, end, denied)
+        return bad_page
+
     def read_phys_mem(self, phys_address: int, length: int) -> bytes:
+        self._check_access(phys_address, length)
+        return self.read_phys_mem_unsafe(phys_address, length)
+
+    def read_phys_mem_unsafe(self, phys_address: int, length: int) -> bytes:
         pa_lo, pa_hi = self.split_address(phys_address)
         return edk2.readmem(pa_lo, pa_hi, length)
 
     def write_phys_mem(self, phys_address: int, length: int, buf: bytes) -> int:
+        self._check_access(phys_address, length, write=True)
+        return self.write_phys_mem_unsafe(phys_address, length, buf)
+
+    def write_phys_mem_unsafe(self, phys_address: int, length: int, buf: bytes) -> int:
         pa_lo, pa_hi = self.split_address(phys_address)
-        if type(buf) == bytearray:
-            buf = bytes(buf)
+        # edk2.writemem writes the whole buffer, so never write more than the length requested
+        # (and, in write_phys_mem, checked).
+        if len(buf) > length:
+            logger().log_debug(f'[helper] Buffer (0x{len(buf):X} bytes) is longer than the write length (0x{length:X}); '
+                               f'only 0x{length:X} bytes are written to 0x{phys_address:016X}')
+        buf = bytes(buf[:length])
         if 4 == length:
             dword_value = struct.unpack('I', buf)[0]
             res = edk2.writemem_dword(pa_lo, pa_hi, dword_value)
@@ -130,6 +237,20 @@ class EfiHelper(Helper):
         pa = va  # UEFI shell has identity mapping
         logger().log_debug(f'[helper] VA (0X{va:016X}) -> PA (0X{pa:016X})')
         return (pa, 0)
+
+    def get_EFI_System_Table_address(self) -> Optional[int]:
+        """Address of the EFI System Table, straight from the firmware.
+
+        Avoids brute-force scanning memory for the 'IBI SYST' signature, which
+        is slow and walks regions that newer firmware leaves unmapped.
+        """
+        try:
+            address = edk2.GetSystemTable()
+        except AttributeError:
+            logger().log_debug('[helper] edk2.GetSystemTable() unavailable')
+            return None
+        logger().log_debug(f'[helper] EFI System Table @ 0x{address:016X}')
+        return address or None
 
     def pa2va(self, pa: int) -> int:
         va = pa  # UEFI Shell has identity mapping
@@ -165,7 +286,7 @@ class EfiHelper(Helper):
         if size == 4:
             ret = edk2.writemem_dword(phys_address_lo, phys_address_hi, value)
         else:
-            buf = struct.pack(size * "B", value)
+            buf = value.to_bytes(size, 'little')
             ret = edk2.writemem(phys_address_lo, phys_address_hi, buf)
         return ret
 

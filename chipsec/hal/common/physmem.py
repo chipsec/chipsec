@@ -53,6 +53,15 @@ class Memory(HALBase):
         self.logger.log_hal(f'[mem] 0x{phys_address:016X}')
         return self.helper.read_phys_mem(phys_address, length)
 
+    def read_physical_mem_unsafe(self, phys_address: int, length: int) -> bytes:
+        """
+        Read physical memory, bypassing the helper's accessibility checks.
+
+        An unmapped or protected address may crash the platform (e.g. a page fault in the UEFI shell).
+        """
+        self.logger.log_hal(f'[mem] 0x{phys_address:016X} (unsafe)')
+        return self.helper.read_phys_mem_unsafe(phys_address, length)
+
     def read_physical_mem_qword(self, phys_address: int) -> int:
         out_buf = self.read_physical_mem(phys_address, 8)
         value = unpack('=Q', out_buf)[0]
@@ -84,6 +93,17 @@ class Memory(HALBase):
             self.logger.log(f'[mem] buffer len = 0x{length:X} to PA = 0x{phys_address:016X}')
             print_buffer_bytes(buf)
         return self.helper.write_phys_mem(phys_address, length, buf)
+
+    def write_physical_mem_unsafe(self, phys_address: int, length: int, buf: bytes) -> int:
+        """
+        Write physical memory, bypassing the helper's accessibility checks.
+
+        An unmapped or protected address may crash the platform (e.g. a page fault in the UEFI shell).
+        """
+        if self.logger.HAL:
+            self.logger.log(f'[mem] buffer len = 0x{length:X} to PA = 0x{phys_address:016X} (unsafe)')
+            print_buffer_bytes(buf)
+        return self.helper.write_phys_mem_unsafe(phys_address, length, buf)
 
     def write_physical_mem_dword(self, phys_address: int, dword_value: int) -> int:
         self.logger.log_hal(f'[mem] dword to PA = 0x{phys_address:016X} <- 0x{dword_value:08X}')

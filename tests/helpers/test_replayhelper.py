@@ -20,8 +20,12 @@
 # To execute: python -m unittest tests.helpers.test_replayhelper
 
 import unittest
+from errno import EFAULT
 from os.path import join
 import chipsec.helper.replay.replayhelper as rph
+from chipsec.library.exceptions import PhysicalMemoryAccessError, UnimplementedAPIError
+
+PMA_ERROR = "!! <class 'chipsec.library.exceptions.PhysicalMemoryAccessError'>: not accessible"
 
 
 class ReplayHelperTest(unittest.TestCase):
@@ -76,6 +80,55 @@ class ReplayHelperTest(unittest.TestCase):
     def test_read_phyis_mem_oob(self):
         mem_value = self.replayhelper.read_phys_mem(0x5010,0x2)
         self.assertEqual(mem_value, b'\xf3\x99')
+
+    def test_read_phys_mem_unsafe_replays_its_own_entries(self):
+        self.replayhelper._data['read_phys_mem_unsafe'] = {'(983040,1)': ['\xaa']}
+        self.assertEqual(self.replayhelper.read_phys_mem_unsafe(0xF0000, 1), b'\xaa')
+
+    def test_write_phys_mem_unsafe_replays_its_own_entries(self):
+        self.replayhelper._data['write_phys_mem_unsafe'] = {"(4096,1,b'\\x01')": ['1']}
+        self.assertEqual(self.replayhelper.write_phys_mem_unsafe(0x1000, 1, b'\x01'), 1)
+
+    def test_a_recorded_read_phys_mem_error_is_raised(self):
+        self.replayhelper._data['read_phys_mem'] = {'(983040,1)': [PMA_ERROR]}
+        with self.assertRaises(PhysicalMemoryAccessError) as ctx:
+            self.replayhelper.read_phys_mem(0xF0000, 1)
+        self.assertEqual(str(ctx.exception), 'not accessible')
+        self.assertEqual(ctx.exception.errorcode, EFAULT)
+
+    def test_a_recorded_read_phys_mem_unsafe_error_is_raised(self):
+        self.replayhelper._data['read_phys_mem_unsafe'] = {'(983040,1)': [PMA_ERROR]}
+        with self.assertRaises(PhysicalMemoryAccessError):
+            self.replayhelper.read_phys_mem_unsafe(0xF0000, 1)
+
+    def test_a_recorded_write_phys_mem_error_is_raised(self):
+        self.replayhelper._data['write_phys_mem'] = {"(4096,1,b'\\x01')": [PMA_ERROR]}
+        with self.assertRaises(PhysicalMemoryAccessError):
+            self.replayhelper.write_phys_mem(0x1000, 1, b'\x01')
+
+    def test_a_recorded_error_with_a_single_argument_is_raised(self):
+        self.replayhelper._data['read_cr'] = {'(0,0)': ["!! <class 'chipsec.library.exceptions.UnimplementedAPIError'>: read_cr"]}
+        with self.assertRaises(UnimplementedAPIError):
+            self.replayhelper._get_element_eval('read_cr', (0, 0))
+
+    def test_a_recorded_builtin_error_is_raised(self):
+        self.replayhelper._data['read_phys_mem'] = {'(4096,1)': ["!! <class 'OSError'>: [Errno 5] Input/output error"]}
+        with self.assertRaisesRegex(OSError, 'Input/output error'):
+            self.replayhelper.read_phys_mem(0x1000, 1)
+
+    def test_an_escaped_value_is_returned_as_recorded(self):
+        payload = "!! <class 'builtins.ValueError'>: data"
+        self.replayhelper._data['read_phys_mem'] = {'(4096,38)': ['!' + payload]}
+        self.assertEqual(self.replayhelper.read_phys_mem(0x1000, 38), payload.encode('latin_1'))
+
+    def test_efi_system_table_address_is_replayed(self):
+        self.replayhelper._data['get_EFI_System_Table_address'] = {'()': [str(0x7FEE0018), 'None']}
+        self.assertIsNone(self.replayhelper.get_EFI_System_Table_address())
+        self.assertEqual(self.replayhelper.get_EFI_System_Table_address(), 0x7FEE0018)
+
+    def test_efi_system_table_address_is_unknown_for_older_recordings(self):
+        self.assertNotIn('get_EFI_System_Table_address', self.replayhelper._data)
+        self.assertIsNone(self.replayhelper.get_EFI_System_Table_address())
 
     def test_cpuid_one(self):
         cpuid_value = self.replayhelper.cpuid(1, 0)

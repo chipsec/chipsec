@@ -75,14 +75,32 @@ class ReplayHelper(Helper):
     def firmware_type(self) -> Optional[str]:
         return self._get_element_eval('firmware_type', ())
 
+    def _decode_element(self, element: Any) -> Any:
+        """
+        Raise the exception if element is a recorded exception, otherwise return the recorded value.
+
+        RecordHelper escapes values that start with '!!' with an extra '!', so they cannot be
+        mistaken for an exception marker ('!! <class ...>').
+        """
+        if type(element) is not str:
+            return element
+        if element.startswith('!!!'):
+            return element[1:]
+        ematch = re.match(r'^!! <class \'(.*)\'>: (.*)', element)
+        if not ematch:
+            return element
+        eimport = ematch[1].split('.')
+        # Built-in exceptions are recorded without a module, e.g. <class 'OSError'>.
+        etype = getattr(import_module('.'.join(eimport[0:-1]) or 'builtins'), eimport[-1])
+        try:
+            err = etype(ematch[2])
+        except TypeError:
+            # OsHelperError and its subclasses also require an errorcode, which is not recorded.
+            err = etype(ematch[2], EFAULT)
+        raise err
+
     def _get_element_eval(self, cmd: str, args: Tuple) -> Optional[Any]:
-        element = self._get_element(cmd, args)
-        if type(element) is str:
-            ematch = re.match(r'^!! <class \'(.*)\'>: (.*)', element)
-            if ematch:
-                eimport = ematch[1].split('.')
-                etype = getattr(import_module('.'.join(eimport[0:-1])), eimport[-1])
-                raise etype(ematch[2])
+        element = self._decode_element(self._get_element(cmd, args))
         try:
             evaledobject = literal_eval(element)
         except (ValueError, SyntaxError, TypeError):
@@ -137,10 +155,16 @@ class ReplayHelper(Helper):
     # physical_address is 64 bit integer
     #
     def read_phys_mem(self, phys_address: int, length: int) -> bytes:
-        return stringtobytes(self._get_element("read_phys_mem", (phys_address, length)))
+        return stringtobytes(self._decode_element(self._get_element("read_phys_mem", (phys_address, length))))
 
     def write_phys_mem(self, phys_address: int, length: int, buf: bytes) -> int:
         return self._get_element_eval("write_phys_mem", (phys_address, length, buf))
+
+    def read_phys_mem_unsafe(self, phys_address: int, length: int) -> bytes:
+        return stringtobytes(self._decode_element(self._get_element("read_phys_mem_unsafe", (phys_address, length))))
+
+    def write_phys_mem_unsafe(self, phys_address: int, length: int, buf: bytes) -> int:
+        return self._get_element_eval("write_phys_mem_unsafe", (phys_address, length, buf))
 
     def alloc_phys_mem(self, length: int, max_phys_address: int) -> Tuple[int, int]:
         return self._get_element_eval("alloc_phys_mem", (length, max_phys_address))
@@ -150,6 +174,12 @@ class ReplayHelper(Helper):
 
     def va2pa(self, virtual_address: int) -> Tuple[int, int]:
         return self._get_element_eval("va2pa", (virtual_address, ))
+
+    def get_EFI_System_Table_address(self) -> Optional[int]:
+        # Recordings made before this API existed have no entry for it.
+        if 'get_EFI_System_Table_address' not in self._data:
+            return None
+        return self._get_element_eval('get_EFI_System_Table_address', ())
 
     def map_io_space(self, phys_address: int, length: int, cache_type: int) -> int:
         return self._get_element_eval("map_io_space", (phys_address, length, cache_type))

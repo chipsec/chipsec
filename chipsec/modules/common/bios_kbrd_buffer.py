@@ -36,6 +36,7 @@ Examples:
 from chipsec.module_common import BaseModule, BIOS
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.logger import print_buffer_bytes
+from chipsec.library.exceptions import PhysicalMemoryAccessError
 from typing import List
 
 TAGS = [BIOS]
@@ -52,10 +53,22 @@ class bios_kbrd_buffer(BaseModule):
         return True
 
     def check_BIOS_keyboard_buffer(self) -> int:
-        kbrd_buf_head = self.cs.hals.memory.read_physical_mem_dword(0x41A) & 0x000000FF
-        kbrd_buf_tail = self.cs.hals.memory.read_physical_mem_dword(0x41C) & 0x000000FF
+        # The keyboard buffer lives in the legacy BIOS Data Area in the first
+        # page of physical memory. A legacy-free platform has no BDA, and
+        # firmware that enforces NULL-pointer protection leaves page 0 unmapped,
+        # so the read is refused rather than returning meaningless data.
+        try:
+            kbrd_buf_head = self.cs.hals.memory.read_physical_mem_dword(0x41A) & 0x000000FF
+            kbrd_buf_tail = self.cs.hals.memory.read_physical_mem_dword(0x41C) & 0x000000FF
+            bios_kbrd_buf = self.cs.hals.memory.read_physical_mem(0x41E, 32)
+        except PhysicalMemoryAccessError as err:
+            self.logger.log_important(f'Legacy BIOS Data Area is not accessible: {err}')
+            self.logger.log('    The platform is legacy-free or page 0 is protected, so there is no')
+            self.logger.log('    legacy keyboard buffer that could hold a pre-boot password.')
+            self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
+            return self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
+
         self.logger.log(f'[*] Keyboard buffer head pointer = 0x{kbrd_buf_head:X} (at 0x41A), tail pointer = 0x{kbrd_buf_tail:X} (at 0x41C)')
-        bios_kbrd_buf = self.cs.hals.memory.read_physical_mem(0x41E, 32)
         self.logger.log('[*] Keyboard buffer contents (at 0x41E):')
         print_buffer_bytes(bios_kbrd_buf)
         bios_kbrd_buf = bios_kbrd_buf.decode('latin_1')

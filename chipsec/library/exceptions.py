@@ -347,6 +347,11 @@ class HWAccessViolationError (OsHelperError):
     pass
 
 
+class PhysicalMemoryAccessError (OsHelperError):
+    """Raised when a physical memory access is refused because the range is unmapped or protected."""
+    pass
+
+
 class UnimplementedAPIError (OsHelperError):
     def __init__(self, api_name: str) -> None:
         super(UnimplementedAPIError, self).__init__(f"'{api_name}' is not implemented", 0)

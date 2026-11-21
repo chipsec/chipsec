@@ -112,6 +112,20 @@ class Helper(ABC):
     def write_phys_mem(self, phys_address: int, size: int, buffer: bytes) -> int:
         pass
 
+    def read_phys_mem_unsafe(self, phys_address: int, size: int) -> bytes:
+        """Read physical memory without any helper-side accessibility checks.
+
+        Helpers that do not validate accesses use the regular read.
+        """
+        return self.read_phys_mem(phys_address, size)
+
+    def write_phys_mem_unsafe(self, phys_address: int, size: int, buffer: bytes) -> int:
+        """Write physical memory without any helper-side accessibility checks.
+
+        Helpers that do not validate accesses use the regular write.
+        """
+        return self.write_phys_mem(phys_address, size, buffer)
+
     @abstractmethod
     def alloc_phys_mem(self, size: int, max_phys_address: int) -> Tuple[int, int]:
         pass
@@ -123,6 +137,13 @@ class Helper(ABC):
     @abstractmethod
     def va2pa(self, virtual_address: int) -> Tuple[int, int]:
         pass
+
+    def get_EFI_System_Table_address(self) -> Optional[int]:
+        """Address of the EFI System Table, if the platform can report it.
+
+        Returning None means the caller has to locate it some other way.
+        """
+        return None
 
     @abstractmethod
     def map_io_space(self, phys_address: int, size: int, cache_type: int) -> int:

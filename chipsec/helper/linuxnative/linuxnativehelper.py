@@ -36,6 +36,7 @@ if TYPE_CHECKING:
 from chipsec.library import defines
 from chipsec.library.exceptions import OsHelperError
 from chipsec.helper.basehelper import Helper
+from chipsec.library.linux_boot_params import get_efi_system_table_address
 from chipsec.helper.linuxnative.cpuid import CPUID
 from chipsec.helper.linuxnative.legacy_pci import LegacyPci
 from chipsec.library.logger import logger
@@ -312,6 +313,9 @@ class LinuxNativeHelper(Helper):
 
     def va2pa(self, va):
         raise NotImplementedError()
+
+    def get_EFI_System_Table_address(self) -> Optional[int]:
+        return get_efi_system_table_address()
 
     def read_io_port(self, io_port: int, size: int) -> int:
         if self.devport_available():

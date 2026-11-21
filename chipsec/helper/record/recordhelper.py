@@ -68,21 +68,25 @@ class RecordHelper(Helper):
     def firmware_type(self) -> Optional[str]:
         return self._call_subhelper()
 
-    def _add_element(self, cmd: str, args: Tuple, ret: Any) -> None:
+    def _add_element(self, cmd: str, args: Tuple, ret: Any, is_error: bool = False) -> None:
         try:
             margs = f"({','.join(str(i) for i in args)})"
         except Exception:
             margs = str(args)
         if isinstance(ret, bytes):
             ret = bytestostring(ret)
+        ret = str(ret)
+        if not is_error and ret.startswith('!!'):
+            # Escape values that could be mistaken for a recorded exception; ReplayHelper strips the extra '!'.
+            ret = '!' + ret
         if str(cmd) in self._data:
             if margs in self._data[str(cmd)]:
                 # using insert opposed to append so that it creates last in first out when using pop command within getElement
-                self._data[str(cmd)][margs].insert(0, str(ret))
+                self._data[str(cmd)][margs].insert(0, ret)
             else:
-                self._data[str(cmd)][margs] = [str(ret)]
+                self._data[str(cmd)][margs] = [ret]
         else:
-            self._data[str(cmd)] = {margs: [str(ret)]}
+            self._data[str(cmd)] = {margs: [ret]}
 
     def _save(self) -> None:
         js = dumps(self._data, sort_keys=False, indent=2, separators=(',', ': '))
@@ -107,7 +111,7 @@ class RecordHelper(Helper):
         except Exception as e:
             ret = f'!! {type(e)}: {e}'
             err = e
-        self._add_element(fname, myargs, ret)
+        self._add_element(fname, myargs, ret, err is not None)
         if err is not None:
             raise err
         return ret
@@ -153,6 +157,12 @@ class RecordHelper(Helper):
     def write_phys_mem(self, phys_address: int, length: int, buf: bytes) -> int:
         return self._call_subhelper(phys_address, length, buf)
 
+    def read_phys_mem_unsafe(self, phys_address: int, length: int) -> bytes:
+        return self._call_subhelper(phys_address, length)
+
+    def write_phys_mem_unsafe(self, phys_address: int, length: int, buf: bytes) -> int:
+        return self._call_subhelper(phys_address, length, buf)
+
     def alloc_phys_mem(self, length: int, max_phys_address: int) -> Tuple[int, int]:
         return self._call_subhelper(length, max_phys_address)
 
@@ -161,6 +171,9 @@ class RecordHelper(Helper):
 
     def va2pa(self, virtual_address: int) -> Tuple[int, int]:
         return self._call_subhelper(virtual_address)
+
+    def get_EFI_System_Table_address(self) -> Optional[int]:
+        return self._call_subhelper()
 
     def map_io_space(self, physical_address: int, length: int, cache_type: int) -> int:
         return self._call_subhelper(physical_address, length, cache_type)
