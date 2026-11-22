@@ -77,6 +77,9 @@ class ConfigChecker():
         return op.join(op.dirname(cfg_file), include_path)
 
     def _iter_config_tokens(self, et_node):
+        # GPIO <pad config="..."> names a register, not an included config file.
+        if et_node.tag == 'pad':
+            return
         config = et_node.attrib.get('config', '')
         for fxml in config.split(','):
             fxml = fxml.strip()
