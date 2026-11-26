@@ -39,7 +39,7 @@ from typing import Dict, Any, Optional, Sequence, Tuple
 import chipsec.module
 import chipsec.library.result_deltas
 from chipsec.library import defines
-from chipsec.library.returncode import ModuleResult, getModuleResultName
+from chipsec.library.returncode import ModuleResult, ReturnCode, getModuleResultName
 from chipsec import chipset
 from chipsec.helper.oshelper import helper
 from chipsec.library.logger import logger
@@ -347,6 +347,9 @@ class ChipsecMain:
                     self.logger.log_bad(traceback.format_exc())
                 if self.failfast:
                     raise
+            if self._return_codes and result == ModuleResult.ERROR:
+                # The module raised or failed to import, so it produced no return code
+                result = ReturnCode.status.INVALID.value[0]
 
             # Populate results
             test_result.end_module(getModuleResultName(result, self._return_codes), result, modx_argv if modx_argv else None)
