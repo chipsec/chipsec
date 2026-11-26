@@ -98,6 +98,20 @@ chipsec_main options
      --skip_config                       Skip configuration and driver loading
      -nl                                 Chipsec won't save logs automatically
 
+JSON results
+------------
+
+``--json`` writes a ``result`` label for each module. With return-code mode
+(``-rc``), each record also includes ``code``, the module's hexadecimal return
+code in the same format as the CSV report. The upper 32 bits encode the
+status. A zero status indicates success. Use the status bits to distinguish
+an unsupported module or an informational result from a successful check
+when their ``result`` labels are all ``Passed``.
+
+Older JSON reports may only contain ``result`` even if generated with ``-rc``.
+``--deltas`` compares ``result`` labels and accepts reports with or without
+the ``code`` field.
+
 chipsec_util options
 --------------------
 
