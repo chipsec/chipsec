@@ -103,6 +103,8 @@ class TestCase:
 
 
 class ChipsecResults:
+    _json_include_code = False
+
     def __init__(self):
         self.test_cases = []
         self.properties = None
@@ -145,7 +147,7 @@ class ChipsecResults:
             else:
                 self.time = self.test_cases[0].time
 
-    def get_results(self) -> Dict[str, int]:
+    def get_results(self) -> Dict[str, Dict[str, str]]:
         results = {}
         for test in self.test_cases:
             results[test.name] = {'result': test.result}
@@ -176,6 +178,9 @@ class ChipsecResults:
 
     def json_full(self) -> str:
         summary = self.get_results()
+        if self._json_include_code:
+            for test in self.test_cases:
+                summary[test.name]['code'] = test.get_fields()['code']
         js = json.dumps(summary, sort_keys=False, indent=2, separators=(',', ': '))
         return js
 
@@ -321,6 +326,8 @@ class LegacyResults(ChipsecResults):
         return ExitCode.OK
 
 class ReturnCodeResults(ChipsecResults):
+    _json_include_code = True
+
     def print_summary(self, runtime: Optional[float] = None) -> None:
         summary = self.order_summary()
         filler = '*' * 27
